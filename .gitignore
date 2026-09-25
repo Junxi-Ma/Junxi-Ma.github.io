@@ -1,0 +1,13 @@
+# 内容索引由 CI（或本地 scripts/build_index.py）生成，不入库
+data/index.json
+
+# Python
+__pycache__/
+*.pyc
+
+# 编辑器 / 系统
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/

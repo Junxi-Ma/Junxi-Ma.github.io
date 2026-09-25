@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JSON 格式化 — Michael</title>
+  <meta name="description" content="格式化、压缩与校验 JSON，错误定位到行列。全程本地运行。">
+  <meta name="theme-color" content="#0a0a0b">
+  <meta name="color-scheme" content="dark">
+  <link rel="icon" type="image/svg+xml" href="../../assets/img/favicon.svg">
+  <link rel="stylesheet" href="../../assets/css/tokens.css">
+  <link rel="stylesheet" href="../../assets/css/main.css">
+  <script>document.documentElement.classList.add('js');</script>
+  <style>
+    /* 工具页专属样式（局部，不污染全站） */
+    .tool {
+      padding-top: calc(var(--nav-h) + clamp(40px, 7vw, 72px));
+      padding-bottom: var(--section-y);
+    }
+    .tool__head {
+      max-width: 720px;
+      margin-bottom: 32px;
+    }
+    .tool__head h1 {
+      font-size: var(--fs-h1);
+      letter-spacing: -0.02em;
+      margin-top: 22px;
+    }
+    .tool__head p {
+      margin-top: 14px;
+      color: var(--text-2);
+      line-height: 1.7;
+    }
+
+    .tool__bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+    .tool__bar .spacer {
+      flex: 1;
+    }
+    .tool__select {
+      font: inherit;
+      font-size: 14px;
+      color: var(--text-2);
+      background: var(--surface-1);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-btn);
+      padding: 9px 12px;
+      cursor: pointer;
+    }
+    .tool__select:hover {
+      border-color: var(--border-hover);
+      color: var(--text-1);
+    }
+
+    .tool__ta {
+      width: 100%;
+      min-height: 400px;
+      resize: vertical;
+      font-family: var(--font-mono);
+      font-size: 13.5px;
+      line-height: 1.7;
+      color: var(--text-1);
+      background: var(--surface-1);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-card);
+      padding: 18px 20px;
+      tab-size: 2;
+      transition: border-color var(--dur-fast) ease, box-shadow var(--dur-fast) ease;
+    }
+    .tool__ta::placeholder {
+      color: var(--text-3);
+    }
+    .tool__ta:focus {
+      outline: none;
+      border-color: rgba(242, 169, 59, 0.55);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+    .tool__ta.is-err {
+      border-color: rgba(240, 80, 51, 0.55);
+    }
+
+    .tool__status {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+      padding: 13px 17px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      background: var(--surface-1);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-btn);
+      color: var(--text-3);
+    }
+    .tool__status .dot {
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      margin-right: 9px;
+      background: var(--text-3);
+      vertical-align: 1px;
+    }
+    .tool__status.is-ok {
+      color: var(--text-2);
+      border-color: rgba(63, 185, 80, 0.3);
+    }
+    .tool__status.is-ok .dot {
+      background: var(--ok);
+      box-shadow: 0 0 8px rgba(63, 185, 80, 0.6);
+    }
+    .tool__status.is-err {
+      color: #ff9d8a;
+      border-color: rgba(240, 80, 51, 0.4);
+      background: rgba(240, 80, 51, 0.06);
+    }
+    .tool__status.is-err .dot {
+      background: var(--err);
+      box-shadow: 0 0 8px rgba(240, 80, 51, 0.6);
+    }
+    .tool__hint {
+      color: var(--text-3);
+      font-size: 12px;
+    }
+
+    @media (max-width: 560px) {
+      .tool__bar .spacer {
+        display: none;
+      }
+      .tool__bar .btn {
+        flex: 1 1 auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main">跳到主要内容</a>
+
+  <header class="nav" id="nav">
+    <div class="container nav__inner">
+      <a class="nav__logo" href="../../index.html" aria-label="Michael 首页">Michael<i>.</i></a>
+      <nav class="nav__links" id="nav-links" aria-label="主导航">
+        <a href="../../index.html">首页</a>
+        <a href="../../tools.html" aria-current="page">工具</a>
+        <a href="../../notes.html">笔记</a>
+        <a href="../../index.html#about">关于</a>
+      </nav>
+      <button class="nav__toggle" id="nav-toggle" aria-label="打开菜单" aria-expanded="false" aria-controls="nav-links">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+          <path d="M4 7h16M4 12h16M4 17h16"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <main id="main">
+    <div class="container tool">
+      <div class="tool__head">
+        <a class="article-back" href="../../tools.html"><span class="arr">←</span>全部工具</a>
+        <p class="mono-label">Tool <span>/</span> 01</p>
+        <h1>JSON 格式化</h1>
+        <p>粘贴 JSON 即可实时校验；格式化、压缩一键完成，解析错误直接定位到行列。所有数据只在你的浏览器里处理。</p>
+      </div>
+
+      <div class="tool__bar">
+        <button class="btn btn--primary btn--sm" id="btn-format" type="button">格式化</button>
+        <button class="btn btn--ghost btn--sm" id="btn-minify" type="button">压缩</button>
+        <button class="btn btn--ghost btn--sm" id="btn-copy" type="button">复制</button>
+        <button class="btn btn--ghost btn--sm" id="btn-clear" type="button">清空</button>
+        <span class="spacer"></span>
+        <label class="tool__hint" for="indent">缩进</label>
+        <select class="tool__select" id="indent" aria-label="缩进宽度">
+          <option value="2" selected>2 空格</option>
+          <option value="4">4 空格</option>
+          <option value="\t">Tab</option>
+        </select>
+      </div>
+
+      <textarea
+        class="tool__ta"
+        id="input"
+        spellcheck="false"
+        placeholder='在此粘贴 JSON，例如：&#10;{"name":"Michael","tools":["json-formatter"],"active":true}'
+        aria-label="JSON 输入"
+      ></textarea>
+
+      <div class="tool__status" id="status" role="status" aria-live="polite">
+        <span id="status-msg"><span class="dot"></span>等待输入 — 粘贴或键入 JSON 开始校验</span>
+        <span class="tool__hint" id="status-stats">Ctrl + Enter 快速格式化</span>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer__inner">
+      <span>© <span data-year>2026</span> Michael · <span class="footer__heart">♥</span> 纯静态手工打造</span>
+      <nav class="footer__links" aria-label="页脚导航">
+        <a href="../../tools.html">Tools</a>
+        <a href="../../notes.html">Notes</a>
+        <a href="https://github.com/" target="_blank" rel="noopener noreferrer">GitHub</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script type="module" src="../../assets/js/main.js"></script>
+  <script>
+    (() => {
+      const input = document.getElementById('input');
+      const status = document.getElementById('status');
+      const statusMsg = document.getElementById('status-msg');
+      const statusStats = document.getElementById('status-stats');
+      const indentSel = document.getElementById('indent');
+
+      /* 状态一律用 textContent 构建 —— JSON.parse 的报错消息会
+         携带输入内容片段，绝不能走 innerHTML */
+      function setStatus(kind, msg, stats) {
+        status.classList.remove('is-ok', 'is-err');
+        input.classList.remove('is-err');
+        if (kind) status.classList.add(`is-${kind}`);
+        if (kind === 'err') input.classList.add('is-err');
+
+        const dot = document.createElement('span');
+        dot.className = 'dot';
+        statusMsg.replaceChildren(dot, document.createTextNode(msg));
+        statusStats.textContent = stats || 'Ctrl + Enter 快速格式化';
+      }
+
+      /* 解析 V8 / SpiderMonkey 的报错消息 → 行列 */
+      function locate(message, text) {
+        const direct = message.match(/line (\d+) column (\d+)/i);
+        if (direct) return `第 ${direct[1]} 行，第 ${direct[2]} 列`;
+        const pos = message.match(/position (\d+)/i);
+        if (pos) {
+          const p = Math.min(Number(pos[1]), text.length);
+          const before = text.slice(0, p);
+          const line = before.split('\n').length;
+          const col = p - before.lastIndexOf('\n');
+          return `第 ${line} 行，第 ${col} 列`;
+        }
+        return '';
+      }
+
+      function tryParse(text, { format, indent } = {}) {
+        if (!text.trim()) {
+          setStatus('', '等待输入 — 粘贴或键入 JSON 开始校验');
+          return false;
+        }
+        try {
+          const value = JSON.parse(text);
+          if (format) {
+            const space = indent === '\\t' ? '\t' : Number(indent);
+            text = JSON.stringify(value, null, space);
+            input.value = text;
+          }
+          const bytes = new TextEncoder().encode(text).length;
+          const lines = text.split('\n').length;
+          const type = Array.isArray(value) ? 'array' : value === null ? 'null' : typeof value;
+          setStatus('ok', `✓ 合法 JSON（${type}）`, `${lines} 行 · ${bytes} bytes`);
+          return true;
+        } catch (e) {
+          const where = locate(String(e.message), text);
+          setStatus('err', `✕ 解析失败${where ? ' — ' + where : ''}`, String(e.message).slice(0, 120));
+          return false;
+        }
+      }
+
+      let debounce;
+      input.addEventListener('input', () => {
+        clearTimeout(debounce);
+        debounce = setTimeout(() => tryParse(input.value), 200);
+      });
+
+      function apply(fn) {
+        clearTimeout(debounce);
+        fn();
+      }
+
+      const doFormat = () =>
+        apply(() => tryParse(input.value, { format: true, indent: indentSel.value }));
+
+      input.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+          e.preventDefault();
+          doFormat();
+        }
+      });
+
+      document.getElementById('btn-format').addEventListener('click', doFormat);
+
+      document.getElementById('btn-minify').addEventListener('click', () =>
+        apply(() => {
+          try {
+            input.value = JSON.stringify(JSON.parse(input.value));
+          } catch {
+            /* 解析失败 → 保持原文，交给下面的 tryParse 报错定位 */
+          }
+          tryParse(input.value);
+        })
+      );
+
+      document.getElementById('btn-copy').addEventListener('click', async (e) => {
+        const btn = e.currentTarget;
+        if (!input.value) return;
+        try {
+          await navigator.clipboard.writeText(input.value);
+        } catch {
+          input.select();
+          document.execCommand('copy');
+        }
+        const old = btn.textContent;
+        btn.textContent = '已复制 ✓';
+        setTimeout(() => (btn.textContent = old), 1400);
+      });
+
+      document.getElementById('btn-clear').addEventListener('click', () => {
+        apply(() => {
+          input.value = '';
+          input.focus();
+          setStatus('', '等待输入 — 粘贴或键入 JSON 开始校验');
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

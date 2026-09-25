@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>学习笔记 — Michael</title>
+  <meta name="description" content="Michael 的学习笔记：前端、设计与工程实践的整理与复盘。">
+  <meta name="theme-color" content="#0a0a0b">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="学习笔记 — Michael">
+  <meta property="og:description" content="前端、设计与工程实践的整理与复盘。">
+  <meta property="og:image" content="assets/img/og.png">
+  <meta name="color-scheme" content="dark">
+  <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
+  <link rel="stylesheet" href="assets/css/tokens.css">
+  <link rel="stylesheet" href="assets/css/main.css">
+  <script>document.documentElement.classList.add('js');</script>
+</head>
+<body>
+  <a class="skip-link" href="#main">跳到主要内容</a>
+
+  <header class="nav" id="nav">
+    <div class="container nav__inner">
+      <a class="nav__logo" href="index.html" aria-label="Michael 首页">Michael<i>.</i></a>
+      <nav class="nav__links" id="nav-links" aria-label="主导航">
+        <a href="index.html">首页</a>
+        <a href="tools.html">工具</a>
+        <a href="notes.html" aria-current="page">笔记</a>
+        <a href="index.html#about">关于</a>
+      </nav>
+      <button class="nav__toggle" id="nav-toggle" aria-label="打开菜单" aria-expanded="false" aria-controls="nav-links">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+          <path d="M4 7h16M4 12h16M4 17h16"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <noscript>
+    <div class="ns-banner">笔记列表需要 JavaScript，请启用后刷新。也可直接克隆仓库查看 notes/ 目录下的 Markdown 原文。</div>
+  </noscript>
+
+  <main id="main">
+    <div class="container page-head">
+      <p class="mono-label">02 <span>/</span> Notes</p>
+      <h1>学习笔记</h1>
+      <p>把学过的东西写下来才算真的学会。这里的内容以 Markdown 维护，按时间倒序排列。</p>
+    </div>
+
+    <section class="section section--bordered" style="padding-top: clamp(32px, 5vw, 48px);">
+      <div class="container">
+        <div class="toolbar">
+          <div class="search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+              <circle cx="11" cy="11" r="7"/>
+              <path d="m20 20-3.5-3.5"/>
+            </svg>
+            <input type="search" id="notes-search" placeholder="搜索标题、摘要或标签…" aria-label="搜索笔记">
+          </div>
+          <div class="chips" id="notes-chips" role="group" aria-label="按标签筛选"></div>
+          <span class="toolbar__count" id="notes-count" aria-live="polite"></span>
+        </div>
+
+        <div id="notes-list">
+          <div class="skel skel-row"></div>
+          <div class="skel skel-row"></div>
+          <div class="skel skel-row"></div>
+          <div class="skel skel-row"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer__inner">
+      <span>© <span data-year>2026</span> Michael · <span class="footer__heart">♥</span> 纯静态手工打造</span>
+      <nav class="footer__links" aria-label="页脚导航">
+        <a href="tools.html">Tools</a>
+        <a href="notes.html">Notes</a>
+        <a href="https://github.com/" target="_blank" rel="noopener noreferrer">GitHub</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script type="module" src="assets/js/main.js"></script>
+  <script type="module" src="assets/js/notes.js"></script>
+</body>
+</html>

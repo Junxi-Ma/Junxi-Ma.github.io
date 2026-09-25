@@ -1,0 +1,18 @@
+# 统一 LF，防止 Windows CRLF 污染 frontmatter 解析与 JSON diff
+* text=auto
+
+*.md    text eol=lf
+*.py    text eol=lf
+*.js    text eol=lf
+*.css   text eol=lf
+*.html  text eol=lf
+*.json  text eol=lf
+*.yml   text eol=lf
+*.svg   text eol=lf
+
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+*.webp  binary

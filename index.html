@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Michael — 小工具与学习笔记</title>
+  <meta name="description" content="Michael 的个人网站：小工具、子网页与关于前端、设计和工程实践的学习笔记。">
+  <meta name="theme-color" content="#0a0a0b">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Michael — 小工具与学习笔记">
+  <meta property="og:description" content="小工具、子网页与学习笔记的个人数字工坊。">
+  <meta property="og:image" content="assets/img/og.png">
+  <meta name="color-scheme" content="dark">
+  <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
+  <link rel="stylesheet" href="assets/css/tokens.css">
+  <link rel="stylesheet" href="assets/css/main.css">
+  <script>document.documentElement.classList.add('js');</script>
+</head>
+<body>
+  <a class="skip-link" href="#main">跳到主要内容</a>
+
+  <header class="nav" id="nav">
+    <div class="container nav__inner">
+      <a class="nav__logo" href="index.html" aria-label="Michael 首页">Michael<i>.</i></a>
+      <nav class="nav__links" id="nav-links" aria-label="主导航">
+        <a href="index.html" aria-current="page">首页</a>
+        <a href="tools.html">工具</a>
+        <a href="notes.html">笔记</a>
+        <a href="#about">关于</a>
+      </nav>
+      <button class="nav__toggle" id="nav-toggle" aria-label="打开菜单" aria-expanded="false" aria-controls="nav-links">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+          <path d="M4 7h16M4 12h16M4 17h16"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- ============ Hero ============ -->
+    <section class="hero" id="hero">
+      <div class="container hero__inner">
+        <span class="hero__badge"><i aria-hidden="true"></i>Michael · Notes &amp; Tools</span>
+        <h1>构建小工具，<br><span class="grad">记录学习与思考</span></h1>
+        <p class="hero__sub">
+          这里是我的数字工坊 —— 存放我写的小工具、若干子网页，以及关于前端、设计与工程实践的长期笔记。纯静态驱动，持续更新。
+        </p>
+        <div class="hero__cta">
+          <a class="btn btn--primary" href="tools.html">浏览工具</a>
+          <a class="btn btn--ghost" href="notes.html">阅读笔记</a>
+        </div>
+        <p class="hero__status" id="hero-status" hidden></p>
+      </div>
+    </section>
+
+    <!-- ============ 01 / TOOLS ============ -->
+    <section class="section" aria-labelledby="tools-title">
+      <div class="container">
+        <div class="section__head reveal">
+          <p class="mono-label">01 <span>/</span> Tools</p>
+          <div class="section__title-row">
+            <h2 id="tools-title">常用小工具</h2>
+            <a class="link-more" href="tools.html">全部工具<span class="arr">→</span></a>
+          </div>
+          <p class="section__desc">日常开发中打磨的效率小工具，全部在浏览器本地运行，无需上传任何数据。</p>
+        </div>
+        <div class="grid" id="home-tools">
+          <div class="skel skel-card"></div>
+          <div class="skel skel-card"></div>
+          <div class="skel skel-card"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 02 / NOTES ============ -->
+    <section class="section" aria-labelledby="notes-title">
+      <div class="container">
+        <div class="section__head reveal">
+          <p class="mono-label">02 <span>/</span> Notes</p>
+          <div class="section__title-row">
+            <h2 id="notes-title">最近笔记</h2>
+            <a class="link-more" href="notes.html">全部笔记<span class="arr">→</span></a>
+          </div>
+          <p class="section__desc">学习过程中的整理与复盘，以 Markdown 撰写，新建文件即自动上线。</p>
+        </div>
+        <div class="rows reveal" id="home-notes">
+          <div class="skel skel-row"></div>
+          <div class="skel skel-row"></div>
+          <div class="skel skel-row"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 03 / ABOUT ============ -->
+    <section class="section" id="about" aria-labelledby="about-title">
+      <div class="container">
+        <div class="section__head reveal">
+          <p class="mono-label">03 <span>/</span> About</p>
+        </div>
+        <div class="about reveal">
+          <div class="about__body">
+            <h2 id="about-title">关于我</h2>
+            <p>
+              你好，我是 Michael，一名热爱构建的开发者。我相信最好的学习方式是「做出来」——
+              把遇到的问题写成小工具，把新学到的东西沉淀成笔记。
+            </p>
+            <p>
+              这个网站本身就是作品之一：没有框架、没有构建步骤，只有 HTML、CSS 和 JavaScript。
+              它部署在 GitHub Pages 上，所有内容开源可查。
+            </p>
+            <div class="about__skills">
+              <span class="tag">HTML / CSS</span>
+              <span class="tag">JavaScript</span>
+              <span class="tag">前端工程</span>
+              <span class="tag">UI 设计</span>
+              <span class="tag">工具开发</span>
+            </div>
+          </div>
+          <div class="contact-card">
+            <a class="contact-card__row" href="mailto:michael@example.com">
+              <span class="contact-card__key">Email</span>
+              <span class="contact-card__val">michael@example.com<span class="arr">↗</span></span>
+            </a>
+            <a class="contact-card__row" href="https://github.com/" target="_blank" rel="noopener noreferrer">
+              <span class="contact-card__key">GitHub</span>
+              <span class="contact-card__val">github.com<span class="arr">↗</span></span>
+            </a>
+            <a class="contact-card__row" href="notes.html">
+              <span class="contact-card__key">Notes</span>
+              <span class="contact-card__val">学习笔记<span class="arr">↗</span></span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer__inner">
+      <span>© <span data-year>2026</span> Michael · <span class="footer__heart">♥</span> 纯静态手工打造</span>
+      <nav class="footer__links" aria-label="页脚导航">
+        <a href="tools.html">Tools</a>
+        <a href="notes.html">Notes</a>
+        <a href="https://github.com/" target="_blank" rel="noopener noreferrer">GitHub</a>
+      </nav>
+    </div>
+  </footer>
+
+  <noscript>
+    <div class="ns-banner">此页面的动态内容列表需要 JavaScript，请启用后刷新。</div>
+  </noscript>
+
+  <script type="module" src="assets/js/main.js"></script>
+  <script type="module" src="assets/js/home.js"></script>
+</body>
+</html>

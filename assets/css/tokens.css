@@ -1,0 +1,80 @@
+/* ============================================================
+   Design Tokens — 全站颜色 / 字体 / 版式 / 动效的唯一来源
+   风格：暗色高级感（近黑底 + 琥珀金强调）
+   修改全站外观，只需改这个文件。
+   ============================================================ */
+
+:root {
+  color-scheme: dark;
+
+  /* --- 颜色 · 背景层级 ------------------------------------ */
+  --bg: #0a0a0b;            /* 页面底色：近黑 */
+  --surface-1: #111214;     /* 卡片表面 */
+  --surface-2: #17181b;     /* 抬升表面 / hover 底色 */
+  --surface-3: #1d1f23;     /* 代码块表面 */
+
+  /* --- 颜色 · 发丝线 -------------------------------------- */
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.14);
+  --border-hover: rgba(255, 255, 255, 0.22);
+
+  /* --- 颜色 · 文本层次（对比度均过 WCAG AA） -------------- */
+  --text-1: #f4f4f5;        /* 标题、主文本   ~17:1 */
+  --text-2: #a1a1aa;        /* 正文、次级信息 ~8.5:1 */
+  --text-3: #787b84;        /* 辅助、meta     ~5.2:1 */
+  --text-read: #c9cbd2;     /* 长文阅读正文（笔记 17px 用，比 text-1 柔和） */
+
+  /* --- 颜色 · 强调色（琥珀金） ---------------------------- */
+  --accent: #f2a93b;
+  --accent-hover: #ffc061;
+  --accent-dim: #e09a2c;
+  --accent-glow: rgba(242, 169, 59, 0.12);
+  --accent-soft: rgba(242, 169, 59, 0.08);
+  --accent-fg: #1a1206;     /* 强调色按钮上的深色文字 */
+
+  /* --- 颜色 · 状态 ---------------------------------------- */
+  --ok: #3fb950;
+  --err: #f05033;
+
+  /* --- 字体（全系统字体栈，零外部字体 CDN） --------------- */
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto,
+    "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
+    "Noto Sans CJK SC", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", "Cascadia Code",
+    "JetBrains Mono", Menlo, Consolas, "Courier New", monospace;
+
+  /* --- 字号阶 --------------------------------------------- */
+  --fs-display: clamp(40px, 6vw, 72px);
+  --fs-h1: clamp(32px, 4vw, 48px);
+  --fs-h2: clamp(24px, 3vw, 28px);
+  --fs-h3: 19px;
+  --fs-body: 16px;
+  --fs-note: 17px;          /* 笔记正文（中文需要更大字号） */
+  --fs-sm: 14px;
+  --fs-xs: 12px;
+
+  /* --- 版式 ----------------------------------------------- */
+  --container: 1120px;
+  --gutter: clamp(20px, 5vw, 40px);
+  --section-y: clamp(72px, 10vw, 128px);
+  --radius-card: 12px;
+  --radius-btn: 10px;
+  --radius-sm: 6px;
+  --nav-h: 64px;
+
+  /* --- 动效 ----------------------------------------------- */
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-reveal: 600ms;
+  --dur-hover: 200ms;
+  --dur-fast: 120ms;
+  --stagger: 60ms;          /* 卡片错峰入场间隔 */
+
+  /* --- 阴影 ----------------------------------------------- */
+  --shadow-card: 0 8px 30px rgba(0, 0, 0, 0.45);
+  --shadow-pop: 0 16px 50px rgba(0, 0, 0, 0.55);
+
+  /* --- 层级 ----------------------------------------------- */
+  --z-nav: 100;
+  --z-progress: 110;
+  --z-menu: 90;
+}

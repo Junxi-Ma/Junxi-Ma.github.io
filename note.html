@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>笔记 — Michael</title>
+  <meta name="description" content="Michael 的学习笔记。">
+  <meta name="theme-color" content="#0a0a0b">
+  <meta name="color-scheme" content="dark">
+  <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
+  <link rel="stylesheet" href="assets/css/tokens.css">
+  <link rel="stylesheet" href="assets/css/main.css">
+  <link rel="stylesheet" href="assets/css/markdown.css">
+  <script>document.documentElement.classList.add('js');</script>
+</head>
+<body>
+  <a class="skip-link" href="#main">跳到主要内容</a>
+  <div class="progress" id="progress" aria-hidden="true"></div>
+
+  <header class="nav" id="nav">
+    <div class="container nav__inner">
+      <a class="nav__logo" href="index.html" aria-label="Michael 首页">Michael<i>.</i></a>
+      <nav class="nav__links" id="nav-links" aria-label="主导航">
+        <a href="index.html">首页</a>
+        <a href="tools.html">工具</a>
+        <a href="notes.html" aria-current="page">笔记</a>
+        <a href="index.html#about">关于</a>
+      </nav>
+      <button class="nav__toggle" id="nav-toggle" aria-label="打开菜单" aria-expanded="false" aria-controls="nav-links">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+          <path d="M4 7h16M4 12h16M4 17h16"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <noscript>
+    <div class="ns-banner">阅读笔记需要 JavaScript（用于获取并渲染 Markdown 文件），请启用后刷新。</div>
+  </noscript>
+
+  <main id="main">
+    <div class="container">
+      <div class="article-head">
+        <a class="article-back" href="notes.html"><span class="arr">←</span>全部笔记</a>
+        <div id="note-head-loading">
+          <div class="skel skel-line skel-line--title"></div>
+          <div class="skel skel-line skel-line--w60" style="height: 15px;"></div>
+        </div>
+        <h1 id="note-title" hidden></h1>
+        <div class="article-meta" id="note-meta" hidden></div>
+        <div class="article-tags" id="note-tags" hidden></div>
+      </div>
+
+      <div class="article-grid">
+        <article class="markdown" id="note-body" aria-live="polite">
+          <div class="skel skel-line skel-line--w95"></div>
+          <div class="skel skel-line skel-line--w80"></div>
+          <div class="skel skel-line skel-line--w95"></div>
+          <div class="skel skel-line skel-line--w60"></div>
+          <div class="skel skel-line skel-line--w95"></div>
+          <div class="skel skel-line skel-line--w80"></div>
+        </article>
+        <aside class="toc" id="toc" hidden aria-label="文章目录"></aside>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer__inner">
+      <span>© <span data-year>2026</span> Michael · <span class="footer__heart">♥</span> 纯静态手工打造</span>
+      <nav class="footer__links" aria-label="页脚导航">
+        <a href="tools.html">Tools</a>
+        <a href="notes.html">Notes</a>
+        <a href="https://github.com/" target="_blank" rel="noopener noreferrer">GitHub</a>
+      </nav>
+    </div>
+  </footer>
+
+  <!-- 经典脚本先行：模块脚本（defer 语义）执行时以下全局已就绪 -->
+  <script src="assets/vendor/marked.umd.min.js"></script>
+  <script src="assets/vendor/purify.min.js"></script>
+  <script src="assets/vendor/highlight.min.js"></script>
+  <script type="module" src="assets/js/main.js"></script>
+  <script type="module" src="assets/js/note.js"></script>
+</body>
+</html>
