@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>快速查人 — Michael</title>
+  <meta name="description" content="按单位统计各事项未到人数，自动汇总全队实到。数据自动保存本机，支持导出导入。">
+  <meta name="theme-color" content="#0a0a0b">
+  <meta name="color-scheme" content="dark light">
+  <link rel="icon" type="image/svg+xml" href="../../assets/img/favicon.svg">
+  <script>
+    (function () {
+      var t = null;
+      try { t = localStorage.getItem('site-theme'); } catch (e) {}
+      if (t !== 'dark' && t !== 'light') t = 'dark';
+      document.documentElement.dataset.theme = t;
+      document.documentElement.classList.add('js');
+      var m = document.querySelector('meta[name="theme-color"]');
+      if (m) m.content = t === 'light' ? '#faf8f5' : '#0a0a0b';
+    })();
+  </script>
+  <link rel="stylesheet" href="../../assets/css/tokens.css">
+  <link rel="stylesheet" href="../../assets/css/main.css">
+  <link rel="stylesheet" href="../../assets/css/tool-ui.css">
+  <style>
+    /* ---- 查人工具专属样式 ---- */
+    .rc-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .rc-toolbar .spacer { flex: 1; }
+
+    .units-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .unit-card {
+      background: var(--surface-1);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-card);
+      overflow: hidden;
+      transition: border-color var(--dur-hover) ease, box-shadow var(--dur-hover) ease,
+        transform var(--dur-hover) var(--ease);
+    }
+    .unit-card:hover {
+      border-color: var(--border-strong);
+      box-shadow: var(--shadow-card);
+    }
+    .unit-card.is-over {
+      border-color: var(--danger-border);
+    }
+
+    .unit-card__head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--border);
+      background: var(--tint-faint);
+    }
+    .unit-card__name {
+      font-size: 16px;
+      font-weight: 600;
+      line-height: 1.3;
+      word-break: break-word;
+    }
+    .unit-card__nums {
+      display: flex;
+      gap: 14px;
+      margin-top: 7px;
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      color: var(--text-3);
+      font-variant-numeric: tabular-nums;
+    }
+    .unit-card__nums b {
+      font-weight: 500;
+      color: var(--text-2);
+    }
+    .unit-card__nums .is-live {
+      color: var(--ok);
+    }
+    .unit-card.is-over .unit-card__nums .is-live {
+      color: var(--err);
+    }
+    .unit-card__acts {
+      display: flex;
+      gap: 4px;
+      flex: none;
+    }
+
+    .unit-card__items {
+      padding: 6px 8px;
+    }
+    .rc-item {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto auto;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 8px;
+      border-radius: var(--radius-sm);
+      transition: background var(--dur-fast) ease;
+    }
+    .rc-item:hover {
+      background: var(--tint-subtle);
+    }
+    .rc-item__name {
+      font-size: 14.5px;
+      color: var(--text-2);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .rc-item.has-count .rc-item__name {
+      color: var(--text-1);
+      font-weight: 550;
+    }
+    .rc-item__acts {
+      display: flex;
+      gap: 2px;
+    }
+
+    .unit-card__foot {
+      padding: 12px 16px;
+      border-top: 1px solid var(--border);
+    }
+    .link-add {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13.5px;
+      color: var(--text-3);
+      transition: color var(--dur-fast) ease;
+    }
+    .link-add:hover {
+      color: var(--accent);
+    }
+
+    .sum-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+      gap: 10px;
+    }
+    .sum-cell {
+      padding: 12px 10px;
+      text-align: center;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-btn);
+    }
+    .sum-cell__name {
+      font-size: 12.5px;
+      color: var(--text-3);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .sum-cell__num {
+      margin-top: 5px;
+      font-family: var(--font-mono);
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--accent);
+      font-variant-numeric: tabular-nums;
+    }
+
+    @media (max-width: 560px) {
+      .units-grid { grid-template-columns: 1fr; }
+      .rc-item__name { font-size: 14px; }
+      .rc-toolbar .spacer { display: none; }
+      .rc-toolbar .btn { flex: 1 1 calc(50% - 5px); }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main">跳到主要内容</a>
+
+  <header class="nav" id="nav">
+    <div class="container nav__inner">
+      <a class="nav__logo" href="../../index.html" aria-label="Michael 首页">Michael<i>.</i></a>
+      <nav class="nav__links" id="nav-links" aria-label="主导航">
+        <a href="../../index.html">首页</a>
+        <a href="../../tools.html" aria-current="page">工具</a>
+        <a href="../../notes.html">笔记</a>
+        <a href="../../index.html#about">关于</a>
+      </nav>
+      <div class="nav__actions">
+        <button class="nav__icon" id="theme-toggle" type="button" aria-label="切换到浅色模式" title="浅色模式">
+          <svg class="ico-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="4"/>
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+          </svg>
+          <svg class="ico-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+        </button>
+        <button class="nav__toggle" id="nav-toggle" aria-label="打开菜单" aria-expanded="false" aria-controls="nav-links">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+            <path d="M4 7h16M4 12h16M4 17h16"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <div class="container tool-page">
+      <div class="tool-head">
+        <a class="article-back" href="../../tools.html"><span class="arr">←</span>全部工具</a>
+        <p class="mono-label">Tool <span>/</span> 02</p>
+        <h1>快速查人</h1>
+        <p>按单位登记各事项未到人数，自动汇总全队实到。数据自动保存在本机浏览器，刷新不丢；可导出备份、换设备导入。</p>
+      </div>
+
+      <!-- 总览 -->
+      <div class="stat-grid">
+        <div class="stat">
+          <div class="stat__label">全队应到</div>
+          <div class="stat__value" id="stExpected">—</div>
+          <div class="stat__hint">可点击修改</div>
+        </div>
+        <div class="stat">
+          <div class="stat__label">全队实到</div>
+          <div class="stat__value" id="stPresent">—</div>
+          <div class="stat__hint" id="stRate">—</div>
+        </div>
+        <div class="stat">
+          <div class="stat__label">未到合计</div>
+          <div class="stat__value" id="stAbsent">—</div>
+          <div class="stat__hint">各事项之和</div>
+        </div>
+        <div class="stat">
+          <div class="stat__label">单位数</div>
+          <div class="stat__value" id="stUnits">—</div>
+          <div class="stat__hint">点卡片可编辑</div>
+        </div>
+      </div>
+
+      <!-- 工具条 -->
+      <div class="panel" style="margin-top:16px">
+        <div class="panel__body">
+          <div class="rc-toolbar">
+            <div class="field" style="max-width:180px">
+              <label class="field__label" for="expectedInput">全队应到人数</label>
+              <input class="input" id="expectedInput" type="number" min="0" inputmode="numeric" value="115">
+            </div>
+            <span class="spacer"></span>
+            <button class="btn btn--primary btn--sm" id="btnAddUnit" type="button">＋ 新增单位</button>
+            <button class="btn btn--ghost btn--sm" id="btnExport" type="button">导出</button>
+            <button class="btn btn--ghost btn--sm" id="btnImport" type="button">导入</button>
+            <button class="btn btn--ghost btn--sm" id="btnReset" type="button">重置计数</button>
+            <input type="file" id="fileInput" accept="application/json,.json" hidden>
+          </div>
+          <div class="callout callout--info" id="sumHint" style="margin-top:16px" hidden></div>
+        </div>
+      </div>
+
+      <!-- 事项汇总 -->
+      <div class="panel">
+        <div class="panel__head">
+          <span class="panel__title"><span class="mono-label">Σ</span>事项未到汇总</span>
+        </div>
+        <div class="panel__body">
+          <div class="sum-grid" id="sumGrid"></div>
+          <div class="empty" id="sumEmpty">暂无未到人数记录</div>
+        </div>
+      </div>
+
+      <!-- 单位列表 -->
+      <div class="units-grid" id="unitsGrid"></div>
+      <div class="empty" id="unitsEmpty" hidden>
+        <div class="empty__icon">📋</div>
+        还没有单位，点上方「新增单位」开始。
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer__inner">
+      <span>© <span data-year>2026</span> Michael · <span class="footer__heart">♥</span> 纯静态手工打造</span>
+      <nav class="footer__links" aria-label="页脚导航">
+        <a href="../../tools.html">Tools</a>
+        <a href="../../notes.html">Notes</a>
+        <a href="https://github.com/" target="_blank" rel="noopener noreferrer">GitHub</a>
+      </nav>
+    </div>
+  </footer>
+
+  <!-- 新增 / 编辑单位 -->
+  <div class="modal" id="unitModal" role="dialog" aria-modal="true" aria-labelledby="unitModalTitle">
+    <div class="modal__box">
+      <div class="modal__head" id="unitModalTitle">新增单位</div>
+      <form id="unitForm">
+        <div class="modal__body">
+          <input type="hidden" id="unitId">
+          <div class="field">
+            <label class="field__label" for="unitName">单位名称</label>
+            <input class="input" id="unitName" required maxlength="20" placeholder="例如：一单位" autocomplete="off">
+          </div>
+          <div class="field">
+            <label class="field__label" for="unitTotal">单位应到人数</label>
+            <input class="input" id="unitTotal" type="number" min="1" inputmode="numeric" required placeholder="例如：34">
+          </div>
+        </div>
+        <div class="modal__foot">
+          <button class="btn btn--ghost btn--sm" type="button" data-close>取消</button>
+          <button class="btn btn--primary btn--sm" type="submit">保存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 重命名事项 -->
+  <div class="modal" id="itemModal" role="dialog" aria-modal="true" aria-labelledby="itemModalTitle">
+    <div class="modal__box">
+      <div class="modal__head" id="itemModalTitle">重命名事项</div>
+      <form id="itemForm">
+        <div class="modal__body">
+          <input type="hidden" id="itemUnitId">
+          <input type="hidden" id="itemIdx">
+          <div class="field">
+            <label class="field__label" for="itemName">事项名称</label>
+            <input class="input" id="itemName" required maxlength="16" autocomplete="off">
+            <span class="field__hint">改名只影响当前单位的这个事项。</span>
+          </div>
+        </div>
+        <div class="modal__foot">
+          <button class="btn btn--ghost btn--sm" type="button" data-close>取消</button>
+          <button class="btn btn--primary btn--sm" type="submit">保存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <noscript>
+    <div class="ns-banner">此工具需要 JavaScript 才能统计与保存数据。</div>
+  </noscript>
+
+  <script type="module" src="../../assets/js/main.js"></script>
+  <script>
+  (() => {
+    'use strict';
+
+    /* ================= 数据层 ================= */
+    const KEY = 'site:roll-call:v1';
+    const DEFAULT_ITEMS = ['队值', '公差', '公区', '竞赛', '外出', '来访', '921住院', '门诊', '训练', '观影'];
+
+    const uid = () => Math.random().toString(36).slice(2, 9);
+
+    function seed() {
+      return {
+        v: 1,
+        expected: 115,
+        units: [
+          { id: uid(), name: '一单位', total: 34, items: DEFAULT_ITEMS.map(n => ({ name: n, count: 0 })) },
+          { id: uid(), name: '二单位', total: 36, items: DEFAULT_ITEMS.map(n => ({ name: n, count: 0 })) },
+          { id: uid(), name: '三单位', total: 45, items: DEFAULT_ITEMS.map(n => ({ name: n, count: 0 })) }
+        ]
+      };
+    }
+
+    let state = load();
+
+    function load() {
+      try {
+        const raw = localStorage.getItem(KEY);
+        if (!raw) return seed();
+        const d = JSON.parse(raw);
+        if (!d || !Array.isArray(d.units)) return seed();
+        d.expected = clampInt(d.expected, 0, 99999, 115);
+        d.units = d.units.filter(u => u && typeof u.name === 'string');
+        d.units.forEach(u => {
+          u.id = u.id || uid();
+          u.total = clampInt(u.total, 1, 99999, 1);
+          u.items = Array.isArray(u.items) ? u.items : [];
+          u.items = u.items
+            .filter(it => it && typeof it.name === 'string')
+            .map(it => ({ name: it.name, count: clampInt(it.count, 0, 9999, 0) }));
+        });
+        return d;
+      } catch {
+        return seed();
+      }
+    }
+
+    function save() {
+      try {
+        localStorage.setItem(KEY, JSON.stringify(state));
+      } catch {
+        toast('保存失败：浏览器存储不可用', true);
+      }
+    }
+
+    function clampInt(v, min, max, fb) {
+      const n = parseInt(v, 10);
+      if (Number.isNaN(n)) return fb;
+      return Math.min(max, Math.max(min, n));
+    }
+
+    /* ================= 计算 ================= */
+    const sumItems = (arr) => arr.reduce((s, it) => s + it.count, 0);
+    const unitAbsent = (u) => sumItems(u.items);
+    const totalAbsent = () => state.units.reduce((s, u) => s + unitAbsent(u), 0);
+
+    /* ================= 渲染 ================= */
+    const $ = (id) => document.getElementById(id);
+    const esc = (s) => String(s).replace(/[&<>"']/g, c => (
+      { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+    ));
+
+    function render() {
+      renderStats();
+      renderSummary();
+      renderUnits();
+      save();
+    }
+
+    function renderStats() {
+      const absent = totalAbsent();
+      const present = state.expected - absent;
+      const unitsTotal = state.units.reduce((s, u) => s + u.total, 0);
+      const rate = state.expected > 0 ? Math.round((present / state.expected) * 100) : 0;
+
+      $('stExpected').textContent = state.expected;
+      $('stPresent').textContent = present;
+      $('stPresent').className = 'stat__value ' + (present < 0 ? 'is-err' : rate < 90 ? 'is-warn' : 'is-ok');
+      $('stAbsent').textContent = absent;
+      $('stAbsent').className = 'stat__value ' + (absent > 0 ? 'is-warn' : '');
+      $('stUnits').textContent = state.units.length;
+      $('stRate').textContent = `到队率 ${rate}%`;
+      $('expectedInput').value = state.expected;
+
+      // 单位应到合计 与 全队应到 不一致时提示
+      const hint = $('sumHint');
+      if (state.units.length && unitsTotal !== state.expected) {
+        hint.hidden = false;
+        hint.innerHTML = `各单位应到合计 <b>${unitsTotal}</b> 人，与全队应到 <b>${state.expected}</b> 人不一致 —— 可能有单位还没建，或人数填错了。`;
+      } else {
+        hint.hidden = true;
+      }
+    }
+
+    function renderSummary() {
+      const totals = new Map();
+      state.units.forEach(u => u.items.forEach(it => {
+        if (it.count > 0) totals.set(it.name, (totals.get(it.name) || 0) + it.count);
+      }));
+
+      const grid = $('sumGrid');
+      $('sumEmpty').hidden = totals.size > 0;
+      grid.hidden = totals.size === 0;
+      grid.innerHTML = [...totals.entries()]
+        .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'zh'))
+        .map(([name, n]) => `<div class="sum-cell"><div class="sum-cell__name">${esc(name)}</div><div class="sum-cell__num">${n}</div></div>`)
+        .join('');
+    }
+
+    function renderUnits() {
+      const grid = $('unitsGrid');
+      $('unitsEmpty').hidden = state.units.length > 0;
+      grid.innerHTML = state.units.map(u => {
+        const absent = unitAbsent(u);
+        const present = u.total - absent;
+        const over = present < 0;
+        return `
+        <section class="unit-card${over ? ' is-over' : ''}" data-unit="${u.id}">
+          <div class="unit-card__head">
+            <div>
+              <div class="unit-card__name">${esc(u.name)}</div>
+              <div class="unit-card__nums">
+                <span>应到 <b>${u.total}</b></span>
+                <span>实到 <b class="is-live">${present}</b></span>
+                <span>未到 <b>${absent}</b></span>
+              </div>
+            </div>
+            <div class="unit-card__acts">
+              <button class="icon-btn" type="button" data-act="edit-unit" title="编辑单位" aria-label="编辑 ${esc(u.name)}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+              </button>
+              <button class="icon-btn icon-btn--danger" type="button" data-act="del-unit" title="删除单位" aria-label="删除 ${esc(u.name)}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="unit-card__items">
+            ${u.items.length ? u.items.map((it, i) => `
+              <div class="rc-item${it.count > 0 ? ' has-count' : ''}">
+                <span class="rc-item__name" title="${esc(it.name)}">${esc(it.name)}</span>
+                <div class="num${it.count > 0 ? ' num--warn' : ''}">
+                  <button class="num__btn" type="button" data-act="dec" data-i="${i}" aria-label="减少${esc(it.name)}">−</button>
+                  <input class="num__input" type="number" min="0" max="9999" inputmode="numeric" value="${it.count}" data-act="set" data-i="${i}" aria-label="${esc(it.name)}人数">
+                  <button class="num__btn" type="button" data-act="inc" data-i="${i}" aria-label="增加${esc(it.name)}">＋</button>
+                </div>
+                <div class="rc-item__acts">
+                  <button class="icon-btn" type="button" data-act="rename" data-i="${i}" title="重命名" aria-label="重命名${esc(it.name)}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                  </button>
+                  <button class="icon-btn icon-btn--danger" type="button" data-act="del-item" data-i="${i}" title="删除事项" aria-label="删除${esc(it.name)}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                  </button>
+                </div>
+              </div>`).join('')
+              : `<div class="empty" style="padding:22px 10px">还没有事项</div>`}
+          </div>
+          <div class="unit-card__foot">
+            <button class="link-add" type="button" data-act="add-item">＋ 添加事项</button>
+          </div>
+        </section>`;
+      }).join('');
+    }
+
+    /* ================= 交互 ================= */
+    const findUnit = (id) => state.units.find(u => u.id === id);
+
+    $('unitsGrid').addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-act]');
+      if (!btn) return;
+      const card = btn.closest('[data-unit]');
+      const unit = card && findUnit(card.dataset.unit);
+      if (!unit) return;
+      const i = parseInt(btn.dataset.i, 10);
+
+      switch (btn.dataset.act) {
+        case 'inc':
+          unit.items[i].count = clampInt(unit.items[i].count + 1, 0, 9999, 0);
+          render();
+          break;
+        case 'dec':
+          unit.items[i].count = clampInt(unit.items[i].count - 1, 0, 9999, 0);
+          render();
+          break;
+        case 'del-item':
+          if (confirm(`删除事项「${unit.items[i].name}」？`)) {
+            unit.items.splice(i, 1);
+            render();
+          }
+          break;
+        case 'rename':
+          openItemModal(unit, i);
+          break;
+        case 'add-item':
+          unit.items.push({ name: '新事项', count: 0 });
+          render();
+          openItemModal(unit, unit.items.length - 1);
+          break;
+        case 'edit-unit':
+          openUnitModal(unit);
+          break;
+        case 'del-unit':
+          if (confirm(`删除单位「${unit.name}」及其全部计数？`)) {
+            state.units = state.units.filter(u => u.id !== unit.id);
+            render();
+          }
+          break;
+      }
+    });
+
+    // 数字直接输入
+    $('unitsGrid').addEventListener('change', (e) => {
+      const input = e.target.closest('input[data-act="set"]');
+      if (!input) return;
+      const card = input.closest('[data-unit]');
+      const unit = card && findUnit(card.dataset.unit);
+      const i = parseInt(input.dataset.i, 10);
+      if (!unit || !unit.items[i]) return;
+      unit.items[i].count = clampInt(input.value, 0, 9999, 0);
+      render();
+    });
+
+    $('expectedInput').addEventListener('change', (e) => {
+      state.expected = clampInt(e.target.value, 0, 99999, 0);
+      render();
+    });
+
+    /* ---- 单位弹窗 ---- */
+    const unitModal = $('unitModal');
+    let editingUnit = null;
+
+    function openUnitModal(unit) {
+      editingUnit = unit || null;
+      $('unitModalTitle').textContent = unit ? '编辑单位' : '新增单位';
+      $('unitId').value = unit ? unit.id : '';
+      $('unitName').value = unit ? unit.name : '';
+      $('unitTotal').value = unit ? unit.total : '';
+      openModal(unitModal);
+      setTimeout(() => $('unitName').focus(), 50);
+    }
+
+    $('unitForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const name = $('unitName').value.trim();
+      const total = clampInt($('unitTotal').value, 1, 99999, 1);
+      if (!name) return;
+      if (editingUnit) {
+        editingUnit.name = name;
+        editingUnit.total = total;
+      } else {
+        state.units.push({
+          id: uid(), name, total,
+          items: DEFAULT_ITEMS.map(n => ({ name: n, count: 0 }))
+        });
+      }
+      closeModal(unitModal);
+      render();
+      toast('已保存');
+    });
+
+    /* ---- 事项重命名弹窗 ---- */
+    const itemModal = $('itemModal');
+    let editingItem = null;
+
+    function openItemModal(unit, idx) {
+      editingItem = { unit, idx };
+      $('itemName').value = unit.items[idx].name;
+      openModal(itemModal);
+      setTimeout(() => { $('itemName').focus(); $('itemName').select(); }, 50);
+    }
+
+    $('itemForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const name = $('itemName').value.trim();
+      if (!name || !editingItem) return;
+      editingItem.unit.items[editingItem.idx].name = name;
+      closeModal(itemModal);
+      render();
+      toast('已重命名');
+    });
+
+    /* ---- 弹窗通用 ---- */
+    function openModal(m) { m.classList.add('is-open'); }
+    function closeModal(m) { m.classList.remove('is-open'); }
+    document.querySelectorAll('[data-close]').forEach(b =>
+      b.addEventListener('click', () => closeModal(b.closest('.modal'))));
+    document.querySelectorAll('.modal').forEach(m =>
+      m.addEventListener('click', (e) => { if (e.target === m) closeModal(m); }));
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') document.querySelectorAll('.modal.is-open').forEach(closeModal);
+    });
+
+    /* ---- 新增单位 ---- */
+    $('btnAddUnit').addEventListener('click', () => openUnitModal(null));
+
+    /* ---- 重置计数 ---- */
+    $('btnReset').addEventListener('click', () => {
+      if (!confirm('把所有事项的计数清零？单位和事项名称会保留。')) return;
+      state.units.forEach(u => u.items.forEach(it => { it.count = 0; }));
+      render();
+      toast('计数已清零');
+    });
+
+    /* ---- 导出 ---- */
+    $('btnExport').addEventListener('click', () => {
+      const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      const d = new Date();
+      const stamp = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
+      a.href = URL.createObjectURL(blob);
+      a.download = `查人数据-${stamp}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+      toast('已导出 JSON');
+    });
+
+    /* ---- 导入 ---- */
+    $('btnImport').addEventListener('click', () => $('fileInput').click());
+    $('fileInput').addEventListener('change', (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      const fr = new FileReader();
+      fr.onload = () => {
+        try {
+          const d = JSON.parse(String(fr.result));
+          if (!d || !Array.isArray(d.units)) throw new Error('格式不符');
+          state = load();          // 走一遍校验清洗
+          state.expected = clampInt(d.expected, 0, 99999, state.expected);
+          state.units = d.units
+            .filter(u => u && typeof u.name === 'string')
+            .map(u => ({
+              id: uid(),
+              name: u.name,
+              total: clampInt(u.total, 1, 99999, 1),
+              items: (Array.isArray(u.items) ? u.items : [])
+                .filter(it => it && typeof it.name === 'string')
+                .map(it => ({ name: it.name, count: clampInt(it.count, 0, 9999, 0) }))
+            }));
+          render();
+          toast(`已导入 ${state.units.length} 个单位`);
+        } catch {
+          toast('导入失败：文件格式不正确', true);
+        }
+        e.target.value = '';
+      };
+      fr.readAsText(file, 'utf-8');
+    });
+
+    /* ---- 轻提示 ---- */
+    let toastTimer;
+    function toast(msg, isErr) {
+      const t = $('toast');
+      t.textContent = msg;
+      t.classList.toggle('toast--err', !!isErr);
+      t.classList.add('is-on');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => t.classList.remove('is-on'), 2200);
+    }
+
+    /* ---- 启动 ---- */
+    render();
+  })();
+  </script>
+</body>
+</html>

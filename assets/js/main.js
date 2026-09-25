@@ -100,3 +100,48 @@ if (hero && finePointer.matches && !reducedMotion.matches) {
 document.querySelectorAll('[data-year]').forEach((el) => {
   el.textContent = String(new Date().getFullYear());
 });
+
+/* ---------- 深 / 浅主题切换 ----------
+   data-theme 由 <head> 内联脚本先行写入（防闪烁）；
+   这里只负责按钮交互、持久化与 meta 同步。 */
+const THEME_KEY = 'site-theme';
+const THEME_COLOR = { dark: '#0a0a0b', light: '#faf8f5' };
+const themeBtn = document.getElementById('theme-toggle');
+const metaTheme = document.querySelector('meta[name="theme-color"]');
+
+const readTheme = () =>
+  document.documentElement.dataset.theme === 'light' ? 'light' : 'dark';
+
+function applyTheme(theme, persist) {
+  document.documentElement.dataset.theme = theme;
+  if (persist) {
+    try {
+      localStorage.setItem(THEME_KEY, theme);
+    } catch {
+      /* 隐私模式等场景下忽略 */
+    }
+  }
+  if (metaTheme) metaTheme.content = THEME_COLOR[theme];
+  themeBtn?.setAttribute(
+    'aria-label',
+    theme === 'dark' ? '切换到浅色模式' : '切换到深色模式'
+  );
+  themeBtn?.setAttribute(
+    'title',
+    theme === 'dark' ? '浅色模式' : '深色模式'
+  );
+}
+
+// 与内联脚本的结果对齐（补 meta / aria）
+applyTheme(readTheme(), false);
+
+themeBtn?.addEventListener('click', () => {
+  applyTheme(readTheme() === 'dark' ? 'light' : 'dark', true);
+});
+
+// 多标签页同步
+window.addEventListener('storage', (e) => {
+  if (e.key === THEME_KEY && (e.newValue === 'dark' || e.newValue === 'light')) {
+    applyTheme(e.newValue, false);
+  }
+});

@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>外出名额分配 — Michael</title>
+  <meta name="description" content="班长设日期与每日名额，成员填表生成提交码回传，按已外出次数与理由加权分配，兼顾公平与名额不浪费。">
+  <meta name="theme-color" content="#0a0a0b">
+  <meta name="color-scheme" content="dark light">
+  <link rel="icon" type="image/svg+xml" href="../../assets/img/favicon.svg">
+  <script>
+    (function () {
+      var t = null;
+      try { t = localStorage.getItem('site-theme'); } catch (e) {}
+      if (t !== 'dark' && t !== 'light') t = 'dark';
+      document.documentElement.dataset.theme = t;
+      document.documentElement.classList.add('js');
+      var m = document.querySelector('meta[name="theme-color"]');
+      if (m) m.content = t === 'light' ? '#faf8f5' : '#0a0a0b';
+    })();
+  </script>
+  <link rel="stylesheet" href="../../assets/css/tokens.css">
+  <link rel="stylesheet" href="../../assets/css/main.css">
+  <link rel="stylesheet" href="../../assets/css/tool-ui.css">
+  <style>
+    /* ---- 外出分配工具专属样式 ---- */
+    .seg-wrap {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .seg-step {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      color: var(--text-3);
+    }
+    .panel[hidden] { display: none; }
+
+    .room-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 13px 16px;
+      background: var(--accent-soft);
+      border: 1px solid rgba(242, 169, 59, 0.28);
+      border-radius: var(--radius-btn);
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      color: var(--text-2);
+      font-variant-numeric: tabular-nums;
+    }
+    .room-strip b {
+      color: var(--accent);
+      font-weight: 550;
+    }
+    .room-strip .sep { color: var(--text-3); }
+
+    .member-chip {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .day-card {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-card);
+      overflow: hidden;
+      background: var(--surface-1);
+    }
+    .day-card + .day-card { margin-top: 12px; }
+    .day-card.is-short { border-color: rgba(242, 169, 59, 0.4); }
+    .day-card__head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 13px 16px;
+      background: var(--tint-faint);
+      border-bottom: 1px solid var(--border);
+    }
+    .day-card__date {
+      font-family: var(--font-mono);
+      font-size: 13.5px;
+      font-variant-numeric: tabular-nums;
+      color: var(--text-1);
+    }
+    .day-card__date .dow { color: var(--accent); margin-left: 6px; }
+    .day-card__cap {
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      color: var(--text-3);
+    }
+    .day-card__list {
+      padding: 6px 8px;
+      display: flex;
+      flex-direction: column;
+    }
+    .pick {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 10px;
+      border-radius: var(--radius-sm);
+    }
+    .pick + .pick { border-top: 1px solid var(--border); }
+    .pick__rank {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text-3);
+      width: 18px;
+      flex: none;
+      font-variant-numeric: tabular-nums;
+    }
+    .pick__main { flex: 1; min-width: 0; }
+    .pick__name {
+      font-size: 14.5px;
+      font-weight: 550;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .pick__meta {
+      margin-top: 3px;
+      font-size: 12.5px;
+      color: var(--text-3);
+    }
+    .day-empty {
+      padding: 20px 10px;
+      text-align: center;
+      font-size: 13.5px;
+      color: var(--text-3);
+    }
+
+    .score-note {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text-3);
+      line-height: 1.8;
+    }
+
+    .switch-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      flex-wrap: wrap;
+      padding: 14px 16px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-btn);
+    }
+    .switch-row__text { flex: 1; min-width: 200px; }
+    .switch-row__title { font-size: 14.5px; font-weight: 550; }
+    .switch-row__hint { font-size: 12.5px; color: var(--text-3); margin-top: 3px; line-height: 1.6; }
+
+    .switch {
+      position: relative;
+      width: 46px;
+      height: 26px;
+      flex: none;
+      border-radius: 999px;
+      background: var(--surface-3);
+      border: 1px solid var(--border-strong);
+      transition: background var(--dur-fast) ease, border-color var(--dur-fast) ease;
+      cursor: pointer;
+    }
+    .switch::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--text-2);
+      transition: transform var(--dur-hover) var(--ease), background var(--dur-fast) ease;
+    }
+    .switch[aria-checked="true"] {
+      background: var(--accent-fill);
+      border-color: var(--accent-fill);
+    }
+    .switch[aria-checked="true"]::after {
+      transform: translateX(20px);
+      background: var(--accent-fg);
+    }
+
+    .flow-num {
+      display: inline-grid;
+      place-items: center;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--accent-fill);
+      color: var(--accent-fg);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 600;
+      flex: none;
+    }
+    .howto {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .howto__row {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      font-size: 13.5px;
+      line-height: 1.65;
+      color: var(--text-2);
+    }
+    .howto__row b { color: var(--text-1); font-weight: 600; }
+
+    @media (max-width: 560px) {
+      .seg-wrap { flex-direction: column; align-items: stretch; }
+      .seg-step { text-align: center; }
+      .day-card__head { flex-direction: column; align-items: flex-start; gap: 6px; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main">跳到主要内容</a>
+
+  <header class="nav" id="nav">
+    <div class="container nav__inner">
+      <a class="nav__logo" href="../../index.html" aria-label="Michael 首页">Michael<i>.</i></a>
+      <nav class="nav__links" id="nav-links" aria-label="主导航">
+        <a href="../../index.html">首页</a>
+        <a href="../../tools.html" aria-current="page">工具</a>
+        <a href="../../notes.html">笔记</a>
+        <a href="../../index.html#about">关于</a>
+      </nav>
+      <div class="nav__actions">
+        <button class="nav__icon" id="theme-toggle" type="button" aria-label="切换到浅色模式" title="浅色模式">
+          <svg class="ico-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="4"/>
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+          </svg>
+          <svg class="ico-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+        </button>
+        <button class="nav__toggle" id="nav-toggle" aria-label="打开菜单" aria-expanded="false" aria-controls="nav-links">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+            <path d="M4 7h16M4 12h16M4 17h16"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <div class="container tool-page">
+      <div class="tool-head">
+        <a class="article-back" href="../../tools.html"><span class="arr">←</span>全部工具</a>
+        <p class="mono-label">Tool <span>/</span> 03</p>
+        <h1>外出名额分配</h1>
+        <p>班长设定日期范围与每日名额并生成邀请码，成员在自己手机上填表、生成提交码发回，最后由系统按「已外出次数优先 + 理由加权」分配，兼顾公平与名额不浪费。全程本地运行，无需服务器。</p>
+      </div>
+
+      <div class="seg-wrap">
+        <div class="seg" role="tablist" aria-label="步骤切换">
+          <button class="seg__btn" type="button" data-step="setup" role="tab">① 建房间</button>
+          <button class="seg__btn" type="button" data-step="join" role="tab">② 我要报名</button>
+          <button class="seg__btn" type="button" data-step="result" role="tab">③ 汇总分配</button>
+        </div>
+        <span class="seg-step" id="segHint">班长用</span>
+      </div>
+
+      <!-- ============ ① 建房间 ============ -->
+      <section class="panel" id="panel-setup">
+        <div class="panel__head">
+          <span class="panel__title"><span class="mono-label">01</span>设置外出安排</span>
+          <button class="btn btn--ghost btn--sm" id="btnRegen" type="button">换一个房间码</button>
+        </div>
+        <div class="panel__body">
+          <div class="field-row">
+            <div class="field">
+              <label class="field__label" for="dStart">可外出开始日期</label>
+              <input class="input" type="date" id="dStart">
+            </div>
+            <div class="field">
+              <label class="field__label" for="dEnd">可外出结束日期</label>
+              <input class="input" type="date" id="dEnd">
+            </div>
+            <div class="field">
+              <label class="field__label" for="dailyCap">每天可外出人数</label>
+              <div class="input-suffix">
+                <input class="input" type="number" id="dailyCap" min="1" max="99" inputmode="numeric" value="3">
+                <span class="input-suffix__unit">人/天</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="field" style="margin-top:16px">
+            <span class="field__label">理由权重 <span class="badge">越大越优先</span></span>
+            <div class="field-row field-row--tight">
+              <div class="field"><input class="input" type="number" id="w0" min="0" max="99" value="5" aria-label="家长看望权重"><span class="field__hint">家长看望</span></div>
+              <div class="field"><input class="input" type="number" id="w1" min="0" max="99" value="3" aria-label="同学看望权重"><span class="field__hint">同学看望</span></div>
+              <div class="field"><input class="input" type="number" id="w2" min="0" max="99" value="2" aria-label="外出游玩权重"><span class="field__hint">外出游玩</span></div>
+              <div class="field"><input class="input" type="number" id="w3" min="0" max="99" value="1" aria-label="其他理由权重"><span class="field__hint">其他 / 自定义</span></div>
+            </div>
+          </div>
+
+          <div class="callout" style="margin-top:18px">
+            <span>💡</span>
+            <div>房间码把日期范围和名额打包成一段文字，<b>发到群里即可</b>，成员粘贴后就能看到你设定的日期，无需注册、无需联网同步。</div>
+          </div>
+
+          <div id="inviteOut" hidden style="margin-top:16px">
+            <div class="code-box">
+              <code class="code-box__text" id="inviteCode"></code>
+              <button class="btn btn--ghost btn--sm" type="button" data-copy="inviteCode">复制</button>
+            </div>
+            <div class="rc-toolbar" style="margin-top:12px">
+              <button class="btn btn--primary btn--sm" type="button" id="btnCopyLink">复制报名链接</button>
+              <span class="field__hint">成员打开链接会自动进入「我要报名」。</span>
+            </div>
+          </div>
+
+          <div style="margin-top:18px">
+            <button class="btn btn--primary btn--block" id="btnMakeInvite" type="button">生成邀请码</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ ② 报名 ============ -->
+      <section class="panel" id="panel-join" hidden>
+        <div class="panel__head">
+          <span class="panel__title"><span class="mono-label">02</span>成员报名</span>
+          <span class="badge" id="roomBadge">未载入房间</span>
+        </div>
+        <div class="panel__body">
+          <div class="field">
+            <label class="field__label" for="inviteIn">粘贴班长发来的邀请码</label>
+            <textarea class="textarea" id="inviteIn" style="min-height:76px" placeholder="OUT1.xxxxxxxx…" spellcheck="false"></textarea>
+            <span class="field__hint">或直接打开班长发的链接，会自动填入。</span>
+          </div>
+          <button class="btn btn--ghost btn--sm" id="btnLoadInvite" type="button" style="margin-top:12px">载入房间</button>
+
+          <div id="joinForm" hidden style="margin-top:20px">
+            <div class="room-strip" id="roomStrip"></div>
+
+            <div class="field-row" style="margin-top:18px">
+              <div class="field">
+                <label class="field__label" for="mName">姓名</label>
+                <input class="input" id="mName" maxlength="20" autocomplete="name" placeholder="你的名字">
+              </div>
+              <div class="field">
+                <label class="field__label" for="mDays">一共要出的天数</label>
+                <input class="input" type="number" id="mDays" min="1" max="30" value="1" inputmode="numeric">
+              </div>
+              <div class="field">
+                <label class="field__label" for="mPast">已外出次数</label>
+                <input class="input" type="number" id="mPast" min="0" max="99" value="0" inputmode="numeric">
+                <span class="field__hint">填 0 的人优先级最高</span>
+              </div>
+            </div>
+
+            <div class="field" style="margin-top:18px">
+              <span class="field__label">可以接受的日期 <span class="badge" id="pickCount">已选 0 天</span></span>
+              <div class="date-grid" id="dateGrid" style="margin-top:4px"></div>
+            </div>
+
+            <div class="field-row" style="margin-top:18px">
+              <div class="field">
+                <label class="field__label" for="mReason">外出理由</label>
+                <select class="select" id="mReason">
+                  <option value="0">家长看望</option>
+                  <option value="1">同学看望</option>
+                  <option value="2">外出游玩</option>
+                  <option value="3">其他</option>
+                  <option value="4">自己填写…</option>
+                </select>
+              </div>
+              <div class="field" id="customReasonWrap" hidden>
+                <label class="field__label" for="mCustom">自定义理由</label>
+                <input class="input" id="mCustom" maxlength="20" placeholder="例如：看病复查">
+              </div>
+            </div>
+
+            <div style="margin-top:20px">
+              <button class="btn btn--primary btn--block" id="btnMakeSub" type="button">生成提交码</button>
+            </div>
+
+            <div id="subOut" hidden style="margin-top:16px">
+              <div class="code-box">
+                <code class="code-box__text" id="subCode"></code>
+                <button class="btn btn--ghost btn--sm" type="button" data-copy="subCode">复制</button>
+              </div>
+              <p class="field__hint" style="margin-top:10px">把这段码发回给班长（或点「复制提交码」），班长粘贴进「③ 汇总分配」即可。</p>
+              <button class="btn btn--primary btn--sm" id="btnCopySub" type="button" style="margin-top:10px">复制提交码</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ ③ 汇总分配 ============ -->
+      <section class="panel" id="panel-result" hidden>
+        <div class="panel__head">
+          <span class="panel__title"><span class="mono-label">03</span>导入提交码并分配</span>
+          <span class="badge" id="subBadge">0 人</span>
+        </div>
+        <div class="panel__body">
+          <div class="field">
+            <label class="field__label" for="subIn">粘贴成员的提交码</label>
+            <textarea class="textarea" id="subIn" style="min-height:88px" placeholder="可一次粘贴多个，每行一个；也可先「载入房间」再逐个粘贴" spellcheck="false"></textarea>
+            <span class="field__hint">同名会以最后一次提交为准。</span>
+          </div>
+          <div class="rc-toolbar" style="margin-top:12px">
+            <button class="btn btn--primary btn--sm" id="btnAddSubs" type="button">导入提交码</button>
+            <button class="btn btn--ghost btn--sm" id="btnLoadRoomFirst" type="button">先载入房间</button>
+            <span class="spacer"></span>
+            <button class="btn btn--danger btn--sm" id="btnClearSubs" type="button">清空名单</button>
+          </div>
+
+          <div id="memberList" hidden style="margin-top:18px">
+            <div class="panel" style="background:var(--surface-2)">
+              <div class="panel__head"><span class="panel__title">已收到的报名</span></div>
+              <div class="list" id="subRows"></div>
+            </div>
+          </div>
+
+          <div class="switch-row" style="margin-top:18px">
+            <div class="switch-row__text">
+              <div class="switch-row__title">允许调剂补位</div>
+              <div class="switch-row__hint">某天名额没报满时，把仍有需求、但那天不在其可接受日期内的成员补进去，避免名额浪费。补位者在结果中标为「调剂」。</div>
+            </div>
+            <button class="switch" id="swFill" role="switch" aria-checked="true" aria-label="允许调剂补位" type="button"></button>
+          </div>
+
+          <div style="margin-top:18px">
+            <button class="btn btn--primary btn--block" id="btnAlloc" type="button">开始分配</button>
+          </div>
+
+          <div id="allocOut" hidden style="margin-top:22px">
+            <div class="stat-grid">
+              <div class="stat"><div class="stat__label">报名人数</div><div class="stat__value" id="aPeople">—</div></div>
+              <div class="stat"><div class="stat__label">总名额</div><div class="stat__value" id="aCap">—</div></div>
+              <div class="stat"><div class="stat__label">已分配</div><div class="stat__value" id="aFill">—</div></div>
+              <div class="stat"><div class="stat__label">调剂补位</div><div class="stat__value" id="aFillIn">—</div></div>
+            </div>
+
+            <div class="callout callout--info" style="margin-top:16px" id="allocNote"></div>
+
+            <div class="score-note" style="margin-top:16px" id="scoreNote"></div>
+
+            <div id="daysWrap" style="margin-top:16px"></div>
+
+            <div id="unsatWrap" hidden style="margin-top:16px">
+              <div class="panel">
+                <div class="panel__head"><span class="panel__title">未能排满的成员</span></div>
+                <div class="list" id="unsatRows"></div>
+              </div>
+            </div>
+
+            <div class="rc-toolbar" style="margin-top:18px">
+              <button class="btn btn--primary btn--sm" id="btnCopyResult" type="button">复制结果文本</button>
+              <button class="btn btn--ghost btn--sm" id="btnClearResult" type="button">清除结果</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 使用说明 -->
+      <div class="panel" style="margin-top:16px">
+        <div class="panel__head"><span class="panel__title"><span class="mono-label">?</span>怎么用</span></div>
+        <div class="panel__body">
+          <div class="howto">
+            <div class="howto__row"><span class="flow-num">1</span><div><b>班长</b>在「① 建房间」设定日期范围与每天名额，点<b>生成邀请码</b>，把码（或报名链接）发到群里。</div></div>
+            <div class="howto__row"><span class="flow-num">2</span><div><b>成员</b>在自己手机上打开链接（或粘贴邀请码），填姓名、可接受日期、天数、已外出次数与理由，点<b>生成提交码</b>发回群里。</div></div>
+            <div class="howto__row"><span class="flow-num">3</span><div><b>班长</b>把所有提交码粘贴进「③ 汇总分配」，点<b>开始分配</b>，复制结果发回群里。</div></div>
+            <div class="howto__row"><span class="flow-num">4</span><div>所有数据只保存在你自己的浏览器里（<b>localStorage</b>），不上传任何服务器；换设备请先导出/记下房间码。</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer__inner">
+      <span>© <span data-year>2026</span> Michael · <span class="footer__heart">♥</span> 纯静态手工打造</span>
+      <nav class="footer__links" aria-label="页脚导航">
+        <a href="../../tools.html">Tools</a>
+        <a href="../../notes.html">Notes</a>
+        <a href="https://github.com/" target="_blank" rel="noopener noreferrer">GitHub</a>
+      </nav>
+    </div>
+  </footer>
+
+  <div class="toast" id="toast"></div>
+
+  <noscript>
+    <div class="ns-banner">此工具需要 JavaScript 才能生成与解析分享码。</div>
+  </noscript>
+
+  <script type="module" src="../../assets/js/main.js"></script>
+  <script>
+  (() => {
+    'use strict';
+
+    /* ================= 常量 ================= */
+    const PREFIX = 'OUT1.';
+    const REASONS = ['家长看望', '同学看望', '外出游玩', '其他'];
+    const DOW = ['日', '一', '二', '三', '四', '五', '六'];
+    const K_ROOM = 'site:outing:room';
+    const K_SUBS = 'site:outing:subs';
+    const K_DRAFT = 'site:outing:draft';
+    const MAX_DAYS = 90; // 日期范围上限，防误操作
+
+    const $ = (id) => document.getElementById(id);
+    const esc = (s) => String(s).replace(/[&<>"']/g, c =>
+      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+    /* ================= 分享码编解码 ================= */
+    function b64e(obj) {
+      const bytes = new TextEncoder().encode(JSON.stringify(obj));
+      let bin = '';
+      bytes.forEach(b => { bin += String.fromCharCode(b); });
+      return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    }
+    function b64d(str) {
+      let s = str.replace(/-/g, '+').replace(/_/g, '/');
+      while (s.length % 4) s += '=';
+      const bin = atob(s);
+      const bytes = Uint8Array.from(bin, c => c.charCodeAt(0));
+      return JSON.parse(new TextDecoder().decode(bytes));
+    }
+    function parseCode(raw) {
+      const t = String(raw || '').trim().replace(/\s+/g, '');
+      if (!t.startsWith(PREFIX)) throw new Error('不是有效的分享码（缺少 OUT1. 前缀）');
+      const d = b64d(t.slice(PREFIX.length));
+      if (!d || d.v !== 1) throw new Error('分享码版本不支持');
+      return d;
+    }
+    const encodeRoom = (r) => PREFIX + b64e({ v: 1, k: r.k, s: r.s, e: r.e, q: r.q, w: r.w });
+    const encodeSub = (s) => PREFIX + b64e({
+      v: 1, k: s.k, n: s.n, a: s.a, d: s.d, p: s.p, g: s.g, x: s.x || '', t: s.t
+    });
+
+    /* ================= 日期工具 ================= */
+    const parseISO = (s) => {
+      const [y, m, d] = s.split('-').map(Number);
+      return new Date(Date.UTC(y, m - 1, d));
+    };
+    const toISO = (dt) => dt.toISOString().slice(0, 10);
+    const addDays = (dt, n) => {
+      const d = new Date(dt.getTime());
+      d.setUTCDate(d.getUTCDate() + n);
+      return d;
+    };
+    const isISO = (s) => /^\d{4}-\d{2}-\d{2}$/.test(s || '');
+
+    /** 生成日期列表 ['2026-09-25', ...] */
+    function dateRange(s, e) {
+      const out = [];
+      let cur = parseISO(s);
+      const end = parseISO(e);
+      let guard = 0;
+      while (cur <= end && guard++ <= MAX_DAYS) {
+        out.push(toISO(cur));
+        cur = addDays(cur, 1);
+      }
+      return out;
+    }
+    const dowOf = (iso) => DOW[parseISO(iso).getUTCDay()];
+    const isWeekend = (iso) => [0, 6].includes(parseISO(iso).getUTCDay());
+    const shortDate = (iso) => {
+      const [, m, d] = iso.split('-');
+      return `${+m}/${+d}`;
+    };
+
+    /* ================= 状态 ================= */
+    let room = loadJSON(K_ROOM, null);   // {k,s,e,q,w,dates}
+    let subs = loadJSON(K_SUBS, []);     // [{k,n,a:[idx],d,p,g,x,t}]
+    let result = null;
+    let allowFill = true;
+
+    function loadJSON(key, fb) {
+      try { const v = JSON.parse(localStorage.getItem(key)); return v === null ? fb : v; }
+      catch { return fb; }
+    }
+    function saveJSON(key, val) {
+      try { localStorage.setItem(key, JSON.stringify(val)); } catch { /* 忽略 */ }
+    }
+
+    const roomCode = () => (room ? room.k : '');
+
+    /* ================= 步骤切换 ================= */
+    const STEPS = { setup: '班长用', join: '成员用', result: '班长用' };
+    const panelOf = { setup: 'panel-setup', join: 'panel-join', result: 'panel-result' };
+
+    function show(step) {
+      if (!panelOf[step]) step = 'setup';
+      Object.entries(panelOf).forEach(([k, id]) => { $(id).hidden = k !== step; });
+      document.querySelectorAll('.seg__btn').forEach(b => {
+        const on = b.dataset.step === step;
+        b.classList.toggle('is-active', on);
+        b.setAttribute('aria-selected', String(on));
+      });
+      $('segHint').textContent = STEPS[step];
+      if (location.hash.slice(1) !== step) history.replaceState(null, '', '#' + step);
+      if (step === 'setup') renderSetup();
+      if (step === 'join') renderJoin();
+      if (step === 'result') renderResult();
+    }
+
+    document.querySelectorAll('.seg__btn').forEach(b =>
+      b.addEventListener('click', () => show(b.dataset.step)));
+
+    /* ================= 复制 / 提示 ================= */
+    let toastTimer;
+    function toast(msg, isErr) {
+      const t = $('toast');
+      t.textContent = msg;
+      t.classList.toggle('toast--err', !!isErr);
+      t.classList.add('is-on');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => t.classList.remove('is-on'), 2400);
+    }
+
+    async function copyText(text) {
+      try {
+        await navigator.clipboard.writeText(text);
+        return true;
+      } catch {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.cssText = 'position:fixed;opacity:0';
+        document.body.appendChild(ta);
+        ta.select();
+        let ok = false;
+        try { ok = document.execCommand('copy'); } catch { ok = false; }
+        ta.remove();
+        return ok;
+      }
+    }
+
+    document.addEventListener('click', async (e) => {
+      const b = e.target.closest('[data-copy]');
+      if (!b) return;
+      const src = $(b.dataset.copy);
+      if (!src) return;
+      const ok = await copyText(src.textContent);
+      const old = b.textContent;
+      b.textContent = ok ? '已复制 ✓' : '复制失败';
+      setTimeout(() => { b.textContent = old; }, 1500);
+    });
+
+    /* ================= ① 建房间 ================= */
+    function randomKey() {
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      let s = '';
+      for (let i = 0; i < 4; i++) s += chars[Math.floor(Math.random() * chars.length)];
+      return s;
+    }
+
+    function renderSetup() {
+      if (!room) return;
+      $('dStart').value = room.s;
+      $('dEnd').value = room.e;
+      $('dailyCap').value = room.q;
+      room.w.forEach((w, i) => { $(`w${i}`).value = w; });
+    }
+
+    function buildRoomFromForm() {
+      const s = $('dStart').value;
+      const e = $('dEnd').value;
+      const q = Math.min(99, Math.max(1, parseInt($('dailyCap').value, 10) || 0));
+      if (!isISO(s) || !isISO(e)) throw new Error('请填写完整的日期范围');
+      if (parseISO(e) < parseISO(s)) throw new Error('结束日期不能早于开始日期');
+      const dates = dateRange(s, e);
+      if (!dates.length) throw new Error('日期范围为空');
+      if (dates.length > MAX_DAYS) throw new Error(`日期范围最多 ${MAX_DAYS} 天`);
+      const w = [0, 1, 2, 3].map(i => Math.max(0, Math.min(99, parseInt($(`w${i}`).value, 10) || 0)));
+      return { k: (room && room.k) || randomKey(), s, e, q, w, dates };
+    }
+
+    $('btnRegen').addEventListener('click', () => {
+      room = room ? { ...room, k: randomKey() } : room;
+      if (room) {
+        saveJSON(K_ROOM, room);
+        toast('已换新房间码，旧码作废');
+        $('inviteOut').hidden = false;
+        $('inviteCode').textContent = encodeRoom(room);
+      } else {
+        toast('先设置日期并生成邀请码');
+      }
+    });
+
+    $('btnMakeInvite').addEventListener('click', () => {
+      try {
+        room = buildRoomFromForm();
+        saveJSON(K_ROOM, room);
+        $('inviteCode').textContent = encodeRoom(room);
+        $('inviteOut').hidden = false;
+        $('inviteOut').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        toast('邀请码已生成');
+      } catch (err) {
+        toast(err.message, true);
+      }
+    });
+
+    $('btnCopyLink').addEventListener('click', async () => {
+      if (!room) return;
+      const url = `${location.origin}${location.pathname}?c=${encodeURIComponent(encodeRoom(room))}#join`;
+      const ok = await copyText(url);
+      toast(ok ? '报名链接已复制' : '复制失败，请手动复制邀请码', !ok);
+    });
+
+    /* ================= ② 报名 ================= */
+    function renderJoin() {
+      if (!room) {
+        $('roomBadge').textContent = '未载入房间';
+        $('roomBadge').className = 'badge';
+        $('joinForm').hidden = true;
+        return;
+      }
+      $('roomBadge').textContent = `房间 ${room.k}`;
+      $('roomBadge').className = 'badge badge--accent';
+      $('joinForm').hidden = false;
+      $('roomStrip').innerHTML =
+        `<span><b>${room.s}</b> 至 <b>${room.e}</b></span><span class="sep">·</span>` +
+        `<span>共 <b>${room.dates.length}</b> 天</span><span class="sep">·</span>` +
+        `<span>每天 <b>${room.q}</b> 人</span><span class="sep">·</span>` +
+        `<span>房间码 <b>${esc(room.k)}</b></span>`;
+
+      renderDateGrid();
+      updatePickCount();
+      loadDraft();
+    }
+
+    function renderDateGrid() {
+      $('dateGrid').innerHTML = room.dates.map((iso, i) => `
+        <label class="date-cell${isWeekend(iso) ? ' is-weekend' : ''}">
+          <input type="checkbox" value="${i}">
+          <span class="date-cell__dow">${dowOf(iso)}</span>
+          <span class="date-cell__day">${shortDate(iso)}</span>
+          <span class="date-cell__slot">${room.q}名额</span>
+        </label>`).join('');
+      // 恢复已选
+      const saved = loadJSON(K_DRAFT, null);
+      if (saved && saved.k === room.k && Array.isArray(saved.picks)) {
+        saved.picks.forEach(i => {
+          const cb = $('dateGrid').querySelector(`input[value="${i}"]`);
+          if (cb) cb.checked = true;
+        });
+      }
+    }
+
+    function pickedIdx() {
+      return [...$('dateGrid').querySelectorAll('input:checked')]
+        .map(c => parseInt(c.value, 10))
+        .sort((a, b) => a - b);
+    }
+
+    function updatePickCount() {
+      $('pickCount').textContent = `已选 ${pickedIdx().length} 天`;
+    }
+
+    $('dateGrid').addEventListener('change', () => {
+      updatePickCount();
+      saveDraft();
+    });
+    ['mName', 'mDays', 'mPast', 'mReason', 'mCustom'].forEach(id =>
+      $(id).addEventListener('input', saveDraft));
+
+    $('mReason').addEventListener('change', () => {
+      $('customReasonWrap').hidden = $('mReason').value !== '4';
+      saveDraft();
+    });
+
+    function saveDraft() {
+      if (!room) return;
+      saveJSON(K_DRAFT, {
+        k: room.k,
+        n: $('mName').value,
+        d: $('mDays').value,
+        p: $('mPast').value,
+        g: $('mReason').value,
+        x: $('mCustom').value,
+        picks: pickedIdx()
+      });
+    }
+
+    function loadDraft() {
+      const d = loadJSON(K_DRAFT, null);
+      if (!d || d.k !== room.k) return;
+      if (d.n) $('mName').value = d.n;
+      if (d.d) $('mDays').value = d.d;
+      if (d.p) $('mPast').value = d.p;
+      if (d.g) $('mReason').value = d.g;
+      $('customReasonWrap').hidden = $('mReason').value !== '4';
+      if (d.x) $('mCustom').value = d.x;
+    }
+
+    $('btnLoadInvite').addEventListener('click', () => {
+      try {
+        const d = parseCode($('inviteIn').value);
+        if (!d.k || !isISO(d.s) || !isISO(d.e) || !(d.q >= 1)) throw new Error('邀请码内容不完整');
+        room = { k: d.k, s: d.s, e: d.e, q: d.q, w: Array.isArray(d.w) ? d.w : [5, 3, 2, 1], dates: dateRange(d.s, d.e) };
+        if (!room.dates.length) throw new Error('日期范围无效');
+        saveJSON(K_ROOM, room);
+        $('inviteIn').value = '';
+        renderJoin();
+        toast(`已载入房间 ${room.k}（${room.dates.length} 天）`);
+      } catch (err) {
+        toast('邀请码无法解析：' + err.message, true);
+      }
+    });
+
+    $('btnMakeSub').addEventListener('click', () => {
+      try {
+        if (!room) throw new Error('请先载入房间');
+        const name = $('mName').value.trim();
+        if (!name) throw new Error('请填写姓名');
+        const picks = pickedIdx();
+        if (!picks.length) throw new Error('请至少选择一个可接受日期');
+        const days = Math.min(room.dates.length, Math.max(1, parseInt($('mDays').value, 10) || 1));
+        const g = parseInt($('mReason').value, 10);
+        const sub = {
+          k: room.k,
+          n: name,
+          a: picks.join(','),
+          d: days,
+          p: Math.max(0, parseInt($('mPast').value, 10) || 0),
+          g: g,
+          x: g === 4 ? $('mCustom').value.trim() : '',
+          t: Date.now()
+        };
+        if (g === 4 && !sub.x) throw new Error('请填写自定义理由');
+
+        const code = encodeSub({ ...sub, a: picks });
+        $('subCode').textContent = code;
+        $('subOut').hidden = false;
+        $('subOut').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        toast('提交码已生成，记得发回给班长');
+      } catch (err) {
+        toast(err.message, true);
+      }
+    });
+
+    $('btnCopySub').addEventListener('click', async () => {
+      const ok = await copyText($('subCode').textContent);
+      toast(ok ? '提交码已复制' : '复制失败', !ok);
+    });
+
+    /* ================= ③ 汇总分配 ================= */
+    function renderResult() {
+      $('subBadge').textContent = `${subs.length} 人`;
+      $('subBadge').className = 'badge' + (subs.length ? ' badge--accent' : '');
+
+      $('memberList').hidden = subs.length === 0;
+      $('subRows').innerHTML = subs.map((s, i) => {
+        const reason = s.g === 4 ? (s.x || '其他') : (REASONS[s.g] || '其他');
+        const dates = String(s.a).split(',').filter(x => x !== '').map(Number);
+        const dstr = dates.map(n => room && room.dates[n] ? shortDate(room.dates[n]) : `#${n}`).join('、');
+        return `<div class="list__row">
+          <div class="list__main">
+            <div class="list__title">${esc(s.n)}
+              <span class="badge">${esc(reason)}</span>
+              <span class="badge">已外出 ${s.p} 次</span>
+              <span class="badge">要 ${s.d} 天</span>
+            </div>
+            <div class="list__sub">可接受：${esc(dstr)}${s.k !== roomCode() ? ` · <span style="color:var(--danger-fg)">房间码不符（${esc(s.k)}）</span>` : ''}</div>
+          </div>
+          <button class="icon-btn icon-btn--danger" type="button" data-del-sub="${i}" aria-label="删除 ${esc(s.n)}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+        </div>`;
+      }).join('');
+    }
+
+    $('subRows').addEventListener('click', (e) => {
+      const b = e.target.closest('[data-del-sub]');
+      if (!b) return;
+      subs.splice(parseInt(b.dataset.delSub, 10), 1);
+      saveJSON(K_SUBS, subs);
+      renderResult();
+    });
+
+    $('btnLoadRoomFirst').addEventListener('click', () => {
+      show('join');
+      $('inviteIn').focus();
+      toast('把邀请码粘贴进去并载入');
+    });
+
+    $('btnClearSubs').addEventListener('click', () => {
+      if (!subs.length) return;
+      if (!confirm(`清空全部 ${subs.length} 人报名？`)) return;
+      subs = [];
+      saveJSON(K_SUBS, subs);
+      renderResult();
+      toast('名单已清空');
+    });
+
+    $('btnAddSubs').addEventListener('click', () => {
+      const lines = $('subIn').value.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+      if (!lines.length) { toast('请先粘贴提交码', true); return; }
+
+      let ok = 0;
+      const fails = [];
+      for (const line of lines) {
+        try {
+          const d = parseCode(line);
+          if (!d.k || !d.n || d.a === undefined || !(d.d >= 1)) throw new Error('字段缺失');
+          const sub = {
+            k: d.k, n: String(d.n).slice(0, 20), a: String(d.a), d: Math.min(99, d.d | 0),
+            p: Math.max(0, d.p | 0), g: (d.g | 0), x: String(d.x || '').slice(0, 20), t: d.t || Date.now()
+          };
+          // 同名覆盖
+          const ex = subs.findIndex(x => x.n === sub.n);
+          if (ex >= 0) subs[ex] = sub; else subs.push(sub);
+          ok++;
+        } catch (err) {
+          fails.push(err.message);
+        }
+      }
+      $('subIn').value = '';
+      saveJSON(K_SUBS, subs);
+      renderResult();
+      if (ok && !fails.length) toast(`已导入 ${ok} 人`);
+      else if (ok) toast(`成功 ${ok} 个，失败 ${fails.length} 个`, true);
+      else toast('全部解析失败：' + (fails[0] || ''), true);
+    });
+
+    $('swFill').addEventListener('click', () => {
+      allowFill = !allowFill;
+      $('swFill').setAttribute('aria-checked', String(allowFill));
+    });
+
+    /* ---- 确定性平局键：同分时结果可复现，且不会总是同一个人占先 ---- */
+    function tiebreak(name) {
+      let h = 2166136261;
+      for (let i = 0; i < name.length; i++) {
+        h ^= name.charCodeAt(i);
+        h = Math.imul(h, 16777619);
+      }
+      return (h >>> 0) % 97;
+    }
+
+    /* ---- 分配算法 ---- */
+    function allocate() {
+      if (!room) throw new Error('请先载入房间（① 建房间，或先在②载入邀请码）');
+      if (!subs.length) throw new Error('还没有收到任何提交码');
+
+      const valid = subs.filter(s => s.k === room.k);
+      const wrongRoom = subs.length - valid.length;
+      if (!valid.length) throw new Error('提交码的房间码都与当前房间不符');
+
+      const maxPast = Math.max(0, ...valid.map(s => s.p));
+
+      const people = valid.map((s, i) => {
+        const idx = String(s.a).split(',').filter(x => x !== '').map(Number)
+          .filter(n => n >= 0 && n < room.dates.length);
+        const weight = room.w[(s.g | 0) >= 4 ? 3 : (s.g | 0)] ?? 1;
+        return {
+          i,
+          name: s.n,
+          reason: (s.g | 0) === 4 ? (s.x || '其他') : (REASONS[s.g] || '其他'),
+          past: s.p,
+          // 需求以「要出的天数」为准；可接受日期只约束阶段一（严格匹配），
+          // 阶段二调剂可满足其超额需求（会标注「调剂」）
+          need: Math.min(s.d, room.dates.length),
+          wants: Math.min(s.d, room.dates.length),
+          accept: idx,
+          got: [],
+          // 主导：外出次数少的绝对优先（相差1次 = 1000分）
+          // 次级：理由权重（相差1 = 100分）
+          // 末级：确定性平局
+          score: (maxPast - s.p) * 1000 + weight * 100 + tiebreak(s.n)
+        };
+      });
+
+      const order = [...people].sort((a, b) => b.score - a.score || a.name.localeCompare(b.name, 'zh'));
+      // 需求总量必须在分配前记录（p.need 在分配过程中会递减）
+      const demand = people.reduce((s, p) => s + p.need, 0);
+      const slot = room.dates.map(() => room.q);
+      const days = room.dates.map(() => []);
+
+      // 阶段一：严格匹配（只在成员自己勾选的日子）
+      room.dates.forEach((_, di) => {
+        const cands = order.filter(p => p.need > 0 && p.accept.includes(di));
+        for (const p of cands) {
+          if (slot[di] <= 0) break;
+          p.got.push(di);
+          p.need--;
+          slot[di]--;
+          days[di].push({ p, fill: false });
+        }
+      });
+
+      // 阶段二：调剂补位（只补仍然缺人的日子）
+      let fillCount = 0;
+      if (allowFill) {
+        room.dates.forEach((_, di) => {
+          while (slot[di] > 0) {
+            const cands = order.filter(p => p.need > 0 && !p.got.includes(di));
+            if (!cands.length) break;
+            const p = cands[0];
+            p.got.push(di);
+            p.need--;
+            slot[di]--;
+            days[di].push({ p, fill: true });
+            fillCount++;
+          }
+        });
+      }
+
+      days.forEach(list => list.sort((a, b) => b.p.score - a.p.score));
+
+      const unsatisfied = order.filter(p => p.need > 0);
+      const totalCap = room.dates.length * room.q;
+      const filled = days.reduce((s, l) => s + l.length, 0);
+      return {
+        days, unsatisfied, order, wrongRoom,
+        stats: { people: people.length, cap: totalCap, filled, fillCount, demand }
+      };
+    }
+
+    $('btnAlloc').addEventListener('click', () => {
+      try {
+        result = allocate();
+        renderAlloc();
+        $('allocOut').hidden = false;
+        $('allocOut').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        toast('分配完成');
+      } catch (err) {
+        toast(err.message, true);
+      }
+    });
+
+    $('btnClearResult').addEventListener('click', () => {
+      result = null;
+      $('allocOut').hidden = true;
+      toast('结果已清除');
+    });
+
+    function renderAlloc() {
+      const r = result;
+      $('aPeople').textContent = r.stats.people;
+      $('aCap').textContent = r.stats.cap;
+      $('aFill').textContent = r.stats.filled;
+      $('aFillIn').textContent = r.stats.fillCount;
+      $('aFillIn').className = 'stat__value ' + (r.stats.fillCount ? 'is-warn' : '');
+
+      const unused = r.stats.cap - r.stats.filled;
+      const note = $('allocNote');
+      let txt = `共 <b>${r.stats.people}</b> 人报名，需求约 <b>${r.stats.demand}</b> 天，名额 <b>${r.stats.cap}</b> 天，已排 <b>${r.stats.filled}</b> 天`;
+      if (unused > 0) txt += `，尚余 <b>${unused}</b> 个名额没报满`;
+      txt += '。';
+      if (r.wrongRoom) txt += `<br>已忽略 ${r.wrongRoom} 条房间码不符的提交。`;
+      note.innerHTML = txt;
+
+      $('scoreNote').innerHTML =
+        '排序规则：已外出次数越少越优先（差 1 次 = 差 1000 分）→ 理由权重（家长看望 &gt; 同学看望 &gt; 外出游玩 &gt; 其他）→ 同分时按姓名散列，保证结果可复现。';
+
+      $('daysWrap').innerHTML = room.dates.map((iso, di) => {
+        const list = r.days[di];
+        const short = list.length < room.q;
+        return `<div class="day-card${short ? ' is-short' : ''}">
+          <div class="day-card__head">
+            <span class="day-card__date">${iso}<span class="dow">周${dowOf(iso)}</span></span>
+            <span class="day-card__cap">${list.length} / ${room.q} 人</span>
+          </div>
+          ${list.length ? `<div class="day-card__list">${list.map((x, n) => `
+            <div class="pick">
+              <span class="pick__rank">${n + 1}</span>
+              <div class="pick__main">
+                <div class="pick__name">${esc(x.p.name)}
+                  ${x.fill ? '<span class="badge badge--err">调剂</span>' : ''}
+                </div>
+                <div class="pick__meta">${esc(x.p.reason)} · 历史外出 ${x.p.past} 次 · 优先分 ${x.p.score}</div>
+              </div>
+            </div>`).join('')}</div>`
+            : `<div class="day-empty">无人报名这天</div>`}
+        </div>`;
+      }).join('');
+
+      $('unsatWrap').hidden = r.unsatisfied.length === 0;
+      $('unsatRows').innerHTML = r.unsatisfied.map(p => `
+        <div class="list__row">
+          <div class="list__main">
+            <div class="list__title">${esc(p.name)}</div>
+            <div class="list__sub">还差 ${p.need} 天 · 已接受 ${p.accept.length} 天 · 历史外出 ${p.past} 次</div>
+          </div>
+          <span class="badge">下次优先</span>
+        </div>`).join('');
+    }
+
+    $('btnCopyResult').addEventListener('click', async () => {
+      if (!result) return;
+      const r = result;
+      const lines = [];
+      lines.push(`【外出分配】${room.s} ~ ${room.e} · 每天${room.q}人`);
+      r.days.forEach((list, di) => {
+        const iso = room.dates[di];
+        const names = list.map(x => x.p.name + (x.fill ? '（调剂）' : '')).join('、');
+        lines.push(`${shortDate(iso)}(周${dowOf(iso)}): ${names || '—'}`);
+      });
+      if (r.unsatisfied.length) {
+        lines.push('未排满：' + r.unsatisfied.map(p => `${p.name}(${p.need}天)`).join('、'));
+      }
+      if (r.stats.fillCount) lines.push('注：标「调剂」者当天不在其可接受日期，请与本人确认。');
+      const ok = await copyText(lines.join('\n'));
+      toast(ok ? '结果文本已复制' : '复制失败', !ok);
+    });
+
+    /* ================= 初始化 ================= */
+    function initDates() {
+      const today = new Date();
+      const iso = (d) => d.toISOString().slice(0, 10);
+      const s = new Date(today.getTime());
+      const e = new Date(today.getTime() + 6 * 86400000);
+      $('dStart').value = room ? room.s : iso(s);
+      $('dEnd').value = room ? room.e : iso(e);
+    }
+
+    // 支持 ?c= 直达报名
+    (function boot() {
+      const c = new URLSearchParams(location.search).get('c');
+      if (c) {
+        try {
+          const d = parseCode(c);
+          if (d.k && isISO(d.s) && isISO(d.e)) {
+            room = { k: d.k, s: d.s, e: d.e, q: d.q, w: d.w, dates: dateRange(d.s, d.e) };
+            saveJSON(K_ROOM, room);
+            $('inviteIn').value = c;
+          }
+        } catch { /* 忽略非法参数 */ }
+      }
+      initDates();
+      show((location.hash || '#setup').slice(1));
+    })();
+  })();
+  </script>
+</body>
+</html>

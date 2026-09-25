@@ -57,14 +57,14 @@ ol {
 }
 
 ::selection {
-  background: rgba(242, 169, 59, 0.28);
+  background: var(--selection);
   color: var(--text-1);
 }
 
 /* 滚动条（WebKit + Firefox） */
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.14) transparent;
+  scrollbar-color: var(--scroll-thumb) transparent;
 }
 *::-webkit-scrollbar {
   width: 10px;
@@ -74,12 +74,12 @@ ol {
   background: transparent;
 }
 *::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--scroll-thumb);
   border-radius: 99px;
   border: 3px solid var(--bg);
 }
 *::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.22);
+  background: var(--scroll-thumb-hover);
 }
 
 /* ---------- 基础排版 ---------- */
@@ -182,7 +182,7 @@ p {
 
 .nav.is-scrolled,
 .nav.is-open {
-  background: rgba(10, 10, 11, 0.72);
+  background: var(--nav-bg);
   -webkit-backdrop-filter: blur(14px) saturate(140%);
   backdrop-filter: blur(14px) saturate(140%);
   border-bottom-color: var(--border);
@@ -190,7 +190,7 @@ p {
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .nav.is-scrolled,
   .nav.is-open {
-    background: rgba(10, 10, 11, 0.96);
+    background: var(--nav-bg-solid);
   }
 }
 
@@ -233,7 +233,7 @@ p {
 }
 .nav__links a:hover {
   color: var(--text-1);
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--tint-hover);
 }
 .nav__links a[aria-current="page"] {
   color: var(--text-1);
@@ -259,11 +259,61 @@ p {
 }
 .nav__toggle:hover {
   color: var(--text-1);
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--tint-hover);
 }
 .nav__toggle svg {
   width: 20px;
   height: 20px;
+}
+
+/* ---------- 主题切换（深/浅） ---------- */
+.nav__actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.nav__icon {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-sm);
+  color: var(--text-2);
+  transition: color var(--dur-fast) ease, background var(--dur-fast) ease,
+    transform var(--dur-hover) var(--ease);
+}
+.nav__icon:hover {
+  color: var(--text-1);
+  background: var(--tint-hover);
+}
+.nav__icon:active {
+  transform: scale(0.92);
+}
+.nav__icon svg {
+  width: 19px;
+  height: 19px;
+  grid-area: 1 / 1;
+}
+/* 暗色下显示「太阳」（点击切到浅色），浅色下显示「月亮」 */
+.nav__icon .ico-sun {
+  opacity: 1;
+  transform: rotate(0deg);
+}
+.nav__icon .ico-moon {
+  opacity: 0;
+  transform: rotate(-45deg) scale(0.6);
+}
+html[data-theme="light"] .nav__icon .ico-sun {
+  opacity: 0;
+  transform: rotate(45deg) scale(0.6);
+}
+html[data-theme="light"] .nav__icon .ico-moon {
+  opacity: 1;
+  transform: rotate(0deg) scale(1);
+}
+.nav__icon .ico-sun,
+.nav__icon .ico-moon {
+  transition: opacity var(--dur-hover) ease, transform var(--dur-hover) var(--ease);
 }
 
 /* ---------- 按钮 ---------- */
@@ -287,11 +337,11 @@ p {
 }
 
 .btn--primary {
-  background: var(--accent);
+  background: var(--accent-fill);
   color: var(--accent-fg);
 }
 .btn--primary:hover {
-  background: var(--accent-hover);
+  background: var(--accent-fill-hover);
   box-shadow: 0 8px 28px rgba(242, 169, 59, 0.28);
   transform: translateY(-1px);
 }
@@ -299,11 +349,11 @@ p {
 .btn--ghost {
   border-color: var(--border-strong);
   color: var(--text-1);
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--tint-subtle);
 }
 .btn--ghost:hover {
   border-color: var(--border-hover);
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--tint-hover);
   transform: translateY(-1px);
 }
 
@@ -371,7 +421,7 @@ p {
   color: var(--text-2);
   border: 1px solid var(--border-strong);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.025);
+  background: var(--tint-subtle);
 }
 .hero__badge i {
   width: 6px;
@@ -545,7 +595,7 @@ p {
   transition: background var(--dur-fast) ease;
 }
 .note-row:hover {
-  background: rgba(255, 255, 255, 0.025);
+  background: var(--tint-subtle);
 }
 .note-row:hover .note-row__title {
   color: var(--accent);
@@ -947,7 +997,7 @@ p {
     align-items: stretch;
     gap: 2px;
     padding: 10px var(--gutter) 18px;
-    background: rgba(10, 10, 11, 0.97);
+    background: var(--nav-menu-bg);
     -webkit-backdrop-filter: blur(16px);
     backdrop-filter: blur(16px);
     border-bottom: 1px solid var(--border);
@@ -1029,7 +1079,7 @@ p {
   left: 16px;
   z-index: 200;
   padding: 10px 18px;
-  background: var(--accent);
+  background: var(--accent-fill);
   color: var(--accent-fg);
   border-radius: var(--radius-btn);
   font-weight: 600;

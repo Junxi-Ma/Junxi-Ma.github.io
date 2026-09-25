@@ -18,8 +18,9 @@
 ├── .nojekyll               ★ 必须保留：禁用 Jekyll，否则 .md 文件会被它转换吃掉
 ├── .githooks/pre-commit    提交钩子：commit 时自动刷新索引（见下文）
 ├── assets/
-│   ├── css/                tokens.css 设计变量 · main.css 全站 · markdown.css 笔记排版
-│   ├── js/                 main/nav · api/数据 · markdown/渲染 · home/notes/tools/note 页面
+│   ├── css/                tokens.css 设计变量+深浅主题 · main.css 全站 ·
+│   │                       markdown.css 笔记排版 · tool-ui.css 工具页组件
+│   ├── js/                 main/nav+主题切换 · api/数据 · markdown/渲染 · 页面控制器
 │   ├── vendor/             本地托管的 marked / DOMPurify / highlight.js（不依赖 CDN）
 │   └── img/                favicon、og.png 分享图
 ├── notes/                  ★ 笔记放这里（.md 文件）
@@ -48,6 +49,14 @@ python -m http.server 8080
 ```
 
 本机已装 Python 3.11，无需安装任何依赖。
+
+## 日夜主题
+
+导航栏右侧的 **☀ / 🌙** 按钮切换深色与浅色，选择存在浏览器 `localStorage`（键 `site-theme`），
+下次访问保持；首次访问默认深色（站点基调）。多标签页会自动同步。
+
+所有颜色都是变量，集中在 `assets/css/tokens.css`：暗色为近黑 + 琥珀金，亮色为**暖纸配色**
+（刻意避开蓝白）。想换配色只改这个文件。笔记页的代码高亮也随主题切换了两套色板。
 
 ---
 
@@ -158,7 +167,8 @@ git config core.hooksPath .githooks
 | 钩子没生效（commit 时没有 `[pre-commit]` 输出） | 执行 `git config core.hooksPath .githooks` 重新挂上 |
 | 双击打开全部空白 | 必须用 HTTP 服务器（见「本地预览」） |
 | `.nojekyll` 删了之后笔记 404 | Jekyll 会把 .md 转成 .html，**别删这个文件** |
-| 导航菜单改了没生效 | 导航/页脚在 5 个 html 里各有一份，需同步修改（无构建的代价） |
+| 导航菜单改了没生效 | 导航/页脚在 7 个 html 里各有一份，需同步修改（无构建的代价） |
+| 页面一闪而过变色（深→浅） | 正常：主题在 `<head>` 内联脚本里就已确定，闪的是浏览器首次绘制 |
 | 新笔记文件名是中文 | 能用，但 URL 会带编码，建议英文 slug |
 | 网页版 GitHub 改了笔记但列表没更新 | 网页编辑不走钩子，本地 pull 后下次提交自动追平 |
 
