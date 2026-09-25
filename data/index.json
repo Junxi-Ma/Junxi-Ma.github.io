@@ -1,0 +1,56 @@
+{
+  "version": 1,
+  "notes": [
+    {
+      "path": "notes/welcome.md",
+      "title": "欢迎来到我的数字工坊",
+      "date": "2026-09-25",
+      "tags": [
+        "建站",
+        "元"
+      ],
+      "description": "这个网站是怎么运作的：纯静态架构、自动内容索引与 GitHub Pages 部署。"
+    },
+    {
+      "path": "notes/design-tokens-dark-mode.md",
+      "title": "暗色界面的设计 Token 清单",
+      "date": "2026-09-18",
+      "tags": [
+        "设计",
+        "CSS"
+      ],
+      "description": "近黑底色 + 琥珀金强调的成套设计变量：配色、字阶、间距与动效曲线的完整记录。"
+    },
+    {
+      "path": "notes/markdown-render-pipeline.md",
+      "title": "无构建步骤下的自动索引与渲染管线",
+      "date": "2026-09-10",
+      "tags": [
+        "架构",
+        "GitHub Actions",
+        "前端"
+      ],
+      "description": "不用任何框架和打包器，怎么让纯静态网站自动发现新笔记并安全地渲染 Markdown。"
+    },
+    {
+      "path": "notes/regex-cheatsheet.md",
+      "title": "正则表达式速查表",
+      "date": null,
+      "tags": [],
+      "description": "正则表达式速查表 这篇笔记故意没有写 frontmatter，用来验证回退逻辑：标题取正文第一个 # 标题，日期缺失，摘要取首段。 常用模式 模式 含义 ^\\s+ 行首空白 \\d{4}-\\d{2}-\\d{2} 日期 2026-09-25 (?<=@)\\w+ @ 后面的单词（后行断言） (?i)foo 忽略大小写匹配 f…"
+    }
+  ],
+  "tools": [
+    {
+      "path": "tools/json-formatter/",
+      "title": "JSON 格式化",
+      "description": "格式化、压缩与校验 JSON，错误定位到行列。数据全程留在本地浏览器。",
+      "tags": [
+        "开发",
+        "效率"
+      ],
+      "icon": "🧩",
+      "order": 1
+    }
+  ]
+}

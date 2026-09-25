@@ -16,16 +16,17 @@
 ├── note.html               笔记详情（?path=notes/xxx.md）
 ├── 404.html                自定义 404（GitHub Pages 自动生效）
 ├── .nojekyll               ★ 必须保留：禁用 Jekyll，否则 .md 文件会被它转换吃掉
+├── .githooks/pre-commit    提交钩子：commit 时自动刷新索引（见下文）
 ├── assets/
 │   ├── css/                tokens.css 设计变量 · main.css 全站 · markdown.css 笔记排版
 │   ├── js/                 main/nav · api/数据 · markdown/渲染 · home/notes/tools/note 页面
 │   ├── vendor/             本地托管的 marked / DOMPurify / highlight.js（不依赖 CDN）
-│   └── img/                favicon 等
+│   └── img/                favicon、og.png 分享图
 ├── notes/                  ★ 笔记放这里（.md 文件）
 ├── tools/<名字>/           ★ 工具放这里（每个工具一个文件夹 + index.html）
-├── data/index.json         内容索引（生成物，不入库）
+├── data/index.json         内容索引（生成物，已入库，提交钩子自动维护）
 ├── scripts/build_index.py  索引生成脚本（纯标准库）
-└── .github/workflows/      GitHub Actions 自动部署
+└── README.md
 ```
 
 ---
@@ -36,7 +37,7 @@
 > `fetch`，列表和笔记会渲染不出来）。
 
 ```bash
-# 1. 生成内容索引（每次新增/修改笔记后执行）
+# 1. 生成内容索引（通常不用手动跑：git commit 时钩子会自动执行）
 python scripts/build_index.py
 
 # 2. 启动本地服务器
@@ -68,8 +69,7 @@ description: 一句话摘要，显示在列表里。
 正文……
 ```
 
-3. `python scripts/build_index.py` 刷新索引 → 本地预览确认
-4. 推送到 GitHub → 自动上线
+3. `git add . && git commit -m "新增笔记"` —— **提交钩子会自动刷新索引**，推送后约 1 分钟上线。
 
 **回退规则**：缺 `title` 取正文第一个 `#` 标题；缺 `description` 取首段文字；
 缺 `date` 归入「未标注」分组；缺 `tags` 不显示标签。
@@ -93,40 +93,60 @@ description: 一句话摘要，显示在列表里。
 }
 ```
 
-4. 同样执行索引脚本 → 预览 → 推送
+4. 同样 commit + push 即可。
 
 ---
 
-## 部署到 GitHub Pages（3 步）
+## 部署说明（GitHub Pages）
 
-1. **建仓库**：在 GitHub 新建**公开（Public）**仓库
-   （免费计划下 Pages 只支持公开仓库）。仓库名建议用 `用户名.github.io`，
-   这样网站挂在域名根路径。
-2. **推送代码**：
+**当前方案：Deploy from a branch（分支部署）**。
 
-   ```bash
-   git add .
-   git commit -m "初始版本"
-   git remote add origin https://github.com/用户名/仓库名.git
-   git push -u origin main
-   ```
+仓库 Settings → Pages → Source 应为 **Deploy from a branch**，分支 `main`，目录 `/(root)`。
+（本仓库初次配置即为此模式，无需额外操作。）
 
-3. **开启 Pages**：仓库 Settings → Pages → Source 选 **GitHub Actions**。
+推送流程就是普通三连，**没有任何额外步骤**：
 
-之后每次 `git push`，Actions 会自动：生成索引 → 打包站点 → 部署上线。
-首次部署后地址是 `https://用户名.github.io/`（约 1 分钟）。
+```cmd
+git add .
+git commit -m "更新说明"
+git push
+```
+
+- `git commit` 时，`.githooks/pre-commit` 自动运行 `scripts/build_index.py`
+  并把最新的 `data/index.json` 加进本次提交 —— 所以索引永远和内容同步
+- 推送后 GitHub 约 1 分钟完成部署
+- 约 10 分钟内 CDN 可能短暂显示旧列表，强刷（Ctrl+F5）即可
+
+### 提交钩子
+
+钩子配置在仓库本地（`.git/config` 的 `core.hooksPath=.githooks`），不会影响别人。
+**新 clone / 换电脑后执行一次**：
+
+```cmd
+git config core.hooksPath .githooks
+```
+
+移除钩子（改为手动跑脚本）：`git config --unset core.hooksPath`
+
+> ⚠️ 在 GitHub 网页上直接编辑 `notes/` 里的文件不会触发钩子 —— 网页改完后，
+> 本地 `git pull`，再随便 `git commit --amend --no-edit` 或下次提交时索引会自动追平。
 
 ### 部署须知
 
-- **提交信息里不要写 `[skip ci]`** —— 它会把 Pages 部署流程一起跳过
-- 改动后线上生效约需 1 分钟；`data/index.json` 有 CDN 缓存，列表最迟 10 分钟内更新
-- 本地忘跑索引脚本不影响部署：CI 每次都会重新生成
+- **提交信息里不要写 `[skip ci]`** —— 会跳过 Pages 的部署流水线
+- 本地忘跑索引脚本没关系（钩子兜底）；但若钩子被移除，推送前必须手动跑一次，
+  否则新笔记/新工具不会出现在列表里
 
-### 备选方案（如果不用 GitHub Actions 部署）
+### 可选升级：恢复 GitHub Actions 自动部署
 
-把 Source 改成 **Deploy from a branch**（main /(root)），并把
-`.gitignore` 里的 `data/index.json` 一行删掉（让索引入库），再手动跑一次
-脚本提交即可。前端完全不用改 —— 两种方案共用同一份 `data/index.json` 契约。
+如果以后想改回「CI 自动生成索引、本地零维护」的模式：
+
+1. 恢复工作流文件：`git show faa76a9:.github/workflows/deploy-site.yml > .github/workflows/deploy-site.yml`
+2. Settings → Pages → Source 改为 **GitHub Actions**（若该选项灰色，检查
+   Settings → General → Actions 是否被禁用、或账号邮箱是否已验证）
+3. 推送后到 Actions 手动 Run workflow 一次
+
+两种方案共用同一份 `data/index.json` 前端契约，站点代码零改动。
 
 ---
 
@@ -134,26 +154,26 @@ description: 一句话摘要，显示在列表里。
 
 | 现象 | 原因 / 解决 |
 | --- | --- |
-| 列表一直转圈 | 没跑 `build_index.py`，或 `data/index.json` 不存在 |
+| 列表一直转圈或显示 Error | `data/index.json` 缺失或过期 → 跑 `python scripts/build_index.py` 后重新提交 |
+| 钩子没生效（commit 时没有 `[pre-commit]` 输出） | 执行 `git config core.hooksPath .githooks` 重新挂上 |
 | 双击打开全部空白 | 必须用 HTTP 服务器（见「本地预览」） |
 | `.nojekyll` 删了之后笔记 404 | Jekyll 会把 .md 转成 .html，**别删这个文件** |
 | 导航菜单改了没生效 | 导航/页脚在 5 个 html 里各有一份，需同步修改（无构建的代价） |
-| 笔记里 `{% raw %}` 报错 | 不会了 —— 已禁用 Jekyll |
 | 新笔记文件名是中文 | 能用，但 URL 会带编码，建议英文 slug |
+| 网页版 GitHub 改了笔记但列表没更新 | 网页编辑不走钩子，本地 pull 后下次提交自动追平 |
 
 ## 内容索引机制
 
 纯静态站点没有服务端目录列表，所以：
 
 ```
-git push
-  → GitHub Actions 运行 scripts/build_index.py（扫描 notes/ 和 tools/）
-  → 生成 data/index.json（幂等：内容没变则字节级一致）
-  → 打包部署，前端只读同源的 index.json
+你写笔记 → git commit（钩子自动运行 build_index.py 扫描 notes/ 和 tools/）
+         → data/index.json 随提交入库（幂等：内容没变则字节级一致）
+         → git push → GitHub 分支部署 → 前端读同源的 index.json
 ```
 
 零第三方运行时 API（不依赖 api.github.com 等，国内访问稳定）。
-脚本纯 Python 标准库，本地和 CI 同一份逻辑。
+脚本纯 Python 标准库，本地即可运行。
 
 ## Credits
 

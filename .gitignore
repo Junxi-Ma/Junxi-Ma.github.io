@@ -1,5 +1,5 @@
-# 内容索引由 CI（或本地 scripts/build_index.py）生成，不入库
-data/index.json
+# 说明：data/index.json 已入库（分支部署需要），
+# 由 .githooks/pre-commit 钩子在每次 commit 时自动刷新，勿手动改。
 
 # Python
 __pycache__/
