@@ -4,29 +4,10 @@
    供 tools/*/index.html 复用，保持各工具视觉一致
    ============================================================ */
 
-/* ---------- 页面骨架 ---------- */
-.tool-page {
-  padding-top: calc(var(--nav-h) + clamp(40px, 7vw, 72px));
-  padding-bottom: var(--section-y);
-}
-
-.tool-head {
-  max-width: 780px;
-  margin-bottom: clamp(24px, 4vw, 36px);
-}
-.tool-head h1 {
-  font-size: var(--fs-h1);
-  letter-spacing: -0.02em;
-  margin-top: 20px;
-}
-.tool-head p {
-  margin-top: 14px;
-  color: var(--text-2);
-  line-height: 1.7;
-}
-.tool-head .article-back {
-  margin-bottom: 4px;
-}
+/* ---------- 页面骨架 ----------
+   `.tool` / `.tool__head` 由各工具页**内联**提供，与 json-formatter 完全一致。
+   这样顶部间距不依赖外部样式表（外部 CSS 一旦没加载，返回按钮就会压到固定导航上）。
+   本文件只负责共享组件：面板、按钮、表单、弹窗、日期格等。 */
 
 /* ---------- 面板 ---------- */
 .panel {
@@ -660,7 +641,7 @@
   .field-row {
     grid-template-columns: 1fr;
   }
-  .tool-head h1 {
+  .tool__head h1 {
     font-size: clamp(28px, 8vw, 36px);
   }
   .modal__foot {

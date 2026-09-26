@@ -23,6 +23,32 @@
   <link rel="stylesheet" href="../../assets/css/main.css">
   <link rel="stylesheet" href="../../assets/css/tool-ui.css">
   <style>
+    /* ---- 页面骨架：与 json-formatter 逐字一致，顶距内联提供 ----
+       （放在页内而不是 tool-ui.css，确保返回按钮永远不会被固定导航压住） */
+    .tool {
+      padding-top: calc(var(--nav-h) + clamp(40px, 7vw, 72px));
+      padding-bottom: var(--section-y);
+    }
+    .tool__head {
+      max-width: 720px;
+      margin-bottom: 32px;
+    }
+    .tool__head h1 {
+      font-size: var(--fs-h1);
+      letter-spacing: -0.02em;
+      margin-top: 22px;
+    }
+    .tool__head p {
+      margin-top: 14px;
+      color: var(--text-2);
+      line-height: 1.7;
+    }
+    @media (max-width: 640px) {
+      .tool__head h1 {
+        font-size: clamp(28px, 8vw, 36px);
+      }
+    }
+
     /* ---- 查人工具专属样式 ---- */
     .rc-toolbar {
       display: flex;
@@ -142,6 +168,18 @@
       color: var(--accent);
     }
 
+    .tpl-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .tpl-row + .tpl-row {
+      margin-top: 8px;
+    }
+    .tpl-row .input {
+      flex: 1;
+    }
+
     .sum-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
@@ -210,8 +248,8 @@
   </header>
 
   <main id="main">
-    <div class="container tool-page">
-      <div class="tool-head">
+    <div class="container tool">
+      <div class="tool__head">
         <a class="article-back" href="../../tools.html"><span class="arr">←</span>全部工具</a>
         <p class="mono-label">Tool <span>/</span> 02</p>
         <h1>快速查人</h1>
@@ -252,9 +290,11 @@
             </div>
             <span class="spacer"></span>
             <button class="btn btn--primary btn--sm" id="btnAddUnit" type="button">＋ 新增单位</button>
+            <button class="btn btn--ghost btn--sm" id="btnTpl" type="button">事项模板</button>
             <button class="btn btn--ghost btn--sm" id="btnExport" type="button">导出</button>
             <button class="btn btn--ghost btn--sm" id="btnImport" type="button">导入</button>
             <button class="btn btn--ghost btn--sm" id="btnReset" type="button">重置计数</button>
+            <button class="btn btn--danger btn--sm" id="btnFactory" type="button">恢复默认</button>
             <input type="file" id="fileInput" accept="application/json,.json" hidden>
           </div>
           <div class="callout callout--info" id="sumHint" style="margin-top:16px" hidden></div>
@@ -329,12 +369,32 @@
             <input class="input" id="itemName" required maxlength="16" autocomplete="off">
             <span class="field__hint">改名只影响当前单位的这个事项。</span>
           </div>
+          <div class="field">
+            <label class="field__label" for="itemCount">未到人数</label>
+            <input class="input" id="itemCount" type="number" min="0" max="9999" inputmode="numeric" placeholder="直接输入人数，无需反复点击加减">
+          </div>
         </div>
         <div class="modal__foot">
           <button class="btn btn--ghost btn--sm" type="button" data-close>取消</button>
           <button class="btn btn--primary btn--sm" type="submit">保存</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- 默认事项模板 -->
+  <div class="modal" id="tplModal" role="dialog" aria-modal="true" aria-labelledby="tplModalTitle">
+    <div class="modal__box">
+      <div class="modal__head" id="tplModalTitle">默认事项模板</div>
+      <div class="modal__body">
+        <span class="field__hint">新增单位时自动套用这套事项。改动只影响之后新建的单位，已有单位不受影响。</span>
+        <div id="tplList"></div>
+        <button class="link-add" id="tplAdd" type="button" style="margin-top:10px">＋ 添加事项</button>
+      </div>
+      <div class="modal__foot">
+        <button class="btn btn--ghost btn--sm" type="button" data-close>取消</button>
+        <button class="btn btn--primary btn--sm" id="tplSave" type="button">保存模板</button>
+      </div>
     </div>
   </div>
 
@@ -355,16 +415,36 @@
 
     const uid = () => Math.random().toString(36).slice(2, 9);
 
+    function mkItems(names) {
+      return names.map((n) => ({ name: n, count: 0 }));
+    }
+
     function seed() {
       return {
         v: 1,
         expected: 115,
+        template: DEFAULT_ITEMS.slice(),
         units: [
-          { id: uid(), name: '一单位', total: 34, items: DEFAULT_ITEMS.map(n => ({ name: n, count: 0 })) },
-          { id: uid(), name: '二单位', total: 36, items: DEFAULT_ITEMS.map(n => ({ name: n, count: 0 })) },
-          { id: uid(), name: '三单位', total: 45, items: DEFAULT_ITEMS.map(n => ({ name: n, count: 0 })) }
+          { id: uid(), name: '一单位', total: 34, items: mkItems(DEFAULT_ITEMS) },
+          { id: uid(), name: '二单位', total: 36, items: mkItems(DEFAULT_ITEMS) },
+          { id: uid(), name: '三单位', total: 45, items: mkItems(DEFAULT_ITEMS) }
         ]
       };
+    }
+
+    /** 当前生效的事项模板（没有就退回出厂预设） */
+    function getTemplate() {
+      return Array.isArray(state.template) && state.template.length
+        ? state.template.slice()
+        : DEFAULT_ITEMS.slice();
+    }
+
+    function cleanTemplate(list) {
+      const out = (Array.isArray(list) ? list : [])
+        .map((s) => String(s).trim())
+        .filter(Boolean)
+        .slice(0, 40);
+      return out.length ? out : DEFAULT_ITEMS.slice();
     }
 
     let state = load();
@@ -376,6 +456,7 @@
         const d = JSON.parse(raw);
         if (!d || !Array.isArray(d.units)) return seed();
         d.expected = clampInt(d.expected, 0, 99999, 115);
+        d.template = cleanTemplate(d.template);   // 旧数据没有模板字段 → 回退出厂预设
         d.units = d.units.filter(u => u && typeof u.name === 'string');
         d.units.forEach(u => {
           u.id = u.id || uid();
@@ -482,6 +563,9 @@
               </div>
             </div>
             <div class="unit-card__acts">
+              <button class="icon-btn" type="button" data-act="dup-unit" title="复制此单位结构" aria-label="复制 ${esc(u.name)}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              </button>
               <button class="icon-btn" type="button" data-act="edit-unit" title="编辑单位" aria-label="编辑 ${esc(u.name)}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
               </button>
@@ -551,6 +635,19 @@
           render();
           openItemModal(unit, unit.items.length - 1);
           break;
+        case 'dup-unit': {
+          const copy = {
+            id: uid(),
+            name: unit.name + ' 副本',
+            total: unit.total,
+            items: mkItems(unit.items.map((it) => it.name))   // 只复制结构，计数清零
+          };
+          state.units.splice(state.units.indexOf(unit) + 1, 0, copy);
+          render();
+          toast('已复制单位结构，改个名字就能用');
+          openUnitModal(copy);   // 顺手打开编辑，直接改名
+          break;
+        }
         case 'edit-unit':
           openUnitModal(unit);
           break;
@@ -605,7 +702,7 @@
       } else {
         state.units.push({
           id: uid(), name, total,
-          items: DEFAULT_ITEMS.map(n => ({ name: n, count: 0 }))
+          items: mkItems(getTemplate())   // 套用「事项模板」
         });
       }
       closeModal(unitModal);
@@ -620,6 +717,7 @@
     function openItemModal(unit, idx) {
       editingItem = { unit, idx };
       $('itemName').value = unit.items[idx].name;
+      $('itemCount').value = unit.items[idx].count;
       openModal(itemModal);
       setTimeout(() => { $('itemName').focus(); $('itemName').select(); }, 50);
     }
@@ -628,10 +726,12 @@
       e.preventDefault();
       const name = $('itemName').value.trim();
       if (!name || !editingItem) return;
-      editingItem.unit.items[editingItem.idx].name = name;
+      const it = editingItem.unit.items[editingItem.idx];
+      it.name = name;
+      it.count = clampInt($('itemCount').value, 0, 9999, 0);
       closeModal(itemModal);
       render();
-      toast('已重命名');
+      toast('已保存');
     });
 
     /* ---- 弹窗通用 ---- */
@@ -654,6 +754,66 @@
       state.units.forEach(u => u.items.forEach(it => { it.count = 0; }));
       render();
       toast('计数已清零');
+    });
+
+    /* ---- 恢复默认（出厂数据） ---- */
+    $('btnFactory').addEventListener('click', () => {
+      if (!confirm(
+        '恢复出厂默认数据？\n\n' +
+        '将重置为：一/二/三单位（34/36/45 人）+ 10 个预设事项，全部计数清零。\n' +
+        '当前数据会被覆盖 —— 需要的话请先导出备份。'
+      )) return;
+      state = seed();
+      render();
+      toast('已恢复默认数据');
+    });
+
+    /* ---- 事项模板 ---- */
+    const tplModal = $('tplModal');
+    let tplNames = [];
+
+    function renderTplList() {
+      $('tplList').innerHTML = tplNames.map((n, i) => `
+        <div class="tpl-row">
+          <input class="input" value="${esc(n)}" maxlength="16" data-tpl-i="${i}" aria-label="模板事项 ${i + 1}">
+          <button class="icon-btn icon-btn--danger" type="button" data-tpl-del="${i}" aria-label="删除第 ${i + 1} 个模板事项">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+        </div>`).join('');
+    }
+
+    function readTplInputs() {
+      tplNames = [...$('tplList').querySelectorAll('input')].map((i) => i.value.trim());
+    }
+
+    $('btnTpl').addEventListener('click', () => {
+      tplNames = getTemplate();
+      renderTplList();
+      openModal(tplModal);
+    });
+
+    $('tplAdd').addEventListener('click', () => {
+      readTplInputs();
+      tplNames.push('');
+      renderTplList();
+      const inputs = $('tplList').querySelectorAll('input');
+      inputs[inputs.length - 1]?.focus();
+    });
+
+    $('tplList').addEventListener('click', (e) => {
+      const b = e.target.closest('[data-tpl-del]');
+      if (!b) return;
+      readTplInputs();
+      tplNames.splice(parseInt(b.dataset.tplDel, 10), 1);
+      renderTplList();
+    });
+
+    $('tplSave').addEventListener('click', () => {
+      readTplInputs();
+      state.template = cleanTemplate(tplNames.filter(Boolean));
+      closeModal(tplModal);
+      render();
+      toast(`模板已保存（${state.template.length} 个事项）`);
     });
 
     /* ---- 导出 ---- */

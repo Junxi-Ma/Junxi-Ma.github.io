@@ -23,6 +23,32 @@
   <link rel="stylesheet" href="../../assets/css/main.css">
   <link rel="stylesheet" href="../../assets/css/tool-ui.css">
   <style>
+    /* ---- 页面骨架：与 json-formatter 逐字一致，顶距内联提供 ----
+       （放在页内而不是 tool-ui.css，确保返回按钮永远不会被固定导航压住） */
+    .tool {
+      padding-top: calc(var(--nav-h) + clamp(40px, 7vw, 72px));
+      padding-bottom: var(--section-y);
+    }
+    .tool__head {
+      max-width: 720px;
+      margin-bottom: 32px;
+    }
+    .tool__head h1 {
+      font-size: var(--fs-h1);
+      letter-spacing: -0.02em;
+      margin-top: 22px;
+    }
+    .tool__head p {
+      margin-top: 14px;
+      color: var(--text-2);
+      line-height: 1.7;
+    }
+    @media (max-width: 640px) {
+      .tool__head h1 {
+        font-size: clamp(28px, 8vw, 36px);
+      }
+    }
+
     /* ---- 外出分配工具专属样式 ---- */
     .seg-wrap {
       display: flex;
@@ -37,6 +63,14 @@
       letter-spacing: 0.1em;
       color: var(--text-3);
     }
+
+    .action-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .action-row .spacer { flex: 1; }
     .panel[hidden] { display: none; }
 
     .room-strip {
@@ -256,8 +290,8 @@
   </header>
 
   <main id="main">
-    <div class="container tool-page">
-      <div class="tool-head">
+    <div class="container tool">
+      <div class="tool__head">
         <a class="article-back" href="../../tools.html"><span class="arr">←</span>全部工具</a>
         <p class="mono-label">Tool <span>/</span> 03</p>
         <h1>外出名额分配</h1>
@@ -334,7 +368,10 @@
       <section class="panel" id="panel-join" hidden>
         <div class="panel__head">
           <span class="panel__title"><span class="mono-label">02</span>成员报名</span>
-          <span class="badge" id="roomBadge">未载入房间</span>
+          <span class="member-chip">
+            <span class="badge" id="joinCount">名单 0 人</span>
+            <span class="badge" id="roomBadge">未载入房间</span>
+          </span>
         </div>
         <div class="panel__body">
           <div class="field">
@@ -385,9 +422,14 @@
               </div>
             </div>
 
-            <div style="margin-top:20px">
-              <button class="btn btn--primary btn--block" id="btnMakeSub" type="button">生成提交码</button>
+            <div class="action-row" style="margin-top:20px">
+              <button class="btn btn--primary" id="btnJoin" type="button">＋ 加入本机名单</button>
+              <button class="btn btn--ghost" id="btnMakeSub" type="button">生成提交码</button>
             </div>
+            <p class="field__hint" style="margin-top:10px">
+              <b>大家轮流用这台设备填</b> → 点「加入本机名单」，填完自动清空继续下一位，全程不用复制粘贴；
+              <b>各人在自己手机上填</b> → 点「生成提交码」把码发回给班长。
+            </p>
 
             <div id="subOut" hidden style="margin-top:16px">
               <div class="code-box">
@@ -408,7 +450,9 @@
           <span class="badge" id="subBadge">0 人</span>
         </div>
         <div class="panel__body">
-          <div class="field">
+          <div class="room-strip" id="roomStripResult" hidden style="margin-bottom:18px"></div>
+
+          <div class="field" id="subInField">
             <label class="field__label" for="subIn">粘贴成员的提交码</label>
             <textarea class="textarea" id="subIn" style="min-height:88px" placeholder="可一次粘贴多个，每行一个；也可先「载入房间」再逐个粘贴" spellcheck="false"></textarea>
             <span class="field__hint">同名会以最后一次提交为准。</span>
@@ -473,10 +517,11 @@
         <div class="panel__head"><span class="panel__title"><span class="mono-label">?</span>怎么用</span></div>
         <div class="panel__body">
           <div class="howto">
-            <div class="howto__row"><span class="flow-num">1</span><div><b>班长</b>在「① 建房间」设定日期范围与每天名额，点<b>生成邀请码</b>，把码（或报名链接）发到群里。</div></div>
-            <div class="howto__row"><span class="flow-num">2</span><div><b>成员</b>在自己手机上打开链接（或粘贴邀请码），填姓名、可接受日期、天数、已外出次数与理由，点<b>生成提交码</b>发回群里。</div></div>
-            <div class="howto__row"><span class="flow-num">3</span><div><b>班长</b>把所有提交码粘贴进「③ 汇总分配」，点<b>开始分配</b>，复制结果发回群里。</div></div>
-            <div class="howto__row"><span class="flow-num">4</span><div>所有数据只保存在你自己的浏览器里（<b>localStorage</b>），不上传任何服务器；换设备请先导出/记下房间码。</div></div>
+            <div class="howto__row"><span class="flow-num">1</span><div><b>班长</b>在「① 建房间」设定日期范围与每天名额，点<b>生成邀请码</b>，把码或报名链接发到群里。</div></div>
+            <div class="howto__row"><span class="flow-num">2</span><div><b>最省事（人能聚在一起）</b>：一台设备传着填 —— 每人填完点<b>「＋ 加入本机名单」</b>，表单自动清空直接录下一位，全程不用复制粘贴。</div></div>
+            <div class="howto__row"><span class="flow-num">3</span><div><b>各在各家（远程）</b>：成员打开邀请链接填表，点<b>「生成提交码」</b>发回群里；班长粘贴进「③ 汇总分配」即可（一次可粘多条，每行一个）。</div></div>
+            <div class="howto__row"><span class="flow-num">4</span><div>在「③」点<b>开始分配</b>，把结果文本复制发回群里。同名以最后一次为准，房间码不符的会自动排除。</div></div>
+            <div class="howto__row"><span class="flow-num">5</span><div>数据只存在你自己的浏览器里（<b>localStorage</b>），不上传任何服务器。</div></div>
           </div>
         </div>
       </div>
@@ -734,6 +779,7 @@
       renderDateGrid();
       updatePickCount();
       loadDraft();
+      updateJoinCount();
     }
 
     function renderDateGrid() {
@@ -815,32 +861,70 @@
       }
     });
 
+    /* ---- 校验并构建提交对象（两个按钮共用） ---- */
+    function validateSub() {
+      if (!room) throw new Error('请先载入房间（回①建房间，或粘贴邀请码）');
+      const name = $('mName').value.trim();
+      if (!name) throw new Error('请填写姓名');
+      const picks = pickedIdx();
+      if (!picks.length) throw new Error('请至少选择一个可接受日期');
+      const g = parseInt($('mReason').value, 10);
+      const sub = {
+        k: room.k,
+        n: name,
+        a: picks.join(','),
+        d: Math.min(room.dates.length, Math.max(1, parseInt($('mDays').value, 10) || 1)),
+        p: Math.max(0, parseInt($('mPast').value, 10) || 0),
+        g: g,
+        x: g === 4 ? $('mCustom').value.trim() : '',
+        t: Date.now()
+      };
+      if (g === 4 && !sub.x) throw new Error('请填写自定义理由');
+      return sub;
+    }
+
+    /* 录完一位后清空表单，直接录下一位 */
+    function clearJoinForm() {
+      $('mName').value = '';
+      $('mDays').value = '1';
+      $('mPast').value = '0';
+      $('mReason').value = '0';
+      $('mCustom').value = '';
+      $('customReasonWrap').hidden = true;
+      $('dateGrid').querySelectorAll('input').forEach((c) => { c.checked = false; });
+      updatePickCount();
+      saveDraft();          // 草稿同步清空，避免切页回来又被还原
+      $('mName').focus();
+    }
+
+    function updateJoinCount() {
+      $('joinCount').textContent = `名单 ${subs.length} 人`;
+      $('joinCount').className = 'badge' + (subs.length ? ' badge--accent' : '');
+    }
+
+    /* 主路径：单机轮流录入，零复制粘贴 */
+    $('btnJoin').addEventListener('click', () => {
+      try {
+        const sub = validateSub();
+        const ex = subs.findIndex((s) => s.n === sub.n);
+        if (ex >= 0) subs[ex] = sub;
+        else subs.push(sub);
+        saveJSON(K_SUBS, subs);
+        clearJoinForm();
+        updateJoinCount();
+        toast(`已加入（${subs.length} 人）— 继续录入下一位`);
+      } catch (err) {
+        toast(err.message, true);
+      }
+    });
+
+    /* 远程场景：生成提交码发回给班长 */
     $('btnMakeSub').addEventListener('click', () => {
       try {
-        if (!room) throw new Error('请先载入房间');
-        const name = $('mName').value.trim();
-        if (!name) throw new Error('请填写姓名');
-        const picks = pickedIdx();
-        if (!picks.length) throw new Error('请至少选择一个可接受日期');
-        const days = Math.min(room.dates.length, Math.max(1, parseInt($('mDays').value, 10) || 1));
-        const g = parseInt($('mReason').value, 10);
-        const sub = {
-          k: room.k,
-          n: name,
-          a: picks.join(','),
-          d: days,
-          p: Math.max(0, parseInt($('mPast').value, 10) || 0),
-          g: g,
-          x: g === 4 ? $('mCustom').value.trim() : '',
-          t: Date.now()
-        };
-        if (g === 4 && !sub.x) throw new Error('请填写自定义理由');
-
-        const code = encodeSub({ ...sub, a: picks });
-        $('subCode').textContent = code;
+        $('subCode').textContent = encodeSub(validateSub());
         $('subOut').hidden = false;
         $('subOut').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        toast('提交码已生成，记得发回给班长');
+        toast('提交码已生成，复制发回给班长');
       } catch (err) {
         toast(err.message, true);
       }
@@ -855,6 +939,21 @@
     function renderResult() {
       $('subBadge').textContent = `${subs.length} 人`;
       $('subBadge').className = 'badge' + (subs.length ? ' badge--accent' : '');
+
+      // 已有房间就展示它，并省掉「先载入房间」这一步
+      const strip = $('roomStripResult');
+      if (room) {
+        strip.hidden = false;
+        strip.innerHTML =
+          `<span><b>${room.s}</b> 至 <b>${room.e}</b></span><span class="sep">·</span>` +
+          `<span>共 <b>${room.dates.length}</b> 天</span><span class="sep">·</span>` +
+          `<span>每天 <b>${room.q}</b> 人</span><span class="sep">·</span>` +
+          `<span>房间码 <b>${esc(room.k)}</b></span>`;
+        $('btnLoadRoomFirst').hidden = true;
+      } else {
+        strip.hidden = true;
+        $('btnLoadRoomFirst').hidden = false;
+      }
 
       $('memberList').hidden = subs.length === 0;
       $('subRows').innerHTML = subs.map((s, i) => {
