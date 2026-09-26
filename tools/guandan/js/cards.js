@@ -233,23 +233,24 @@ function gdEnumerateBeats(hand, level, last) {
     }
   } else if (type === 'straight' || type === 'flush') {
     const wantFlush = type === 'flush';
+    const suitsToTry = wantFlush ? GD_SUITS : [null];
     for (let s = 3; s <= 10; s++) {
       const top = s + 4;
       if (top <= last.main) continue;
-      let miss = 0, picks = [], ok = true;
-      for (let r = s; r < s + 5; r++) {
-        if (r === level || !byRank[r]) { miss++; continue; }
-        let c = byRank[r][0];
-        if (wantFlush) {
-          const suited = byRank[r].filter(x => x.suit === (picks[0] ? picks[0].suit : x.suit));
-          c = suited.find(x => !picks.length || x.suit === picks[0].suit) || null;
-          if (!c) { ok = false; break; }
+      let found = false;
+      for (const suit of suitsToTry) {
+        if (found) break;
+        let miss = 0, picks = [], ok = true;
+        for (let r = s; r < s + 5; r++) {
+          // 级牌与 2 不参与顺子；该点数为空则需要百搭补位
+          const avail = (r === level) ? [] : (byRank[r] || []).filter(c => !suit || c.suit === suit);
+          if (!avail.length) { miss++; continue; }
+          picks.push(avail[0]);
         }
-        picks.push(c);
+        if (!ok || miss > w) continue;
+        res.push(gdMkCombo(type, picks.concat(wilds.slice(0, miss)), top));
+        found = true;
       }
-      if (!ok || miss > w) continue;
-      if (wantFlush && picks.length && !picks.every(c => c.suit === picks[0].suit)) continue;
-      res.push(gdMkCombo(type, picks.concat(wilds.slice(0, miss)), top));
     }
   } else if (type === 'tube' || type === 'plate') {
     const per = type === 'tube' ? 2 : 3, span = type === 'tube' ? 3 : 2;

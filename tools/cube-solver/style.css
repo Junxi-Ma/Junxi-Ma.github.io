@@ -1,0 +1,295 @@
+/* ============================================================
+   cube-solver — 魔方还原助手样式
+   ============================================================ */
+.cs-page {
+  min-height: 100vh;
+  padding: clamp(16px, 3vw, 32px);
+  max-width: 1280px;
+  margin: 0 auto;
+  color: var(--text-1);
+  font-family: var(--font-sans);
+}
+
+/* ---------- 头部 ---------- */
+.cs-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.cs-head h1 {
+  font-size: clamp(22px, 3vw, 30px);
+  margin: 0;
+  letter-spacing: 0.02em;
+}
+.cs-sub {
+  margin: 6px 0 0;
+  color: var(--text-2);
+  font-size: 14px;
+}
+.cs-head-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+/* ---------- 按钮 ---------- */
+.btn {
+  appearance: none;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-2);
+  color: var(--text-1);
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background .15s, border-color .15s, transform .05s;
+  font-family: inherit;
+}
+.btn:hover { background: var(--surface-3); border-color: var(--border-hover); }
+.btn:active { transform: scale(0.97); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn-primary {
+  background: var(--accent-fill);
+  color: var(--accent-fg);
+  border-color: transparent;
+  font-weight: 600;
+}
+.btn-primary:hover { background: var(--accent-fill-hover); }
+
+/* ---------- 主体两栏 ---------- */
+.cs-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+  gap: 20px;
+  align-items: start;
+}
+@media (max-width: 880px) {
+  .cs-main { grid-template-columns: 1fr; }
+}
+.cs-pane {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 18px;
+}
+
+/* ---------- 3D 舞台 ---------- */
+.cs-3d-pane { position: sticky; top: 16px; }
+.cs-3d-stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  max-height: 560px;
+  border-radius: 12px;
+  background:
+    radial-gradient(circle at 50% 40%, rgba(242,169,59,0.06), transparent 60%),
+    var(--surface-2);
+  overflow: hidden;
+  touch-action: none;
+}
+.cs-3d-stage canvas { display: block; width: 100% !important; height: 100% !important; }
+.cs-3d-hint {
+  position: absolute;
+  left: 14px; top: 12px;
+  font-size: 12px;
+  color: var(--text-3);
+  pointer-events: none;
+  z-index: 2;
+}
+.cs-status {
+  margin-top: 12px;
+  font-size: 14px;
+  color: var(--text-2);
+  min-height: 20px;
+  text-align: center;
+}
+.cs-status.is-ok { color: var(--ok); }
+.cs-status.is-err { color: var(--err); }
+
+/* ---------- 输入区 ---------- */
+.cs-block { margin-bottom: 20px; }
+.cs-block h2 {
+  font-size: 15px;
+  margin: 0 0 8px;
+  color: var(--text-1);
+}
+.cs-tip {
+  font-size: 12.5px;
+  color: var(--text-3);
+  margin: 0 0 10px;
+  line-height: 1.5;
+}
+
+/* ---------- 调色板 ---------- */
+.cs-palette {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.cs-swatch {
+  width: 40px; height: 40px;
+  border-radius: 10px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  position: relative;
+  transition: transform .12s, border-color .12s;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.15);
+}
+.cs-swatch:hover { transform: scale(1.08); }
+.cs-swatch.is-active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow), inset 0 0 0 1px rgba(0,0,0,0.15);
+}
+.cs-swatch .cs-swatch-label {
+  position: absolute;
+  bottom: -18px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  color: var(--text-3);
+  white-space: nowrap;
+}
+.cs-palette { margin-bottom: 22px; }
+
+/* ---------- 展开图 ---------- */
+.cs-net {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(3, auto);
+  gap: 6px;
+  max-width: 360px;
+}
+.cs-face {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+  aspect-ratio: 1 / 1;
+}
+.cs-face--U { grid-column: 2; grid-row: 1; }
+.cs-face--L { grid-column: 1; grid-row: 2; }
+.cs-face--F { grid-column: 2; grid-row: 2; }
+.cs-face--R { grid-column: 3; grid-row: 2; }
+.cs-face--B { grid-column: 4; grid-row: 2; }
+.cs-face--D { grid-column: 2; grid-row: 3; }
+
+.cs-sticker {
+  aspect-ratio: 1 / 1;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: transform .08s, box-shadow .12s;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.25);
+}
+.cs-sticker:hover { transform: scale(1.12); z-index: 2; box-shadow: 0 0 0 2px var(--accent); }
+.cs-sticker.is-center { outline: 1px dashed rgba(255,255,255,0.25); outline-offset: -2px; }
+
+/* 面标签 */
+.cs-face-label {
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-3);
+  margin-top: 2px;
+}
+
+/* ---------- 操作行 ---------- */
+.cs-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.cs-actions .btn-primary { padding: 10px 20px; font-size: 15px; }
+.cs-spacer { flex: 1; }
+.cs-face-legend {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 11px;
+  color: var(--text-3);
+}
+.cs-face-legend span { display: inline-flex; align-items: center; gap: 4px; }
+.cs-face-legend i {
+  width: 12px; height: 12px;
+  border-radius: 3px;
+  display: inline-block;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.25);
+}
+
+/* ---------- 求解步骤区 ---------- */
+.cs-solution {
+  margin-top: 20px;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 18px;
+}
+.cs-solution-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.cs-solution-head h2 { margin: 0; font-size: 16px; }
+.cs-solution-meta {
+  font-size: 13px;
+  color: var(--text-3);
+  font-weight: 400;
+  margin-left: 8px;
+}
+.cs-solution-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.cs-speed {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-2);
+}
+.cs-speed input { width: 90px; accent-color: var(--accent); }
+
+.cs-solution-body {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 16px;
+  align-items: start;
+}
+@media (max-width: 640px) {
+  .cs-solution-body { grid-template-columns: 1fr; }
+}
+.cs-current-move {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--accent);
+  font-family: var(--font-mono);
+  min-width: 80px;
+  line-height: 1;
+  padding-top: 4px;
+}
+.cs-move-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.cs-move-chip {
+  padding: 5px 10px;
+  border-radius: 7px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all .12s;
+  user-select: none;
+}
+.cs-move-chip:hover { background: var(--surface-3); }
+.cs-move-chip.is-done { opacity: 0.5; }
+.cs-move-chip.is-current {
+  background: var(--accent-fill);
+  color: var(--accent-fg);
+  border-color: transparent;
+  font-weight: 600;
+}

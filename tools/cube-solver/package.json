@@ -1,0 +1,6 @@
+{
+  "name": "cube-solver",
+  "private": true,
+  "type": "module",
+  "description": "让 Node 把本目录下的 .js 当作 ES 模块，便于 solver.test.mjs 单元测试（浏览器不受影响）"
+}

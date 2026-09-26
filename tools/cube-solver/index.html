@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>魔方还原助手 — Michael</title>
+  <meta name="description" content="输入当前魔方各面颜色，自动校验合法性并给出还原步骤，支持三维动画逐步演示。">
+  <meta name="theme-color" content="#0a0a0b">
+  <meta name="color-scheme" content="dark light">
+  <link rel="icon" type="image/svg+xml" href="../../assets/img/favicon.svg">
+  <script>
+    (function () {
+      var t = null;
+      try { t = localStorage.getItem('site-theme'); } catch (e) {}
+      if (t !== 'dark' && t !== 'light') t = 'dark';
+      document.documentElement.dataset.theme = t;
+      document.documentElement.classList.add('js');
+    })();
+  </script>
+  <link rel="stylesheet" href="../../assets/css/tokens.css">
+  <link rel="stylesheet" href="../../assets/css/main.css">
+  <link rel="stylesheet" href="style.css?v=4">
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
+    }
+  }
+  </script>
+</head>
+<body class="cs-page">
+
+<header class="cs-head">
+  <div>
+    <h1>魔方还原助手</h1>
+    <p class="cs-sub">输入当前各面颜色 → 校验合法性 → 逐步动画还原</p>
+  </div>
+  <div class="cs-head-actions">
+    <button type="button" class="btn" id="btn-reset">复原状态</button>
+    <button type="button" class="btn" id="btn-scramble">随机打乱</button>
+  </div>
+</header>
+
+<main class="cs-main">
+  <!-- 左侧：3D 视图 -->
+  <section class="cs-pane cs-3d-pane">
+    <div class="cs-3d-stage" id="stage">
+      <div class="cs-3d-hint">拖拽旋转 · 滚轮缩放</div>
+    </div>
+    <div class="cs-status" id="status">请在右侧输入当前魔方状态</div>
+  </section>
+
+  <!-- 右侧：输入与控制 -->
+  <section class="cs-pane cs-input-pane">
+    <div class="cs-block">
+      <h2>颜色调色板</h2>
+      <p class="cs-tip">点选颜色后，再点右侧展开图上的贴纸涂色；右键可循环切换。</p>
+      <div class="cs-palette" id="palette"></div>
+    </div>
+
+    <div class="cs-block">
+      <h2>展开图（输入状态）</h2>
+      <div class="cs-net" id="net"></div>
+    </div>
+
+    <div class="cs-block cs-actions">
+      <button type="button" class="btn btn-primary" id="btn-solve">验证并求解</button>
+      <span class="cs-spacer"></span>
+      <span class="cs-face-legend" id="face-legend"></span>
+    </div>
+  </section>
+</main>
+
+<!-- 求解步骤区 -->
+<section class="cs-solution" id="solution" hidden>
+  <div class="cs-solution-head">
+    <h2>还原步骤 <span class="cs-solution-meta" id="solution-meta"></span></h2>
+    <div class="cs-solution-controls">
+      <button type="button" class="btn" id="btn-prev">◀ 上一步</button>
+      <button type="button" class="btn" id="btn-next">下一步 ▶</button>
+      <button type="button" class="btn" id="btn-play">▶ 自动播放</button>
+      <label class="cs-speed">
+        速度
+        <input type="range" id="speed" min="120" max="900" value="380" step="20">
+      </label>
+      <button type="button" class="btn" id="btn-jump-start">回到开头</button>
+    </div>
+  </div>
+  <div class="cs-solution-body">
+    <div class="cs-current-move" id="current-move">—</div>
+    <div class="cs-move-list" id="move-list"></div>
+  </div>
+</section>
+
+<script type="module" src="app.js?v=5"></script>
+</body>
+</html>

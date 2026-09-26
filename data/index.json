@@ -73,6 +73,28 @@
       ],
       "icon": "🚪",
       "order": 3
+    },
+    {
+      "path": "tools/guandan/",
+      "title": "掼蛋单机版",
+      "description": "三档牌技 AI、可对话的角色人格、升级/带资两种模式、自由拖拽理牌与智能提示。",
+      "tags": [
+        "游戏",
+        "棋牌"
+      ],
+      "icon": "🃏",
+      "order": 3
+    },
+    {
+      "path": "tools/cube-solver/",
+      "title": "魔方还原助手",
+      "description": "输入当前魔方各面颜色，自动校验合法性并给出还原步骤，支持三维动画逐步演示。",
+      "tags": [
+        "工具",
+        "益智"
+      ],
+      "icon": "🧩",
+      "order": 4
     }
   ]
 }
