@@ -443,12 +443,20 @@ body.gd-playing { overflow: hidden; }
   font-weight: 800; font-size: 19px; line-height: 1.05;
   font-family: Georgia, 'Times New Roman', 'Songti SC', serif;
 }
-.gd-card .gd-c-suit { position: absolute; top: 27px; left: 7px; font-size: 16px; }
+/* 左上角标：点数+花色同一行，堆叠露边时也看得清花色 */
+.gd-card .gd-c-idx {
+  position: absolute; top: 6px; left: 7px;
+  display: flex; align-items: baseline; gap: 1px;
+  font-weight: 800; line-height: 1;
+  font-family: Georgia, 'Times New Roman', 'Songti SC', serif;
+}
+.gd-card .gd-c-idx .r { font-size: 19px; }
+.gd-card .gd-c-idx .s { font-size: 14.5px; }
 .gd-card .gd-c-big { position: absolute; inset: 0; display: grid; place-items: center; font-size: 32px; opacity: .92; }
 /* 右下角倒置角标（真扑克式） */
 .gd-card .gd-c-corner {
   position: absolute; right: 7px; bottom: 5px;
-  display: flex; flex-direction: column; align-items: center;
+  display: flex; align-items: baseline; gap: 1px;
   transform: rotate(180deg);
   font-weight: 800; line-height: 1;
   font-family: Georgia, 'Times New Roman', 'Songti SC', serif;
@@ -498,9 +506,12 @@ body.gd-playing { overflow: hidden; }
   border-radius: 7px;
 }
 .gd-card.mini::after { display: none; }
-.gd-card.mini .gd-c-rank { font-size: 13px; top: 3px; left: 4px; }
-.gd-card.mini .gd-c-suit { font-size: 11px; top: 19px; left: 4px; }
+.gd-card.mini .gd-c-rank { font-size: 10px; top: 3px; left: 4px; }
+.gd-card.mini .gd-c-idx { top: 4px; left: 4px; }
+.gd-card.mini .gd-c-idx .r { font-size: 13px; }
+.gd-card.mini .gd-c-idx .s { font-size: 11px; }
 .gd-card.mini .gd-c-big { display: none; }
+.gd-card.mini .gd-c-corner { right: 4px; bottom: 3px; }
 .gd-card.mini .gd-c-corner .r { font-size: 9px; }
 .gd-card.mini .gd-c-corner .s { font-size: 8px; }
 .gd-card.mini .gd-c-wild { font-size: 8px; padding: 0 3px; }
@@ -542,7 +553,7 @@ body.gd-playing { overflow: hidden; }
 
 /* ================= 聊天抽屉 ================= */
 .gd-chat {
-  position: fixed; right: 0; top: 0; bottom: 0; width: min(320px, 86vw);
+  position: fixed; right: 0; top: var(--nav-h); bottom: 0; width: min(320px, 86vw);
   background: rgba(16, 18, 16, .97);
   border-left: 1px solid rgba(255, 255, 255, .1);
   display: flex; flex-direction: column;
@@ -602,6 +613,8 @@ body.gd-playing { overflow: hidden; }
 @media (max-width: 720px) {
   .gd-page { --gd-card-w: 56px; --gd-card-h: 80px; --gd-band: 22px; }
   .gd-btn { padding: 7px 11px; font-size: 12.5px; border-radius: 10px; }
+  .gd-card .gd-c-idx .r { font-size: 13.5px; }
+  .gd-card .gd-c-idx .s { font-size: 11px; }
   .gd-card .gd-c-rank { font-size: 13px; }
   .gd-card .gd-c-big { font-size: 22px; }
   .gd-card.mini { --gd-card-w: 34px; --gd-card-h: 48px; }

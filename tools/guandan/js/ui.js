@@ -324,11 +324,14 @@ const UI = {
     const wild = gdIsWild(c, level) ? '<span class="gd-c-wild">配</span>' : '';
     const suit = joker ? '' : GD_SUIT_SYMBOL[c.suit];
     const label = GD_RANK_LABEL[c.rank];
+    // 左上/右下角标把点数和花色排成一行，牌堆叠只露出窄边时花色依然可读
+    const body = joker
+      ? `<span class="gd-c-rank">${label}</span>`
+      : `<span class="gd-c-idx"><span class="r">${label}</span><span class="s">${suit}</span></span>
+      <span class="gd-c-corner"><span class="r">${label}</span><span class="s">${suit}</span></span>`;
     return `<div class="gd-card${mini ? ' mini' : ''}${cls}" data-id="${c.id}">
-      <span class="gd-c-rank">${label}</span>
-      <span class="gd-c-suit">${suit}</span>
       <span class="gd-c-big">${joker ? (c.rank === 17 ? '🃏' : '🃟') : suit}</span>
-      <span class="gd-c-corner"><span class="r">${label}</span><span class="s">${suit}</span></span>
+      ${body}
       ${wild}</div>`;
   },
   buildCardEl(c, mini, level) {
@@ -563,6 +566,14 @@ const UI = {
     this.$('gd-btn-chat').addEventListener('click', toggleChat);
     this.$('gd-chat-close').addEventListener('click', () => {
       this.$('gd-chat').classList.remove('open');
+      this.$('gd-btn-chat').textContent = '💬 聊天';
+    });
+    // 点抽屉以外的任意位置关闭聊天（× 在抽屉头部，也覆盖了误触顶栏按钮的场景）
+    document.addEventListener('click', e => {
+      const chat = this.$('gd-chat');
+      if (!chat.classList.contains('open')) return;
+      if (chat.contains(e.target) || (e.target.closest && e.target.closest('#gd-btn-chat'))) return;
+      chat.classList.remove('open');
       this.$('gd-btn-chat').textContent = '💬 聊天';
     });
     this.$('gd-chat-send').addEventListener('click', () => this.sendChat());
