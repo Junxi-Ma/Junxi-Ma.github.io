@@ -381,20 +381,6 @@ export function uncombRank(rank, n = 12, k = 4) {
   return pos;
 }
 
-/** 排列排名（Lehmer 码） */
-function permRank(arr, universe) {
-  const idx = new Map(universe.map((v, i) => [v, i]));
-  let rank = 0;
-  const n = arr.length;
-  for (let i = 0; i < n; i++) {
-    let less = 0;
-    const ai = idx.get(arr[i]);
-    for (let j = i + 1; j < n; j++) if (idx.get(arr[j]) < ai) less++;
-    rank = rank * (n - i) + less;
-  }
-  return rank;
-}
-
 const FACT = [1, 1, 2, 6, 24, 120, 720, 5040, 40320];
 
 /* ================= 阶段二坐标 ================= */
@@ -406,11 +392,6 @@ EDGE_SLOTS.forEach((p, i) => (p[1] !== 0 ? UD_EDGE_IDX : SLICE_EDGE_IDX).push(i)
 /** 值域（块 id = 家乡槽位下标，故与槽位下标同集合） */
 const UD_PIECE_IDS = UD_EDGE_IDX.slice();
 const SLICE_PIECE_IDS = SLICE_EDGE_IDX.slice();
-
-/* 表初始化用（一次性，可分配） */
-const extractCp = (st) => st.cp;
-const extractEp8 = (st) => Int8Array.from(UD_EDGE_IDX.map((i) => st.ep[i]));
-const extractSp = (st) => Int8Array.from(SLICE_EDGE_IDX.map((i) => st.ep[i]));
 
 /* 热路径用：复用缓冲，逐节点零分配 */
 const _ep8 = new Int8Array(8);
@@ -475,24 +456,124 @@ function rankSp(p) {
 /* ================= 剪枝表 ================= */
 let TABLES = null;
 
-function bfsPerm(start, universe, transition) {
-  const size = FACT[universe.length];
-  const dist = new Int16Array(size).fill(-1);
-  const r0 = permRank(start, universe);
-  dist[r0] = 0;
-  let frontier = [start.slice()];
+/* 单坐标的每步转移表：twistMove[m][rank]、flipMove[m][rank]、sliceMove[m][rank]。
+   联合剪枝表（twist×slice / flip×slice）的 BFS 全靠它们做 O(1) 转移。 */
+function buildMoveTransitions() {
+  const twistMove = [], flipMove = [], sliceMove = [];
+  for (const m of MOVES18) {
+    const dm = cubieMove(m);
+    const tm = new Int16Array(6561);   // 3^8 全空间（未用的 sum≢0 部分留在 255）
+    for (let r = 0; r < 6561; r++) {
+      const co = new Int8Array(8);
+      for (let i = 7, x = r; i >= 0; i--) { co[i] = x % 3; x = (x / 3) | 0; }
+      const nc = new Int8Array(8);
+      for (let i = 0; i < 8; i++) nc[i] = (co[dm.cp[i]] + dm.co[i]) % 3;
+      tm[r] = twistRank(nc);
+    }
+    const fm = new Int16Array(4096);
+    for (let r = 0; r < 4096; r++) {
+      const eo = new Int8Array(12);
+      for (let i = 11, x = r; i >= 0; i--) { eo[i] = x & 1; x >>= 1; }
+      const ne = new Int8Array(12);
+      for (let i = 0; i < 12; i++) ne[i] = (eo[dm.ep[i]] + dm.eo[i]) & 1;
+      fm[r] = flipRank(ne);
+    }
+    const inv = new Int8Array(12);              // inv[p] = 块从槽 p 移到的槽
+    for (let j = 0; j < 12; j++) inv[dm.ep[j]] = j;
+    const sm = new Int16Array(495);
+    for (let r = 0; r < 495; r++) {
+      const set = uncombRank(r);
+      const nset = set.map((p) => inv[p]).sort((a, b) => a - b);
+      sm[r] = combRank(nset);
+    }
+    twistMove.push(tm); flipMove.push(fm); sliceMove.push(sm);
+  }
+  return { twistMove, flipMove, sliceMove };
+}
+
+/** 联合坐标 BFS：状态 = coord*495 + sliceRank，从复原态的坐标出发精确算距离 */
+function bfsJoint(coordMove, sliceMove, coordSize, goalRank) {
+  const SL = 495;
+  const dist = new Uint8Array(coordSize * SL).fill(255);
+  dist[goalRank] = 0;
+  let front = [goalRank];
   let d = 0;
-  while (frontier.length) {
+  while (front.length) {
     d++;
     const next = [];
-    for (const arr of frontier) {
-      for (const m of PHASE2_MOVES) {
-        const t = transition(arr, m);
-        const r = permRank(t, universe);
-        if (dist[r] === -1) { dist[r] = d; next.push(t); }
+    for (const idx of front) {
+      const c = (idx / SL) | 0;
+      const s = idx - c * SL;
+      for (let mi = 0; mi < 18; mi++) {
+        const n = coordMove[mi][c] * SL + sliceMove[mi][s];
+        if (dist[n] === 255) { dist[n] = d; next.push(n); }
       }
     }
-    frontier = next;
+    front = next;
+  }
+  return dist;
+}
+
+/* ---------- 阶段二：排列转移表（Lehmer 编解码一次成型） ----------
+   cp / ep8 各自 × 中层边排列 sp 组成联合表，比三张单排列表的启发强得多。 */
+/** universe（升序值域）上的排列解码：rank → 排列（元素为 universe 的值） */
+function permUnrank(rank, universe) {
+  const items = universe.slice();
+  const out = [];
+  let r = rank;
+  for (let k = universe.length; k > 0; k--) {
+    const f = FACT[k - 1];
+    const q = (r / f) | 0;
+    r -= q * f;
+    out.push(items.splice(q, 1)[0]);
+  }
+  return out;
+}
+
+/** universe 上的排列在每步 PHASE2_MOVES 下的转移表（applyOne 把结果写进 scratch） */
+function buildPermTrans(universe, applyOne) {
+  const n = FACT[universe.length];
+  const len = universe.length;
+  const idx = new Int8Array(12).fill(-1);
+  universe.forEach((v, i) => { idx[v] = i; });
+  const tabs = PHASE2_MOVES.map(() => new Int32Array(n));
+  const scratch = new Int8Array(len);
+  for (let r = 0; r < n; r++) {
+    const arr = permUnrank(r, universe);
+    for (let mi = 0; mi < PHASE2_MOVES.length; mi++) {
+      applyOne(arr, PHASE2_MOVES[mi], scratch);
+      let rank = 0;
+      for (let i = 0; i < len; i++) {
+        const ai = idx[scratch[i]];
+        let less = 0;
+        for (let j = i + 1; j < len; j++) if (idx[scratch[j]] < ai) less++;
+        rank = rank * (len - i) + less;
+      }
+      tabs[mi][r] = rank;
+    }
+  }
+  return tabs;
+}
+
+/** 联合坐标 BFS（阶段二版）：状态 = permRank*24 + slicePermRank，复原态 = 0 */
+function bfsJoint2(permTrans, spTrans, permSize) {
+  const SP = FACT[4];   // 24
+  const dist = new Uint8Array(permSize * SP).fill(255);
+  dist[0] = 0;
+  let front = [0];
+  let d = 0;
+  while (front.length) {
+    d++;
+    const next = [];
+    for (const idx of front) {
+      const p = (idx / SP) | 0;
+      const s = idx - p * SP;
+      for (let mi = 0; mi < PHASE2_MOVES.length; mi++) {
+        const n = permTrans[mi][p] * SP + spTrans[mi][s];
+        if (dist[n] === 255) { dist[n] = d; next.push(n); }
+      }
+    }
+    front = next;
   }
   return dist;
 }
@@ -500,91 +581,30 @@ function bfsPerm(start, universe, transition) {
 export function buildTables() {
   if (TABLES) return TABLES;
 
-  /* ---------- 阶段一 ---------- */
-  const distTwist = new Int8Array(6561).fill(-1);   // 3^8
-  const distFlip = new Int8Array(4096).fill(-1);    // 2^12（12 条边全参与排名）
-  const distSlice = new Int16Array(495).fill(-1);   // C(12,4)
-  distTwist[0] = 0; distFlip[0] = 0;
-  // 中层槽位组合的「真实」目标排名 —— 不能想当然用 0（0 对应的是前四个槽位）
+  /* ---------- 阶段一：联合剪枝表（twist×slice / flip×slice） ----------
+     中层槽位组合的「真实」目标排名 —— 不能想当然用 0（0 对应的是前四个槽位） */
   const sliceGoalRank = combRank(SLICE_EDGE_IDX);
-  distSlice[sliceGoalRank] = 0;
+  const { twistMove, flipMove, sliceMove } = buildMoveTransitions();
+  const distTwistSlice = bfsJoint(twistMove, sliceMove, 6561, sliceGoalRank);
+  const distFlipSlice = bfsJoint(flipMove, sliceMove, 4096, sliceGoalRank);
 
-  { // 角朝向
-    let front = [Int8Array.from([0, 0, 0, 0, 0, 0, 0, 0])];
-    let d = 0;
-    while (front.length) {
-      d++;
-      const next = [];
-      for (const co of front) {
-        for (const m of MOVES18) {
-          const dm = cubieMove(m);
-          const nc = new Int8Array(8);
-          for (let i = 0; i < 8; i++) nc[i] = (co[dm.cp[i]] + dm.co[i]) % 3;
-          const k = twistRank(nc);
-          if (distTwist[k] === -1) { distTwist[k] = d; next.push(nc); }
-        }
-      }
-      front = next;
-    }
-  }
-  { // 边朝向
-    let front = [new Int8Array(12)];
-    let d = 0;
-    while (front.length) {
-      d++;
-      const next = [];
-      for (const eo of front) {
-        for (const m of MOVES18) {
-          const dm = cubieMove(m);
-          const ne = new Int8Array(12);
-          for (let i = 0; i < 12; i++) ne[i] = (eo[dm.ep[i]] + dm.eo[i]) % 2;
-          const k = flipRank(ne);
-          if (distFlip[k] === -1) { distFlip[k] = d; next.push(ne); }
-        }
-      }
-      front = next;
-    }
-  }
-  { // 中层块位置集合
-    let front = [SLICE_EDGE_IDX.slice()];
-    let d = 0;
-    const done = new Set([sliceGoalRank]);
-    while (front.length) {
-      d++;
-      const next = [];
-      for (const pos of front) {
-        const set = new Set(pos);
-        for (const m of MOVES18) {
-          const dm = cubieMove(m);
-          const inv = new Int8Array(12);       // inv[p] = 块从槽 p 移到的槽
-          for (let j = 0; j < 12; j++) inv[dm.ep[j]] = j;
-          const nset = [];
-          for (const p of set) nset.push(inv[p]);
-          nset.sort((a, b) => a - b);
-          const k = combRank(nset);
-          if (!done.has(k)) { done.add(k); distSlice[k] = d; next.push(nset); }
-        }
-      }
-      front = next;
-    }
-  }
+  /* ---------- 阶段二：联合剪枝表（cp×sp / ep8×sp） ---------- */
+  const spTrans = buildPermTrans(SLICE_PIECE_IDS, (arr, m, out) => {
+    const dm = cubieMove(m);
+    for (let k = 0; k < 4; k++) out[k] = arr[SLICE_EDGE_IDX.indexOf(dm.ep[SLICE_EDGE_IDX[k]])];
+  });
+  const cpTrans = buildPermTrans(CORNER_IDS, (arr, m, out) => {
+    const dm = cubieMove(m);
+    for (let i = 0; i < 8; i++) out[i] = arr[dm.cp[i]];
+  });
+  const ep8Trans = buildPermTrans(UD_PIECE_IDS, (arr, m, out) => {
+    const dm = cubieMove(m);
+    for (let k = 0; k < 8; k++) out[k] = arr[UD_EDGE_IDX.indexOf(dm.ep[UD_EDGE_IDX[k]])];
+  });
+  const distCpSp = bfsJoint2(cpTrans, spTrans, FACT[8]);
+  const distEp8Sp = bfsJoint2(ep8Trans, spTrans, FACT[8]);
 
-  /* ---------- 阶段二 ---------- */
-  const solved = faceletsToCubie(SOLVED);
-  const distCp = bfsPerm(extractCp(solved), CORNER_IDS, (arr, m) => {
-    const dm = cubieMove(m);
-    return Int8Array.from(arr.map((_, i) => arr[dm.cp[i]]));
-  });
-  const distEp8 = bfsPerm(extractEp8(solved), UD_PIECE_IDS, (arr, m) => {
-    const dm = cubieMove(m);
-    return Int8Array.from(UD_EDGE_IDX.map((slot) => arr[UD_EDGE_IDX.indexOf(dm.ep[slot])]));
-  });
-  const distSp = bfsPerm(extractSp(solved), SLICE_PIECE_IDS, (arr, m) => {
-    const dm = cubieMove(m);
-    return Int8Array.from(SLICE_EDGE_IDX.map((slot) => arr[SLICE_EDGE_IDX.indexOf(dm.ep[slot])]));
-  });
-
-  TABLES = { distTwist, distFlip, distSlice, distCp, distEp8, distSp };
+  TABLES = { distTwistSlice, distFlipSlice, distCpSp, distEp8Sp };
   return TABLES;
 }
 
@@ -595,32 +615,36 @@ export function h1(st) {
   for (let i = 0; i < 8; i++) tw = tw * 3 + st.co[i];
   let fl = 0;
   for (let i = 0; i < 12; i++) fl = fl * 2 + st.eo[i];
-  return Math.max(
-    t.distTwist[tw],
-    t.distFlip[fl],
-    t.distSlice[combRank(sliceInto(st))],
-  );
+  const sr = combRank(sliceInto(st));
+  const d1 = t.distTwistSlice[tw * 495 + sr];
+  const d2 = t.distFlipSlice[fl * 495 + sr];
+  // 255 只会出现在非法坐标上（朝向和不对的状态已在校验阶段被拒绝），兜底返回一个保守值
+  if (d1 === 255 || d2 === 255) return 14;
+  return d1 > d2 ? d1 : d2;
 }
 
 export function coord2(st) {
   const t = buildTables();
-  return Math.max(
-    t.distCp[rankCorner(st.cp)],
-    t.distEp8[rankEp8(ep8Of(st))],
-    t.distSp[rankSp(spOf(st))],
-  );
+  const sp = rankSp(spOf(st));
+  const d1 = t.distCpSp[rankCorner(st.cp) * 24 + sp];
+  const d2 = t.distEp8Sp[rankEp8(ep8Of(st)) * 24 + sp];
+  // 255 只会出现在非法坐标上，兜底返回一个保守值
+  if (d1 === 255 || d2 === 255) return 20;
+  return d1 > d2 ? d1 : d2;
 }
 
 
-/** 诊断：把 h1 的三个分量拆开（仅供测试用） */
+/** 诊断：把 h1 的两个联合分量拆开（仅供测试用） */
 export function h1debug(st) {
   const t = buildTables();
-  const tw = twistRank(st.co);
-  const fl = flipRank(st.eo);
-  const sl = combRank(slicePositions(st));
+  let tw = 0;
+  for (let i = 0; i < 8; i++) tw = tw * 3 + st.co[i];
+  let fl = 0;
+  for (let i = 0; i < 12; i++) fl = fl * 2 + st.eo[i];
+  const sr = combRank(sliceInto(st));
   return {
-    tw, fl, sl,
-    dTw: t.distTwist[tw], dFl: t.distFlip[fl], dSl: t.distSlice[sl],
+    tw, fl, sl: sr,
+    dTwSl: t.distTwistSlice[tw * 495 + sr], dFlSl: t.distFlipSlice[fl * 495 + sr],
     co: [...st.co], eo: [...st.eo], slice: slicePositions(st),
   };
 }

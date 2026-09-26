@@ -12,6 +12,8 @@ const UI = {
   bubbleTimers: {},
   bannerTimer: null,
   toastTimer: null,
+  trickSig: ['', '', '', ''],  // 各座位当前出牌签名，用于只在变化时触发飞入动画
+  dealAnim: false,       // 下一轮 renderHand 是否播发牌动画
 
   $: id => document.getElementById(id),
 
@@ -93,7 +95,7 @@ const UI = {
       for (const id of p) if (!map.includes(id)) map.push(id);
       this.settings.seatMap = map.slice(0, 3);
       [1, 2, 3].forEach(seat => {
-        const sel = this.$('gd-seat-' + seat);
+        const sel = this.$('gd-pick-' + seat);
         sel.innerHTML = p.map(id => {
           const pe = GD_PERSONAS.find(x => x.id === id);
           return `<option value="${id}">${pe.name}</option>`;
@@ -117,20 +119,15 @@ const UI = {
 
   wireSetup() {
     [1, 2, 3].forEach(seat => {
-      this.$('gd-seat-' + seat).addEventListener('change', e => {
-        this.settings.seatMap[seat - 1] = e.target.value;
-        // 防重复：若与其它座位冲突则交换
-        const seen = {};
-        let dup = false;
-        this.settings.seatMap.forEach(id => { if (seen[id]) dup = true; seen[id] = 1; });
-        if (dup) {
-          const rest = this.settings.picked.filter(id => !this.settings.seatMap.includes(id) ||
-            this.settings.seatMap.indexOf(id) !== this.settings.seatMap.lastIndexOf(id));
-          // 简单修复：重置为 picked 顺序
-          this.settings.seatMap = this.settings.picked.slice();
-          [1, 2, 3].forEach(s => { this.$('gd-seat-' + s).value = this.settings.seatMap[s - 1]; });
-          this.toast('座位不能重复，已自动重排');
-        }
+      this.$('gd-pick-' + seat).addEventListener('change', e => {
+        const nv = e.target.value;
+        const map = this.settings.seatMap;
+        const old = map[seat - 1];
+        const other = map.indexOf(nv);
+        // 与持有该角色的座位互换，天然不重复
+        if (other >= 0 && other !== seat - 1) map[other] = old;
+        map[seat - 1] = nv;
+        [1, 2, 3].forEach(s => { this.$('gd-pick-' + s).value = map[s - 1]; });
         this.saveSettings();
       });
     });
@@ -153,6 +150,7 @@ const UI = {
     PersonaChat.settings = this.settings;
     this.$('gd-setup').hidden = true;
     this.$('gd-game').hidden = false;
+    document.body.classList.add('gd-playing');
     this.$('gd-chat-list').innerHTML = '';
     this.$('gd-chat-note').textContent = s.apiKey
       ? '已连接 LLM，角色会用大模型自由对话。'
@@ -172,6 +170,7 @@ const UI = {
   /* ==================== 牌桌渲染 ==================== */
   onRoundStart() {
     this.selected.clear();
+    this.dealAnim = true;   // 新一局：手牌逐张发牌入场
     this.syncHand(true);
     this.banner(`第 ${Game.S.roundNo} 局 · 打 ${Game.levelText()}`);
   },
@@ -214,6 +213,10 @@ const UI = {
     const t = S.seatTrick[i];
     if (t === 'pass') trickHtml = '<span class="gd-pass-tag">不出</span>';
     else if (t) trickHtml = t.cards.map(c => this.cardHtml(c, true, S.level)).join('');
+    // 出牌/不出发生变化时才触发飞入动画（renderAll 每步都会重绘所有座位）
+    const sig = t === 'pass' ? 'p' : (t ? t.cards.map(c => c.id).join('.') : '');
+    const fly = !!sig && sig !== this.trickSig[i];
+    this.trickSig[i] = sig;
     const oldBubble = this.$('gd-bubble-' + i);
     const bubbleText = oldBubble ? oldBubble.textContent : '';
     const bubbleShown = oldBubble ? oldBubble.classList.contains('show') : false;
@@ -221,7 +224,7 @@ const UI = {
     el.classList.toggle('active', S.current === i && !S.roundOver);
     el.innerHTML = `
       <div class="gd-bubble${bubbleShown ? ' show' : ''}" id="gd-bubble-${i}"></div>
-      <div class="gd-seat-trick">${trickHtml}</div>
+      <div class="gd-seat-trick${fly ? ' is-new' : ''}">${trickHtml}</div>
       <div class="gd-seat-avatar-wrap" style="--pc:${color}">
         <div class="gd-seat-avatar"><img src="${avatarSrc}" alt=""></div>
         ${p.finishRank ? '' : `<div class="gd-seat-count-badge">${p.hand.length}</div>`}
@@ -241,8 +244,7 @@ const UI = {
   },
 
   /* ---------------- 手牌 ---------------- */
-  syncHand(rebuild) {
-    const S = Game.S;
+  syncHand(rebuild) {    const S = Game.S;
     if (!S) return;
     const hand = S.players[0].hand;
     const inHand = new Set(hand.map(c => c.id));
@@ -275,12 +277,15 @@ const UI = {
   renderHand() {
     const S = Game.S;
     const hand = this.$('gd-hand');
+    const dealing = this.dealAnim;   // 仅本帧播发牌动画，之后的重绘（点选等）不再播
+    this.dealAnim = false;
     hand.innerHTML = '';
     const pick = this.pickMode;
     // 自适应重叠量：列越高（张数越多）重叠越大，确保整列都显示在手牌区内
     const root = document.querySelector('.gd-page');
     const cardH = parseFloat(getComputedStyle(root).getPropertyValue('--gd-card-h')) || 108;
     const colH = this.$('gd-hand-scroll').clientHeight - 26;
+    let n = 0;
     this.handCols.forEach((col, ci) => {
       const band = col.length > 1 ? Math.max(13, Math.min(34, (colH - cardH) / (col.length - 1))) : 30;
       const colEl = document.createElement('div');
@@ -289,6 +294,11 @@ const UI = {
       colEl.style.setProperty('--gd-band', band + 'px');
       col.forEach(card => {
         const el = this.buildCardEl(card, false, S.level);
+        if (dealing) {
+          el.classList.add('deal');
+          el.style.animationDelay = Math.min(n * 22, 720) + 'ms';
+        }
+        n++;
         if (this.selected.has(card.id)) el.classList.add('selected');
         if (pick) {
           if (pick.eligible(card)) el.classList.add('pickable');
@@ -302,6 +312,9 @@ const UI = {
       });
       hand.appendChild(colEl);
     });
+    // 出牌按钮同步已选张数
+    this.$('gd-btn-play').textContent =
+      (this.selected.size && !this.pickMode) ? `出牌 · ${this.selected.size}` : '出牌';
   },
 
   cardHtml(c, mini, level) {
@@ -315,6 +328,7 @@ const UI = {
       <span class="gd-c-rank">${label}</span>
       <span class="gd-c-suit">${suit}</span>
       <span class="gd-c-big">${joker ? (c.rank === 17 ? '🃏' : '🃟') : suit}</span>
+      <span class="gd-c-corner"><span class="r">${label}</span><span class="s">${suit}</span></span>
       ${wild}</div>`;
   },
   buildCardEl(c, mini, level) {
@@ -759,7 +773,9 @@ const UI = {
   backToSetup() {
     this.$('gd-game').hidden = true;
     this.$('gd-setup').hidden = false;
+    document.body.classList.remove('gd-playing');
     this.$('gd-chat').classList.remove('open');
+    window.scrollTo(0, 0);
   }
 };
 

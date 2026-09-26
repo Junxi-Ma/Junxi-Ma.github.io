@@ -7,7 +7,7 @@
 import * as THREE from 'three';
 import {
   solvedFacelets, applyMove, solve, parseScramble, randomScramble,
-  describeMove, FACES, isSolved,
+  describeMove, FACES, buildTables,
 } from './solver.js';
 
 /* ================= 配色（唯一来源） ================= */
@@ -20,6 +20,7 @@ const FACE_COLORS = {
   B: '#0046ad',
 };
 const FACE_LABELS = { U: '上', D: '下', R: '右', L: '左', F: '前', B: '后' };
+const COLOR_NAMES = { U: '白', D: '黄', R: '红', L: '橙', F: '绿', B: '蓝' };
 const FACE_BASE = { U: 0, R: 9, F: 18, D: 27, L: 36, B: 45 };
 
 // 每步在三维中的旋转轴与基准角（顺时针对应 solver 的无前缀方向）
@@ -41,6 +42,36 @@ let solution = null;       // { moves: [...], ms }
 let stepIndex = 0;         // 当前已执行到第几步
 let animating = false;
 let playing = false;
+
+/* ================= 中心色与状态换算 ================= */
+
+/** 六个中心贴纸当前的颜色（字母）—— 中心不动，定义各面的颜色归属 */
+function centerOfFaces() {
+  const out = {};
+  for (const f of FACES) out[f] = facelets[FACE_BASE[f] + 4];
+  return out;
+}
+
+/** 每面同色即算复原（不要求颜色对号，支持任意持握方向 / 异配色魔方） */
+function isCubeSolved() {
+  return FACES.every((f) => {
+    const c = facelets[FACE_BASE[f] + 4];
+    for (let i = 0; i < 9; i++) if (facelets[FACE_BASE[f] + i] !== c) return false;
+    return true;
+  });
+}
+
+/** 把「涂色字母」按中心色翻译成「面字母」再交给求解器。
+    标准配色下是恒等变换；魔方整体换色或换持握方向也能正确求解。 */
+function faceletsForSolve() {
+  const centers = centerOfFaces();
+  const toFace = {};
+  for (const f of FACES) {
+    if (toFace[centers[f]]) throw new Error('六个中心颜色必须各不相同');
+    toFace[centers[f]] = f;
+  }
+  return facelets.map((l) => toFace[l]);
+}
 
 /* ================= 三维场景 ================= */
 const stage = document.getElementById('stage');
@@ -235,9 +266,10 @@ function animateMove(move, duration = 380) {
           c.mesh.rotation.set(0, 0, 0);
         }
         pivot.rotation.set(0, 0, 0);
-        // 用 solver 结果刷新贴纸颜色
+        // 用 solver 结果刷新贴纸颜色与展开图
         facelets = applyMove(facelets, move);
         updateCubeletColors();
+        renderNet();
         resolve();
       }
     }
@@ -328,10 +360,10 @@ function renderPalette() {
     sw.className = 'cs-swatch' + (f === selectedColor ? ' is-active' : '');
     sw.style.background = FACE_COLORS[f];
     sw.dataset.face = f;
-    sw.title = `${FACE_LABELS[f]}面（${f}）`;
+    sw.title = `${COLOR_NAMES[f]}色`;
     const lbl = document.createElement('span');
     lbl.className = 'cs-swatch-label';
-    lbl.textContent = FACE_LABELS[f];
+    lbl.textContent = COLOR_NAMES[f];
     sw.appendChild(lbl);
     paletteEl.appendChild(sw);
   }
@@ -343,11 +375,12 @@ paletteEl.addEventListener('click', (e) => {
   renderPalette();
 });
 
-/* 面颜色图例 */
+/* 面颜色图例：随中心色实时显示当前各面的颜色归属 */
 function renderLegend() {
   const el = document.getElementById('face-legend');
+  const centers = centerOfFaces();
   el.innerHTML = FACES.map((f) =>
-    `<span><i style="background:${FACE_COLORS[f]}"></i>${FACE_LABELS[f]}=${f}</span>`
+    `<span><i style="background:${FACE_COLORS[centers[f]]}"></i>${FACE_LABELS[f]}面</span>`
   ).join('');
 }
 
@@ -375,13 +408,14 @@ function invalidateSolution() {
   stepIndex = 0;
   solutionEl.hidden = true;
   stopPlay();
-  setStatus('请在右侧输入当前魔方状态');
+  renderLegend();
+  setStatus('展开图已变化，需要重新求解');
 }
 
 async function doSolve() {
   if (animating) return;
   // 先做一次轻量合法性提示
-  if (isSolved(facelets)) {
+  if (isCubeSolved()) {
     setStatus('当前已是复原状态，无需求解。', 'ok');
     return;
   }
@@ -391,7 +425,7 @@ async function doSolve() {
   await new Promise((r) => setTimeout(r, 30));
   let res;
   try {
-    res = solve(facelets, { timeoutMs: 60000 });
+    res = solve(faceletsForSolve(), { timeoutMs: 60000 });
   } catch (e) {
     btnSolve.disabled = false;
     setStatus('无法求解：' + e.message, 'err');
@@ -483,6 +517,7 @@ async function jumpToStep(target) {
   }
   stepIndex = target;
   updateCubeletColors();
+  renderNet();
   currentMoveEl.textContent = target === 0 ? '—'
     : `${solution.moves[target - 1]}  (${describeMove(solution.moves[target - 1])})`;
   if (stepIndex >= solution.moves.length) currentMoveEl.textContent = '✓ 还原完成';
@@ -544,4 +579,6 @@ initThree();
 renderPalette();
 renderNet();
 renderLegend();
-setStatus('请在右侧输入当前魔方状态（或点击「随机打乱」试玩）');
+setStatus('在展开图上涂出当前魔方状态，或点「随机打乱」试玩');
+/* 空闲时预建剪枝表（约 0.5s），首次点「验证并求解」就不用等这一步 */
+setTimeout(() => { try { buildTables(); } catch { /* 求解时会再建 */ } }, 2500);

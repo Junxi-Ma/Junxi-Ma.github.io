@@ -83,7 +83,7 @@
         "棋牌"
       ],
       "icon": "🃏",
-      "order": 3
+      "order": 4
     },
     {
       "path": "tools/cube-solver/",
@@ -94,7 +94,7 @@
         "益智"
       ],
       "icon": "🧩",
-      "order": 4
+      "order": 5
     }
   ]
 }

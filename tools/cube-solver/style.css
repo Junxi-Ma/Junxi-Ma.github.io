@@ -1,35 +1,42 @@
 /* ============================================================
    cube-solver — 魔方还原助手样式
+   页面骨架与全站工具页一致，工具本体自成一体
    ============================================================ */
-.cs-page {
-  min-height: 100vh;
-  padding: clamp(16px, 3vw, 32px);
-  max-width: 1280px;
-  margin: 0 auto;
-  color: var(--text-1);
-  font-family: var(--font-sans);
-}
 
-/* ---------- 头部 ---------- */
-.cs-head {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
+/* ---------- 页面骨架：与 roll-call 等工具页一致 ---------- */
+.tool {
+  padding-top: calc(var(--nav-h) + clamp(40px, 7vw, 72px));
+  padding-bottom: var(--section-y);
 }
-.cs-head h1 {
-  font-size: clamp(22px, 3vw, 30px);
-  margin: 0;
-  letter-spacing: 0.02em;
+.tool__head {
+  max-width: 720px;
+  margin-bottom: 28px;
 }
-.cs-sub {
-  margin: 6px 0 0;
+.tool__head h1 {
+  font-size: var(--fs-h1);
+  letter-spacing: -0.02em;
+  margin-top: 22px;
+}
+.tool__head p {
+  margin-top: 14px;
   color: var(--text-2);
-  font-size: 14px;
+  line-height: 1.7;
 }
-.cs-head-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+@media (max-width: 640px) {
+  .tool__head h1 { font-size: clamp(28px, 8vw, 36px); }
+}
+.article-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13.5px;
+  color: var(--text-3);
+  text-decoration: none;
+  transition: color var(--dur-fast) ease;
+}
+.article-back:hover { color: var(--text-1); }
+.article-back .arr { transition: transform var(--dur-fast) ease; }
+.article-back:hover .arr { transform: translateX(-3px); }
 
 /* ---------- 按钮 ---------- */
 .btn {
@@ -55,6 +62,17 @@
 }
 .btn-primary:hover { background: var(--accent-fill-hover); }
 
+/* ---------- 操作行 ---------- */
+.cs-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.cs-toolbar .btn-primary { padding: 10px 22px; font-size: 15px; }
+.cs-spacer { flex: 1; }
+
 /* ---------- 主体两栏 ---------- */
 .cs-main {
   display: grid;
@@ -73,7 +91,7 @@
 }
 
 /* ---------- 3D 舞台 ---------- */
-.cs-3d-pane { position: sticky; top: 16px; }
+.cs-3d-pane { position: sticky; top: calc(var(--nav-h) + 16px); }
 .cs-3d-stage {
   position: relative;
   width: 100%;
@@ -190,14 +208,6 @@
 }
 
 /* ---------- 操作行 ---------- */
-.cs-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-.cs-actions .btn-primary { padding: 10px 20px; font-size: 15px; }
-.cs-spacer { flex: 1; }
 .cs-face-legend {
   display: flex;
   gap: 8px;
