@@ -290,10 +290,13 @@ create index if not exists outing_entries_room_idx on public.outing_entries (roo
 alter table public.outing_rooms  enable row level security;
 alter table public.outing_entries enable row level security;
 
+drop policy if exists "outing rooms readable" on public.outing_rooms;
 create policy "outing rooms readable" on public.outing_rooms
   for select to anon, authenticated using (true);
+drop policy if exists "outing rooms creatable" on public.outing_rooms;
 create policy "outing rooms creatable" on public.outing_rooms
   for insert to anon, authenticated with check (true);
+drop policy if exists "outing rooms editable with code" on public.outing_rooms;
 create policy "outing rooms editable with code" on public.outing_rooms
   for update to anon, authenticated using (true) with check (true);
 
@@ -306,15 +309,19 @@ as $$
   select exists (select 1 from public.outing_rooms where code = p_code);
 $$;
 
+drop policy if exists "outing entries readable" on public.outing_entries;
 create policy "outing entries readable" on public.outing_entries
   for select to anon, authenticated using (true);
+drop policy if exists "outing entries insertable" on public.outing_entries;
 create policy "outing entries insertable" on public.outing_entries
   for insert to anon, authenticated
   with check (public.outing_room_exists(room_code));
+drop policy if exists "outing entries editable" on public.outing_entries;
 create policy "outing entries editable" on public.outing_entries
   for update to anon, authenticated
   using (public.outing_room_exists(room_code))
   with check (public.outing_room_exists(room_code));
+drop policy if exists "outing entries deletable" on public.outing_entries;
 create policy "outing entries deletable" on public.outing_entries
   for delete to anon, authenticated
   using (public.outing_room_exists(room_code));
