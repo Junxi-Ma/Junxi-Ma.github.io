@@ -11,7 +11,27 @@ import { getSupabase, isConfigured } from './supabase.js';
 let sb = null;
 let user = null;
 let isAdmin = false;
+let pendingOpen = false;
 let els = null; // 弹窗元素引用
+
+/* ---------- 同步读取 supabase-js 缓存的会话 ----------
+   避免换页时按钮先显示「登录」、等客户端加载完才闪变成昵称。
+   缓存键：sb-<项目ref>-auth-token，值为会话 JSON（含 user）。 */
+function cachedUser() {
+  if (!isConfigured()) return null;
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (!k || !k.startsWith('sb-') || !k.endsWith('-auth-token')) continue;
+      const raw = JSON.parse(localStorage.getItem(k) || 'null');
+      const u = raw?.user || raw?.currentUser?.user || null;
+      if (u?.id) return u;
+    }
+  } catch {
+    /* 忽略 */
+  }
+  return null;
+}
 
 /* ---------- 展示名 ---------- */
 function displayName(u) {
@@ -36,7 +56,14 @@ function injectButton() {
   btn.className = 'nav-auth-btn';
   btn.id = 'nav-auth';
   btn.textContent = '登录';
-  btn.addEventListener('click', () => openModal());
+  btn.addEventListener('click', () => {
+    if (!els) {
+      // 客户端尚未加载完：记住意图，加载完自动打开
+      pendingOpen = true;
+      return;
+    }
+    openModal();
+  });
   actions.insertBefore(btn, document.getElementById('theme-toggle'));
 }
 
@@ -322,10 +349,13 @@ async function refreshIdentity() {
 
 /* ---------- 初始化 ---------- */
 if (isConfigured()) {
+  // 立即用缓存会话渲染按钮（同步、无闪烁）；客户端加载后再做权威校验
+  user = cachedUser();
+  injectButton();
+  renderButton();
   getSupabase().then((client) => {
     if (!client) return;
     sb = client;
-    injectButton();
     buildModal();
     const refresh = async () => {
       try {
@@ -339,5 +369,9 @@ if (isConfigured()) {
     };
     refresh();
     sb.auth.onAuthStateChange(() => refresh());
+    if (pendingOpen) {
+      pendingOpen = false;
+      openModal();
+    }
   });
 }
