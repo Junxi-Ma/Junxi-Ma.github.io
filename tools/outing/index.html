@@ -251,10 +251,57 @@
     }
     .howto__row b { color: var(--text-1); font-weight: 600; }
 
+    .on-join-row {
+      display: flex;
+      gap: 10px;
+      align-items: stretch;
+    }
+    .on-join-row .input { flex: 1; min-width: 0; }
+    .on-join-row .btn { flex: none; white-space: nowrap; }
+
+    .on-caps-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
+      gap: 8px;
+      margin-top: 4px;
+    }
+    .on-cap-cell {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--surface-1);
+      padding: 7px 10px;
+    }
+    .on-cap-date {
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      color: var(--text-2);
+      white-space: nowrap;
+    }
+    .on-cap-cell input {
+      width: 52px;
+      font: inherit;
+      font-size: 13.5px;
+      text-align: center;
+      color: var(--text-1);
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 4px 6px;
+    }
+    .on-cap-cell input:focus {
+      outline: none;
+      border-color: rgba(242, 169, 59, 0.55);
+    }
+
     @media (max-width: 560px) {
       .seg-wrap { flex-direction: column; align-items: stretch; }
       .seg-step { text-align: center; }
       .day-card__head { flex-direction: column; align-items: flex-start; gap: 6px; }
+      .on-join-row { flex-direction: column; align-items: stretch; }
     }
   </style>
 </head>
@@ -319,9 +366,9 @@
             <div class="field-row">
               <div class="field" style="flex:1.2">
                 <label class="field__label" for="onJoinCode">加入房间</label>
-                <div class="input-suffix">
+                <div class="on-join-row">
                   <input class="input" id="onJoinCode" maxlength="6" placeholder="输入班长发的房间码" style="text-transform:uppercase" autocapitalize="characters">
-                  <button class="btn btn--primary btn--sm" id="onJoin" type="button">进入</button>
+                  <button class="btn btn--primary" id="onJoin" type="button">进入房间</button>
                 </div>
                 <span class="field__hint">或直接打开班长发的加入链接，会自动进入房间。</span>
               </div>
@@ -340,12 +387,16 @@
                     <input class="input" type="date" id="onEnd">
                   </div>
                   <div class="field">
-                    <label class="field__label" for="onCap">每天可外出人数</label>
+                    <label class="field__label" for="onCap">默认每天可外出人数</label>
                     <div class="input-suffix">
                       <input class="input" type="number" id="onCap" min="1" max="99" inputmode="numeric" value="3">
                       <span class="input-suffix__unit">人/天</span>
                     </div>
                   </div>
+                </div>
+                <div class="field" style="margin-top:14px">
+                  <span class="field__label">每天名额 <span class="badge">可逐日调整</span></span>
+                  <div class="on-caps-grid" id="onCaps"></div>
                 </div>
                 <div class="field" style="margin-top:14px">
                   <span class="field__label">理由权重 <span class="badge">越大越优先</span></span>

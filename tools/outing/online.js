@@ -39,9 +39,11 @@ const isWeekend = (iso) => [0, 6].includes(parseISO(iso).getUTCDay());
 
 /* ================= 状态 ================= */
 let sb = null;
+let capsOk = false;       // 数据库是否已支持逐日名额（caps 列）
 let room = null;          // {code, start_date, end_date, daily_cap, weights, allow_fill, result, result_at, dates}
 let entries = [];
 let editingId = null;     // 正在编辑的条目 id
+let pendingCaps = [];     // 创建表单里的逐日名额
 let channel = null;
 let pollTimer = null;
 let resultOpen = false;
@@ -62,6 +64,11 @@ function clientId() {
 
 function roomDates(r) { return dateRange(r.start_date, r.end_date); }
 function roomWithDates(r) { return { ...r, dates: roomDates(r) }; }
+/** 第 di 天的名额：逐日设置优先，否则用默认 daily_cap */
+function capOf(di) {
+  const c = room.caps?.[di];
+  return (c === 0 || c) ? c : (room.daily_cap ?? 3);
+}
 
 /* ================= 页签联动 ================= */
 function panelVisible(step) {
@@ -99,6 +106,11 @@ async function createRoom() {
   if (parseISO(e) < parseISO(s)) { toast('结束日期不能早于开始日期', true); return; }
   const dates = dateRange(s, e);
   if (!dates.length || dates.length > MAX_DAYS) { toast(`日期范围需在 1 ~ ${MAX_DAYS} 天`, true); return; }
+  const caps = dates.map((_, i) => (pendingCaps[i] ?? q));
+  const capsDiffer = caps.some((c) => c !== q);
+  if (capsDiffer && !capsOk) {
+    toast('数据库还没启用逐日名额（重跑 supabase/schema.sql 后生效），本次按统一名额创建', true);
+  }
   const payload = {
     code: randomCode(),
     start_date: s,
@@ -106,6 +118,7 @@ async function createRoom() {
     daily_cap: q,
     weights: weightInputs(),
     allow_fill: $('onFill').getAttribute('aria-checked') === 'true',
+    ...(capsOk ? { caps: capsDiffer ? caps : null } : {}),
   };
   // 房间码冲突自动重试
   for (let i = 0; i < 5; i++) {
@@ -287,7 +300,7 @@ function renderRoom() {
   $('onRoom').hidden = false;
   $('onCode').textContent = room.code;
   $('onRange').textContent = `${room.start_date} 至 ${room.end_date}（${room.dates.length} 天）`;
-  $('onCapText').textContent = room.daily_cap;
+  $('onCapText').textContent = `${room.daily_cap} 人/天` + (room.caps ? '（逐日可不同）' : '');
   renderDateGrid();
   renderResultBanner();
 }
@@ -298,7 +311,7 @@ function renderDateGrid() {
       <input type="checkbox" value="${i}">
       <span class="date-cell__dow">${dowOf(iso)}</span>
       <span class="date-cell__day">${shortDate(iso)}</span>
-      <span class="date-cell__slot">${room.daily_cap}名额</span>
+      <span class="date-cell__slot">${capOf(i)}名额</span>
     </label>`).join('');
 }
 
@@ -363,7 +376,7 @@ function allocateOnline() {
   });
   const order = [...people].sort((a, b) => b.score - a.score || a.name.localeCompare(b.name, 'zh'));
   const demand = people.reduce((s, p) => s + p.need, 0);
-  const slot = room.dates.map(() => room.daily_cap);
+  const slot = room.dates.map((_, di) => capOf(di));
   const days = room.dates.map(() => []);
 
   room.dates.forEach((_, di) => {
@@ -445,11 +458,11 @@ function renderResultBanner() {
       <div class="stat"><div class="stat__label">调剂补位</div><div class="stat__value">${r.stats.fillCount}</div></div>
     </div>
     <div style="margin-top:14px">
-      ${r.days.map((d) => `
-        <div class="day-card${d.names.length < room.daily_cap ? ' is-short' : ''}">
+      ${r.days.map((d, di) => `
+        <div class="day-card${d.names.length < capOf(di) ? ' is-short' : ''}">
           <div class="day-card__head">
             <span class="day-card__date">${d.iso}<span class="dow">周${dowOf(d.iso)}</span></span>
-            <span class="day-card__cap">${d.names.length} / ${room.daily_cap} 人</span>
+            <span class="day-card__cap">${d.names.length} / ${capOf(di)} 人</span>
           </div>
           ${d.names.length ? `<div class="day-card__list">${d.names.map((x, n) => `
             <div class="pick">
@@ -486,10 +499,49 @@ async function boot() {
       '<div class="callout"><span>☁️</span><div>Supabase 加载失败，请检查网络后刷新。离线模式仍可使用。</div></div>';
     return;
   }
+  // 探测 caps 列是否存在（旧表结构降级为统一名额）
+  try {
+    const { error } = await sb.from('outing_rooms').select('caps').limit(1);
+    capsOk = !error;
+  } catch {
+    capsOk = false;
+  }
 
   // 理由权重输入行（创建房间用）
   $('onWeights').innerHTML = DEFAULT_W.map((w, i) => `
     <div class="field"><input class="input" type="number" id="onw${i}" min="0" max="99" value="${w}" aria-label="${REASONS[i]}权重"><span class="field__hint">${REASONS[i]}</span></div>`).join('');
+
+  // 逐日名额编辑器：默认取「每天人数」，可单独调整
+  const renderCapsEditor = () => {
+    const s = $('onStart').value;
+    const e = $('onEnd').value;
+    if (!isISO(s) || !isISO(e) || parseISO(e) < parseISO(s)) {
+      $('onCaps').innerHTML = '<span class="field__hint">填好日期范围后，这里可以逐天调整名额</span>';
+      pendingCaps = [];
+      return;
+    }
+    const dates = dateRange(s, e);
+    if (dates.length > MAX_DAYS) {
+      $('onCaps').innerHTML = `<span class="field__hint">日期范围最多 ${MAX_DAYS} 天</span>`;
+      pendingCaps = [];
+      return;
+    }
+    const def = Math.max(1, Math.min(99, parseInt($('onCap').value, 10) || 3));
+    pendingCaps = dates.map((_, i) => (pendingCaps[i] ?? def));
+    $('onCaps').innerHTML = dates.map((iso, i) => `
+      <div class="on-cap-cell">
+        <span class="on-cap-date">${shortDate(iso)} 周${dowOf(iso)}</span>
+        <input type="number" min="0" max="99" data-di="${i}" value="${pendingCaps[i]}" inputmode="numeric" aria-label="${iso} 名额">
+      </div>`).join('');
+  };
+  ['onStart', 'onEnd', 'onCap'].forEach((id) =>
+    $(id).addEventListener('change', renderCapsEditor));
+  $('onCaps').addEventListener('input', (e) => {
+    const di = e.target.dataset?.di;
+    if (di === undefined) return;
+    pendingCaps[+di] = Math.max(0, Math.min(99, parseInt(e.target.value, 10) || 0));
+  });
+  renderCapsEditor();
 
   $('onCreate').addEventListener('click', createRoom);
   $('onJoin').addEventListener('click', joinRoom);
