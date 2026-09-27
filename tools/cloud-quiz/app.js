@@ -233,24 +233,71 @@ function buildQueue(mode, familyId, count) {
 /* ================= 页面渲染 ================= */
 const $ = id => document.getElementById(id);
 
+const FAMILY_ACCENT = { high: 'high', mid: 'mid', low: 'low' };
+
+/** 天空高度示意图：三族按海拔排布，点云朵跳到对应云属卡片 */
+function renderSky() {
+  const sky = $('cq-sky');
+  sky.innerHTML = '';
+  const bands = [
+    { fam: 'high', height: '5000 m 以上' },
+    { fam: 'mid', height: '2500 – 5000 m' },
+    { fam: 'low', height: '2500 m 以下' },
+  ];
+  for (const band of bands) {
+    const fam = CLOUD_FAMILIES.find(f => f.id === band.fam);
+    const el = document.createElement('div');
+    el.className = 'cq-sky-band';
+    el.dataset.fam = band.fam;
+    el.innerHTML = `
+      <div class="cq-sky-band-head"><b>${fam.name}</b><i>${band.height}</i></div>
+      <div class="cq-sky-chips">
+        ${CLOUD_GENERA.filter(g => g.family === band.fam).map(g =>
+          `<button type="button" class="cq-cloud" data-genus="${g.id}" title="查看 ${g.cn} 明细"><b>${g.abbr}</b>${g.cn}</button>`).join('')}
+      </div>`;
+    sky.appendChild(el);
+  }
+  const ground = document.createElement('div');
+  ground.className = 'cq-sky-ground';
+  ground.textContent = '地面';
+  sky.appendChild(ground);
+
+  sky.addEventListener('click', e => {
+    const chip = e.target.closest('.cq-cloud');
+    if (!chip) return;
+    const box = document.getElementById('cq-genus-' + chip.dataset.genus);
+    if (!box) return;
+    box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    box.classList.remove('is-flash');
+    void box.offsetWidth;
+    box.classList.add('is-flash');
+  });
+}
+
 function renderLearn() {
   const wrap = $('cq-learn');
   wrap.innerHTML = '';
   for (const fam of CLOUD_FAMILIES) {
     const card = document.createElement('section');
     card.className = 'cq-fam';
+    card.dataset.fam = fam.id;
     const genera = CLOUD_GENERA.filter(g => g.family === fam.id);
     const generaText = genera.map(g => g.cn + ' ' + g.abbr).join('　');
     const morphText = genera.map(g => g.morph).join('·');
     card.innerHTML = `
       <header class="cq-fam-head">
-        <h3>${fam.name}<small>${fam.hint}</small></h3>
+        <h3><span class="cq-fam-dot"></span>${fam.name}<small>${fam.hint}</small></h3>
         <p class="cq-fam-line">${generaText}</p>
         <p class="cq-fam-morph">形态：<b>${morphText}</b></p>
+        <button class="btn btn--ghost btn--sm cq-fam-quiz" data-fam="${fam.id}" type="button">考这族 →</button>
       </header>`;
+    const grid = document.createElement('div');
+    grid.className = 'cq-genus-grid';
+    card.appendChild(grid);
     for (const g of genera) {
       const box = document.createElement('div');
       box.className = 'cq-genus';
+      box.id = 'cq-genus-' + g.id;
       const rows = CLOUD_SPECIES.filter(s => s.genus === g.id);
       box.innerHTML = `
         <div class="cq-genus-head">
@@ -265,7 +312,7 @@ function renderLearn() {
               <td class="cq-maskable" data-k="latin"><i>${s.latin}</i></td>
             </tr>`).join('')}
         </tbody></table>`;
-      card.appendChild(box);
+      grid.appendChild(box);
     }
     wrap.appendChild(card);
   }
@@ -285,15 +332,17 @@ function applyMasks() {
 
 /* ================= 测验流程 ================= */
 const Quiz = {
-  queue: [], idx: 0, right: 0, wrongList: [], active: false,
+  queue: [], idx: 0, right: 0, wrongList: [], active: false, streak: 0, bestStreak: 0,
 
   start(mode, familyId, count) {
     this.queue = buildQueue(mode, familyId, count);
     if (!this.queue.length) { alert('这个范围下没有可出的题'); return; }
-    this.idx = 0; this.right = 0; this.wrongList = []; this.active = true;
+    this.idx = 0; this.right = 0; this.wrongList = []; this.active = false;
+    this.streak = 0; this.bestStreak = 0;
     $('cq-config').hidden = true;
     $('cq-summary').hidden = true;
     $('cq-stage').hidden = false;
+    this.active = true;
     this.show();
   },
 
@@ -302,7 +351,8 @@ const Quiz = {
   show() {
     const q = this.cur();
     $('cq-progress').textContent = `第 ${this.idx + 1} / ${this.queue.length} 题`;
-    $('cq-score').textContent = `本组答对 ${this.right}`;
+    $('cq-progressbar-fill').style.width = ((this.idx + 1) / this.queue.length * 100) + '%';
+    this.renderScore();
     $('cq-type-tag').textContent = CQ_TYPES[q.type];
     $('cq-prompt').textContent = q.prompt;
     $('cq-prompt-sub').textContent = q.sub;
@@ -323,6 +373,12 @@ const Quiz = {
     $('cq-next').hidden = true;
   },
 
+  renderScore() {
+    let text = `本组答对 ${this.right}`;
+    if (this.streak >= 2) text += ` · 🔥 连对 ${this.streak}`;
+    $('cq-score').textContent = text;
+  },
+
   answer(i) {
     const q = this.cur();
     if (q.answered) return;
@@ -338,10 +394,17 @@ const Quiz = {
     fb.hidden = false;
     fb.className = 'cq-feedback ' + (ok ? 'is-ok' : 'is-err');
     fb.textContent = (ok ? '✓ 答对了　' : '✕ 答错了　') + q.explain;
-    if (ok) this.right++;
-    else { this.wrongList.push(q); q.missedOnce = true; }
+    if (ok) {
+      this.right++;
+      this.streak++;
+      this.bestStreak = Math.max(this.bestStreak, this.streak);
+    } else {
+      this.streak = 0;
+      this.wrongList.push(q);
+      q.missedOnce = true;
+    }
     CQStore.record(q.type, q.targetId, ok);
-    $('cq-score').textContent = `本组答对 ${this.right}`;
+    this.renderScore();
     $('cq-next').hidden = false;
     $('cq-next').focus();
     refreshStats();
@@ -367,7 +430,13 @@ const Quiz = {
     const total = this.queue.length;
     const summary = $('cq-summary');
     summary.hidden = false;
-    $('cq-summary-title').textContent = `本轮结束：${this.right} / ${total}`;
+    const rate = Math.round((this.right / total) * 100);
+    const praise = rate >= 90 ? '优秀，保持这个手感！'
+      : rate >= 70 ? '不错，把错题消灭掉就稳了。'
+      : rate >= 40 ? '多来几轮，重点啃错题。'
+      : '先去速记表遮罩背两遍，再回来战。';
+    $('cq-summary-title').textContent = `本轮 ${this.right} / ${total}（${rate}%）${this.bestStreak >= 3 ? ` · 最高连对 ${this.bestStreak}` : ''}`;
+    $('cq-summary-praise').textContent = praise;
     const seen = new Set();
     const lines = [];
     for (const q of this.queue) {
@@ -406,6 +475,7 @@ function refreshStats() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  renderSky();
   renderLearn();
   refreshStats();
 
@@ -414,12 +484,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
   $('mask-abbr').addEventListener('change', applyMasks);
   $('mask-latin').addEventListener('change', applyMasks);
+  $('mask-reveal').addEventListener('click', () => {
+    document.querySelectorAll('.cq-maskable').forEach(td => {
+      td.classList.remove('masked');
+      td.classList.add('revealed');
+    });
+  });
+  $('mask-reset').addEventListener('click', () => {
+    document.querySelectorAll('.cq-maskable').forEach(td => td.classList.remove('revealed'));
+    applyMasks();
+  });
   $('cq-learn').addEventListener('click', e => {
     const td = e.target.closest('.cq-maskable');
     if (td && td.classList.contains('masked')) {
       td.classList.add('revealed');
       td.classList.remove('masked');
     }
+  });
+  // 族头部的「考这族」：限定范围直接开考
+  $('cq-learn').addEventListener('click', e => {
+    const btn = e.target.closest('.cq-fam-quiz');
+    if (!btn) return;
+    $('cq-family').value = btn.dataset.fam;
+    switchTab('quiz');
+    Quiz.start($('cq-mode').value, btn.dataset.fam, Number($('cq-count').value));
   });
 
   $('cq-start').addEventListener('click', () => {

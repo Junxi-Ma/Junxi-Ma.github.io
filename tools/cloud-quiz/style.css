@@ -3,6 +3,9 @@
    页面骨架与全站工具页一致，工具本体自成一体
    ============================================================ */
 
+/* main.css 的 .btn 设了 display，会盖掉 hidden 属性，全局兜底 */
+.tool [hidden] { display: none !important; }
+
 /* ---------- 页面骨架：与 roll-call 等工具页一致 ---------- */
 .tool {
   padding-top: calc(var(--nav-h) + clamp(40px, 7vw, 72px));
@@ -79,6 +82,106 @@
   margin-left: auto;
 }
 
+/* ---------- 天空高度示意图 ---------- */
+.cq-sky {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  margin-bottom: 18px;
+  background: linear-gradient(180deg, #0a1122 0%, #0d1a33 46%, #12283e 74%, #0e2417 100%);
+  color: #dfe8f5;
+}
+.cq-sky-band {
+  padding: 12px 18px 14px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  min-height: 76px;
+}
+.cq-sky-band[data-fam="high"] { border-bottom: 1.5px dashed rgba(170, 200, 255, .35); }
+.cq-sky-band[data-fam="mid"]  { border-bottom: 1.5px dashed rgba(170, 200, 255, .35); }
+.cq-sky-band-head { flex: none; width: 118px; }
+.cq-sky-band-head b {
+  display: block;
+  font-size: 15px;
+  letter-spacing: .1em;
+}
+.cq-sky-band-head i {
+  font-style: normal;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  opacity: .65;
+}
+.cq-sky-chips {
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding-top: 10px;
+}
+.cq-cloud {
+  appearance: none;
+  border: none;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  position: relative;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 7px 15px;
+  border-radius: 999px;
+  background: #e6edf8;
+  color: #1c2a40;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, .35);
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.cq-cloud::before {
+  content: '';
+  position: absolute;
+  top: -6px; left: 13px;
+  width: 20px; height: 13px;
+  border-radius: 999px 999px 0 0;
+  background: inherit;
+}
+.cq-cloud::after {
+  content: '';
+  position: absolute;
+  top: -9px; right: 15px;
+  width: 13px; height: 10px;
+  border-radius: 999px 999px 0 0;
+  background: inherit;
+}
+.cq-cloud b {
+  font-family: var(--font-mono);
+  font-size: 13.5px;
+}
+.cq-cloud:hover { transform: translateY(-3px); box-shadow: 0 8px 18px rgba(0, 0, 0, .45); }
+.cq-sky-band[data-fam="high"] .cq-cloud { color: #274a80; }
+.cq-sky-band[data-fam="mid"]  .cq-cloud { color: #14614f; }
+.cq-sky-band[data-fam="low"]  .cq-cloud { color: #7a5410; }
+.cq-sky-ground {
+  padding: 8px 18px;
+  background: rgba(6, 20, 10, .55);
+  border-top: 2px solid rgba(140, 200, 120, .25);
+  font-size: 11.5px;
+  letter-spacing: .4em;
+  color: #9fc49b;
+  text-align: center;
+}
+[data-theme="light"] .cq-sky {
+  background: linear-gradient(180deg, #cfe4fb 0%, #dcedfb 46%, #e9f3fc 74%, #d9ecd2 100%);
+  color: #22344c;
+  border-color: rgba(90, 130, 180, .35);
+}
+[data-theme="light"] .cq-sky-band[data-fam="high"],
+[data-theme="light"] .cq-sky-band[data-fam="mid"] { border-bottom-color: rgba(70, 110, 160, .35); }
+[data-theme="light"] .cq-sky-ground {
+  background: rgba(190, 220, 175, .6);
+  border-top-color: rgba(90, 140, 70, .4);
+  color: #3a5c2e;
+}
+
 /* ---------- 速记表 ---------- */
 .cq-fam {
   background: var(--surface-1);
@@ -86,14 +189,42 @@
   border-radius: 16px;
   padding: 20px 22px;
   margin-bottom: 18px;
+  position: relative;
+  overflow: hidden;
 }
-.cq-fam-head { margin-bottom: 14px; }
+.cq-fam::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: var(--fam-accent, var(--accent));
+  opacity: .8;
+}
+.cq-fam[data-fam="high"] { --fam-accent: #7aa7ff; }
+.cq-fam[data-fam="mid"]  { --fam-accent: #4fd1a5; }
+.cq-fam[data-fam="low"]  { --fam-accent: #ffc03c; }
+
+.cq-fam-head {
+  margin-bottom: 16px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: start;
+  gap: 4px 12px;
+}
 .cq-fam-head h3 {
   margin: 0;
   font-size: 18px;
   display: flex;
-  align-items: baseline;
-  gap: 12px;
+  align-items: center;
+  gap: 10px;
+  grid-column: 1;
+}
+.cq-fam-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--fam-accent, var(--accent));
+  box-shadow: 0 0 10px var(--fam-accent, var(--accent));
+  flex: none;
 }
 .cq-fam-head h3 small {
   font-size: 12.5px;
@@ -101,27 +232,41 @@
   color: var(--text-3);
 }
 .cq-fam-line {
-  margin: 8px 0 0;
+  grid-column: 1;
+  margin: 6px 0 0;
   font-family: var(--font-mono);
   font-size: 13px;
   color: var(--text-2);
   line-height: 1.9;
 }
 .cq-fam-morph {
-  margin: 4px 0 0;
+  grid-column: 1;
+  margin: 2px 0 0;
   font-size: 12.5px;
   color: var(--text-3);
 }
 .cq-fam-morph b { color: var(--text-2); font-weight: 600; letter-spacing: .35em; }
+.cq-fam-quiz { grid-column: 2; grid-row: 1 / span 3; align-self: center; }
 
+.cq-genus-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+  gap: 10px;
+}
 .cq-genus {
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 12px 14px;
-  margin-bottom: 10px;
-  background: var(--surface-0, transparent);
+  background: var(--surface-2);
+  transition: border-color .3s ease, box-shadow .3s ease;
 }
-.cq-genus:last-child { margin-bottom: 0; }
+.cq-genus.is-flash {
+  animation: cqFlash 1.4s ease;
+}
+@keyframes cqFlash {
+  0%, 60% { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow, rgba(255, 192, 60, .25)); }
+  100% { border-color: var(--border); box-shadow: none; }
+}
 .cq-genus-head {
   display: flex;
   align-items: center;
@@ -133,7 +278,7 @@
   font-family: var(--font-mono);
   font-size: 13.5px;
   color: var(--accent);
-  background: var(--surface-2);
+  background: var(--surface-1);
   border: 1px solid var(--border);
   border-radius: 6px;
   padding: 1px 8px;
@@ -160,16 +305,19 @@
   font-size: 13.5px;
 }
 .cq-table td {
-  padding: 6px 10px;
+  padding: 6.5px 10px;
   border-top: 1px dashed var(--border);
   line-height: 1.6;
 }
 .cq-table tr:first-child td { border-top: none; }
+.cq-table tbody tr { transition: background .15s; }
+.cq-table tbody tr:hover { background: rgba(255, 255, 255, .035); }
+[data-theme="light"] .cq-table tbody tr:hover { background: rgba(0, 0, 0, .035); }
 .cq-table td:first-child { width: 9em; color: var(--text-1); }
 .cq-table code {
   font-family: var(--font-mono);
   font-size: 13px;
-  color: var(--text-2);
+  color: var(--text-1);
 }
 .cq-table i {
   font-family: var(--font-mono);
@@ -193,7 +341,7 @@
   color: var(--text-3);
   display: inline-flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
   flex-wrap: wrap;
 }
 .cq-mask-hint label {
@@ -266,7 +414,25 @@
   padding: 3px 12px;
 }
 
+.cq-progressbar {
+  max-width: 640px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+.cq-progressbar i {
+  display: block;
+  height: 100%;
+  width: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent-fill), #ffd479);
+  transition: width .3s ease;
+}
+
 .cq-prompt-card {
+  position: relative;
   max-width: 640px;
   background: var(--surface-1);
   border: 1px solid var(--border);
@@ -274,6 +440,17 @@
   padding: 34px 26px 26px;
   text-align: center;
   margin-bottom: 14px;
+  overflow: hidden;
+}
+.cq-prompt-card::after {
+  content: '☁';
+  position: absolute;
+  right: 20px; top: 12px;
+  font-size: 34px;
+  line-height: 1;
+  color: var(--text-1);
+  opacity: .08;
+  pointer-events: none;
 }
 .cq-prompt {
   font-family: var(--font-mono);
@@ -359,8 +536,14 @@
 
 /* ---------- 测验：总结 ---------- */
 .cq-summary h3 {
-  margin: 0 0 10px;
-  font-size: 20px;
+  margin: 0 0 6px;
+  font-size: 24px;
+  letter-spacing: -0.01em;
+}
+.cq-summary-praise {
+  margin: 0 0 6px;
+  font-size: 13.5px;
+  color: var(--text-2);
 }
 .cq-summary h4 {
   margin: 16px 0 8px;
@@ -372,8 +555,9 @@
   padding-left: 20px;
   font-size: 13.5px;
   color: var(--text-2);
-  line-height: 2;
+  line-height: 2.1;
 }
+.cq-summary li + li { border-top: 1px dashed var(--border); }
 .cq-all-right {
   color: var(--ok);
   font-size: 15px;
@@ -389,4 +573,10 @@
   .cq-options { grid-template-columns: 1fr; }
   .cq-table td:first-child { width: 7.5em; }
   .cq-stats { margin-left: 0; width: 100%; }
+  .cq-genus-grid { grid-template-columns: 1fr; }
+  .cq-fam-head { grid-template-columns: 1fr; }
+  .cq-fam-quiz { grid-column: 1; grid-row: auto; justify-self: start; }
+  .cq-sky-band { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .cq-sky-band-head { width: auto; display: flex; align-items: baseline; gap: 10px; }
+  .cq-sky-band-head b { font-size: 13.5px; }
 }

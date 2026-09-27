@@ -22,7 +22,7 @@
   </script>
   <link rel="stylesheet" href="../../assets/css/tokens.css">
   <link rel="stylesheet" href="../../assets/css/main.css">
-  <link rel="stylesheet" href="style.css?v=1">
+  <link rel="stylesheet" href="style.css?v=3">
 </head>
 <body>
   <a class="skip-link" href="#main">跳到主要内容</a>
@@ -74,10 +74,13 @@
 
       <!-- ================= 速记表 ================= -->
       <div id="cq-learn-wrap">
-        <div class="cq-mask-hint" style="margin-bottom: 14px;">
+        <div class="cq-sky" id="cq-sky"></div>
+        <div class="cq-mask-hint" style="margin: 16px 0 14px;">
           <span>遮罩自测：</span>
           <label><input type="checkbox" id="mask-abbr"> 挡住英文简写</label>
           <label><input type="checkbox" id="mask-latin"> 挡住拉丁学名</label>
+          <button class="btn btn--ghost btn--sm" id="mask-reveal" type="button">全部揭开</button>
+          <button class="btn btn--ghost btn--sm" id="mask-reset" type="button">重新遮住</button>
           <span>点被挡住的格子即可揭底</span>
         </div>
         <div id="cq-learn"></div>
@@ -92,7 +95,6 @@
                 <option value="all" selected>全科混合</option>
                 <option value="species">云类速记（简写 ↔ 中文 ↔ 拉丁）</option>
                 <option value="genus">云属框架（族属 · 简写 · 形态）</option>
-                <option value="wrong">错题重练</option>
               </select>
             </label>
           </div>
@@ -127,6 +129,7 @@
             <span class="cq-score" id="cq-score"></span>
             <span class="cq-type-tag" id="cq-type-tag"></span>
           </div>
+          <div class="cq-progressbar" aria-hidden="true"><i id="cq-progressbar-fill"></i></div>
           <div class="cq-prompt-card">
             <div class="cq-prompt" id="cq-prompt"></div>
             <div class="cq-prompt-sub" id="cq-prompt-sub"></div>
@@ -141,6 +144,7 @@
 
         <div class="cq-panel cq-summary" id="cq-summary" hidden>
           <h3 id="cq-summary-title"></h3>
+          <p class="cq-summary-praise" id="cq-summary-praise"></p>
           <div id="cq-summary-wrong"></div>
           <div class="cq-summary-actions">
             <button class="btn btn--primary" id="cq-again" type="button">再来一轮（Enter）</button>
