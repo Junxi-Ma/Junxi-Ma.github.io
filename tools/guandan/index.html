@@ -4,9 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>掼蛋单机版 — Michael</title>
-  <meta name="description" content="单机掼蛋：三档牌技 AI、可对话的角色人格、升级/带资两种模式、自由理牌与智能提示。">
+  <meta name="description" content="单机掼蛋：三档牌技 AI、个性化牌友对话、升级与带资双模式、自由理牌与智能出牌提示。">
   <meta name="theme-color" content="#0a0a0b">
-  <meta name="color-scheme" content="dark">
+  <meta name="color-scheme" content="dark light">
   <link rel="icon" type="image/svg+xml" href="../../assets/img/favicon.svg">
   <script>
     /* 首帧前定下主题，避免闪烁；无记录时默认暗色（站点基调） */
@@ -22,7 +22,7 @@
   </script>
   <link rel="stylesheet" href="../../assets/css/tokens.css">
   <link rel="stylesheet" href="../../assets/css/main.css">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=8">
 </head>
 <body class="gd-page">
   <a class="skip-link" href="#main">跳到主要内容</a>
@@ -56,129 +56,226 @@
   </header>
 
   <main id="main">
-    <!-- ================= 设置/开局界面 ================= -->
+    <!-- ================= 设置/开桌大厅 ================= -->
     <section id="gd-setup" class="gd-setup">
       <div class="container tool">
         <div class="tool__head">
           <a class="article-back" href="../../tools.html"><span class="arr">←</span>全部工具</a>
           <p class="mono-label">Tool <span>/</span> 04</p>
           <h1>掼蛋单机版</h1>
-          <p>和三位各有性格的 AI 打经典掼蛋：升级、带资两种玩法，算法出牌、LLM 陪聊（可选），手牌随便拖拽理牌。</p>
+          <p>纯单机运行的经典竞技掼蛋。与三位性格迥异的 AI 牌友同台对弈，支持升级与带资双模式、逢人配百搭、进贡抗贡与手牌自由理牌拖拽。</p>
         </div>
 
         <div class="gd-setup-card">
+          <!-- 玩法模式选择 -->
           <div class="gd-block">
-            <h2>玩法模式</h2>
-            <div class="gd-mode-row" id="gd-mode-row">
-              <label class="gd-mode">
+            <div class="gd-block-header">
+              <h2>对战模式</h2>
+              <span class="gd-sub-badge">规则正宗</span>
+            </div>
+            <div class="gd-mode-grid">
+              <label class="gd-mode-opt">
                 <input type="radio" name="gd-mode" value="shengji" checked>
-                <div class="gd-mode-card">
-                  <b>升级模式</b>
-                  <span>双下升3级 · 一三升2级 · 一四升1级，从2打到A，先进贡后开打，队友固定</span>
+                <div class="gd-mode-box">
+                  <div class="gd-mode-top">
+                    <span class="gd-mode-icon">🏆</span>
+                    <b>经典升级模式</b>
+                    <span class="gd-mode-tag">推荐</span>
+                  </div>
+                  <p>从打 2 升级到打 A。双下升 3 级，一三升 2 级，一四升 1 级；包含进贡还贡机制与固定配合队友。</p>
                 </div>
               </label>
-              <label class="gd-mode">
+              <label class="gd-mode-opt">
                 <input type="radio" name="gd-mode" value="daizi">
-                <div class="gd-mode-card">
-                  <b>带资模式</b>
-                  <span>每局按名次结算 300 / 200 / 100，不进贡，每局随机换队友，固定打2</span>
+                <div class="gd-mode-box">
+                  <div class="gd-mode-top">
+                    <span class="gd-mode-icon">🪙</span>
+                    <b>带资竞技模式</b>
+                    <span class="gd-mode-tag">快节奏</span>
+                  </div>
+                  <p>固定打 2 不进贡。每局按头游、二游、三游、末游结算分值，每轮随机轮换对家队友，胜负一目了然。</p>
                 </div>
               </label>
             </div>
           </div>
 
+          <!-- AI 牌技档位 -->
           <div class="gd-block">
-            <h2>AI 牌技</h2>
-            <div class="gd-mode-row">
-              <label class="gd-mode"><input type="radio" name="gd-ai" value="1">
-                <div class="gd-mode-card"><b>新手</b><span>随性出牌，图个乐呵</span></div></label>
-              <label class="gd-mode"><input type="radio" name="gd-ai" value="2" checked>
-                <div class="gd-mode-card"><b>熟手</b><span>贪心压制，会算基础账</span></div></label>
-              <label class="gd-mode"><input type="radio" name="gd-ai" value="3">
-                <div class="gd-mode-card"><b>高手</b><span>拆牌记牌，懂配合有炸点</span></div></label>
+            <div class="gd-block-header">
+              <h2>AI 智能等级</h2>
+            </div>
+            <div class="gd-ai-grid">
+              <label class="gd-ai-opt">
+                <input type="radio" name="gd-ai" value="1">
+                <div class="gd-ai-box">
+                  <b>休闲新手</b>
+                  <span>轻松图乐，出牌平缓</span>
+                </div>
+              </label>
+              <label class="gd-ai-opt">
+                <input type="radio" name="gd-ai" value="2" checked>
+                <div class="gd-ai-box">
+                  <b>竞技熟手</b>
+                  <span>攻守兼备，注重过牌</span>
+                </div>
+              </label>
+              <label class="gd-ai-opt">
+                <input type="radio" name="gd-ai" value="3">
+                <div class="gd-ai-box">
+                  <b>算牌大师</b>
+                  <span>精准记牌，拆牌有度懂掩护</span>
+                </div>
+              </label>
             </div>
           </div>
 
+          <!-- 牌友选择与座位示意 -->
           <div class="gd-block">
-            <h2>选择牌友 <small>（点选 3 位，再安排座位）</small></h2>
+            <div class="gd-block-header">
+              <h2>选择 3 位牌友入座</h2>
+              <span class="gd-tip-text">先点击 3 位角色，下方即可直观调整座位分布</span>
+            </div>
             <div class="gd-persona-grid" id="gd-persona-grid"></div>
-            <div class="gd-seat-assign" id="gd-seat-assign" hidden>
-              <label>右手边（下家）<select id="gd-pick-1"></select></label>
-              <label>对&nbsp;&nbsp;家（队友）<select id="gd-pick-2"></select></label>
-              <label>左手边（上家）<select id="gd-pick-3"></select></label>
-            </div>
-          </div>
 
-          <div class="gd-block">
-            <h2>对话与辅助</h2>
-            <div class="gd-form">
-              <label class="gd-form-row">
-                <span>API 地址</span>
-                <input id="gd-api-base" type="text" placeholder="https://api.openai.com/v1（不填则角色只说内置台词）">
-              </label>
-              <label class="gd-form-row">
-                <span>API Key</span>
-                <input id="gd-api-key" type="password" placeholder="sk-... 仅保存在本机浏览器">
-              </label>
-              <label class="gd-form-row">
-                <span>模型</span>
-                <input id="gd-api-model" type="text" placeholder="gpt-4o-mini">
-              </label>
-              <div class="gd-form-row gd-inline">
-                <label><input id="gd-hint-toggle" type="checkbox" checked> 开启“提示”按钮（最高牌技分析）</label>
-                <label>出牌速度
-                  <select id="gd-speed">
-                    <option value="0.6">慢</option>
-                    <option value="1" selected>标准</option>
-                    <option value="1.8">快</option>
-                  </select>
-                </label>
+            <!-- 可视化环形座位牌桌展示 -->
+            <div class="gd-seat-preview-board" id="gd-seat-assign" hidden>
+              <div class="gd-seat-preview-title">
+                <span>四人对战桌位安排</span>
+                <small>（下拉框选择，支持快速对调）</small>
+              </div>
+              <div class="gd-seat-selectors">
+                <div class="gd-seat-sel-item gd-seat-sel-2">
+                  <span class="gd-seat-role-badge ally">北 · 队友 (对家)</span>
+                  <select id="gd-pick-2" class="gd-select"></select>
+                </div>
+                <div class="gd-seat-sel-middle">
+                  <div class="gd-seat-sel-item gd-seat-sel-3">
+                    <span class="gd-seat-role-badge foe">西 · 上家</span>
+                    <select id="gd-pick-3" class="gd-select"></select>
+                  </div>
+                  <div class="gd-mini-felt">
+                    <div class="gd-mini-felt-badge">掼蛋桌</div>
+                  </div>
+                  <div class="gd-seat-sel-item gd-seat-sel-1">
+                    <span class="gd-seat-role-badge foe">东 · 下家</span>
+                    <select id="gd-pick-1" class="gd-select"></select>
+                  </div>
+                </div>
+                <div class="gd-seat-sel-item gd-seat-sel-0">
+                  <span class="gd-seat-role-badge self">南 · 本家 (你)</span>
+                  <div class="gd-seat-self-name">你自己</div>
+                </div>
               </div>
             </div>
           </div>
 
-          <button id="gd-start-btn" class="gd-btn gd-btn-primary gd-btn-big">开 桌</button>
-          <p class="gd-note">进贡规则：末游向头游进贡最大牌（逢人配除外），头游还一张 10 及以下；双下则两人都进贡；进贡方合计持有双大王可抗贡。</p>
+          <!-- 高级配置：对话与辅助 -->
+          <div class="gd-block">
+            <details class="gd-advanced-details">
+              <summary class="gd-advanced-summary">
+                <span>牌桌闲聊与高级设置</span>
+                <span class="gd-advanced-sub">内置台词兜底 · 可接入 OpenAI 兼容大模型对话</span>
+              </summary>
+              <div class="gd-form">
+                <label class="gd-form-row">
+                  <span>API 接口</span>
+                  <input id="gd-api-base" type="text" placeholder="https://api.openai.com/v1（不填则角色使用精选内置台词）">
+                </label>
+                <label class="gd-form-row">
+                  <span>API Key</span>
+                  <input id="gd-api-key" type="password" placeholder="sk-... 仅安全保存在本机浏览器 localStorage">
+                </label>
+                <label class="gd-form-row">
+                  <span>对话模型</span>
+                  <input id="gd-api-model" type="text" placeholder="gpt-4o-mini 或其他兼容模型">
+                </label>
+                <div class="gd-form-row gd-inline">
+                  <label class="gd-check-label">
+                    <input id="gd-hint-toggle" type="checkbox" checked>
+                    <span>开启「提示」功能（由大师级算法分析推荐手牌）</span>
+                  </label>
+                  <label class="gd-select-label">
+                    <span>出牌节奏</span>
+                    <select id="gd-speed" class="gd-select">
+                      <option value="0.6">从容 (0.6x)</option>
+                      <option value="1" selected>标准 (1.0x)</option>
+                      <option value="1.8">迅捷 (1.8x)</option>
+                    </select>
+                  </label>
+                </div>
+              </div>
+            </details>
+          </div>
+
+          <!-- 开桌按钮 -->
+          <div class="gd-start-row">
+            <button id="gd-start-btn" class="gd-btn gd-btn-primary gd-btn-hero">立即开桌</button>
+            <p class="gd-rule-footnote">
+              掼蛋规则：红桃级牌为「逢人配」万能牌（除王牌外可任意替代）。双下时负方两人进贡，两名进贡者持有双大王可抗贡。
+            </p>
+          </div>
         </div>
       </div>
     </section>
 
-    <!-- ================= 牌桌界面 ================= -->
+    <!-- ================= 牌桌竞技界面 ================= -->
     <section id="gd-game" class="gd-game" hidden>
+      <!-- 顶栏信息与快捷操作 -->
       <header class="gd-topbar">
-        <button id="gd-btn-quit" class="gd-btn gd-btn-ghost">← 离桌</button>
-        <div class="gd-topbar-info">
-          <span id="gd-mode-label">升级</span>
-          <span id="gd-level-info"></span>
-          <span id="gd-funds-info"></span>
+        <div class="gd-topbar-left">
+          <button id="gd-btn-quit" class="gd-btn gd-btn-sm gd-btn-outline" title="离开当前牌桌">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="gd-ico"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+            离桌
+          </button>
+          <div class="gd-topbar-pills">
+            <span class="gd-pill-mode" id="gd-mode-label">升级模式</span>
+            <span class="gd-pill-level" id="gd-level-info">正在发牌…</span>
+            <span class="gd-pill-funds" id="gd-funds-info"></span>
+          </div>
         </div>
-        <div class="gd-topbar-btns">
-          <button id="gd-btn-rules" class="gd-btn gd-btn-ghost">规则</button>
-          <button id="gd-btn-settings" class="gd-btn gd-btn-ghost">设置</button>
-          <button id="gd-btn-chat" class="gd-btn gd-btn-ghost">💬 聊天</button>
+        <div class="gd-topbar-right">
+          <button id="gd-btn-rules" class="gd-btn gd-btn-sm gd-btn-ghost">规则</button>
+          <button id="gd-btn-settings" class="gd-btn gd-btn-sm gd-btn-ghost">设置</button>
+          <button id="gd-btn-chat" class="gd-btn gd-btn-sm gd-btn-chat">💬 聊天</button>
         </div>
       </header>
 
+      <!-- 牌桌主体（深祖母绿+炭黑微质感绒面） -->
       <div class="gd-table-wrap">
         <div class="gd-table" id="gd-table">
           <div class="gd-felt"></div>
+          <!-- 牌桌中央：黄铜浮雕级牌徽章与控牌状态 -->
           <div class="gd-center" id="gd-center"></div>
+
+          <!-- 四个坐席（0:本家, 1:下家东, 2:对家北, 3:上家西） -->
           <div class="gd-seat gd-seat-0" id="gd-seat-0"></div>
           <div class="gd-seat gd-seat-1" id="gd-seat-1"></div>
           <div class="gd-seat gd-seat-2" id="gd-seat-2"></div>
           <div class="gd-seat gd-seat-3" id="gd-seat-3"></div>
         </div>
+        <!-- 跑马灯状态提示横幅 -->
         <div class="gd-banner" id="gd-banner" hidden></div>
       </div>
 
+      <!-- 底部手牌与操作台 -->
       <div class="gd-hand-zone">
         <div class="gd-hand-bar">
-          <div class="gd-turn-tip" id="gd-turn-tip"></div>
+          <div class="gd-turn-tip" id="gd-turn-tip">等待发牌…</div>
           <div class="gd-hand-actions">
-            <button id="gd-btn-hint" class="gd-btn">提示</button>
-            <button id="gd-btn-sort" class="gd-btn">理牌</button>
-            <button id="gd-btn-pass" class="gd-btn">不出</button>
-            <button id="gd-btn-play" class="gd-btn gd-btn-primary">出牌</button>
+            <button id="gd-btn-hint" class="gd-btn gd-btn-action" title="大师算法推荐出牌">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="gd-ico"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7zM9 21h6"/></svg>
+              提示
+            </button>
+            <button id="gd-btn-sort" class="gd-btn gd-btn-action" title="按点数自动理牌">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="gd-ico"><path d="M3 6h18M7 12h10M10 18h4"/></svg>
+              理牌
+            </button>
+            <button id="gd-btn-pass" class="gd-btn gd-btn-action" title="要不起 / 过牌">
+              不出
+            </button>
+            <button id="gd-btn-play" class="gd-btn gd-btn-primary gd-btn-play" title="打出选中手牌">
+              出牌
+            </button>
           </div>
         </div>
         <div class="gd-hand-scroll" id="gd-hand-scroll">
@@ -186,20 +283,24 @@
         </div>
       </div>
 
-      <!-- 聊天抽屉 -->
+      <!-- 牌桌闲聊毛玻璃抽屉 -->
       <aside class="gd-chat" id="gd-chat">
         <div class="gd-chat-head">
-          <b>牌桌闲聊</b>
-          <button id="gd-chat-close" class="gd-btn gd-btn-ghost">×</button>
+          <div class="gd-chat-title">
+            <span class="gd-chat-title-icon">💬</span>
+            <b>牌友闲聊</b>
+          </div>
+          <button id="gd-chat-close" class="gd-chat-close-btn" title="关闭聊天">×</button>
         </div>
         <div class="gd-chat-list" id="gd-chat-list"></div>
         <div class="gd-chat-input-row">
-          <input id="gd-chat-input" type="text" maxlength="80" placeholder="和牌友们聊两句…">
-          <button id="gd-chat-send" class="gd-btn gd-btn-primary">发</button>
+          <input id="gd-chat-input" type="text" maxlength="80" placeholder="发送一句话和牌友聊天…">
+          <button id="gd-chat-send" class="gd-btn gd-btn-primary gd-btn-sm">发送</button>
         </div>
         <p class="gd-chat-note" id="gd-chat-note"></p>
       </aside>
 
+      <!-- 悬浮微提示 -->
       <div class="gd-toast" id="gd-toast" hidden></div>
     </section>
   </main>
@@ -225,10 +326,15 @@
   </div>
 
   <script type="module" src="../../assets/js/main.js"></script>
-  <script src="js/cards.js"></script>
-  <script src="js/ai.js"></script>
-  <script src="js/personas.js"></script>
-  <script src="js/game.js"></script>
-  <script src="js/ui.js"></script>
+  <script src="js/cards.js?v=8"></script>
+  <script src="js/ai.js?v=8"></script>
+  <script src="js/personas.js?v=8"></script>
+  <script src="js/game.js?v=8"></script>
+  <script src="js/ui.js?v=8"></script>
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      if (window.UI) window.UI.init();
+    });
+  </script>
 </body>
 </html>

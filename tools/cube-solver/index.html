@@ -4,9 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>魔方还原助手 — Michael</title>
-  <meta name="description" content="输入当前魔方各面颜色，自动校验合法性并给出还原步骤，支持三维动画逐步演示。">
+  <meta name="description" content="在展开图上输入当前魔方状态，自动校验合法性并给出还原步骤，支持高品质三维动画逐步演示。">
   <meta name="theme-color" content="#0a0a0b">
-  <meta name="color-scheme" content="dark">
+  <meta name="color-scheme" content="dark light">
   <link rel="icon" type="image/svg+xml" href="../../assets/img/favicon.svg">
   <script>
     /* 首帧前定下主题，避免闪烁；无记录时默认暗色（站点基调） */
@@ -22,7 +22,7 @@
   </script>
   <link rel="stylesheet" href="../../assets/css/tokens.css">
   <link rel="stylesheet" href="../../assets/css/main.css">
-  <link rel="stylesheet" href="style.css?v=7">
+  <link rel="stylesheet" href="style.css?v=8">
   <script type="importmap">
   {
     "imports": {
@@ -68,59 +68,150 @@
         <a class="article-back" href="../../tools.html"><span class="arr">←</span>全部工具</a>
         <p class="mono-label">Tool <span>/</span> 05</p>
         <h1>魔方还原助手</h1>
-        <p>在展开图上涂出魔方现状，自动校验合法性并给出还原步骤，三维动画逐步演示。标准配色之外，换过配色或换过持握方向的魔方也能输入。</p>
+        <p>在展开图上点选并涂色录入魔方当前状态，实时显示各颜色用量，自动校验合法性并秒级计算还原公式，支持 3D 拟真模型分步与连续动画演示。</p>
       </div>
 
+      <!-- 顶栏操作区 -->
       <div class="cs-toolbar">
-        <button type="button" class="btn btn-primary" id="btn-solve">验证并求解</button>
-        <button type="button" class="btn" id="btn-scramble">随机打乱</button>
-        <button type="button" class="btn" id="btn-reset">复原状态</button>
-        <span class="cs-spacer"></span>
-        <span class="cs-face-legend" id="face-legend"></span>
+        <div class="cs-toolbar-left">
+          <button type="button" class="btn btn-primary" id="btn-solve">
+            <svg class="cs-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+            计算还原步骤
+          </button>
+          <button type="button" class="btn" id="btn-scramble">
+            <svg class="cs-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+            随机打乱
+          </button>
+          <button type="button" class="btn" id="btn-reset">
+            <svg class="cs-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+            复原初始
+          </button>
+        </div>
+        <div class="cs-toolbar-right">
+          <div class="cs-face-legend" id="face-legend"></div>
+        </div>
       </div>
 
       <div class="cs-main">
-        <!-- 左侧：3D 视图 -->
+        <!-- 左侧：3D 拟真视图 -->
         <section class="cs-pane cs-3d-pane">
           <div class="cs-3d-stage" id="stage">
-            <div class="cs-3d-hint">拖拽旋转 · 滚轮缩放</div>
+            <div class="cs-3d-hint">
+              <span class="cs-hint-dot"></span> 拖拽可旋转视角 · 滚轮缩放
+            </div>
+            <!-- 3D 悬浮视角快捷工具条 -->
+            <div class="cs-view-controls" aria-label="视角切换">
+              <button type="button" class="cs-view-btn" id="btn-cam-iso" title="等轴测视角">等轴</button>
+              <button type="button" class="cs-view-btn" id="btn-cam-front" title="前视图 F">正视</button>
+              <button type="button" class="cs-view-btn" id="btn-cam-top" title="顶视图 U">俯视</button>
+              <button type="button" class="cs-view-btn" id="btn-cam-right" title="右视图 R">侧视</button>
+              <button type="button" class="cs-view-btn" id="btn-cam-reset" title="复位视角">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+              </button>
+            </div>
+            <!-- 场景光影装饰底托 -->
+            <div class="cs-stage-shadow"></div>
           </div>
-          <div class="cs-status" id="status">在展开图上涂出当前魔方状态</div>
+          <div class="cs-status-bar">
+            <div class="cs-status-pill" id="status">
+              <span class="cs-status-dot"></span>
+              <span class="cs-status-text">在展开图涂色录入魔方当前状态</span>
+            </div>
+          </div>
         </section>
 
-        <!-- 右侧：输入与控制 -->
+        <!-- 右侧：录入与控制 -->
         <section class="cs-pane cs-input-pane">
-          <div class="cs-block">
-            <h2>颜色</h2>
-            <p class="cs-tip">点选颜色后，点击展开图上的贴纸涂色；右键（长按）可循环切换颜色。六块中心贴纸决定各面的颜色归属。</p>
-            <div class="cs-palette" id="palette"></div>
+          <!-- 调色板与用量统计 -->
+          <div class="cs-card-section">
+            <div class="cs-section-header">
+              <div class="cs-section-title">
+                <h2>当前画笔与颜色用量</h2>
+                <span class="cs-section-badge">各 9 块</span>
+              </div>
+              <span class="cs-tip-inline">点击选中画笔，也可右键展开图快速循环换色</span>
+            </div>
+            <div class="cs-palette-grid" id="palette"></div>
           </div>
 
-          <div class="cs-block">
-            <h2>展开图（输入状态）</h2>
-            <div class="cs-net" id="net"></div>
+          <!-- 展开图涂色区 -->
+          <div class="cs-card-section">
+            <div class="cs-section-header">
+              <div class="cs-section-title">
+                <h2>二维展开图录入</h2>
+              </div>
+              <div class="cs-quick-actions">
+                <button type="button" class="cs-text-btn" id="btn-fill-face" title="将当前选中画笔颜色填满指定面">
+                  一键填面
+                </button>
+              </div>
+            </div>
+            <div class="cs-net-wrapper">
+              <div class="cs-net" id="net"></div>
+            </div>
+            <p class="cs-net-hint">中心贴纸（带边框）为各面基准色，六面中心颜色不可重复。</p>
           </div>
         </section>
       </div>
 
-      <!-- 求解步骤区 -->
+      <!-- 求解步骤演播室 -->
       <section class="cs-solution" id="solution" hidden>
-        <div class="cs-solution-head">
-          <h2>还原步骤 <span class="cs-solution-meta" id="solution-meta"></span></h2>
-          <div class="cs-solution-controls">
-            <button type="button" class="btn" id="btn-prev">◀ 上一步</button>
-            <button type="button" class="btn" id="btn-next">下一步 ▶</button>
-            <button type="button" class="btn" id="btn-play">▶ 自动播放</button>
-            <label class="cs-speed">
-              速度
-              <input type="range" id="speed" min="120" max="900" value="380" step="20">
-            </label>
-            <button type="button" class="btn" id="btn-jump-start">回到开头</button>
+        <div class="cs-solution-card">
+          <div class="cs-solution-head">
+            <div class="cs-solution-heading">
+              <span class="cs-solution-tag">还原方案</span>
+              <h2>还原演示演播室</h2>
+              <span class="cs-solution-meta" id="solution-meta"></span>
+            </div>
+            <div class="cs-player-controls">
+              <button type="button" class="btn btn-sm" id="btn-jump-start" title="回到起点">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 20L9 12l10-8v16zM5 19V5"/></svg>
+              </button>
+              <button type="button" class="btn btn-sm" id="btn-prev" title="上一步 (逆推)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+                上一步
+              </button>
+              <button type="button" class="btn btn-sm btn-primary" id="btn-play">
+                <svg class="ico-play" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                <svg class="ico-pause" viewBox="0 0 24 24" fill="currentColor" style="display:none"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                <span>自动演示</span>
+              </button>
+              <button type="button" class="btn btn-sm" id="btn-next" title="下一步">
+                下一步
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+              </button>
+              <button type="button" class="btn btn-sm" id="btn-jump-end" title="跳到完成">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 4l10 8-10 8V4zM19 5v14"/></svg>
+              </button>
+              <div class="cs-speed-ctrl">
+                <span>速度</span>
+                <input type="range" id="speed" min="100" max="800" value="340" step="20" title="调整旋转动画速度">
+              </div>
+            </div>
           </div>
-        </div>
-        <div class="cs-solution-body">
-          <div class="cs-current-move" id="current-move">—</div>
-          <div class="cs-move-list" id="move-list"></div>
+
+          <!-- 步数进度条 -->
+          <div class="cs-timeline-bar">
+            <div class="cs-timeline-track" id="timeline-track">
+              <div class="cs-timeline-fill" id="timeline-fill" style="width: 0%"></div>
+            </div>
+            <div class="cs-timeline-numbers">
+              <span id="step-counter">0 / 0 步</span>
+              <span id="step-percent">0%</span>
+            </div>
+          </div>
+
+          <!-- 步骤动作看板与全部步骤列表 -->
+          <div class="cs-solution-body">
+            <div class="cs-step-hero">
+              <div class="cs-step-hero-label">当前步骤</div>
+              <div class="cs-current-move" id="current-move">—</div>
+              <div class="cs-current-desc" id="current-desc">等待开始演示</div>
+            </div>
+            <div class="cs-move-scroll">
+              <div class="cs-move-list" id="move-list"></div>
+            </div>
+          </div>
         </div>
       </section>
     </div>
@@ -138,6 +229,6 @@
   </footer>
 
   <script type="module" src="../../assets/js/main.js"></script>
-  <script type="module" src="app.js?v=7"></script>
+  <script type="module" src="app.js?v=8"></script>
 </body>
 </html>

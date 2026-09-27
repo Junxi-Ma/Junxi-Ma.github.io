@@ -312,9 +312,18 @@ const UI = {
       });
       hand.appendChild(colEl);
     });
-    // 出牌按钮同步已选张数
-    this.$('gd-btn-play').textContent =
-      (this.selected.size && !this.pickMode) ? `出牌 · ${this.selected.size}` : '出牌';
+    // 出牌按钮同步已选张数与就绪高光
+    const canPlay = this.selected.size && !this.pickMode;
+    const playBtn = this.$('gd-btn-play');
+    playBtn.textContent = canPlay ? `出牌 · ${this.selected.size}` : '出牌';
+    if (canPlay && Game.S && Game.S.current === 0) {
+      const cards = Game.S.players[0].hand.filter(c => this.selected.has(c.id));
+      const combos = gdAnalyzeSelection(cards, Game.S.level);
+      const beats = combos.some(c => !Game.S.lastPlay || gdCanBeat(c, Game.S.lastPlay));
+      playBtn.classList.toggle('ready', beats);
+    } else {
+      playBtn.classList.remove('ready');
+    }
   },
 
   cardHtml(c, mini, level) {
