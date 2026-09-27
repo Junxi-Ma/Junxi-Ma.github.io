@@ -212,8 +212,16 @@ async function handleSubmit() {
         options: { data: { display_name: nickname || null } },
       });
       if (error) throw error;
-      if (!data.session) {
-        showMsg('注册成功！请到邮箱点击确认链接，再回来登录。');
+      // Supabase 的坑：邮箱已存在但未验证时，signUp 不报错，
+      // 而是 user.identities 为空数组——此处明确提示，别让用户干等邮件
+      if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+        showMsg('这个邮箱注册过但还没完成验证：去邮箱（含垃圾箱）找确认邮件，'
+          + '或在 Supabase 控制台 Authentication → Users 里手动确认 / 删除该账号后重新注册。'
+          + '也可以在 Authentication → Sign In / Up 关闭 Confirm email，一劳永逸。');
+        els._setMode('login');
+      } else if (!data.session) {
+        showMsg('注册成功！确认邮件已发送（注意垃圾箱）。'
+          + '若收不到，可在 Supabase 控制台 Authentication → Sign In / Up 关闭 Confirm email，注册即登录。');
         els._setMode('login');
       }
       // 已直接建立会话（关闭邮箱确认时）→ onAuthStateChange 会刷新按钮
@@ -231,11 +239,22 @@ async function handleSubmit() {
 
 function translateAuthError(e) {
   const msg = String(e?.message || e);
-  if (/Invalid login credentials/i.test(msg)) return '邮箱或密码不正确';
+  if (/Invalid login credentials/i.test(msg)) {
+    return '邮箱或密码不正确。若邮箱还没做过邮箱验证，也会这样提示——'
+      + '去邮箱点确认链接，或在 Supabase 控制台 Authentication → Users 里手动确认。';
+  }
   if (/already registered|already exists/i.test(msg)) return '该邮箱已注册，直接登录即可';
-  if (/rate limit/i.test(msg)) return '尝试太频繁了，稍等一下再试';
+  if (/rate limit|too many/i.test(msg)) {
+    return '操作太频繁（Supabase 免费版对发信/尝试次数限制很低）。等几分钟再试；'
+      + '建议在 Authentication → Sign In / Up 关闭 Confirm email，注册即登录、彻底避开发信限制。';
+  }
+  if (/not confirmed/i.test(msg)) {
+    return '邮箱还没验证。去邮箱（含垃圾箱）点确认链接；或在 Supabase 控制台 Authentication → Users 手动确认该账号；'
+      + '或关闭 Confirm email 后重新注册。';
+  }
   if (/valid email/i.test(msg)) return '邮箱格式看起来不对';
   if (/is invalid/i.test(msg)) return '这个邮箱域名不可用，换一个常用邮箱试试';
+  if (/Signup requires a valid password/i.test(msg)) return '密码至少 6 位';
   if (/Failed to fetch|NetworkError/i.test(msg)) return '连不上后端（检查 Supabase 地址是否已填写）';
   return msg;
 }
