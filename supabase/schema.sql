@@ -252,3 +252,81 @@ on conflict (id) do nothing;
 --     insert into public.admins (user_id)
 --       select id from auth.users where email = '某人邮箱';
 -- ############################################################
+
+-- ############################################################
+-- 七、外出名额分配：在线房间（房间码即凭证，知道码即可共同编辑）
+-- ############################################################
+
+-- 1) 房间表：日期范围、每日名额、理由权重、是否允许调剂、已发布结果
+create table if not exists public.outing_rooms (
+  code        text primary key,
+  start_date  date not null,
+  end_date    date not null,
+  daily_cap   int  not null default 3,
+  weights     jsonb not null default '[5,3,2,1]',
+  allow_fill  boolean not null default true,
+  result      jsonb,
+  result_at   timestamptz,
+  created_at  timestamptz not null default now()
+);
+
+-- 2) 报名条目：房间内所有人可增删改（房间码即信任凭证）
+create table if not exists public.outing_entries (
+  id          uuid primary key default gen_random_uuid(),
+  room_code   text not null references public.outing_rooms(code) on delete cascade,
+  name        text not null,
+  days        int  not null default 1,
+  past        int  not null default 0,
+  reason_idx  int  not null default 0,
+  reason_text text not null default '',
+  accepts     jsonb not null default '[]',
+  client_id   text not null default '',
+  created_at  timestamptz not null default now(),
+  updated_at  timestamptz not null default now()
+);
+create index if not exists outing_entries_room_idx on public.outing_entries (room_code);
+
+-- 3) 行级安全：房间码就是唯一的准入凭证
+alter table public.outing_rooms  enable row level security;
+alter table public.outing_entries enable row level security;
+
+create policy "outing rooms readable" on public.outing_rooms
+  for select to anon, authenticated using (true);
+create policy "outing rooms creatable" on public.outing_rooms
+  for insert to anon, authenticated with check (true);
+create policy "outing rooms editable with code" on public.outing_rooms
+  for update to anon, authenticated using (true) with check (true);
+
+-- 报名条目只允许挂在真实存在的房间下（函数见下）
+create or replace function public.outing_room_exists(p_code text)
+returns boolean
+language sql stable
+security definer set search_path = public
+as $$
+  select exists (select 1 from public.outing_rooms where code = p_code);
+$$;
+
+create policy "outing entries readable" on public.outing_entries
+  for select to anon, authenticated using (true);
+create policy "outing entries insertable" on public.outing_entries
+  for insert to anon, authenticated
+  with check (public.outing_room_exists(room_code));
+create policy "outing entries editable" on public.outing_entries
+  for update to anon, authenticated
+  using (public.outing_room_exists(room_code))
+  with check (public.outing_room_exists(room_code));
+create policy "outing entries deletable" on public.outing_entries
+  for delete to anon, authenticated
+  using (public.outing_room_exists(room_code));
+
+-- 4) 实时推送：把两张表加入 realtime 发布（幂等）
+do $$
+begin
+  alter publication supabase_realtime add table public.outing_entries;
+exception when duplicate_object then null;
+end $$;
+do $$
+begin
+  alter publication supabase_realtime add table public.outing_rooms;
+exception when duplicate_object then null;
+end $$;

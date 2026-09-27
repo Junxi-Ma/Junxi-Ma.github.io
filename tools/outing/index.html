@@ -295,19 +295,157 @@
         <a class="article-back" href="../../tools.html"><span class="arr">←</span>全部工具</a>
         <p class="mono-label">Tool <span>/</span> 03</p>
         <h1>外出名额分配</h1>
-        <p>班长设定日期范围与每日名额并生成邀请码，成员在自己手机上填表、生成提交码发回，最后由系统按「已外出次数优先 + 理由加权」分配，兼顾公平与名额不浪费。全程本地运行，无需服务器。</p>
+        <p>推荐用<b>在线房间</b>：班长创建房间得一个房间码，成员输码进入、实时共同编辑报名，班长分配后结果全房间可见。外出理由扩至 8 类并可自定义，按「已外出次数优先 + 理由加权」分配。离线邀请码模式保留备用。</p>
       </div>
 
       <div class="seg-wrap">
         <div class="seg" role="tablist" aria-label="步骤切换">
-          <button class="seg__btn" type="button" data-step="setup" role="tab">① 建房间</button>
-          <button class="seg__btn" type="button" data-step="join" role="tab">② 我要报名</button>
-          <button class="seg__btn" type="button" data-step="result" role="tab">③ 汇总分配</button>
+          <button class="seg__btn" type="button" data-step="online" role="tab">① 在线房间</button>
+          <button class="seg__btn" type="button" data-step="setup" role="tab">② 离线 · 建房间</button>
+          <button class="seg__btn" type="button" data-step="join" role="tab">③ 离线 · 报名</button>
+          <button class="seg__btn" type="button" data-step="result" role="tab">④ 离线 · 汇总</button>
         </div>
-        <span class="seg-step" id="segHint">班长用</span>
+        <span class="seg-step" id="segHint">多人实时（推荐）</span>
       </div>
 
-      <!-- ============ ① 建房间 ============ -->
+      <!-- ============ ① 在线房间 ============ -->
+      <section class="panel" id="panel-online" hidden>
+        <div class="panel__head">
+          <span class="panel__title"><span class="mono-label">01</span>在线房间 <span class="badge">推荐</span></span>
+        </div>
+        <div class="panel__body">
+          <!-- 未进入房间：创建 / 加入 -->
+          <div id="onEntry">
+            <div class="field-row">
+              <div class="field" style="flex:1.2">
+                <label class="field__label" for="onJoinCode">加入房间</label>
+                <div class="input-suffix">
+                  <input class="input" id="onJoinCode" maxlength="6" placeholder="输入班长发的房间码" style="text-transform:uppercase" autocapitalize="characters">
+                  <button class="btn btn--primary btn--sm" id="onJoin" type="button">进入</button>
+                </div>
+                <span class="field__hint">或直接打开班长发的加入链接，会自动进入房间。</span>
+              </div>
+            </div>
+
+            <div class="panel" style="margin-top:20px; background:var(--surface-2)">
+              <div class="panel__head"><span class="panel__title">创建新房间 <small style="font-weight:400;color:var(--text-3)">（班长用）</small></span></div>
+              <div class="panel__body">
+                <div class="field-row">
+                  <div class="field">
+                    <label class="field__label" for="onStart">可外出开始日期</label>
+                    <input class="input" type="date" id="onStart">
+                  </div>
+                  <div class="field">
+                    <label class="field__label" for="onEnd">可外出结束日期</label>
+                    <input class="input" type="date" id="onEnd">
+                  </div>
+                  <div class="field">
+                    <label class="field__label" for="onCap">每天可外出人数</label>
+                    <div class="input-suffix">
+                      <input class="input" type="number" id="onCap" min="1" max="99" inputmode="numeric" value="3">
+                      <span class="input-suffix__unit">人/天</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="field" style="margin-top:14px">
+                  <span class="field__label">理由权重 <span class="badge">越大越优先</span></span>
+                  <div class="field-row field-row--tight" id="onWeights"></div>
+                </div>
+                <div class="switch-row" style="margin-top:14px">
+                  <div class="switch-row__text">
+                    <div class="switch-row__title">允许调剂补位</div>
+                    <div class="switch-row__hint">某天名额没报满时，把仍有需求的成员补进去，避免名额浪费。</div>
+                  </div>
+                  <button class="switch" id="onFill" role="switch" aria-checked="true" aria-label="允许调剂补位" type="button"></button>
+                </div>
+                <button class="btn btn--primary btn--block" id="onCreate" type="button" style="margin-top:14px">创建房间并获取房间码</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 已进入房间 -->
+          <div id="onRoom" hidden>
+            <div class="room-strip" style="font-size:14px">
+              <span>房间码 <b id="onCode" style="font-size:18px; letter-spacing:.12em"></b></span>
+              <span class="sep">·</span>
+              <span><b id="onRange"></b></span>
+              <span class="sep">·</span>
+              <span>每天 <b id="onCapText"></b> 人</span>
+              <span class="sep">·</span>
+              <span id="onCount">0 人</span>
+              <span style="flex:1"></span>
+              <button class="btn btn--ghost btn--sm" id="onCopyLink" type="button">复制加入链接</button>
+              <button class="btn btn--ghost btn--sm" id="onLeave" type="button">退出房间</button>
+            </div>
+
+            <div class="callout callout--info" id="onResultBanner" hidden style="margin-top:14px">
+              <span>📋</span>
+              <div><b>分配结果已发布</b>（<span id="onResultAt"></span>）—— <a href="#online" id="onResultToggle" style="color:inherit">展开 / 收起</a></div>
+            </div>
+            <div id="onResultBox" hidden style="margin-top:14px"></div>
+
+            <div class="panel" style="margin-top:16px; background:var(--surface-2)">
+              <div class="panel__head">
+                <span class="panel__title" id="onFormTitle">填报 / 修改我的外出</span>
+                <button class="btn btn--ghost btn--sm" id="onCancelEdit" type="button" hidden>取消编辑</button>
+              </div>
+              <div class="panel__body">
+                <div class="field-row">
+                  <div class="field">
+                    <label class="field__label" for="onName">姓名</label>
+                    <input class="input" id="onName" maxlength="20" autocomplete="name" placeholder="你的名字">
+                  </div>
+                  <div class="field">
+                    <label class="field__label" for="onDays">一共要出的天数</label>
+                    <input class="input" type="number" id="onDays" min="1" max="30" value="1" inputmode="numeric">
+                  </div>
+                  <div class="field">
+                    <label class="field__label" for="onPast">已外出次数</label>
+                    <input class="input" type="number" id="onPast" min="0" max="99" value="0" inputmode="numeric">
+                    <span class="field__hint">填 0 的人优先级最高</span>
+                  </div>
+                </div>
+                <div class="field" style="margin-top:16px">
+                  <span class="field__label">可以接受的日期 <span class="badge" id="onPickCount">已选 0 天</span></span>
+                  <div class="date-grid" id="onDateGrid" style="margin-top:4px"></div>
+                </div>
+                <div class="field-row" style="margin-top:16px">
+                  <div class="field">
+                    <label class="field__label" for="onReason">外出理由</label>
+                    <select class="select" id="onReason"></select>
+                  </div>
+                  <div class="field" id="onCustomWrap" hidden>
+                    <label class="field__label" for="onCustom">自定义理由</label>
+                    <input class="input" id="onCustom" maxlength="20" placeholder="例如：看病复查">
+                  </div>
+                </div>
+                <div class="action-row" style="margin-top:18px">
+                  <button class="btn btn--primary" id="onSubmit" type="button">提交报名（实时同步全房间）</button>
+                  <span class="field__hint">房间内人人可互相编辑，请谨慎操作</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="panel" style="margin-top:16px">
+              <div class="panel__head">
+                <span class="panel__title">房间名单</span>
+                <span class="member-chip">
+                  <span class="badge badge--accent" id="onEntriesCount">0 人</span>
+                  <span class="badge">实时同步中</span>
+                </span>
+              </div>
+              <div class="list" id="onEntries"></div>
+              <div class="rc-toolbar" style="margin-top:12px">
+                <button class="btn btn--primary btn--sm" id="onAlloc" type="button">开始分配并发布结果</button>
+                <button class="btn btn--ghost btn--sm" id="onReload" type="button">手动刷新</button>
+              </div>
+              <div id="onAllocOut" hidden style="margin-top:16px"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ ② 建房间（离线） ============ -->
       <section class="panel" id="panel-setup">
         <div class="panel__head">
           <span class="panel__title"><span class="mono-label">01</span>设置外出安排</span>
@@ -338,7 +476,11 @@
               <div class="field"><input class="input" type="number" id="w0" min="0" max="99" value="5" aria-label="家长看望权重"><span class="field__hint">家长看望</span></div>
               <div class="field"><input class="input" type="number" id="w1" min="0" max="99" value="3" aria-label="同学看望权重"><span class="field__hint">同学看望</span></div>
               <div class="field"><input class="input" type="number" id="w2" min="0" max="99" value="2" aria-label="外出游玩权重"><span class="field__hint">外出游玩</span></div>
-              <div class="field"><input class="input" type="number" id="w3" min="0" max="99" value="1" aria-label="其他理由权重"><span class="field__hint">其他 / 自定义</span></div>
+              <div class="field"><input class="input" type="number" id="w3" min="0" max="99" value="4" aria-label="看病就医权重"><span class="field__hint">看病就医</span></div>
+              <div class="field"><input class="input" type="number" id="w4" min="0" max="99" value="2" aria-label="办理事务权重"><span class="field__hint">办理事务</span></div>
+              <div class="field"><input class="input" type="number" id="w5" min="0" max="99" value="1" aria-label="采购物品权重"><span class="field__hint">采购物品</span></div>
+              <div class="field"><input class="input" type="number" id="w6" min="0" max="99" value="2" aria-label="朋友聚会权重"><span class="field__hint">朋友聚会</span></div>
+              <div class="field"><input class="input" type="number" id="w7" min="0" max="99" value="1" aria-label="其他理由权重"><span class="field__hint">其他 / 自定义</span></div>
             </div>
           </div>
 
@@ -412,8 +554,12 @@
                   <option value="0">家长看望</option>
                   <option value="1">同学看望</option>
                   <option value="2">外出游玩</option>
-                  <option value="3">其他</option>
-                  <option value="4">自己填写…</option>
+                  <option value="3">看病就医</option>
+                  <option value="4">办理事务</option>
+                  <option value="5">采购物品</option>
+                  <option value="6">朋友聚会</option>
+                  <option value="7">其他</option>
+                  <option value="8">自己填写…</option>
                 </select>
               </div>
               <div class="field" id="customReasonWrap" hidden>
@@ -517,11 +663,12 @@
         <div class="panel__head"><span class="panel__title"><span class="mono-label">?</span>怎么用</span></div>
         <div class="panel__body">
           <div class="howto">
-            <div class="howto__row"><span class="flow-num">1</span><div><b>班长</b>在「① 建房间」设定日期范围与每天名额，点<b>生成邀请码</b>，把码或报名链接发到群里。</div></div>
-            <div class="howto__row"><span class="flow-num">2</span><div><b>最省事（人能聚在一起）</b>：一台设备传着填 —— 每人填完点<b>「＋ 加入本机名单」</b>，表单自动清空直接录下一位，全程不用复制粘贴。</div></div>
-            <div class="howto__row"><span class="flow-num">3</span><div><b>各在各家（远程）</b>：成员打开邀请链接填表，点<b>「生成提交码」</b>发回群里；班长粘贴进「③ 汇总分配」即可（一次可粘多条，每行一个）。</div></div>
-            <div class="howto__row"><span class="flow-num">4</span><div>在「③」点<b>开始分配</b>，把结果文本复制发回群里。同名以最后一次为准，房间码不符的会自动排除。</div></div>
-            <div class="howto__row"><span class="flow-num">5</span><div>数据只存在你自己的浏览器里（<b>localStorage</b>），不上传任何服务器。</div></div>
+            <div class="howto__row"><span class="flow-num">1</span><div><b>在线房间（推荐）</b>：班长在「① 在线房间」创建房间，把<b>房间码</b>发到群里；成员输码进入，实时共同编辑报名，班长点「分配并发布」，结果全房间可见。</div></div>
+            <div class="howto__row"><span class="flow-num">2</span><div><b>离线备用</b>：班长在「② 建房间」设定日期范围与每天名额，点<b>生成邀请码</b>，把码或报名链接发到群里。</div></div>
+            <div class="howto__row"><span class="flow-num">3</span><div><b>最省事（人能聚在一起）</b>：一台设备传着填 —— 每人填完点<b>「＋ 加入本机名单」</b>，表单自动清空直接录下一位，全程不用复制粘贴。</div></div>
+            <div class="howto__row"><span class="flow-num">4</span><div><b>各在各家（远程）</b>：成员打开邀请链接填表，点<b>「生成提交码」</b>发回群里；班长粘贴进「③ 汇总分配」即可（一次可粘多条，每行一个）。</div></div>
+            <div class="howto__row"><span class="flow-num">5</span><div>在「④」点<b>开始分配</b>，把结果文本复制发回群里。同名以最后一次为准，房间码不符的会自动排除。</div></div>
+            <div class="howto__row"><span class="flow-num">6</span><div><b>离线模式</b>的数据只存在你自己的浏览器里（<b>localStorage</b>）；在线房间数据存在 Supabase，进出房间都不需要注册账号。</div></div>
           </div>
         </div>
       </div>
@@ -546,13 +693,16 @@
   </noscript>
 
   <script type="module" src="../../assets/js/main.js"></script>
+  <script type="module" src="online.js"></script>
   <script>
   (() => {
     'use strict';
 
     /* ================= 常量 ================= */
     const PREFIX = 'OUT1.';
-    const REASONS = ['家长看望', '同学看望', '外出游玩', '其他'];
+    const REASONS = ['家长看望', '同学看望', '外出游玩', '看病就医', '办理事务', '采购物品', '朋友聚会', '其他'];
+    const CUSTOM = 8;                       // 「自己填写…」的下标（新旧数据迁移见 boot）
+    const DEF_W = [5, 3, 2, 4, 2, 1, 2, 1];
     const DOW = ['日', '一', '二', '三', '四', '五', '六'];
     const K_ROOM = 'site:outing:room';
     const K_SUBS = 'site:outing:subs';
@@ -627,6 +777,23 @@
     let result = null;
     let allowFill = true;
 
+    /* 旧版本数据迁移：理由 4 项 → 8 项（旧 g=4 自定义 → 新 g=8），权重补齐 */
+    (function migrateLegacy() {
+      if (room && Array.isArray(room.w) && room.w.length < REASONS.length) {
+        room.w = Array.from({ length: REASONS.length }, (_, i) => room.w[i] ?? DEF_W[i]);
+        saveJSON(K_ROOM, room);
+      }
+      if (subs.some((s) => s.g === 4)) {
+        subs.forEach((s) => { if (s.g === 4) s.g = CUSTOM; });
+        saveJSON(K_SUBS, subs);
+      }
+      const draft = loadJSON(K_DRAFT, null);
+      if (draft && String(draft.g) === '4') {
+        draft.g = String(CUSTOM);
+        saveJSON(K_DRAFT, draft);
+      }
+    })();
+
     function loadJSON(key, fb) {
       try { const v = JSON.parse(localStorage.getItem(key)); return v === null ? fb : v; }
       catch { return fb; }
@@ -638,18 +805,18 @@
     const roomCode = () => (room ? room.k : '');
 
     /* ================= 步骤切换 ================= */
-    const STEPS = { setup: '班长用', join: '成员用', result: '班长用' };
+    const STEPS = { online: '多人实时（推荐）', setup: '离线 · 班长用', join: '离线 · 成员用', result: '离线 · 班长用' };
     const panelOf = { setup: 'panel-setup', join: 'panel-join', result: 'panel-result' };
 
     function show(step) {
-      if (!panelOf[step]) step = 'setup';
+      if (!STEPS[step]) step = 'online';
       Object.entries(panelOf).forEach(([k, id]) => { $(id).hidden = k !== step; });
       document.querySelectorAll('.seg__btn').forEach(b => {
         const on = b.dataset.step === step;
         b.classList.toggle('is-active', on);
         b.setAttribute('aria-selected', String(on));
       });
-      $('segHint').textContent = STEPS[step];
+      $('segHint').textContent = STEPS[step] || '';
       if (location.hash.slice(1) !== step) history.replaceState(null, '', '#' + step);
       if (step === 'setup') renderSetup();
       if (step === 'join') renderJoin();
@@ -723,7 +890,7 @@
       const dates = dateRange(s, e);
       if (!dates.length) throw new Error('日期范围为空');
       if (dates.length > MAX_DAYS) throw new Error(`日期范围最多 ${MAX_DAYS} 天`);
-      const w = [0, 1, 2, 3].map(i => Math.max(0, Math.min(99, parseInt($(`w${i}`).value, 10) || 0)));
+      const w = [0, 1, 2, 3, 4, 5, 6, 7].map(i => Math.max(0, Math.min(99, parseInt($(`w${i}`).value, 10) || 0)));
       return { k: (room && room.k) || randomKey(), s, e, q, w, dates };
     }
 
@@ -818,7 +985,7 @@
       $(id).addEventListener('input', saveDraft));
 
     $('mReason').addEventListener('change', () => {
-      $('customReasonWrap').hidden = $('mReason').value !== '4';
+      $('customReasonWrap').hidden = $('mReason').value !== String(CUSTOM);
       saveDraft();
     });
 
@@ -842,7 +1009,7 @@
       if (d.d) $('mDays').value = d.d;
       if (d.p) $('mPast').value = d.p;
       if (d.g) $('mReason').value = d.g;
-      $('customReasonWrap').hidden = $('mReason').value !== '4';
+      $('customReasonWrap').hidden = $('mReason').value !== String(CUSTOM);
       if (d.x) $('mCustom').value = d.x;
     }
 
@@ -876,10 +1043,10 @@
         d: Math.min(room.dates.length, Math.max(1, parseInt($('mDays').value, 10) || 1)),
         p: Math.max(0, parseInt($('mPast').value, 10) || 0),
         g: g,
-        x: g === 4 ? $('mCustom').value.trim() : '',
+        x: g === CUSTOM ? $('mCustom').value.trim() : '',
         t: Date.now()
       };
-      if (g === 4 && !sub.x) throw new Error('请填写自定义理由');
+      if (g === CUSTOM && !sub.x) throw new Error('请填写自定义理由');
       return sub;
     }
 
@@ -957,7 +1124,7 @@
 
       $('memberList').hidden = subs.length === 0;
       $('subRows').innerHTML = subs.map((s, i) => {
-        const reason = s.g === 4 ? (s.x || '其他') : (REASONS[s.g] || '其他');
+        const reason = s.g === CUSTOM ? (s.x || '其他') : (REASONS[s.g] || '其他');
         const dates = String(s.a).split(',').filter(x => x !== '').map(Number);
         const dstr = dates.map(n => room && room.dates[n] ? shortDate(room.dates[n]) : `#${n}`).join('、');
         return `<div class="list__row">
@@ -1009,6 +1176,7 @@
         try {
           const d = parseCode(line);
           if (!d.k || !d.n || d.a === undefined || !(d.d >= 1)) throw new Error('字段缺失');
+          if (d.g === 4 && d.x) d.g = CUSTOM;   // 旧版自定义理由迁移
           const sub = {
             k: d.k, n: String(d.n).slice(0, 20), a: String(d.a), d: Math.min(99, d.d | 0),
             p: Math.max(0, d.p | 0), g: (d.g | 0), x: String(d.x || '').slice(0, 20), t: d.t || Date.now()
@@ -1058,11 +1226,12 @@
       const people = valid.map((s, i) => {
         const idx = String(s.a).split(',').filter(x => x !== '').map(Number)
           .filter(n => n >= 0 && n < room.dates.length);
-        const weight = room.w[(s.g | 0) >= 4 ? 3 : (s.g | 0)] ?? 1;
+        const wi = (s.g | 0) === CUSTOM ? REASONS.length - 1 : (s.g | 0);
+        const weight = room.w[wi] ?? 1;
         return {
           i,
           name: s.n,
-          reason: (s.g | 0) === 4 ? (s.x || '其他') : (REASONS[s.g] || '其他'),
+          reason: (s.g | 0) === CUSTOM ? (s.x || '其他') : (REASONS[s.g] || '其他'),
           past: s.p,
           // 需求以「要出的天数」为准；可接受日期只约束阶段一（严格匹配），
           // 阶段二调剂可满足其超额需求（会标注「调剂」）
@@ -1235,7 +1404,7 @@
         } catch { /* 忽略非法参数 */ }
       }
       initDates();
-      show((location.hash || '#setup').slice(1));
+      show((location.hash || '#online').slice(1));
     })();
   })();
   </script>
