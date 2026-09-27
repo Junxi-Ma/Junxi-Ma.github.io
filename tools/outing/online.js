@@ -507,6 +507,10 @@ async function boot() {
     capsOk = false;
   }
 
+  // 理由下拉框（8 类 + 自定义）
+  $('onReason').innerHTML = REASONS.map((r, i) => `<option value="${i}">${r}</option>`).join('')
+    + `<option value="${CUSTOM}">自己填写…</option>`;
+
   // 理由权重输入行（创建房间用）
   $('onWeights').innerHTML = DEFAULT_W.map((w, i) => `
     <div class="field"><input class="input" type="number" id="onw${i}" min="0" max="99" value="${w}" aria-label="${REASONS[i]}权重"><span class="field__hint">${REASONS[i]}</span></div>`).join('');
