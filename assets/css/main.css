@@ -1105,3 +1105,191 @@ html[data-theme="light"] .nav__icon .ico-moon {
     transform: none;
   }
 }
+
+/* ============================================================
+   Supabase 动态能力：页脚访客统计 / 导航登录入口 / 登录弹窗
+   （由 assets/js/analytics.js 与 auth.js 注入，未配置后端时不出现）
+   ============================================================ */
+/* 全局兜底：任何组件级 display 都不允许盖掉 hidden 语义 */
+[hidden] {
+  display: none !important;
+}
+.footer__stats {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-3);
+}
+
+.nav-auth-btn {
+  appearance: none;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-2);
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 6px 14px;
+  cursor: pointer;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color var(--dur-fast) ease, border-color var(--dur-fast) ease;
+}
+.nav-auth-btn:hover {
+  color: var(--text-1);
+  border-color: var(--border-hover);
+}
+.nav-auth-btn.is-user {
+  color: var(--accent);
+  border-color: rgba(242, 169, 59, 0.4);
+}
+
+.auth-mask {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal, 200);
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+.auth-card {
+  width: min(400px, 100%);
+  background: var(--bg, #0a0a0b);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 24px 26px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.55);
+}
+.auth-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.auth-head h3 {
+  margin: 0;
+  font-size: 18px;
+}
+.auth-close {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--text-3);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 8px;
+}
+.auth-close:hover {
+  color: var(--text-1);
+  background: var(--surface-2);
+}
+.auth-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 3px;
+  margin-bottom: 16px;
+}
+.auth-tab {
+  appearance: none;
+  border: none;
+  background: transparent;
+  font: inherit;
+  font-size: 13.5px;
+  color: var(--text-2);
+  padding: 7px 0;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background var(--dur-fast) ease, color var(--dur-fast) ease;
+}
+.auth-tab.is-active {
+  background: var(--accent-fill);
+  color: var(--accent-fg);
+  font-weight: 600;
+}
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-2);
+}
+.auth-field input {
+  font: inherit;
+  font-size: 14px;
+  color: var(--text-1);
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  transition: border-color var(--dur-fast) ease, box-shadow var(--dur-fast) ease;
+}
+.auth-field input:focus {
+  outline: none;
+  border-color: rgba(242, 169, 59, 0.55);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+.auth-msg {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ok);
+}
+.auth-msg.is-err {
+  color: var(--danger-fg);
+}
+.auth-submit {
+  margin-top: 4px;
+  width: 100%;
+}
+.auth-account {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--text-2);
+  line-height: 1.7;
+}
+.auth-account p {
+  margin: 0;
+}
+.auth-account-msg {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ok);
+}
+.auth-account-msg.is-err {
+  color: var(--danger-fg);
+}
+.auth-account-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+.auth-account-actions .btn {
+  width: 100%;
+}
+.auth-account-actions .auth-admin-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  color: var(--accent);
+  border-color: rgba(242, 169, 59, 0.4);
+}

@@ -185,6 +185,36 @@ git config core.hooksPath .githooks
 零第三方运行时 API（不依赖 api.github.com 等，国内访问稳定）。
 脚本纯 Python 标准库，本地即可运行。
 
+## 动态能力（Supabase 后端）
+
+站点托管仍在 GitHub Pages；Supabase 提供数据库与账号体系，让部分功能"上云"：
+
+| 功能 | 说明 | 数据 |
+| --- | --- | --- |
+| 全站访客统计 | 页脚展示 总访问 / 独立访客 / 今日访问 | `visits` 表（匿名，仅随机访客 id + 路径） |
+| 登录注册 | 导航栏入口，邮箱 + 密码（Supabase Auth 托管） | `profiles` 表（触发器自动建档） |
+| 管理后台 | `admin.html`：账号封禁/解封、访客黑名单、访客行为轨迹、管理员名单 | `admins` / `banned_visitors` + 管理员可读 `visits` |
+
+管理后台要点：
+
+- 管理员 = `admins` 表成员；第一个登录后在账号弹窗「认领管理员」的账号自动入选（仅一次），
+  之后可在后台按邮箱提拔 / 移除（白名单）。
+- 封禁是**服务端强制**：被封账号登录即被踢出，其所有动态写入被 RLS 策略拒绝；
+  访客黑名单按浏览器随机访客 id 拦截上报。
+- 后台入口：登录管理员账号后，账号弹窗出现「管理后台 →」，或直接访问 `/admin.html`。
+
+启用步骤（一次性）：
+
+1. Supabase 控制台 → SQL Editor → 粘贴运行 `supabase/schema.sql`（幂等）；
+2. 把项目地址（Project URL，形如 `https://xxxx.supabase.co`）填入
+   `assets/js/supabase.js` 的 `SUPABASE_URL`；
+3. publishable key 已内置（公开密钥可放前端）；如需轮换在 Supabase → Settings → API。
+4. 想注册后立即登录（跳过邮箱验证）：Authentication → Sign In / Up → 关闭 Confirm email。
+
+安全设计：`visits` 开启 RLS，匿名只能写入、不能读原始记录；页脚统计走
+`security definer` 聚合函数 `get_site_stats()`，仅暴露计数。
+未配置 URL 或后端不可达时整站自动回退为纯静态行为（无报错、无动态元素）。
+
 ## Credits
 
 | 库 | 版本 | 许可证 |

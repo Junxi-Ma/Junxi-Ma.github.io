@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>管理后台 — Michael</title>
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#0a0a0b">
+  <meta name="color-scheme" content="dark">
+  <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
+  <script>
+    /* 首帧前定下主题，避免闪烁；无记录时默认暗色（站点基调） */
+    (function () {
+      var t = null;
+      try { t = localStorage.getItem('site-theme'); } catch (e) {}
+      if (t !== 'dark' && t !== 'light') t = 'dark';
+      document.documentElement.dataset.theme = t;
+      document.documentElement.classList.add('js');
+      var m = document.querySelector('meta[name="theme-color"]');
+      if (m) m.content = t === 'light' ? '#faf8f5' : '#0a0a0b';
+    })();
+  </script>
+  <link rel="stylesheet" href="assets/css/tokens.css">
+  <link rel="stylesheet" href="assets/css/main.css">
+  <style>
+    /* ---------- 管理后台专属样式 ---------- */
+    .tool {
+      padding-top: calc(var(--nav-h) + clamp(40px, 7vw, 72px));
+      padding-bottom: var(--section-y);
+    }
+    .tool__head {
+      max-width: 720px;
+      margin-bottom: 28px;
+    }
+    .tool__head h1 {
+      font-size: var(--fs-h1);
+      letter-spacing: -0.02em;
+      margin-top: 22px;
+    }
+    .tool__head p {
+      margin-top: 14px;
+      color: var(--text-2);
+      line-height: 1.7;
+    }
+    .article-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13.5px;
+      color: var(--text-3);
+      text-decoration: none;
+      transition: color var(--dur-fast) ease;
+    }
+    .article-back:hover { color: var(--text-1); }
+
+    [hidden] { display: none !important; }
+
+    .adm-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+    .adm-tabs {
+      display: inline-flex;
+      background: var(--surface-1);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 4px;
+      gap: 2px;
+      flex-wrap: wrap;
+    }
+    .adm-tab {
+      appearance: none;
+      border: none;
+      background: transparent;
+      color: var(--text-2);
+      font: inherit;
+      font-size: 14px;
+      padding: 7px 16px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: background .15s, color .15s;
+    }
+    .adm-tab:hover { color: var(--text-1); }
+    .adm-tab.is-active {
+      background: var(--accent-fill);
+      color: var(--accent-fg);
+      font-weight: 600;
+    }
+    .adm-note {
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      color: var(--text-3);
+    }
+
+    .adm-panel {
+      background: var(--surface-1);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px 22px;
+      margin-bottom: 18px;
+    }
+    .adm-panel h2 {
+      margin: 0 0 14px;
+      font-size: 16px;
+    }
+    .adm-panel h2 small {
+      font-weight: 400;
+      color: var(--text-3);
+      font-size: 12.5px;
+      margin-left: 10px;
+    }
+
+    .adm-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13.5px;
+    }
+    .adm-table th {
+      text-align: left;
+      font-size: 12px;
+      color: var(--text-3);
+      font-weight: 600;
+      padding: 0 10px 8px;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    .adm-table td {
+      padding: 9px 10px;
+      border-bottom: 1px dashed var(--border);
+      color: var(--text-1);
+      line-height: 1.5;
+    }
+    .adm-table tbody tr { transition: background .15s; }
+    .adm-table tbody tr:hover { background: rgba(255, 255, 255, .03); }
+    [data-theme="light"] .adm-table tbody tr:hover { background: rgba(0, 0, 0, .03); }
+    .adm-table code, .adm-table .mono {
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      color: var(--text-2);
+    }
+    .adm-banned { color: var(--danger-fg); font-weight: 600; }
+    .adm-ok { color: var(--ok); }
+    .adm-actions { display: flex; gap: 6px; justify-content: flex-end; flex-wrap: wrap; }
+
+    .adm-form-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+      align-items: center;
+    }
+    .adm-form-row input {
+      font: inherit;
+      font-size: 13.5px;
+      color: var(--text-1);
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 9px 12px;
+    }
+    .adm-form-row input:focus {
+      outline: none;
+      border-color: rgba(242, 169, 59, 0.55);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+    .adm-msg {
+      margin: 8px 0 0;
+      font-size: 13px;
+      color: var(--ok);
+      min-height: 1em;
+    }
+    .adm-msg.is-err { color: var(--danger-fg); }
+
+    .adm-guard {
+      max-width: 560px;
+      background: var(--surface-1);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px 30px;
+      text-align: center;
+    }
+    .adm-guard h2 { margin: 0 0 10px; font-size: 20px; }
+    .adm-guard p {
+      margin: 0 0 8px;
+      color: var(--text-2);
+      font-size: 14px;
+      line-height: 1.8;
+    }
+    .adm-guard .mono {
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      color: var(--text-3);
+      word-break: break-all;
+    }
+
+    .adm-journey {
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px dashed var(--border);
+    }
+    .adm-journey h3 { margin: 0 0 10px; font-size: 14px; color: var(--text-2); }
+
+    @media (max-width: 640px) {
+      .adm-table { font-size: 12.5px; }
+      .adm-table th, .adm-table td { padding: 7px 6px; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main">跳到主要内容</a>
+
+  <header class="nav" id="nav">
+    <div class="container nav__inner">
+      <a class="nav__logo" href="index.html" aria-label="Michael 首页">Michael<i>.</i></a>
+      <nav class="nav__links" id="nav-links" aria-label="主导航">
+        <a href="index.html">首页</a>
+        <a href="tools.html">工具</a>
+        <a href="notes.html">笔记</a>
+        <a href="index.html#about">关于</a>
+      </nav>
+      <div class="nav__actions">
+        <button class="nav__icon" id="theme-toggle" type="button" aria-label="切换到浅色模式" title="浅色模式">
+          <svg class="ico-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="4"/>
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+          </svg>
+          <svg class="ico-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+        </button>
+        <button class="nav__toggle" id="nav-toggle" aria-label="打开菜单" aria-expanded="false" aria-controls="nav-links">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+            <path d="M4 7h16M4 12h16M4 17h16"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <div class="container tool">
+      <div class="tool__head">
+        <a class="article-back" href="index.html"><span class="arr">←</span>返回首页</a>
+        <p class="mono-label">Admin</p>
+        <h1>管理后台</h1>
+        <p>账号管理、访客黑名单与访客行为查看。仅管理员可访问，权限由数据库行级安全强制。</p>
+      </div>
+
+      <!-- 未登录 / 非管理员守卫 -->
+      <div class="adm-guard" id="adm-guard">
+        <h2 id="adm-guard-title">需要管理员身份</h2>
+        <p id="adm-guard-text">请先在右上角登录，并使用管理员账号访问本页。</p>
+        <p class="mono" id="adm-guard-hint"></p>
+      </div>
+
+      <!-- 管理应用 -->
+      <div id="adm-app" hidden>
+        <div class="adm-toolbar">
+          <div class="adm-tabs" role="tablist">
+            <button class="adm-tab is-active" data-tab="accounts" type="button">账号管理</button>
+            <button class="adm-tab" data-tab="banned" type="button">访客黑名单</button>
+            <button class="adm-tab" data-tab="behavior" type="button">访客行为</button>
+            <button class="adm-tab" data-tab="admins" type="button">管理员名单</button>
+          </div>
+          <button class="btn btn--ghost btn--sm" id="adm-refresh" type="button">刷新数据</button>
+          <span class="adm-note" id="adm-note"></span>
+        </div>
+
+        <!-- 账号管理 -->
+        <section class="adm-panel" id="adm-tab-accounts">
+          <h2>注册账号 <small>封禁后该账号立即被踢出，且所有动态写入被服务端拒绝</small></h2>
+          <table class="adm-table">
+            <thead><tr>
+              <th>昵称</th><th>邮箱</th><th>注册时间</th><th>状态</th><th style="text-align:right">操作</th>
+            </tr></thead>
+            <tbody id="adm-accounts"></tbody>
+          </table>
+        </section>
+
+        <!-- 访客黑名单 -->
+        <section class="adm-panel" id="adm-tab-banned" hidden>
+          <h2>匿名访客黑名单 <small>按浏览器访客 id 拦截其访问上报（不针对注册账号）</small></h2>
+          <div class="adm-form-row">
+            <input type="text" id="adm-bv-id" placeholder="访客 id（visitor_id）" style="min-width: 260px;">
+            <input type="text" id="adm-bv-reason" placeholder="原因（可选）">
+            <button class="btn btn--primary btn--sm" id="adm-bv-add" type="button">加入黑名单</button>
+          </div>
+          <p class="adm-msg" id="adm-bv-msg" hidden></p>
+          <table class="adm-table">
+            <thead><tr>
+              <th>访客 id</th><th>原因</th><th>加入时间</th><th style="text-align:right">操作</th>
+            </tr></thead>
+            <tbody id="adm-bv-list"></tbody>
+          </table>
+        </section>
+
+        <!-- 访客行为 -->
+        <section class="adm-panel" id="adm-tab-behavior" hidden>
+          <h2>访客总览 <small>按访客聚合；点击行查看该访客的访问轨迹</small></h2>
+          <table class="adm-table">
+            <thead><tr>
+              <th>访客 id</th><th>访问次数</th><th>首次</th><th>最近</th>
+            </tr></thead>
+            <tbody id="adm-overview"></tbody>
+          </table>
+          <div class="adm-journey" id="adm-journey" hidden>
+            <h3 id="adm-journey-title"></h3>
+            <table class="adm-table">
+              <thead><tr><th>时间</th><th>路径</th></tr></thead>
+              <tbody id="adm-journey-body"></tbody>
+            </table>
+          </div>
+          <h2 style="margin-top: 22px;">最近访问 <small>最新 100 条页面加载</small></h2>
+          <table class="adm-table">
+            <thead><tr><th>时间</th><th>访客 id</th><th>路径</th></tr></thead>
+            <tbody id="adm-recent"></tbody>
+          </table>
+        </section>
+
+        <!-- 管理员名单 -->
+        <section class="adm-panel" id="adm-tab-admins" hidden>
+          <h2>管理员名单（白名单） <small>拥有全部后台权限；第一个认领的账号自动进入</small></h2>
+          <div class="adm-form-row">
+            <input type="email" id="adm-admin-email" placeholder="按注册邮箱提拔" style="min-width: 260px;">
+            <button class="btn btn--primary btn--sm" id="adm-admin-add" type="button">提拔为管理员</button>
+          </div>
+          <p class="adm-msg" id="adm-admin-msg" hidden></p>
+          <table class="adm-table">
+            <thead><tr>
+              <th>昵称</th><th>邮箱</th><th>成为管理员时间</th><th style="text-align:right">操作</th>
+            </tr></thead>
+            <tbody id="adm-admins"></tbody>
+          </table>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer__inner">
+      <span>© <span data-year>2026</span> Michael · <span class="footer__heart">♥</span> 纯静态手工打造</span>
+      <nav class="footer__links" aria-label="页脚导航">
+        <a href="tools.html">Tools</a>
+        <a href="notes.html">Notes</a>
+        <a href="https://github.com/" target="_blank" rel="noopener noreferrer">GitHub</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script type="module" src="assets/js/main.js"></script>
+  <script type="module" src="assets/js/admin.js"></script>
+</body>
+</html>

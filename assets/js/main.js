@@ -145,3 +145,8 @@ window.addEventListener('storage', (e) => {
     applyTheme(e.newValue, false);
   }
 });
+
+/* ---------- Supabase 动态能力（访客统计 / 登录注册） ----------
+   未配置后端时两个模块都会静默跳过，站点保持纯静态行为。 */
+import './analytics.js';
+import './auth.js';
