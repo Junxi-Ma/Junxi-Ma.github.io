@@ -7,25 +7,69 @@
 
 import { escapeHtml } from './api.js';
 
+/* ---------- 数学公式保护 ----------
+   公式里的 _ 和 * 会被 marked 当成 Markdown 语法（x_i → 斜体），
+   因此渲染前先把 $$…$$ / $…$ 抽走换成纯字母数字占位符，
+   marked.parse 之后再原样放回（TeX 转 HTML 转义）。
+   放回的 $…$ 文本随后由 enhanceArticle 里的 KaTeX auto-render 渲染。 */
+const MATH_STORE = [];
+
+function stashMath(md) {
+  MATH_STORE.length = 0;
+  return String(md ?? '')
+    .replace(/\$\$([\s\S]+?)\$\$/g, (_, tex) => {
+      MATH_STORE.push({ display: true, tex });
+      return `@@M${MATH_STORE.length - 1}@@`;
+    })
+    .replace(/\$([^$\n]+?)\$/g, (_, tex) => {
+      MATH_STORE.push({ display: false, tex });
+      return `@@M${MATH_STORE.length - 1}@@`;
+    });
+}
+
+function unstashMath(html) {
+  return html.replace(/@@M(\d+)@@/g, (_, i) => {
+    const m = MATH_STORE[Number(i)];
+    if (!m) return '';
+    const tex = escapeHtml(m.tex.trim());
+    return m.display ? `$$${tex}$$` : `$${tex}$`;
+  });
+}
+
 /**
  * 渲染 Markdown → 已净化的 HTML。
- * 固定顺序：marked.parse → DOMPurify.sanitize，任何情况不跳过净化。
+ * 固定顺序：抽公式 → marked.parse → 还原公式 → DOMPurify.sanitize，
+ * 任何情况不跳过净化。
  */
 export function renderMarkdown(md) {
-  const raw = window.marked.parse(String(md ?? ''), {
+  const stashed = stashMath(md);
+  const raw = window.marked.parse(stashed, {
     gfm: true,
     breaks: false,
     pedantic: false,
   });
-  return window.DOMPurify.sanitize(raw, {
+  return window.DOMPurify.sanitize(unstashMath(raw), {
     USE_PROFILES: { html: true },
     // input 保留（GFM 任务列表复选框，marked 输出 type=checkbox + disabled）
     FORBID_TAGS: ['style', 'form', 'button'],
   });
 }
 
+/** KaTeX 渲染（$…$ 行内、$$…$$ 独立公式）；KaTeX 未加载时静默跳过 */
+function renderMath(root) {
+  if (typeof window.renderMathInElement !== 'function') return;
+  window.renderMathInElement(root, {
+    delimiters: [
+      { left: '$$', right: '$$', display: true },
+      { left: '$', right: '$', display: false },
+    ],
+    throwOnError: false,
+  });
+}
+
 /** 对已渲染的 .markdown 容器做增强；返回 TOC 数据 [{level,id,text}] */
 export function enhanceArticle(root) {
+  renderMath(root);
   wrapTables(root);
   wrapCodeBlocks(root);
   highlightCode(root);

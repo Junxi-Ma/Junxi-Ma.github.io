@@ -476,6 +476,155 @@ html[data-theme="light"] .hljs-addition {
   color: #098658;
 }
 
+/* ---------- 笔记多色批注体系 ----------
+   语义：红=易错点 蓝=物理意义 绿=关键结论 紫=数学技巧 橙=课件补充
+   颜色随主题切换（暗色取 GitHub Dark 色板，亮色取 GitHub Light 色板） */
+:root,
+html[data-theme="dark"] {
+  --mk-red: #ff7b72;
+  --mk-blue: #79c0ff;
+  --mk-green: #56d364;
+  --mk-purple: #d2a8ff;
+  --mk-orange: #ffa657;
+}
+html[data-theme="light"] {
+  --mk-red: #c73a34;
+  --mk-blue: #0b62c4;
+  --mk-green: #177a37;
+  --mk-purple: #7c3edd;
+  --mk-orange: #b25107;
+}
+
+.markdown .mk-red    { color: var(--mk-red); }
+.markdown .mk-blue   { color: var(--mk-blue); }
+.markdown .mk-green  { color: var(--mk-green); }
+.markdown .mk-purple { color: var(--mk-purple); }
+.markdown .mk-orange { color: var(--mk-orange); }
+.markdown .mk-hl {
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+  border-radius: 3px;
+  padding: 0 3px;
+}
+
+/* 批注框：正文里的彩色结论 / 警示 / 解释块 */
+.markdown .mk-box {
+  margin: 1.35em 0;
+  padding: 12px 18px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--border-strong);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  background: var(--tint-subtle);
+  font-size: 0.97em;
+}
+.markdown .mk-box p {
+  margin: 0.5em 0;
+}
+.markdown .mk-box--key {
+  border-left-color: var(--mk-green);
+  background: color-mix(in srgb, var(--mk-green) 8%, transparent);
+}
+.markdown .mk-box--key b {
+  color: var(--mk-green);
+}
+.markdown .mk-box--warn {
+  border-left-color: var(--mk-red);
+  background: color-mix(in srgb, var(--mk-red) 8%, transparent);
+}
+.markdown .mk-box--warn b {
+  color: var(--mk-red);
+}
+.markdown .mk-box--why {
+  border-left-color: var(--mk-blue);
+  background: color-mix(in srgb, var(--mk-blue) 8%, transparent);
+}
+.markdown .mk-box--why b {
+  color: var(--mk-blue);
+}
+.markdown .mk-box--tip {
+  border-left-color: var(--mk-purple);
+  background: color-mix(in srgb, var(--mk-purple) 8%, transparent);
+}
+.markdown .mk-box--tip b {
+  color: var(--mk-purple);
+}
+.markdown .mk-box--note {
+  border-left-color: var(--mk-orange);
+  background: color-mix(in srgb, var(--mk-orange) 8%, transparent);
+}
+.markdown .mk-box--note b {
+  color: var(--mk-orange);
+}
+
+/* 推导示意图（纯 HTML/CSS，作者在 Markdown 里写原始 HTML） */
+.markdown .dg {
+  margin: 1.5em 0;
+  padding: 16px 14px 12px;
+  border: 1px dashed var(--border-strong);
+  border-radius: 10px;
+  background: var(--tint-faint);
+}
+.markdown .dg__row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  text-align: center;
+}
+.markdown .dg__face {
+  border: 1.5px solid var(--mk-blue);
+  color: var(--mk-blue);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  line-height: 1.7;
+  background: color-mix(in srgb, var(--mk-blue) 8%, transparent);
+}
+.markdown .dg__face--in {
+  border-color: var(--mk-green);
+  color: var(--mk-green);
+  background: color-mix(in srgb, var(--mk-green) 8%, transparent);
+}
+.markdown .dg__face--out {
+  border-color: var(--mk-red);
+  color: var(--mk-red);
+  background: color-mix(in srgb, var(--mk-red) 8%, transparent);
+}
+.markdown .dg__body {
+  border: 1.5px solid var(--text-3);
+  border-radius: 8px;
+  padding: 10px 18px;
+  color: var(--text-2);
+  background: var(--surface-2);
+  font-size: 13px;
+  line-height: 1.7;
+}
+.markdown .dg__arrow {
+  color: var(--text-3);
+  font-size: 16px;
+}
+.markdown .dg__cap {
+  margin: 12px 0 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-3);
+}
+
+/* KaTeX 公式 */
+.markdown .katex-display {
+  margin: 0.9em 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 3px 0;
+}
+.markdown .katex {
+  font-size: 1.08em;
+}
+/* 公式在批注框内的独立展示稍微收紧 */
+.markdown .mk-box .katex-display {
+  margin: 0.6em 0;
+}
+
 /* ---------- 详情页状态 ---------- */
 .skel-line {
   height: 17px;
