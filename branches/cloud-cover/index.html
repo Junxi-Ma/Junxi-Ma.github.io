@@ -602,16 +602,27 @@
     .segment-btn input[type="radio"] {
       display: none;
     }
-    .segment-btn:has(input:checked) {
+    .segment-btn:has(input:checked),
+    .segment-btn.is-on {
       background: var(--g-surface);
       color: var(--g-blue);
       font-weight: 600;
       box-shadow: 0 1px 3px rgba(60,64,67,0.15);
     }
-    .segment-btn:has(input:disabled) {
+    .segment-btn:has(input:disabled),
+    .segment-btn.is-disabled {
       opacity: 0.5;
       cursor: not-allowed;
     }
+    /* ROI 交互层：覆盖在画布上，拖动选区 */
+    .roi-overlay {
+      position: absolute;
+      inset: 0;
+      touch-action: none;
+      z-index: 2;
+    }
+    .roi-overlay.roi-full { pointer-events: none; }
+    .stage-hud { z-index: 3; }
 
     /* Material Design Switches */
     .options-list {
@@ -1114,6 +1125,9 @@
               <!-- Main Canvas -->
               <canvas id="view" width="640" height="360"></canvas>
 
+              <!-- ROI 拖拽交互层 -->
+              <div class="roi-overlay roi-full" id="roiOverlay"></div>
+
               <!-- Placeholder -->
               <div class="stage-placeholder" id="placeholder">
                 <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/></svg>
@@ -1147,7 +1161,7 @@
               </div>
               <div class="legend-item">
                 <div class="legend-box" style="border:1px dashed #ffffff;background:rgba(255,255,255,0.2);"></div>
-                <span><b>圆形天空 ROI</b>（剔除四角杂物）</span>
+                <span><b>选区轮廓</b>（虚线，可在图上拖拽调位置与大小）</span>
               </div>
             </div>
 
@@ -1239,11 +1253,11 @@
                 <span style="font-size:11px;color:var(--g-blue);">AI 优先推荐</span>
               </div>
               <div class="segmented-control">
-                <label class="segment-btn" id="lblEngAI">
+                <label class="segment-btn is-disabled" id="lblEngAI" title="AI 模型加载中，就绪后自动启用">
                   <input type="radio" name="engine" value="ai" id="engAI" disabled>
-                  <span>✨ U-Net 深度学习</span>
+                  <span id="engAIText">✨ U-Net（模型加载中…）</span>
                 </label>
-                <label class="segment-btn" id="lblEngColor">
+                <label class="segment-btn is-on" id="lblEngColor">
                   <input type="radio" name="engine" value="color" id="engColor" checked>
                   <span>⚡ 传统色比法 (R−B)</span>
                 </label>
@@ -1252,15 +1266,26 @@
 
             <!-- Switches List -->
             <div class="options-list">
-              <div class="option-item">
-                <div class="option-info">
-                  <div class="option-title">圆形天空有效区 (Circular ROI)</div>
-                  <div class="option-desc">自动截取天顶区域，剔除四角地平线、树木与建筑遮挡</div>
+              <div class="option-item" style="flex-direction:column;align-items:stretch;">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                  <div class="option-title">有效天空选区 (ROI)</div>
+                  <button class="btn btn-primary" id="roiReset" style="font-size:11px;padding:4px 12px;">↺ 重置选区</button>
                 </div>
-                <label class="m3-switch">
-                  <input type="checkbox" id="roiToggle" checked>
-                  <span class="switch-slider"></span>
-                </label>
+                <div class="option-desc" style="margin-top:4px;">在左侧图像上拖动选区调位置，拖动边缘／角点调大小</div>
+                <div class="segmented-control" style="margin-top:8px;">
+                  <label class="segment-btn is-on" id="lblRoiCircle">
+                    <input type="radio" name="roishape" value="circle" id="roiCircle" checked>
+                    <span>⭕ 圆形</span>
+                  </label>
+                  <label class="segment-btn" id="lblRoiRect">
+                    <input type="radio" name="roishape" value="rect" id="roiRect">
+                    <span>▭ 矩形</span>
+                  </label>
+                  <label class="segment-btn" id="lblRoiFull">
+                    <input type="radio" name="roishape" value="full" id="roiFull">
+                    <span>⛶ 全图</span>
+                  </label>
+                </div>
               </div>
 
               <div class="option-item">
@@ -1382,7 +1407,9 @@
     var fileInput = $('fileInput'), captureInput = $('captureInput'),
         btnCam = $('btnCam'), video = $('cam'), btnShot = $('btnShot'),
         view = $('view'), placeholder = $('placeholder'),
-        roiToggle = $('roiToggle'), showMask = $('showMask'),
+        roiOverlay = $('roiOverlay'), engAIText = $('engAIText'),
+        lblEngAI = $('lblEngAI'), lblEngColor = $('lblEngColor'),
+        showMask = $('showMask'),
         autoTh = $('autoTh'), thSlider = $('thSlider'), thLabel = $('thLabel'),
         percentEl = $('percent'), chengEl = $('cheng'),
         gradeEl = $('grade'), metaEl = $('meta'), errBox = $('err'),
@@ -1401,7 +1428,13 @@
     var stream = null;
     var lastMask = null;
     var lastRoi = null;
-    var lastCx = 0, lastCy = 0, lastR = 0, lastUseCircle = true;
+    var lastCx = 0, lastCy = 0, lastR = 0, lastShape = 'circle', lastRect = null;
+    /* ROI 选区状态（相对图像宽高的归一化坐标），可在图上拖拽调整 */
+    var roiState = { shape: 'circle', cx: 0.5, cy: 0.5, r: 0.48, x0: 0.08, y0: 0.08, x1: 0.92, y1: 0.92 };
+    function roiDefaults() {
+      roiState.cx = 0.5; roiState.cy = 0.5; roiState.r = 0.48;
+      roiState.x0 = 0.08; roiState.y0 = 0.08; roiState.x1 = 0.92; roiState.y1 = 0.92;
+    }
 
     /* ---------- 图像载入 ---------- */
     function loadFile(file) {
@@ -1443,6 +1476,7 @@
       stageHud.hidden = false;
       hudInfo.textContent = src.width + ' × ' + src.height + ' px';
       stopCam();
+      syncRoiOverlayMode();
       process();
     }
 
@@ -1525,17 +1559,31 @@
       var w = src.width, h = src.height, n = w * h;
       var data = sctx.getImageData(0, 0, w, h).data;
 
-      // 1) 有效天空区（圆形 ROI）
-      var useCircle = roiToggle.checked;
-      var cx = w / 2, cy = h / 2, r = Math.min(w, h) * 0.48, r2 = r * r;
+      // 1) 有效天空区（可拖拽选区：圆形 / 矩形 / 全图）
+      var shape = roiState.shape;
+      var cx = 0, cy = 0, r = 0, rect = null;
       var inRoi = new Uint8Array(n), roiN = 0, y, x, i;
-      for (y = 0; y < h; y++) {
-        var dy = y - cy;
-        for (x = 0; x < w; x++) {
-          i = y * w + x;
-          if (useCircle) { var dx = x - cx; if (dx * dx + dy * dy > r2) continue; }
-          inRoi[i] = 1; roiN++;
+      if (shape === 'circle') {
+        cx = roiState.cx * w; cy = roiState.cy * h; r = roiState.r * Math.min(w, h);
+        var r2 = r * r;
+        for (y = 0; y < h; y++) {
+          var dy = y - cy;
+          for (x = 0; x < w; x++) {
+            i = y * w + x;
+            var dx = x - cx;
+            if (dx * dx + dy * dy > r2) continue;
+            inRoi[i] = 1; roiN++;
+          }
         }
+      } else if (shape === 'rect') {
+        rect = [roiState.x0 * w, roiState.y0 * h, roiState.x1 * w, roiState.y1 * h];
+        var xs = Math.max(0, Math.floor(rect[0])), xe = Math.min(w, Math.ceil(rect[2]));
+        var ys = Math.max(0, Math.floor(rect[1])), ye = Math.min(h, Math.ceil(rect[3]));
+        for (y = ys; y < ye; y++)
+          for (x = xs; x < xe; x++) { inRoi[y * w + x] = 1; roiN++; }
+      } else {
+        for (i = 0; i < n; i++) inRoi[i] = 1;
+        roiN = n;
       }
       if (!roiN) return;
 
@@ -1578,7 +1626,7 @@
       // 缓存渲染状态
       lastMask = mask;
       lastRoi = inRoi;
-      lastCx = cx; lastCy = cy; lastR = r; lastUseCircle = useCircle;
+      lastCx = cx; lastCy = cy; lastR = r; lastShape = shape; lastRect = rect;
 
       // 3) 云量统计
       var cloudN = 0, skyN = 0, obsN = 0;
@@ -1641,15 +1689,104 @@
         vctx.putImageData(out, 0, 0);
       }
 
-      if (lastUseCircle) {
-        vctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
-        vctx.setLineDash([6, 5]);
-        vctx.lineWidth = 2;
+      vctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+      vctx.setLineDash([6, 5]);
+      vctx.lineWidth = 2;
+      if (lastShape === 'circle') {
         vctx.beginPath();
         vctx.arc(lastCx, lastCy, lastR, 0, Math.PI * 2);
         vctx.stroke();
-        vctx.setLineDash([]);
+      } else if (lastShape === 'rect' && lastRect) {
+        vctx.strokeRect(lastRect[0], lastRect[1],
+          lastRect[2] - lastRect[0], lastRect[3] - lastRect[1]);
       }
+      vctx.setLineDash([]);
+    }
+
+    /* ---------- ROI 选区拖拽：移动 / 调大小 ---------- */
+    var roiDrag = null;
+    function evImgPos(e) {
+      var r = view.getBoundingClientRect();
+      var sx = src.width / r.width, sy = src.height / r.height;
+      return { x: (e.clientX - r.left) * sx, y: (e.clientY - r.top) * sy, m: r };
+    }
+    function roiTol(m) { return 18 * (src.width / m.width); }  /* 命中容差 ≈18 显示像素 */
+    function curRoiPx() {
+      var w = src.width, h = src.height;
+      if (roiState.shape === 'circle')
+        return { shape: 'circle', cx: roiState.cx * w, cy: roiState.cy * h, r: roiState.r * Math.min(w, h) };
+      if (roiState.shape === 'rect')
+        return { shape: 'rect', x0: roiState.x0 * w, y0: roiState.y0 * h, x1: roiState.x1 * w, y1: roiState.y1 * h };
+      return { shape: 'full' };
+    }
+    function hitRoi(p) {
+      var g = curRoiPx(), tol = roiTol(p.m);
+      if (g.shape === 'circle') {
+        var d = Math.hypot(p.x - g.cx, p.y - g.cy);
+        if (Math.abs(d - g.r) <= tol) return 'resize';
+        if (d < g.r) return 'move';
+        return null;
+      }
+      if (g.shape === 'rect') {
+        var corners = [[g.x0, g.y0], [g.x1, g.y0], [g.x0, g.y1], [g.x1, g.y1]];
+        for (var c = 0; c < 4; c++)
+          if (Math.hypot(p.x - corners[c][0], p.y - corners[c][1]) <= tol) return 'corner:' + c;
+        if (p.x > g.x0 && p.x < g.x1 && p.y > g.y0 && p.y < g.y1) return 'move';
+        return null;
+      }
+      return null;
+    }
+    roiOverlay.addEventListener('pointerdown', function (e) {
+      if (!src.width || roiState.shape === 'full') return;
+      var p = evImgPos(e), mode = hitRoi(p);
+      if (!mode) return;
+      roiDrag = { mode: mode, sx: p.x, sy: p.y, snap: JSON.parse(JSON.stringify(roiState)) };
+      roiOverlay.setPointerCapture(e.pointerId);
+      e.preventDefault();
+    });
+    roiOverlay.addEventListener('pointermove', function (e) {
+      if (!src.width) return;
+      var p = evImgPos(e);
+      if (!roiDrag) {
+        var hov = hitRoi(p);
+        roiOverlay.style.cursor =
+          (hov === 'resize' || (hov && hov.indexOf('corner:') === 0)) ? 'nwse-resize'
+          : hov === 'move' ? 'move' : 'default';
+        return;
+      }
+      var w = src.width, h2 = src.height;
+      var s = roiDrag.snap, dx = (p.x - roiDrag.sx) / w, dy = (p.y - roiDrag.sy) / h2;
+      if (roiDrag.mode === 'move') {
+        if (s.shape === 'circle') {
+          roiState.cx = Math.min(1, Math.max(0, s.cx + dx));
+          roiState.cy = Math.min(1, Math.max(0, s.cy + dy));
+        } else {
+          var ww = s.x1 - s.x0, hh = s.y1 - s.y0;
+          roiState.x0 = Math.min(1 - ww, Math.max(0, s.x0 + dx));
+          roiState.y0 = Math.min(1 - hh, Math.max(0, s.y0 + dy));
+          roiState.x1 = roiState.x0 + ww;
+          roiState.y1 = roiState.y0 + hh;
+        }
+      } else if (roiDrag.mode === 'resize') {          /* 圆形：拖边缘改半径 */
+        var g = curRoiPx();
+        roiState.r = Math.min(0.75, Math.max(0.06,
+          Math.hypot(p.x - g.cx, p.y - g.cy) / Math.min(w, h2)));
+      } else {                                          /* 矩形：拖角点 */
+        var ci = +roiDrag.mode.split(':')[1];
+        var xn = Math.min(1, Math.max(0, p.x / w)), yn = Math.min(1, Math.max(0, p.y / h2));
+        if (ci === 0)      { roiState.x0 = Math.min(xn, s.x1 - 0.05); roiState.y0 = Math.min(yn, s.y1 - 0.05); }
+        else if (ci === 1) { roiState.x1 = Math.max(xn, s.x0 + 0.05); roiState.y0 = Math.min(yn, s.y1 - 0.05); }
+        else if (ci === 2) { roiState.x0 = Math.min(xn, s.x1 - 0.05); roiState.y1 = Math.max(yn, s.y0 + 0.05); }
+        else               { roiState.x1 = Math.max(xn, s.x0 + 0.05); roiState.y1 = Math.max(yn, s.y0 + 0.05); }
+      }
+      renderVisualization();   /* 拖动中只重画轮廓与掩码，松手才重新统计 */
+    });
+    function roiDragEnd() { if (roiDrag) { roiDrag = null; process(); } }
+    roiOverlay.addEventListener('pointerup', roiDragEnd);
+    roiOverlay.addEventListener('pointercancel', roiDragEnd);
+    function syncRoiOverlayMode() {
+      roiOverlay.classList.toggle('roi-full', roiState.shape === 'full' || !src.width);
+      if (roiState.shape === 'full' || !src.width) roiOverlay.style.cursor = 'default';
     }
 
     /* ---------- 实时摄像头 ---------- */
@@ -1683,23 +1820,61 @@
     }
 
     /* ---------- 参数联动 ---------- */
-    roiToggle.onchange = process;
     showMask.onchange = process;
-    (function () {
-      var radios = document.querySelectorAll('input[name="engine"]');
-      for (var k = 0; k < radios.length; k++) {
-        radios[k].onchange = function () { toggleColorOpts(); process(); };
+    /* 单选钮高亮同步（浏览器不支持 :has() 时也能看到选中态） */
+    function syncSegHighlight() {
+      var pairs = [
+        ['engAI', 'lblEngAI'], ['engColor', 'lblEngColor'],
+        ['roiCircle', 'lblRoiCircle'], ['roiRect', 'lblRoiRect'], ['roiFull', 'lblRoiFull']
+      ];
+      for (var k = 0; k < pairs.length; k++) {
+        var input = $(pairs[k][0]), lbl = $(pairs[k][1]);
+        if (input && lbl) lbl.classList.toggle('is-on', input.checked);
       }
-    })();
+      lblEngAI.classList.toggle('is-disabled', engAI.disabled);
+    }
+    var engineRadios = document.querySelectorAll('input[name="engine"]');
+    for (var k = 0; k < engineRadios.length; k++) {
+      engineRadios[k].onchange = function () { syncSegHighlight(); toggleColorOpts(); process(); };
+    }
+    /* ROI 形状切换 */
+    var roiRadios = document.querySelectorAll('input[name="roishape"]');
+    for (var rr = 0; rr < roiRadios.length; rr++) {
+      roiRadios[rr].onchange = function () {
+        roiState.shape = this.value;
+        syncRoiOverlayMode();
+        syncSegHighlight();
+        process();
+      };
+    }
+    $('roiReset').onclick = function () {
+      roiDefaults();
+      renderVisualization();
+      process();
+    };
+    /* 在 AI 引擎下动色比参数 → 自动切回色比法（拖阈值即表示想用色比引擎） */
+    function switchToColorIfAi() {
+      if (engAI.checked && aiReady) {
+        engAI.checked = false;
+        engColor.checked = true;
+        syncSegHighlight();
+        toggleColorOpts();
+      }
+    }
     autoTh.onchange = function () {
       thSlider.disabled = autoTh.checked;
       thLabel.textContent = autoTh.checked ? '自动' : ('R−B ≥ ' + thSlider.value);
+      switchToColorIfAi();
       process();
     };
     thSlider.oninput = function () {
       thLabel.textContent = 'R−B ≥ ' + thSlider.value;
+      switchToColorIfAi();
       if (!autoTh.checked) process();
     };
+    syncSegHighlight();
+    engAIText.textContent = '✨ U-Net（模型加载中…）';
+    syncRoiOverlayMode();
 
     /* Technical Docs Tabs Switching */
     var docTabs = document.querySelectorAll('.doc-tab-btn');
@@ -1787,8 +1962,11 @@
     }
     function toggleColorOpts() {
       var aiOn = engAI.checked && aiReady;
-      colorOpts.style.opacity = aiOn ? '0.45' : '1';
-      colorOpts.style.pointerEvents = aiOn ? 'none' : 'auto';
+      /* 仅提示性变暗，保持可交互：在 AI 模式下动色比参数会自动切回色比法 */
+      colorOpts.style.opacity = aiOn ? '0.55' : '1';
+      colorOpts.style.pointerEvents = 'auto';
+      var hint = document.querySelector('.segmented-label span:last-child');
+      if (hint) hint.textContent = aiOn ? '动色比参数将自动切回色比法' : 'AI 优先推荐';
     }
     function patchWasmFetch() {
       var realFetch = window.fetch;
@@ -1801,9 +1979,10 @@
       };
     }
     async function initAI() {
+      lblEngAI.title = 'AI 模型加载中，就绪后自动启用';
       if (!window.ort) {
         var ok = await loadScript('model/ort.min.js?v=1');
-        if (!ok || !window.ort) { setAiStatus('未找到 ort.min.js', false); return; }
+        if (!ok || !window.ort) { setAiStatus('未找到 ort.min.js', false); engAIText.textContent = '✨ U-Net（不可用）'; return; }
       }
       try {
         if (!window.ORT_WASM_B64) await loadScript('model/ort_wasm_b64.js?v=1');
@@ -1817,12 +1996,16 @@
           b64ToBytes(window.CLOUD_MODEL_B64), { executionProviders: ['wasm'] });
         aiReady = true;
         engAI.disabled = false;
+        engAIText.textContent = '✨ U-Net 深度学习';
+        lblEngAI.title = '';
         setAiStatus('Wasm SIMD 已就绪', true);
         engAI.checked = true;
+        syncSegHighlight();
         toggleColorOpts();
         process();
       } catch (e) {
         setAiStatus('离线模型不可用', false);
+        engAIText.textContent = '✨ U-Net（不可用）';
       }
     }
 
