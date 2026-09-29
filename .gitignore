@@ -11,3 +11,8 @@ Thumbs.db
 *.swp
 .idea/
 .vscode/
+
+# 军训祝福页的原始副本：内容已完整迁移到 branches/junxun/，此处仅作本地备份。
+# 它自带一个 .git（独立仓库），若不忽略，git add . 会把它记成无法拉取的子模块，
+# 进而导致 GitHub Pages 构建在 Checkout 步骤失败、线上迟迟不更新。
+Message Board/
