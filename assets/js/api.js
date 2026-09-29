@@ -17,7 +17,7 @@ export function escapeHtml(str) {
 /**
  * 获取内容索引 data/index.json。
  * ?v= 破坏 GitHub Pages CDN 缓存（约 10 分钟）；失败自动重试一次。
- * @returns {Promise<{notes: Array, tools: Array}>}
+ * @returns {Promise<{notes: Array, tools: Array, branches: Array}>}
  */
 export async function fetchIndex() {
   const url = `data/index.json?v=${Date.now()}`;
@@ -37,6 +37,7 @@ async function load(url) {
   return {
     notes: Array.isArray(data.notes) ? data.notes : [],
     tools: Array.isArray(data.tools) ? data.tools : [],
+    branches: Array.isArray(data.branches) ? data.branches : [],
   };
 }
 

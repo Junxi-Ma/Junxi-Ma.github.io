@@ -1,0 +1,3020 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="format-detection" content="telephone=no">
+<meta name="theme-color" content="#F8F6F0">
+<title>军训专属祝福 · Michael</title>
+<meta name="description" content="二〇二六夏军训纪念页：查询你的专属教官祝福、拆开两位教官写给全体的信，并在留言墙上留下想说的话。">
+<style>
+:root{
+  --paper:#FDFCF8;
+  --ink:#2E3A42;
+  --ink-2:#48545E;
+  --ink-3:#79858E;
+  --ink-4:#A6AFB7;
+  --mist:#7E9DB4;
+  --mist-deep:#63839C;
+  --mist-soft:#DCE7EF;
+  --seal:166,72,58;
+  --hairline:#E6E4DC;
+  --hairline-blue:#DFE8EE;
+
+  /* 末尾挂上彩色 emoji 字体：保证 😄👍🎉 这类表情正常显示，而不是方框 */
+  --font-emoji:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji","Twemoji Mozilla","EmojiOne Color","Android Emoji",sans-serif;
+  /* 表情单独包一层用这个字体渲染（见 emjHtml），绝不让中文字体抢走 */
+  --font-song:"Songti SC","STSong","Source Han Serif SC","Noto Serif SC","Noto Serif CJK SC",SimSun,"宋体",Georgia,"Times New Roman",serif,var(--font-emoji);
+  --font-kai:"Kaiti SC","STKaiti",KaiTi,"楷体","Kai",var(--font-song),var(--font-emoji);
+  --font-ui:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei","微软雅黑",sans-serif,var(--font-emoji);
+}
+
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html{-webkit-text-size-adjust:100%;overflow-x:hidden;background:#F8F6F0;}
+body{
+  margin:0;
+  min-height:100vh;
+  font-family:var(--font-song);
+  font-size:16px;
+  line-height:1.95;
+  color:var(--ink-2);
+  background-color:#F8F6F0;
+  overflow-x:hidden;
+  touch-action:manipulation;
+  -webkit-font-smoothing:antialiased;
+}
+body.locked{overflow:hidden;}
+h1,h2,h3,p{margin:0;}
+button{font-family:inherit;}
+
+/* ---------- 宣纸底纹 ---------- */
+.bg{
+  position:fixed;top:0;right:0;bottom:0;left:0;
+  z-index:-1;overflow:hidden;pointer-events:none;
+  background:
+    radial-gradient(135% 72% at 50% -16%, #E6EDF2 0%, rgba(230,237,242,0) 62%),
+    radial-gradient(88% 52% at 6% 104%, #F0E9DC 0%, rgba(240,233,220,0) 58%),
+    radial-gradient(72% 44% at 102% 76%, #E8EEF1 0%, rgba(232,238,241,0) 60%),
+    linear-gradient(180deg,#F9F7F2 0%,#F6F5EF 46%,#F1F2EE 100%);
+}
+.bg::after{
+  content:'';position:absolute;top:0;right:0;bottom:0;left:0;opacity:.05;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+@supports (mix-blend-mode:multiply){ .bg::after{mix-blend-mode:multiply;} }
+.mote{
+  position:absolute;top:0;width:5px;height:5px;border-radius:50%;
+  background:rgba(146,172,192,.55);filter:blur(1.6px);opacity:0;
+  animation:drift 32s linear infinite;
+}
+.mote:nth-child(2){left:18%;animation-duration:30s;animation-delay:6s;width:4px;height:4px;}
+.mote:nth-child(3){left:52%;animation-duration:38s;animation-delay:14s;width:6px;height:6px;background:rgba(178,166,140,.5);}
+.mote:nth-child(4){left:81%;animation-duration:26s;animation-delay:2s;width:4px;height:4px;}
+.mote:nth-child(5){left:34%;animation-duration:42s;animation-delay:9s;width:5px;height:5px;background:rgba(196,178,154,.4);filter:blur(2px);}
+.mote:nth-child(6){left:68%;animation-duration:35s;animation-delay:18s;width:3.5px;height:3.5px;background:rgba(126,157,180,.45);}
+@keyframes drift{
+  0%{opacity:0;transform:translate3d(0,-16px,0) scale(.75);}
+  18%{opacity:.55;} 78%{opacity:.35;}
+  100%{opacity:0;transform:translate3d(28px,104vh,0) scale(1.15);}
+}
+
+/* ---------- 视图与平滑切换 ---------- */
+.view{
+  display:none;max-width:560px;margin:0 auto;
+  padding:28px 24px 56px;
+  padding-bottom:calc(56px + env(safe-area-inset-bottom));
+}
+.view.active{display:block;}
+.view.anim-right{animation:viewInRight .52s cubic-bezier(.16,1,.3,1) backwards;}
+.view.anim-left {animation:viewInLeft  .52s cubic-bezier(.16,1,.3,1) backwards;}
+@keyframes viewInRight{
+  from{opacity:0;transform:translate3d(32px,0,0) scale(.985);}
+  to{opacity:1;transform:none;}
+}
+@keyframes viewInLeft{
+  from{opacity:0;transform:translate3d(-32px,0,0) scale(.985);}
+  to{opacity:1;transform:none;}
+}
+@keyframes riseIn{
+  from{opacity:0;transform:translate3d(0,18px,0) scale(.985);}
+  to{opacity:1;transform:none;}
+}
+.rise{animation:riseIn .75s cubic-bezier(.16,1,.3,1) backwards;}
+
+/* ---------- 返回箭头 ---------- */
+.topbar{display:flex;align-items:center;margin:0 0 16px -4px;min-height:38px;}
+.nav-back{
+  display:inline-flex;align-items:center;gap:6px;
+  height:36px;padding:0 15px 0 11px;
+  font-size:13.5px;font-family:var(--font-kai);letter-spacing:.12em;
+  color:#5A7D96;background:rgba(255,255,255,.82);
+  border:1px solid rgba(126,157,180,.32);border-radius:10px;
+  box-shadow:0 2px 8px rgba(96,116,134,.05);
+  cursor:pointer;-webkit-appearance:none;appearance:none;touch-action:manipulation;
+  transition:all .22s cubic-bezier(.16,1,.3,1);
+}
+.nav-back:hover{background:#fff;border-color:rgba(126,157,180,.55);transform:translateX(-1px);}
+.nav-back:active{background:#F1F6FA;transform:scale(.95);}
+.nav-back svg{width:15px;height:15px;display:block;flex:none;}
+.nav-back.sm{height:32px;padding:0 12px 0 9px;font-size:13px;}
+.nav-back.sm svg{width:14px;height:14px;}
+
+/* ---------- 首页 ---------- */
+.hero{text-align:center;padding:18px 0 38px;}
+.hero-eyebrow{
+  display:inline-block;padding:2px 12px;
+  font-family:var(--font-kai);font-size:12.5px;letter-spacing:.36em;text-indent:.36em;
+  color:#7A8C98;background:rgba(255,255,255,.6);
+  border:1px solid rgba(126,157,180,.25);border-radius:20px;
+}
+.hero h1{
+  margin-top:16px;font-size:27px;font-weight:600;letter-spacing:.28em;text-indent:.28em;
+  color:var(--ink);
+  text-shadow:0 1px 2px rgba(46,58,66,.06);
+}
+.hero-rule{display:flex;align-items:center;justify-content:center;gap:14px;margin:22px 0 20px;}
+.hero-rule .line{width:56px;height:1px;background:linear-gradient(90deg,rgba(126,157,180,0),rgba(126,157,180,.55));}
+.hero-rule .line:last-child{background:linear-gradient(90deg,rgba(126,157,180,.55),rgba(126,157,180,0));}
+.hero-rule .dot{
+  width:6px;height:6px;background:rgba(126,157,180,.65);transform:rotate(45deg);
+  box-shadow:0 0 6px rgba(126,157,180,.4);
+  animation:dotPulse 3s ease-in-out infinite alternate;
+}
+@keyframes dotPulse{from{transform:rotate(45deg) scale(.9);opacity:.6;}to{transform:rotate(45deg) scale(1.15);opacity:1;}}
+.hero .subtitle{font-size:14.5px;line-height:2;letter-spacing:.18em;text-indent:.18em;color:var(--ink-3);}
+
+.bless-hero{text-align:center;padding:10px 0 30px;}
+.bless-hero .to{
+  display:inline-block;font-family:var(--font-kai);font-size:13px;letter-spacing:.36em;text-indent:.36em;
+  color:#8694A0;padding:2px 10px;border-bottom:1px solid rgba(126,157,180,.35);
+}
+.bless-hero .who{
+  margin-top:16px;font-size:26px;font-weight:600;letter-spacing:.24em;text-indent:.24em;
+  color:var(--ink);
+}
+.bless-hero .rule{
+  width:44px;height:2px;margin:20px auto 0;
+  background:linear-gradient(90deg,rgba(126,157,180,0),rgba(126,157,180,.65),rgba(126,157,180,0));
+  border-radius:1px;
+}
+
+/* ---------- 卡片纸质质感 ---------- */
+.card{
+  background:var(--paper);
+  border:1px solid rgba(126,157,180,.26);
+  border-radius:20px;padding:28px 24px;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.9),
+    0 8px 28px -4px rgba(96,116,134,.085),
+    0 2px 6px rgba(96,116,134,.03);
+  position:relative;
+  transition:box-shadow .3s,border-color .3s;
+}
+
+/* ---------- 表单控件 ---------- */
+.field-label{display:block;font-family:var(--font-kai);font-size:14.5px;letter-spacing:.16em;color:var(--ink-3);margin-bottom:12px;}
+.field{
+  display:block;width:100%;height:52px;padding:0 18px;
+  font-size:16px;font-family:var(--font-song);letter-spacing:.08em;color:var(--ink);
+  background:#FBFAF6;border:1px solid rgba(126,157,180,.28);border-radius:12px;
+  outline:none;-webkit-appearance:none;appearance:none;
+  box-shadow:inset 0 1px 3px rgba(96,116,134,.04);
+  transition:border-color .28s,box-shadow .28s,background .28s;
+}
+.field::placeholder{color:#BFC5C9;letter-spacing:.1em;}
+.field:focus{
+  background:#fff;border-color:rgba(100,140,168,.75);
+  box-shadow:0 0 0 4px rgba(126,157,180,.16),inset 0 1px 2px rgba(0,0,0,.02);
+}
+.field.shake{animation:shake .45s;}
+@keyframes shake{
+  0%,100%{transform:translateX(0);} 20%{transform:translateX(-6px);}
+  40%{transform:translateX(6px);}   60%{transform:translateX(-3px);}
+  80%{transform:translateX(3px);}
+}
+.field-sm{height:44px;font-size:15px;border-radius:10px;}
+.field-area{
+  height:auto;min-height:92px;padding:14px 18px;line-height:1.9;
+  resize:none;margin-top:10px;
+}
+
+/* ---------- 按钮样式（带呼吸扫光与毛玻璃） ---------- */
+.btn{
+  display:block;width:100%;height:52px;border:none;border-radius:12px;
+  font-size:15.5px;font-family:var(--font-song);font-weight:500;letter-spacing:.22em;text-indent:.22em;
+  cursor:pointer;-webkit-appearance:none;appearance:none;touch-action:manipulation;
+  position:relative;overflow:hidden;
+  transition:transform .22s cubic-bezier(.16,1,.3,1),box-shadow .28s,background .28s,border-color .28s,opacity .28s;
+}
+.btn:active{transform:scale(.98);}
+.btn[disabled]{opacity:.55;pointer-events:none;}
+.btn-primary{
+  margin-top:18px;color:#FCFCFA;
+  background:linear-gradient(145deg,#8BA7BD 0%,#6485A0 100%);
+  box-shadow:0 6px 20px rgba(100,133,160,.28),inset 0 1px 0 rgba(255,255,255,.25);
+}
+.btn-primary:hover{
+  background:linear-gradient(145deg,#95B0C5 0%,#6C8DA8 100%);
+  box-shadow:0 8px 24px rgba(100,133,160,.34),inset 0 1px 0 rgba(255,255,255,.3);
+}
+/* 主按钮流光掠过 */
+.btn-primary::after{
+  content:'';position:absolute;top:0;left:-100%;width:60%;height:100%;
+  background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.26),rgba(255,255,255,0));
+  transform:skewX(-22deg);
+  animation:btnShimmer 6s infinite cubic-bezier(.4,0,.2,1);
+  pointer-events:none;
+}
+@keyframes btnShimmer{0%,68%{left:-100%;}100%{left:220%;}}
+
+.btn-ghost{
+  color:#395E7C;font-weight:600;
+  background:rgba(255,255,255,.86);
+  border:1px solid rgba(126,157,180,.42);
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+  box-shadow:0 3px 12px rgba(96,116,134,.06);
+}
+.btn-ghost:hover{background:#fff;border-color:rgba(126,157,180,.6);box-shadow:0 5px 16px rgba(96,116,134,.1);}
+.btn-ghost:active{background:#F0F5F9;border-color:rgba(126,157,180,.5);}
+.btn-sm{width:auto;height:42px;margin-top:0;padding:0 24px;font-size:14.5px;letter-spacing:.16em;}
+
+/* ---------- 专属祝福展示（两份便签小笺） ---------- */
+.blessing-card{
+  position:relative;padding:26px 20px 24px;
+  background:linear-gradient(180deg,#FEFEFC 0%,#FAF8F3 100%);
+  overflow:hidden;
+}
+.blessing-card::before{
+  content:'';position:absolute;left:20px;right:20px;top:0;height:3px;
+  background:linear-gradient(90deg,rgba(126,157,180,.5) 0%,rgba(196,168,132,.45) 50%,rgba(126,157,180,.1) 100%);
+}
+/* 两位教官专属便签块 */
+.bless-block{
+  margin-top:8px;padding:18px 18px 16px;
+  background:#FCFBF7;border:1px solid rgba(126,157,180,.2);
+  border-radius:14px;box-shadow:0 2px 10px rgba(96,116,134,.04);
+  position:relative;
+}
+.bless-block:first-child{
+  border-left:3px solid #B05D50;   /* 教官一：暖红铁血线 */
+  background:linear-gradient(175deg,#FDFBF8 0%,#FBF8F3 100%);
+}
+.bless-block + .bless-block{
+  margin-top:18px;
+  border-left:3px solid #5A839C;   /* 教官二：青蓝青春线 */
+  background:linear-gradient(175deg,#F8FAFB 0%,#F4F7F9 100%);
+}
+.bless-in{animation:blessIn .6s cubic-bezier(.16,1,.3,1) backwards;}
+@keyframes blessIn{
+  from{opacity:0;transform:translate3d(0,14px,0) scale(.98);}
+  to{opacity:1;transform:none;}
+}
+.bless-from{
+  display:inline-flex;align-items:center;
+  font-family:var(--font-kai);font-size:13.5px;font-weight:600;letter-spacing:.18em;
+  color:#6A869C;margin-bottom:10px;padding:2px 10px;border-radius:6px;
+  background:rgba(255,255,255,.7);border:1px solid rgba(126,157,180,.2);
+}
+.bless-block:first-child .bless-from{color:#9E4C3E;border-color:rgba(178,84,72,.22);}
+.bless-block + .bless-block .bless-from{color:#49758F;border-color:rgba(79,122,140,.22);}
+/* 小圆点用 CSS 画，不依赖任何字体（避免缺字时变方框） */
+.bless-from::before{
+  content:'';display:inline-block;width:5px;height:5px;border-radius:50%;
+  background:currentColor;opacity:.65;margin-right:6px;vertical-align:1px;
+}
+.blessing-text{
+  font-size:16px;line-height:2.2;letter-spacing:.05em;color:var(--ink-2);
+  text-align:justify;white-space:pre-wrap;word-break:break-word;
+}
+.actions{margin-top:22px;display:flex;flex-direction:column;gap:13px;}
+
+/* ---------- 留言墙 ---------- */
+.wall-head{text-align:center;padding:0 0 26px;}
+.wall-head h2{font-size:23px;font-weight:600;letter-spacing:.32em;text-indent:.32em;color:var(--ink);}
+.wall-head .wall-rule{width:36px;height:2px;margin:16px auto;background:rgba(126,157,180,.45);border-radius:1px;}
+.wall-head p{font-size:14px;letter-spacing:.14em;text-indent:.14em;color:var(--ink-4);}
+
+/* 写留言 */
+.compose{padding:24px 22px;margin-bottom:18px;}
+.compose-title{font-family:var(--font-kai);font-size:15px;letter-spacing:.16em;color:var(--ink-3);margin-bottom:12px;}
+.compose-bar{display:flex;align-items:center;justify-content:flex-end;gap:12px;margin-top:14px;}
+.compose-tip{
+  flex:1;font-family:var(--font-kai);font-size:12.5px;
+  letter-spacing:.08em;color:var(--ink-4);
+}
+/* 照片选择与预览 */
+.photo-pick{display:flex;align-items:center;gap:11px;flex-wrap:wrap;margin-top:11px;}
+.photo-btn{
+  display:inline-flex;align-items:center;gap:6px;
+  height:36px;padding:0 14px;
+  font-family:var(--font-kai);font-size:13.5px;letter-spacing:.1em;
+  color:#5A7D96;background:rgba(255,255,255,.85);
+  border:1px dashed rgba(126,157,180,.5);border-radius:9px;
+  cursor:pointer;-webkit-appearance:none;appearance:none;touch-action:manipulation;
+  transition:background .25s,border-color .25s,color .25s;
+}
+.photo-btn:hover{background:#fff;border-color:rgba(126,157,180,.75);}
+.photo-btn:active{transform:scale(.97);}
+.photo-btn svg{width:16px;height:16px;display:block;}
+.photo-tip{font-family:var(--font-kai);font-size:12px;letter-spacing:.06em;color:var(--ink-4);}
+.photo-preview{position:relative;display:flex;align-items:center;gap:10px;}
+.photo-preview img{
+  width:60px;height:60px;object-fit:cover;border-radius:10px;
+  border:1px solid rgba(126,157,180,.35);background:#fff;padding:2px;
+  box-shadow:0 3px 10px rgba(96,116,134,.12);
+}
+.photo-meta{font-family:var(--font-kai);font-size:12px;color:var(--ink-4);letter-spacing:.05em;}
+.photo-del{
+  position:absolute;top:-7px;left:50px;
+  width:20px;height:20px;line-height:1;border-radius:50%;
+  font-size:14px;color:#fff;background:rgba(90,110,126,.9);
+  border:1px solid rgba(255,255,255,.7);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  -webkit-appearance:none;appearance:none;
+}
+/* 排序切换 */
+.sort-btn{
+  flex:none;height:30px;padding:0 12px;
+  font-family:var(--font-kai);font-size:12.5px;letter-spacing:.12em;
+  color:#5A7D96;background:rgba(255,255,255,.8);
+  border:1px solid rgba(126,157,180,.35);border-radius:8px;
+  cursor:pointer;-webkit-appearance:none;appearance:none;touch-action:manipulation;
+  transition:background .25s,border-color .25s;
+}
+.sort-btn:hover{background:#fff;border-color:rgba(126,157,180,.6);}
+/* 置顶标记 */
+.wall-item.is-pinned{border-color:rgba(178,84,72,.35);box-shadow:0 6px 22px rgba(178,84,72,.1);}
+.pin-tag.on{color:#9E4C3E;background:#FBF0EC;border-color:rgba(178,84,72,.3);}
+
+/* ---------- 管理端 ---------- */
+.admin-who{
+  margin-left:auto;font-family:var(--font-kai);font-size:13px;letter-spacing:.14em;
+  color:#8A5A4E;padding:4px 12px;border-radius:8px;
+  background:#FBF1ED;border:1px solid rgba(178,84,72,.25);
+}
+.admin-tabs{display:flex;gap:8px;margin-bottom:18px;}
+.admin-tab{
+  flex:1;height:40px;
+  font-family:var(--font-kai);font-size:14px;letter-spacing:.14em;
+  color:#6E8CA6;background:rgba(255,255,255,.8);
+  border:1px solid rgba(126,157,180,.35);border-radius:10px;
+  cursor:pointer;-webkit-appearance:none;appearance:none;touch-action:manipulation;
+  transition:background .25s,color .25s,border-color .25s;
+}
+.admin-tab.active{color:#fff;background:linear-gradient(145deg,#8BA7BD,#6485A0);border-color:transparent;}
+.admin-hint{
+  font-family:var(--font-kai);font-size:12.5px;line-height:1.8;letter-spacing:.05em;
+  color:var(--ink-4);margin-bottom:14px;
+}
+.admin-pane{animation:riseIn .5s cubic-bezier(.16,1,.3,1) backwards;}
+.admin-row{margin:0 0 14px;}
+.admin-edit{display:flex;flex-direction:column;}
+.admin-label{
+  display:block;font-family:var(--font-kai);font-size:13.5px;letter-spacing:.14em;
+  color:var(--ink-3);margin:10px 0 8px;
+}
+.admin-letter{min-height:300px;font-size:14.5px;line-height:1.95;font-family:var(--font-song);}
+.admin-edit .btn,.admin-pane > .btn{margin-top:18px;}
+/* 留言上的管理员小工具 */
+.admin-tools{display:inline-flex;gap:6px;margin-left:auto;}
+.admin-tools button{
+  height:26px;padding:0 9px;font-family:var(--font-kai);font-size:12px;letter-spacing:.08em;
+  color:#5A7D96;background:rgba(255,255,255,.9);
+  border:1px solid rgba(126,157,180,.4);border-radius:7px;
+  cursor:pointer;-webkit-appearance:none;appearance:none;
+}
+.admin-tools button:active{transform:scale(.95);}
+.admin-tools button.danger{color:#A8493C;border-color:rgba(178,84,72,.4);}
+.admin-tools button.on{color:#fff;background:#B25448;border-color:transparent;}
+.wall-name{display:flex;align-items:center;gap:2px;}
+.wall-name .admin-tools{margin-left:auto;}
+/* 集体相框：拍立得洗印感 */
+.gallery{margin:0 0 20px;}
+.gallery-title{
+  text-align:center;font-family:var(--font-kai);
+  font-size:14.5px;letter-spacing:.22em;text-indent:.22em;
+  color:var(--ink-3);margin-bottom:14px;
+}
+.gallery-track{
+  display:flex;gap:12px;overflow-x:auto;
+  -webkit-overflow-scrolling:touch;scroll-snap-type:x mandatory;
+  padding:4px 4px 10px;
+}
+.gallery-track::-webkit-scrollbar{height:0;}
+.gallery-track img{
+  flex:none;width:154px;height:112px;object-fit:cover;
+  border-radius:10px;border:1px solid rgba(126,157,180,.3);
+  padding:3px;background:#fff;
+  box-shadow:0 6px 18px rgba(96,116,134,.12);
+  scroll-snap-align:center;
+  transition:transform .25s ease,box-shadow .25s ease;
+}
+.gallery-track img:active{transform:scale(.97);}
+.store-hint{
+  margin-top:12px;font-family:var(--font-kai);
+  font-size:12.5px;line-height:1.75;letter-spacing:.06em;color:var(--ink-4);
+}
+.store-hint.warn{color:#B0764A;}
+
+.wall-section{
+  display:flex;align-items:center;gap:12px;
+  margin:28px 0 16px;
+}
+.wall-section .line{flex:1;height:1px;background:linear-gradient(90deg,rgba(126,157,180,.3),rgba(126,157,180,0));}
+.wall-section .line:first-child{background:linear-gradient(90deg,rgba(126,157,180,0),rgba(126,157,180,.3));}
+.wall-section span{
+  flex:none;font-family:var(--font-kai);font-size:13.5px;font-weight:600;
+  letter-spacing:.26em;text-indent:.26em;color:#6C8598;
+}
+
+.wall-list{display:flex;flex-direction:column;gap:15px;}
+.wall-item{
+  position:relative;background:var(--paper);
+  border:1px solid rgba(126,157,180,.26);border-radius:16px;
+  padding:20px;box-shadow:0 4px 18px rgba(96,116,134,.055);
+  transition:transform .2s,box-shadow .2s;
+}
+.wall-item.post-new{animation:postSlideDown .6s cubic-bezier(.16,1,.3,1) backwards;}
+@keyframes postSlideDown{
+  from{opacity:0;transform:translate3d(0,-24px,0) scale(.95);}
+  to{opacity:1;transform:none;}
+}
+.wall-user{display:flex;align-items:center;gap:12px;}
+.avatar{
+  flex:none;width:40px;height:40px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:15.5px;color:#4F7694;font-family:var(--font-kai);font-weight:600;
+  background:linear-gradient(150deg,#EEF4F9,#D8E5EF);
+  border:1px solid rgba(126,157,180,.28);
+  box-shadow:0 2px 6px rgba(96,116,134,.08);
+}
+.wall-meta{min-width:0;}
+.wall-name{font-size:15.5px;font-weight:600;letter-spacing:.1em;color:var(--ink);line-height:1.5;}
+.wall-time{font-family:var(--font-kai);font-size:12.5px;letter-spacing:.08em;color:var(--ink-4);line-height:1.5;margin-top:2px;}
+.pin-tag{
+  display:inline-block;margin-left:7px;padding:1px 8px;
+  font-size:11px;font-weight:500;letter-spacing:.08em;
+  color:#6C8294;background:#EDF3F7;
+  border:1px solid #DFE8EE;border-radius:5px;vertical-align:1px;
+}
+.wall-content{
+  margin-top:13px;padding-left:14px;
+  border-left:2.5px solid rgba(126,157,180,.32);
+  font-size:15.5px;line-height:2.1;letter-spacing:.045em;color:var(--ink-2);
+  text-align:justify;white-space:pre-wrap;word-break:break-word;
+}
+.wall-photo{margin-top:13px;border-radius:12px;overflow:hidden;border:1px solid var(--hairline-blue);background:#F4F6F7;}
+.wall-photo img{display:block;width:100%;height:auto;}
+.wall-photo .ph-loading{
+  display:flex;align-items:center;justify-content:center;
+  height:120px;font-family:var(--font-kai);font-size:12.5px;color:var(--ink-4);letter-spacing:.14em;
+}
+
+.wall-actions{display:flex;align-items:center;gap:24px;margin-top:14px;padding-top:13px;border-top:1px solid #F1EFE9;}
+.act{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:4px 0;font-size:13.5px;letter-spacing:.06em;color:#8F9EA9;
+  background:none;border:none;cursor:pointer;
+  -webkit-appearance:none;appearance:none;touch-action:manipulation;
+  transition:color .25s,transform .2s;
+}
+.act:active{transform:scale(.92);}
+.act svg{width:18px;height:18px;display:block;transition:transform .3s cubic-bezier(.34,1.56,.64,1);}
+.act.liked{color:#C45846;}
+.act.liked svg{
+  fill:currentColor;
+  animation:heartPop .45s cubic-bezier(.34,1.56,.64,1) both;
+}
+@keyframes heartPop{
+  0%{transform:scale(1);}
+  45%{transform:scale(1.36);}
+  75%{transform:scale(.92);}
+  100%{transform:scale(1.15);}
+}
+.act.liked svg path{stroke:currentColor;}
+
+.replies{margin-top:12px;padding:12px 14px;background:#F8F7F2;border-radius:12px;border:1px solid rgba(126,157,180,.12);}
+.reply-item{font-size:14px;line-height:1.95;color:var(--ink-2);word-break:break-word;}
+/* 表情用系统彩色表情字体渲染，避免被中文字体抢走变成方框/黑白。
+   不设 line-height / vertical-align，交给父级排版，避免表情被裁切成方块。 */
+.emj{font-family:var(--font-emoji);font-style:normal;font-weight:400;}
+.act.reply em{font-style:normal;font-size:13px;letter-spacing:.05em;}
+/* 每条评论后的「回复」小按钮 */
+.reply-to{
+  display:inline-block;margin-left:8px;padding:1px 7px;
+  font-family:var(--font-kai);font-size:12px;letter-spacing:.06em;
+  color:#7C93A6;background:none;
+  border:1px solid rgba(126,157,180,.35);border-radius:6px;
+  cursor:pointer;-webkit-appearance:none;appearance:none;touch-action:manipulation;
+  vertical-align:1px;transition:color .2s,border-color .2s,background .2s;
+}
+.reply-to:hover{color:#4F7694;border-color:rgba(126,157,180,.6);background:rgba(255,255,255,.7);}
+.reply-to:active{transform:scale(.95);}
+.reply-item + .reply-item{margin-top:7px;}
+.reply-item .rn{color:#5C7F9B;font-weight:600;}
+
+.reply-box{display:flex;gap:10px;margin-top:11px;}
+.reply-box .field{flex:1;margin:0;}
+
+.wall-empty{
+  text-align:center;padding:40px 20px;
+  font-family:var(--font-kai);font-size:14.5px;letter-spacing:.12em;color:var(--ink-4);
+}
+.wall-foot{text-align:center;margin-top:36px;font-family:var(--font-kai);font-size:13.5px;letter-spacing:.25em;text-indent:.25em;color:var(--ink-4);}
+.ver{text-align:center;margin-top:38px;font-size:11.5px;letter-spacing:.25em;text-indent:.25em;color:#C2C8CE;}
+
+/* ---------- 信件弹窗（信封 + 折纸动画） ---------- */
+.modal{
+  position:fixed;top:0;right:0;bottom:0;left:0;z-index:100;
+  display:flex;align-items:center;justify-content:center;padding:20px;
+  background:rgba(38,48,56,.42);
+  -webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px);
+  opacity:0;visibility:hidden;
+  transition:opacity .34s ease,visibility .34s ease;
+}
+.modal.show{opacity:1;visibility:visible;}
+
+/* 信封选择层 */
+.env-stage{
+  width:100%;max-width:460px;
+  padding:8px 4px 6px;
+  animation:envStageIn .5s cubic-bezier(.16,1,.3,1) backwards;
+}
+@keyframes envStageIn{from{opacity:0;transform:translate3d(0,18px,0) scale(.98);}to{opacity:1;transform:none;}}
+.env-bar{margin-bottom:14px;}
+.env-head{text-align:center;margin-bottom:22px;}
+.env-head h3{font-size:20px;font-weight:700;letter-spacing:.2em;text-indent:.2em;color:var(--ink);text-shadow:0 1px 0 rgba(255,255,255,.7);}
+.env-sub{
+  margin-top:11px;font-family:var(--font-kai);font-size:13px;letter-spacing:.12em;
+  color:var(--ink-3);
+  display:inline-block;padding:7px 18px;border-radius:999px;
+  background:rgba(255,255,255,.82);
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+  box-shadow:0 2px 10px rgba(96,116,134,.12);
+  border:1px solid rgba(126,157,180,.2);
+}
+.env-pair{display:flex;gap:20px;justify-content:center;}
+.env-tip{
+  margin:22px auto 0;width:fit-content;
+  font-family:var(--font-kai);font-size:12.5px;letter-spacing:.16em;text-indent:.16em;
+  color:var(--ink-3);
+  padding:6px 16px;border-radius:999px;
+  background:rgba(255,255,255,.72);
+  -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
+  box-shadow:0 1px 6px rgba(96,116,134,.08);
+  border:1px solid rgba(126,157,180,.18);
+}
+
+/* 单个信封升级 */
+.envelope{
+  position:relative;flex:1 1 0;max-width:176px;min-width:0;
+  aspect-ratio:5/3.2;
+  background:linear-gradient(165deg,#F7F0E2 0%,#EFE3CB 100%);
+  border:1px solid #DECFA8;border-radius:11px;
+  overflow:hidden;cursor:pointer;touch-action:manipulation;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.6),
+    0 12px 28px rgba(70,88,104,.2);
+  transition:transform .25s cubic-bezier(.16,1,.3,1),box-shadow .25s;
+}
+.envelope:hover{transform:translateY(-3px);box-shadow:0 16px 36px rgba(70,88,104,.26);}
+.envelope:active{transform:scale(.95);}
+.envelope.rise{animation:envRise .65s cubic-bezier(.16,1,.3,1) backwards;}
+@keyframes envRise{from{opacity:0;transform:translate3d(0,24px,0) scale(.88);}to{opacity:1;transform:none;}}
+
+/* 信封翻盖（三角形带立体阴影） */
+.env-flap{
+  position:absolute;top:0;left:0;right:0;height:55%;
+  background:linear-gradient(165deg,#F4EAD4,#E7D6B8);
+  clip-path:polygon(0 0,100% 0,50% 100%);
+  filter:drop-shadow(0 2px 3px rgba(100,80,60,.16));
+  transform-origin:top center;
+  transition:transform .38s cubic-bezier(.4,.1,.3,1);
+  z-index:2;
+}
+.envelope.opening .env-flap{transform:rotateX(175deg);}
+.envelope.opening{transform:scale(.97);}
+
+/* 封口蜡印立体质感 */
+.env-seal{
+  position:absolute;top:48%;left:50%;
+  width:28px;height:28px;border-radius:50%;
+  transform:translate(-50%,-50%);
+  background:radial-gradient(circle at 35% 30%,#D96E5A 0%,#B24434 65%,#882E22 100%);
+  z-index:3;
+  box-shadow:
+    0 2px 8px rgba(80,20,10,.35),
+    inset 0 1px 2px rgba(255,255,255,.4),
+    inset 0 -1px 2px rgba(0,0,0,.3);
+  transition:opacity .3s;
+}
+.envelope.opening .env-seal{opacity:0;}
+
+/* 信封正面（寄信人） */
+.env-body{
+  position:absolute;inset:auto 0 0 0;padding:0 8px 12px;
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
+  text-align:center;z-index:1;
+}
+.env-from{
+  font-family:var(--font-kai);font-size:15.5px;font-weight:600;
+  letter-spacing:.16em;text-indent:.16em;
+  color:#6B4E36;
+  text-shadow:0 1px 0 rgba(255,255,255,.4);
+}
+.env-hint{margin-top:3px;font-size:11px;letter-spacing:.14em;text-indent:.14em;color:#9E8466;}
+
+/* 邮票升级（双齿孔感与复古小邮戳印） */
+.envelope::after{
+  content:'';position:absolute;top:8px;right:8px;
+  width:22px;height:26px;
+  border:1px dashed rgba(168,73,60,.65);
+  background:
+    radial-gradient(circle at 50% 50%,rgba(168,73,60,.16) 0 4px,transparent 5px),
+    linear-gradient(135deg,#F8F2E2,#ECD8BA);
+  border-radius:3px;
+  box-shadow:0 1px 3px rgba(0,0,0,.1);
+}
+
+.sheet{
+  position:relative;
+  width:100%;max-width:540px;max-height:84vh;
+  display:flex;flex-direction:column;
+  background:#FDFCF8;
+  border:1px solid rgba(126,157,180,.26);
+  border-radius:18px;
+  overflow:hidden;
+  transform-origin:50% 50%;
+  will-change:transform,opacity;
+  box-shadow:0 22px 60px rgba(40,60,80,.2),inset 0 1px 0 rgba(255,255,255,.7);
+}
+/* 信纸内框 + 中缝折痕 */
+.sheet::before{
+  content:'';position:absolute;top:8px;right:8px;bottom:8px;left:8px;
+  pointer-events:none;z-index:2;
+  border:1px solid rgba(126,157,180,.18);border-radius:13px;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.55);
+}
+.sheet::after{
+  content:'';position:absolute;left:0;right:0;top:50%;height:1px;
+  pointer-events:none;z-index:2;
+  background:linear-gradient(90deg,rgba(120,140,160,0),rgba(120,140,160,.16),rgba(120,140,160,0));
+}
+
+/* 展开：从中缝向上下摊开（纯 2D，移动端流畅），像展开一封信 */
+@keyframes unfoldIn{
+  0%  {opacity:0;transform:translateY(28px) scaleY(.06) scale(.95);}
+  42% {opacity:1;transform:translateY(8px) scaleY(.58) scale(.985);}
+  74% {transform:translateY(0) scaleY(1.025) scale(1);}
+  100%{opacity:1;transform:translateY(0) scaleY(1) scale(1);}
+}
+@keyframes foldOut{
+  0%  {opacity:1;transform:translateY(0) scaleY(1) scale(1);}
+  35% {opacity:1;transform:translateY(8px) scaleY(.55) scale(.985);}
+  100%{opacity:0;transform:translateY(22px) scaleY(.06) scale(.95);}
+}
+.sheet.fold-open{animation:unfoldIn .68s cubic-bezier(.16,.7,.3,1) backwards;}
+.sheet.fold-close{animation:foldOut .42s cubic-bezier(.55,.1,.85,.45) both;}
+
+.sheet-head{position:relative;padding:22px 24px 15px;text-align:center;border-bottom:1px solid #EFEDE5;overflow:hidden;}
+/* 横向矩形蒙版：信封式色带，随教官换色（淡彩，不抢正文） */
+.sheet-head::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:5px;z-index:3;
+  background:linear-gradient(90deg,#B25448 0%,#D49574 45%,#C98A52 60%,#B25448 100%);
+}
+.sheet-head::after{
+  content:'';position:absolute;top:5px;left:0;right:0;height:70px;z-index:0;pointer-events:none;
+  background:linear-gradient(180deg,rgba(178,84,72,.08),rgba(178,84,72,0));
+}
+.sheet[data-letter="1"] .sheet-head::before{
+  background:linear-gradient(90deg,#4F7A8C 0%,#7FB0A8 45%,#6FA3B5 60%,#4F7A8C 100%);
+}
+.sheet[data-letter="1"] .sheet-head::after{
+  background:linear-gradient(180deg,rgba(79,122,140,.09),rgba(79,122,140,0));
+}
+.sheet-bar{display:flex;margin-bottom:13px;}
+.sheet-head h3{font-size:17.5px;font-weight:500;letter-spacing:.24em;text-indent:.24em;color:var(--ink);}
+#letterTitle{display:none;}   /* 打开信后不再重复显示「写给同学们的一封信」 */
+.sheet-head .sheet-sub{margin-top:8px;font-family:var(--font-kai);font-size:12.5px;letter-spacing:.16em;text-indent:.16em;color:var(--ink-4);}
+
+.sheet-body{
+  flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  overscroll-behavior:contain;padding:22px 26px 8px;
+}
+.sheet-body p{
+  font-size:15.5px;line-height:2.15;letter-spacing:.04em;color:var(--ink-2);
+  margin-bottom:17px;text-align:justify;
+}
+.sheet-body .letter-greeting{
+  font-family:var(--font-kai);font-size:16.5px;letter-spacing:.14em;
+  color:var(--mist-deep);margin-bottom:20px;
+}
+/* 展开后内容逐行浮现（只动透明度，最省性能） */
+.sheet.fold-open .lt-line{animation:letterLine .6s ease backwards;}
+@keyframes letterLine{from{opacity:0;}to{opacity:1;}}
+
+.letter-sign{display:flex;align-items:flex-end;justify-content:flex-end;gap:18px;margin:30px 0 6px;}
+.sign-text{text-align:right;font-family:var(--font-kai);font-size:14.5px;line-height:2;letter-spacing:.1em;color:#5E6C77;}
+.sign-text .sign-date{display:block;font-size:13px;color:var(--ink-4);letter-spacing:.14em;}
+.seal{
+  flex:none;display:flex;align-items:center;justify-content:center;
+  width:46px;height:46px;padding:4px;
+  -webkit-writing-mode:vertical-rl;writing-mode:vertical-rl;
+  -webkit-text-orientation:upright;text-orientation:upright;
+  font-family:var(--font-kai);font-style:normal;font-size:13.5px;line-height:1.05;letter-spacing:2px;
+  color:rgba(var(--seal),.86);
+  border:1.4px solid rgba(var(--seal),.55);border-radius:4px;
+  background:rgba(255,255,255,.35);
+  box-shadow:inset 0 0 0 1px rgba(var(--seal),.13),0 1px 3px rgba(var(--seal),.18);
+  transform:rotate(-1.5deg);
+}
+.sheet-foot{padding:14px 24px 18px;padding-bottom:calc(18px + env(safe-area-inset-bottom));border-top:1px solid #EFEDE5;}
+.sheet-foot .btn{height:48px;font-size:15px;margin-top:0;}
+
+/* 提示弹窗 */
+.alert-box{
+  width:100%;max-width:310px;padding:32px 26px 24px;text-align:center;
+  background:#FDFCF8;border:1px solid rgba(126,157,180,.2);border-radius:18px;
+  transform:translateY(14px) scale(.975);
+  transition:transform .38s cubic-bezier(.22,.8,.3,1);
+}
+.modal.show .alert-box{transform:translateY(0) scale(1);}
+.alert-icon{
+  width:50px;height:50px;margin:0 auto 18px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;color:#6E8CA6;
+  background:linear-gradient(150deg,#EDF4F9,#E0EBF3);border:1px solid rgba(126,157,180,.18);
+}
+/* 图标用 CSS 画：外圈 + 内点，不依赖任何字体 */
+.alert-icon::after{
+  content:'';width:10px;height:10px;border-radius:50%;
+  background:currentColor;opacity:.7;
+  box-shadow:0 0 0 4px rgba(110,140,166,.18);
+}
+.alert-msg{font-size:15.5px;line-height:2;letter-spacing:.05em;color:var(--ink-2);}
+.alert-box .btn{margin-top:24px;height:46px;font-size:15px;}
+
+/* ---------- 轻提示 / 加载 ---------- */
+.toast{
+  position:fixed;left:50%;bottom:76px;bottom:calc(76px + env(safe-area-inset-bottom));
+  z-index:200;max-width:78%;padding:11px 22px;
+  font-size:14px;letter-spacing:.12em;text-indent:.12em;line-height:1.6;
+  color:#F7F6F1;text-align:center;background:rgba(52,64,74,.86);border-radius:9px;
+  opacity:0;transform:translate(-50%,10px);pointer-events:none;
+  transition:opacity .3s,transform .3s;
+}
+.toast.show{opacity:1;transform:translate(-50%,0);}
+
+.loading{
+  position:fixed;top:0;right:0;bottom:0;left:0;z-index:300;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
+  background:rgba(248,246,240,.76);
+  -webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);
+  opacity:0;visibility:hidden;transition:opacity .28s,visibility .28s;
+}
+.loading.show{opacity:1;visibility:visible;}
+/* 双环水墨加载圈 */
+.spinner{
+  position:relative;width:34px;height:34px;
+}
+.spinner::before,.spinner::after{
+  content:'';position:absolute;inset:0;border-radius:50%;
+  border:2px solid transparent;
+}
+.spinner::before{
+  border-top-color:rgba(100,133,160,.75);
+  border-bottom-color:rgba(196,168,132,.45);
+  animation:spin 1s cubic-bezier(.6,.15,.4,.85) infinite;
+}
+.spinner::after{
+  inset:5px;border-top-color:rgba(156,107,64,.55);
+  animation:spin 1.5s cubic-bezier(.15,.6,.85,.4) infinite reverse;
+}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading-text{
+  font-family:var(--font-kai);font-size:14px;letter-spacing:.18em;text-indent:.18em;
+  color:var(--ink-3);
+  animation:textFade 1.6s ease-in-out infinite alternate;
+}
+@keyframes textFade{from{opacity:.45;}to{opacity:1;}}
+.toast{
+  position:fixed;left:50%;bottom:76px;bottom:calc(76px + env(safe-area-inset-bottom));
+  z-index:200;max-width:78%;padding:12px 22px;
+  font-size:14px;letter-spacing:.12em;text-indent:.12em;line-height:1.6;
+  color:#F7F6F1;text-align:center;
+  background:rgba(50,62,72,.92);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:11px;
+  box-shadow:0 8px 26px rgba(40,52,62,.28);
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+  opacity:0;transform:translate(-50%,16px) scale(.96);pointer-events:none;
+  transition:opacity .3s,transform .32s cubic-bezier(.34,1.4,.6,1);
+}
+.toast.show{opacity:1;transform:translate(-50%,0) scale(1);}
+
+.hidden{display:none !important;}
+
+.err-bar{
+  position:fixed;left:0;right:0;bottom:0;z-index:999;
+  padding:11px 14px 11px;padding-bottom:calc(11px + env(safe-area-inset-bottom));
+  font-family:Consolas,Menlo,monospace;font-size:12px;line-height:1.55;
+  color:#FFF4F1;background:rgba(154,62,50,.95);word-break:break-all;
+}
+
+/* ---------- 返回站点（迁移到 Michael. 分支后新增，左下角悬浮） ---------- */
+.site-back{
+  position:fixed;z-index:60;left:14px;
+  bottom:calc(14px + env(safe-area-inset-bottom));
+  display:inline-flex;align-items:center;gap:6px;
+  padding:7px 13px 7px 10px;border-radius:999px;
+  font-family:var(--font-ui);font-size:12.5px;line-height:1;letter-spacing:.02em;
+  color:var(--mist-deep);text-decoration:none;white-space:nowrap;
+  background:rgba(255,255,255,.82);border:1px solid var(--hairline-blue);
+  box-shadow:0 2px 10px rgba(46,58,66,.10);
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+  transition:color .2s,background .2s,border-color .2s;
+}
+.site-back svg{width:13px;height:13px;flex:none;}
+.site-back:hover,.site-back:focus-visible{color:#FFF;background:var(--mist-deep);border-color:var(--mist-deep);}
+@media (max-width:420px){.site-back{font-size:11.5px;padding:6px 11px 6px 9px;left:10px;}}
+
+@media (prefers-reduced-motion:reduce){
+  *{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important;}
+  .mote{display:none;}
+}
+</style>
+</head>
+<body>
+
+<div class="bg" aria-hidden="true">
+  <span class="mote" style="left:8%;animation-duration:34s;"></span>
+  <span class="mote"></span>
+  <span class="mote"></span>
+  <span class="mote"></span>
+  <span class="mote"></span>
+  <span class="mote"></span>
+</div>
+
+<!-- ======================= 第一级 · 首页 ======================= -->
+<section id="viewHome" class="view active">
+  <div class="hero">
+    <p class="hero-eyebrow">二〇二六 · 夏</p>
+    <h1>军训专属祝福</h1>
+    <div class="hero-rule"><span class="line"></span><span class="dot"></span><span class="line"></span></div>
+    <p class="subtitle">迷彩褪去，情谊长存</p>
+  </div>
+
+  <div class="card rise">
+    <label class="field-label" for="nameInput">写下你的名字</label>
+    <input id="nameInput" class="field" type="text" placeholder="例如：张小明"
+           autocomplete="off" autocorrect="off" autocapitalize="off"
+           spellcheck="false" enterkeyhint="search" maxlength="20">
+    <button id="queryBtn" class="btn btn-primary" type="button">展开我的祝福</button>
+  </div>
+
+  <p class="ver">版本 v10.3</p>
+
+  <!-- 返回站点：固定悬浮在左下角，不与页面任何交互元素重叠 -->
+  <a class="site-back" href="../../branches.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H6"></path><path d="M11 7l-5 5 5 5"></path></svg>
+    Michael. 分支
+  </a>
+</section>
+
+<!-- ======================= 第二级 · 专属祝福 ======================= -->
+<section id="viewBlessing" class="view">
+  <div class="topbar">
+    <button class="nav-back" type="button" data-back>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H6"></path><path d="M11 7l-5 5 5 5"></path></svg>
+      返回
+    </button>
+  </div>
+
+  <div class="bless-hero">
+    <p class="to">致</p>
+    <p class="who" id="blessName"></p>
+    <div class="rule"></div>
+  </div>
+
+  <div class="card blessing-card" id="blessCard">
+    <div id="blessBody"></div>
+  </div>
+
+  <div class="actions" id="blessActions">
+    <button id="letterBtn" class="btn btn-ghost" type="button">查看写给全体同学的一封信</button>
+    <button id="wallBtn" class="btn btn-ghost" type="button">查看留言墙</button>
+  </div>
+</section>
+
+<!-- ======================= 第三级 · 留言墙 ======================= -->
+<section id="viewWall" class="view">
+  <div class="topbar">
+    <button class="nav-back" type="button" data-back>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H6"></path><path d="M11 7l-5 5 5 5"></path></svg>
+      返回
+    </button>
+  </div>
+
+  <div class="wall-head">
+    <h2>留言墙</h2>
+    <div class="wall-rule"></div>
+    <p>那些没说出口的话，都留在这里了</p>
+  </div>
+
+  <!-- 集体相框：照片放在 photos 文件夹，命名 1.jpg、2.jpg… 自动读取 -->
+  <div class="gallery hidden" id="galleryWrap">
+    <p class="gallery-title">我们的军训时光</p>
+    <div class="gallery-track" id="galleryTrack"></div>
+  </div>
+
+  <!-- 写留言 -->
+  <div class="card compose">
+    <p class="compose-title">写一句</p>
+    <input id="msgName" class="field field-sm" type="text" placeholder="你的名字（可留空）"
+           autocomplete="off" maxlength="12">
+    <textarea id="msgText" class="field field-area" placeholder="军训结束啦，想对大家说点什么…"
+              maxlength="300" rows="3"></textarea>
+
+    <!-- 照片：自动压缩后上传，加载快 -->
+    <div class="photo-pick">
+      <input id="photoInput" class="hidden" type="file" accept="image/*">
+      <button id="photoBtn" class="photo-btn" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"></rect><circle cx="8.6" cy="10" r="1.6"></circle><path d="M3.5 17l4.7-4.4 3.4 3.1 3-2.6 5.9 5"></path></svg>
+        加张照片
+      </button>
+      <div class="photo-preview hidden" id="photoPreview">
+        <img id="photoThumb" alt="照片预览">
+        <div class="photo-meta"><span id="photoSize"></span></div>
+        <button class="photo-del" id="photoDel" type="button" aria-label="移除照片">×</button>
+      </div>
+      <span class="photo-tip" id="photoTip">会自动压缩，看得清又不占流量</span>
+    </div>
+
+    <div class="compose-bar">
+      <span class="compose-tip">发布后所有人可见</span>
+      <button id="postBtn" class="btn btn-primary btn-sm" type="button">发布</button>
+    </div>
+
+    <p class="store-hint" id="storeHint"></p>
+  </div>
+
+  <div class="wall-section">
+    <span class="line"></span><span>留言</span><span class="line"></span>
+    <button class="sort-btn" id="sortBtn" type="button">最新在前</button>
+  </div>
+  <div id="wallList" class="wall-list"></div>
+  <p class="wall-foot">迷彩青春 · 不说再见</p>
+</section>
+
+<!-- ======================= 管理端（001 / 002 登录进入） ======================= -->
+<section id="viewAdmin" class="view">
+  <div class="topbar">
+    <button class="nav-back" type="button" data-back>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H6"></path><path d="M11 7l-5 5 5 5"></path></svg>
+      返回
+    </button>
+    <span class="admin-who" id="adminWho"></span>
+  </div>
+
+  <div class="wall-head">
+    <h2>管理端</h2>
+    <div class="wall-rule"></div>
+    <p>置顶 / 修改 / 删除留言，编辑寄语与信件</p>
+  </div>
+
+  <div class="admin-tabs">
+    <button class="admin-tab active" type="button" data-tab="wall">留言管理</button>
+    <button class="admin-tab" type="button" data-tab="bless">寄语管理</button>
+    <button class="admin-tab" type="button" data-tab="letter">信件管理</button>
+  </div>
+
+  <!-- 留言管理 -->
+  <div class="admin-pane" id="paneWall">
+    <p class="admin-hint" id="adminHint"></p>
+    <div id="adminList" class="wall-list"></div>
+  </div>
+
+  <!-- 寄语管理 -->
+  <div class="admin-pane hidden" id="paneBless">
+    <p class="admin-hint">选择同学，编辑两封寄语后点保存。保存后立刻对所有人生效。</p>
+    <div class="admin-row">
+      <select id="blessPick" class="field field-sm"></select>
+    </div>
+    <div class="admin-edit">
+      <label class="admin-label" id="blessLabel1">寄语一</label>
+      <textarea id="blessEdit1" class="field field-area" rows="3"></textarea>
+      <label class="admin-label" id="blessLabel2">寄语二</label>
+      <textarea id="blessEdit2" class="field field-area" rows="3"></textarea>
+      <button id="blessSave" class="btn btn-primary" type="button">保存这位同学的寄语</button>
+    </div>
+  </div>
+
+  <!-- 信件管理 -->
+  <div class="admin-pane hidden" id="paneLetter">
+    <p class="admin-hint">直接改信的内容（保留 [寄信人][标题] 等标签和空行分段），保存后立刻生效。</p>
+    <div class="admin-row">
+      <select id="letterPick" class="field field-sm"></select>
+    </div>
+    <textarea id="letterEdit" class="field field-area admin-letter" rows="14"></textarea>
+    <button id="letterSave" class="btn btn-primary" type="button">保存这封信</button>
+  </div>
+</section>
+
+<!-- ======================= 信件弹窗（两个信封 → 拆信） ======================= -->
+<div id="letterModal" class="modal" role="dialog" aria-modal="true">
+
+  <!-- 信封选择层 -->
+  <div class="env-stage hidden" id="envStage">
+    <div class="sheet-bar">
+      <button class="nav-back sm" id="envBack" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H6"></path><path d="M11 7l-5 5 5 5"></path></svg>
+        返回
+      </button>
+    </div>
+    <div class="env-head">
+      <h3 id="envTitle">写给全体同学的一封信</h3>
+      <p class="env-sub">这里有两封信，来自两位教官，点开一封拆开看看</p>
+    </div>
+    <div class="env-pair" id="envPair"></div>
+    <p class="env-tip">点一下信封，拆开</p>
+  </div>
+
+  <!-- 信件层 -->
+  <div class="sheet" id="letterSheet">
+    <div class="sheet-head">
+      <div class="sheet-bar">
+        <button class="nav-back sm" id="letterBack" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H6"></path><path d="M11 7l-5 5 5 5"></path></svg>
+          返回信封
+        </button>
+      </div>
+      <h3 id="letterTitle">写给同学们的一封信</h3>
+      <p class="sheet-sub">展信安 · 向上滑动阅读</p>
+    </div>
+    <div class="sheet-body" id="letterBody"></div>
+    <div class="sheet-foot">
+      <button id="letterClose" class="btn btn-primary" type="button">轻轻合上，回到信封</button>
+    </div>
+  </div>
+</div>
+
+<!-- ======================= 提示弹窗 ======================= -->
+<div id="alertModal" class="modal" role="dialog" aria-modal="true">
+  <div class="alert-box">
+    <div class="alert-icon" id="alertIcon"></div>
+    <p class="alert-msg" id="alertMsg"></p>
+    <button id="alertOk" class="btn btn-primary" type="button">我知道了</button>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+<div id="loading" class="loading">
+  <div class="spinner"></div>
+  <p class="loading-text" id="loadingText">正在翻开写给你的那一页…</p>
+</div>
+
+<div id="errBar" class="err-bar" style="display:none"></div>
+<script>
+window.onerror = function (msg, src, line, col) {
+  var bar = document.getElementById('errBar');
+  if (!bar) return;
+  bar.style.display = 'block';
+  bar.textContent = '页面出错：' + msg + '（第 ' + line + ' 行:' + col + '）— 请截图发给老师';
+  return false;
+};
+</script>
+
+<script>
+/* ==========================================================
+   ★ 配置区 —— 只改这里
+   ==========================================================
+
+   【本机模式】两个都留空。
+     留言 / 点赞 / 评论 / 照片只存在访客自己手机上，别人看不到。
+     适合先预览效果，不需要任何注册。
+
+   【共享模式】填入 Supabase 的地址和 anon key（见随文件附的说明）。
+     填好后所有人就能互相看到留言、点赞和照片了。
+   ---------------------------------------------------------- */
+const CONFIG = {
+  supabaseUrl: 'https://pimyumfvricwpigqlacv.supabase.co',
+  supabaseKey: 'sb_publishable_Lz1UOc8oPtTOxv6shuYPYA__5bBUcE9',
+
+  /* 学生名单文件：支持 .csv 或 .xlsx，需与 index.html 放在同一目录。
+     格式：A列=姓名，B列=C列=两位教官的祝福。第一行表头建议写「姓名,教官一,教官二」，
+     表头里两位教官的名字就是页面上显示的名字——可以改成真实姓名（祝福、信封、落款全同步）。
+     另一个自动回退候选：名单.csv（同目录）。都读不到时才用内置名单。 */
+  dataFile: '名单.xlsx',
+
+  /* 集体信文本文件：两位教官各一封（支持 .txt，UTF-8 / GBK 均可）。
+     开头可写 [寄信人][标题][问候][落款][日期][印章] 标签，正文段落之间空一行。
+     某封读不到就用代码里的内置文本。 */
+  letterFiles: ['信1.txt', '信2.txt'],
+
+  /* 集体相框照片：在 photosFolder 文件夹里放 1.jpg、2.jpg、3.jpg…（连续编号自动读取）。
+     想用自定义文件名时，用 photosManifest 指定清单文件（每行一个文件名）。 */
+  photosFolder: 'photos',
+  photosManifest: '',
+
+  /* 管理员账号：在首页姓名框输入这里的号码即可进入对应教官的管理端。
+     0 = 马教官，1 = 石教官（与名单表头、信封顺序一致）。 */
+  admins: { '001': 0, '002': 1 },
+
+  /* 照片上传自动压缩：最长边压到 maxPhotoEdge 像素、JPEG 质量 photoQuality。
+     900 / 0.72 在手机上看得清，单张约 100~200KB，加载快。 */
+  maxPhotoEdge: 900,
+  photoQuality: 0.72,
+
+  maxContent: 300      // 留言最多多少字
+};
+
+/* ==========================================================
+   ①  学生名单与专属祝福
+   —— 名单完全从文件读取（名单.xlsx / 名单.csv），不再预设托底内容。
+   —— 若名单文件都读不到，下面数组留空即可（查询时会提示「未找到」，
+      比显示一段假文案更诚实）。
+   ========================================================== */
+const STUDENTS = [
+  /* 想保留极少数「文件全失败时」的兜底，可在这里补：
+  ,{ name: '学生姓名', blessing: '教官一的祝福', blessing2: '教官二的祝福' }
+  */
+];
+
+/* ==========================================================
+   ②  集体信（两位教官各一封）
+   —— 优先读取 信1.txt / 信2.txt，读不到时用这里面的内置文本
+   —— 每一封：sender 信封上的寄信人 / title 标题 / greeting 问候
+                paragraphs 正文段落 / signature 落款 / date 日期 / seal 印章
+   ========================================================== */
+const LETTERS = [
+  {
+    sender: '马教官',
+    title: '写给同学们的一封信',
+    greeting: '亲爱的同学们：',
+    paragraphs: [
+      '见字如面。当你们读到这封信的时候，操场上已经听不见我的哨声了。十四天的军训，你们晒黑了，也站直了，我都看在眼里。',
+      '我记得第一天让你们站军姿，有人五分钟就晃，有人偷偷揉腿。到结营那天，你们能顶着太阳纹丝不动站满四十分钟——你们不知道那一刻，我心里有多骄傲。',
+      '我凶过你们，罚过你们，嗓门大到隔栋楼都听得见。但比这更想说的是：军训教会你们的，不是站军姿，而是学会在该坚持的时候，不给自己找借口。这份东西，比任何成绩都值钱。',
+      '往后的日子没有哨声了，但请记住我说过的话：腰杆挺直，眼睛看向前方，步子一步一步踩实。一个人掉队，全班都会等你——出了这个操场，也要记得，你不是一个人。',
+      '愿你们此去，一身硬气，满心温柔。立正，敬礼！'
+    ],
+    signature: '马教官',
+    date: '二〇二六年九月',
+    seal: '铁血'
+  },
+  {
+    sender: '石教官',
+    title: '写给同学们的另一封信',
+    greeting: '亲爱的同学们：',
+    paragraphs: [
+      '同学们，是我。结营那天我站在队列前没说几句话，是怕一开口就绷不住。',
+      '还记得拉歌那晚吗？你们把喉咙都喊哑了，谁也不肯先停。还有下雨那天，我说收操，你们却喊着不走——那是我当教官这些年，最像被“缴械”的一次。',
+      '我总装作很凶，其实每次有人晒得站不住，我比谁都着急。训练场上我一句软话都没说过，现在补上：你们真的很好，好到让我舍不得说再见。',
+      '以后没有我的口令了。跑步记得热身，累了就歇，别硬撑。想我了，就看看照片里晒黑的脸——那是我们一起晒出来的。',
+      '同学们，江湖路远，愿你们平安、快乐、正直。有空，回来看我。'
+    ],
+    signature: '石教官',
+    date: '二〇二六年九月',
+    seal: '青春'
+  }
+];
+
+/* ==========================================================
+   ③  置顶留言：已取消（原范例留言已删除，评论区由同学自发发布）
+   ========================================================== */
+const PINNED_MESSAGES = [];
+
+/* ==========================================================
+   以下为页面逻辑，一般不需要修改
+   ========================================================== */
+(function () {
+  'use strict';
+
+  var $ = function (id) { return document.getElementById(id); };
+
+  var reduceMotion = false;
+  try {
+    reduceMotion = !!(window.matchMedia &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  } catch (e) { reduceMotion = false; }
+
+  /* ---------- DOM ---------- */
+  var nameInput = $('nameInput'), queryBtn = $('queryBtn');
+  var blessName = $('blessName'), blessBody = $('blessBody');
+  var blessCard = $('blessCard'), blessActions = $('blessActions');
+  var letterBtn = $('letterBtn'), wallBtn = $('wallBtn');
+
+  var letterModal = $('letterModal'), letterSheet = $('letterSheet');
+  var letterBody = $('letterBody'), letterTitle = $('letterTitle');
+  var letterClose = $('letterClose'), letterBack = $('letterBack');
+  var envStage = $('envStage'), envPair = $('envPair');
+  var envBack = $('envBack'), envTitle = $('envTitle');
+
+  var alertModal = $('alertModal'), alertMsg = $('alertMsg'), alertOk = $('alertOk');
+  var toastEl = $('toast'), loadingEl = $('loading'), loadingText = $('loadingText');
+
+  var msgName = $('msgName'), msgText = $('msgText'), postBtn = $('postBtn');
+  var storeHint = $('storeHint'), wallList = $('wallList');
+  var galleryWrap = $('galleryWrap'), galleryTrack = $('galleryTrack');
+  var photoInput = $('photoInput'), photoBtn = $('photoBtn'), photoPreview = $('photoPreview');
+  var photoThumb = $('photoThumb'), photoSize = $('photoSize'), photoDel = $('photoDel');
+  var photoTip = $('photoTip'), sortBtn = $('sortBtn');
+
+  var NAMES = ['home', 'blessing', 'wall', 'admin'];
+  var VIEWS = { home: $('viewHome'), blessing: $('viewBlessing'),
+                wall: $('viewWall'), admin: $('viewAdmin') };
+
+  /* ---------- 管理员状态（001=马教官，002=石教官） ---------- */
+  var adminIdx = null;          // null = 访客
+  var adminWhoEl = $('adminWho');
+  function isAdmin() { return adminIdx !== null; }
+
+  /* ---------- 寄语 / 信件 的线上覆盖内容（管理员改动） ---------- */
+  var siteOverrides = {};       // key -> value，如 'bless:0:张小明'、'letter:0'
+  function blessKey(i, name) { return 'bless:' + i + ':' + name; }
+  function letterKey(i) { return 'letter:' + i; }
+
+  /* ==========================================================
+     存储层：本机(localStorage) / 云端(Supabase REST)
+     两种模式对外接口完全一致，页面代码不关心用哪种
+     ========================================================== */
+  var Store = (function () {
+    var url = String(CONFIG.supabaseUrl || '').replace(/\/+$/, '');
+    var key = String(CONFIG.supabaseKey || '');
+    var isCloud = !!(url && key);
+    var LS_KEY = 'grad_wall_v1';
+
+    function hdrs(extra) {
+      var h = { 'apikey': key, 'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json' };
+      for (var k in extra) { if (extra.hasOwnProperty(k)) h[k] = extra[k]; }
+      return h;
+    }
+    function api(path, opts) {
+      opts = opts || {};
+      opts.headers = hdrs(opts.headers || {});
+      return fetch(url + '/rest/v1/' + path, opts).then(function (r) {
+        if (!r.ok) {
+          return r.text().then(function (t) {
+            throw new Error('云端返回 ' + r.status + '：' + String(t).slice(0, 140));
+          });
+        }
+        if (r.status === 204) return null;
+        return r.json();
+      });
+    }
+
+    function lsRead() {
+      try {
+        var raw = localStorage.getItem(LS_KEY);
+        var d = raw ? JSON.parse(raw) : null;
+        return d && d.posts ? d : { posts: [] };
+      } catch (e) { return { posts: [] }; }
+    }
+    function lsWrite(d) {
+      try { localStorage.setItem(LS_KEY, JSON.stringify(d)); return true; }
+      catch (e) { return false; }   // 绝大多数是容量超限
+    }
+    function lsId() { return 'L' + Date.now() + '_' + Math.floor(Math.random() * 10000); }
+    function sortDesc(a, b) { return String(b.created_at).localeCompare(String(a.created_at)); }
+
+    if (!isCloud) {
+      return {
+        mode: 'local',
+        list: function () {
+          var d = lsRead();
+          d.posts.sort(sortDesc);
+          d.posts.forEach(function (p) { p.replies = p.replies || []; p.has_photo = !!p.photo; });
+          return Promise.resolve(d.posts);
+        },
+        add: function (post) {
+          var d = lsRead();
+          var p = {
+            id: lsId(),
+            name: post.name, content: post.content,
+            photo: post.photo || null,
+            likes: 0, replies: [],
+            created_at: new Date().toISOString()
+          };
+          d.posts.push(p);
+          if (!lsWrite(d)) {
+            return Promise.reject(new Error('这台手机的存储放不下了。照片比较占空间，试试换一张小一点的，或删掉之前的留言。'));
+          }
+          p.has_photo = !!p.photo;
+          return Promise.resolve(p);
+        },
+        photo: function (id) {
+          var d = lsRead();
+          for (var i = 0; i < d.posts.length; i++) {
+            if (d.posts[i].id === id) return Promise.resolve(d.posts[i].photo || null);
+          }
+          return Promise.resolve(null);
+        },
+        like: function (id, delta) {
+          var d = lsRead(), out = 0;
+          d.posts.forEach(function (p) {
+            if (p.id === id) { p.likes = Math.max(0, (p.likes || 0) + delta); out = p.likes; }
+          });
+          lsWrite(d);
+          return Promise.resolve(out);
+        },
+        reply: function (postId, reply) {
+          var d = lsRead();
+          var r = { id: lsId(), post_id: postId, name: reply.name,
+                    content: reply.content, created_at: new Date().toISOString() };
+          d.posts.forEach(function (p) {
+            if (p.id === postId) { p.replies = p.replies || []; p.replies.push(r); }
+          });
+          if (!lsWrite(d)) return Promise.reject(new Error('这台手机的存储放不下了，试试删掉一些带照片的留言。'));
+          return Promise.resolve(r);
+        },
+        clear: function () {
+          try { localStorage.removeItem(LS_KEY); } catch (e) {}
+          return Promise.resolve();
+        },
+        /* ---- 管理员操作（本机模式） ---- */
+        setPinned: function (id, on) {
+          var d = lsRead();
+          d.posts.forEach(function (p) { if (p.id === id) p.pinned = !!on; });
+          lsWrite(d); return Promise.resolve(true);
+        },
+        removePost: function (id) {
+          var d = lsRead();
+          d.posts = d.posts.filter(function (p) { return p.id !== id; });
+          lsWrite(d); return Promise.resolve(true);
+        },
+        editPost: function (id, content) {
+          var d = lsRead();
+          d.posts.forEach(function (p) { if (p.id === id) p.content = content; });
+          lsWrite(d); return Promise.resolve(true);
+        },
+        saveSiteData: function (key, value) {
+          try { localStorage.setItem('grad_site_' + key, value); return Promise.resolve(true); }
+          catch (e) { return Promise.reject(new Error('本机存储放不下')); }
+        },
+        loadSiteData: function () {
+          var out = {};
+          try {
+            for (var i = 0; i < localStorage.length; i++) {
+              var k = localStorage.key(i);
+              if (k && k.indexOf('grad_site_') === 0) out[k.slice(10)] = localStorage.getItem(k);
+            }
+          } catch (e) {}
+          return Promise.resolve(out);
+        }
+      };
+    }
+
+    return {
+      mode: 'cloud',
+      list: function () {
+        // 逐级退回：pinned / has_photo 这两列若数据库还没加，也不影响留言墙使用
+        var base = 'id,name,content,likes,created_at';
+        function q(cols) { return api('wall_posts?select=' + cols + '&order=created_at.desc'); }
+        return q(base + ',has_photo,pinned')
+          .catch(function () { return q(base + ',has_photo'); })
+          .catch(function () { return q(base); })
+          .then(function (posts) {
+            return api('wall_replies?select=id,post_id,name,content,created_at&order=created_at.asc')
+              .then(function (replies) {
+                var map = {};
+                (replies || []).forEach(function (r) {
+                  (map[r.post_id] = map[r.post_id] || []).push(r);
+                });
+                (posts || []).forEach(function (p) {
+                  p.replies = map[p.id] || [];
+                  p.has_photo = !!p.has_photo;
+                  p.pinned = !!p.pinned;
+                });
+                return posts || [];
+              });
+          });
+      },
+      add: function (post) {
+        return api('wall_posts', {
+          method: 'POST',
+          headers: { 'Prefer': 'return=representation' },
+          body: JSON.stringify({
+            name: post.name, content: post.content,
+            photo: post.photo || null, likes: 0
+          })
+        }).then(function (rows) {
+          var p = rows[0];
+          p.replies = [];
+          p.has_photo = !!p.photo;
+          delete p.photo;
+          return p;
+        });
+      },
+      photo: function (id) {
+        return api('wall_posts?select=photo&id=eq.' + encodeURIComponent(id))
+          .then(function (rows) { return rows && rows[0] ? rows[0].photo : null; });
+      },
+      like: function (id, delta) {
+        return api('rpc/bump_likes', {
+          method: 'POST',
+          body: JSON.stringify({ p_id: id, p_delta: delta })
+        }).then(function (n) { return typeof n === 'number' ? n : (n && n[0]) || 0; });
+      },
+      reply: function (postId, reply) {
+        return api('wall_replies', {
+          method: 'POST',
+          headers: { 'Prefer': 'return=representation' },
+          body: JSON.stringify({ post_id: postId, name: reply.name, content: reply.content })
+        }).then(function (rows) { return rows[0]; });
+      },
+      clear: function () { return Promise.resolve(); },
+      /* ---- 管理员操作（云端）----
+         先走 RPC 函数；若函数还没建（PGRST202）就退回直接改/删接口，
+         只要建表 SQL 里的权限策略跑过，同样能生效。 */
+      setPinned: function (id, on) {
+        var direct = function () {
+          return api('wall_posts?id=eq.' + encodeURIComponent(id), {
+            method: 'PATCH',
+            headers: { 'Prefer': 'return=minimal' },
+            body: JSON.stringify({ pinned: !!on })
+          }).then(function () { return true; });
+        };
+        return api('rpc/admin_set_pinned', {
+          method: 'POST',
+          body: JSON.stringify({ p_id: id, p_on: !!on })
+        }).then(function () { return true; })
+          .catch(function (err) {
+            if (/PGRST202|PGRST204|404/.test(String(err.message))) return direct();
+            throw err;
+          });
+      },
+      removePost: function (id) {
+        var direct = function () {
+          return api('wall_replies?post_id=eq.' + encodeURIComponent(id), { method: 'DELETE' })
+            .catch(function () {})
+            .then(function () {
+              return api('wall_posts?id=eq.' + encodeURIComponent(id), { method: 'DELETE' });
+            })
+            .then(function () { return true; });
+        };
+        return api('rpc/admin_delete_post', {
+          method: 'POST',
+          body: JSON.stringify({ p_id: id })
+        }).then(function () { return true; })
+          .catch(function (err) {
+            if (/PGRST202|PGRST204|404/.test(String(err.message))) return direct();
+            throw err;
+          });
+      },
+      editPost: function (id, content) {
+        var direct = function () {
+          return api('wall_posts?id=eq.' + encodeURIComponent(id), {
+            method: 'PATCH',
+            headers: { 'Prefer': 'return=minimal' },
+            body: JSON.stringify({ content: content })
+          }).then(function () { return true; });
+        };
+        return api('rpc/admin_edit_post', {
+          method: 'POST',
+          body: JSON.stringify({ p_id: id, p_content: content })
+        }).then(function () { return true; })
+          .catch(function (err) {
+            if (/PGRST202|PGRST204|404/.test(String(err.message))) return direct();
+            throw err;
+          });
+      },
+      /* ---- 寄语 / 信件 覆盖内容（site_data 键值表） ---- */
+      loadSiteData: function () {
+        return api('site_data?select=k,v').then(function (rows) {
+          var out = {};
+          (rows || []).forEach(function (r) { out[r.k] = r.v; });
+          return out;
+        }).catch(function () { return {}; });   // 表还没建时静默跳过
+      },
+      saveSiteData: function (key, value) {
+        return api('site_data', {
+          method: 'POST',
+          headers: { 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+          body: JSON.stringify([{ k: key, v: value, updated_at: new Date().toISOString() }])
+        }).then(function () { return true; });
+      }
+    };
+  })();
+
+  /* ---------- 姓名匹配 ---------- */
+  var students = STUDENTS;   // 内置名单；名单文件加载成功后会整体替换
+
+  function normalize(str) {
+    return String(str == null ? '' : str)
+      .replace(/\s+/g, '')
+      .replace(/[！-～]/g, function (ch) {
+        return String.fromCharCode(ch.charCodeAt(0) - 0xFEE0);
+      })
+      .toLowerCase();
+  }
+  function findStudent(input) {
+    var key = normalize(input);
+    if (!key) return null;
+    var i;
+    for (i = 0; i < students.length; i++) {
+      if (normalize(students[i].name) === key) return students[i];
+    }
+    var fuzzy = [];
+    for (i = 0; i < students.length; i++) {
+      var n = normalize(students[i].name);
+      if (n.indexOf(key) !== -1 || key.indexOf(n) !== -1) fuzzy.push(students[i]);
+    }
+    return fuzzy.length === 1 ? fuzzy[0] : null;
+  }
+
+  /* ---------- 名单文件加载（支持 csv / xlsx） ---------- */
+  // CSV：无需外部库，内置解析器直接读；中文自动识别 UTF-8 / GBK
+  // XLSX：按需从 CDN 加载解析库，多线路回退；失败则用内置名单
+  function parseCsv(text) {
+    text = String(text).replace(/^﻿/, '');
+    var rows = [], row = [], cur = '', inQ = false;
+    for (var i = 0; i < text.length; i++) {
+      var c = text[i];
+      if (inQ) {
+        if (c === '"') {
+          if (text[i + 1] === '"') { cur += '"'; i++; }
+          else inQ = false;
+        } else cur += c;
+      } else if (c === '"') inQ = true;
+      else if (c === ',') { row.push(cur); cur = ''; }
+      else if (c === '\n') { row.push(cur); cur = ''; rows.push(row); row = []; }
+      else if (c === '\r') { /* 跳过，\r\n 交给 \n 处理 */ }
+      else cur += c;
+    }
+    row.push(cur);
+    if (row.length > 1 || trim(cur)) rows.push(row);
+    return rows;
+  }
+
+  function decodeBuffer(buf) {
+    var bytes = new Uint8Array(buf);
+    var hasBom = bytes.length > 2 && bytes[0] === 0xEF && bytes[1] === 0xBB && bytes[2] === 0xBF;
+    var utf8 = new TextDecoder('utf-8').decode(buf);
+    if (hasBom || utf8.indexOf('�') === -1) return utf8;
+    try { return new TextDecoder('gb18030').decode(buf); }   // 中文版 Excel 另存的 CSV 常是 GBK
+    catch (e) { return utf8; }
+  }
+
+  var instructorNames = ['', ''];   // 两位教官的显示名，优先取名单表头（可改成真实姓名，全站同步）
+
+  // 表头列名若是通用文案（祝福语/寄语等），说明不是教官姓名，跳过
+  function isGenericHeader(v) {
+    var t = trim(String(v == null ? '' : v));
+    if (!t) return true;
+    return /^(祝福|寄语|留言|文本|内容|备注|祝福语|测试|message|blessing|content|note|test)$/i.test(t);
+  }
+
+  function rowsToStudents(rows) {
+    var out = [], start = 0;
+    if (rows.length && rows[0] && rows[0].length &&
+        /^(姓名|名字|学生姓名|同学|name)$/i.test(trim(rows[0][0]))) {
+      start = 1;   // 第一行是表头，跳过
+      // 从表头读取两位教官的显示名：把「教官一/教官二」改成真实姓名，祝福标签、信封、落款全同步
+      var h = rows[0];
+      if (h.length > 1 && !isGenericHeader(h[1])) {
+        instructorNames[0] = trim(String(h[1]));
+      }
+      if (h.length > 2 && !isGenericHeader(h[2])) {
+        instructorNames[1] = trim(String(h[2]));
+      }
+    }
+    for (var i = start; i < rows.length; i++) {
+      var r = rows[i];
+      if (!r || !r.length) continue;
+      var name = trim(r[0]);
+      if (!name) continue;
+      // 三列：A=姓名，B=教官一的祝福，C=教官二的祝福 —— 内容全部来自名单文件，不预设
+      var blessing  = r[1] ? trim(String(r[1])) : '';
+      var blessing2 = r[2] ? trim(String(r[2])) : '';
+      if (!blessing && !blessing2) {
+        blessing = '愿你把军训里练出的那股劲儿，带到往后的每一天。';
+      }
+      out.push({ name: name, blessing: blessing, blessing2: blessing2 });
+    }
+    return out;
+  }
+
+  function loadLibScript(src) {
+    return new Promise(function (resolve, reject) {
+      var s = document.createElement('script');
+      s.src = src;
+      s.onload = function () { resolve(window.XLSX || null); };
+      s.onerror = function () {
+        if (s.parentNode) s.parentNode.removeChild(s);
+        reject(new Error(src));
+      };
+      document.head.appendChild(s);
+    });
+  }
+
+  function ensureXlsxLib() {
+    if (window.XLSX) return Promise.resolve(window.XLSX);
+    var cdns = [
+      'https://cdn.bootcdn.net/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',
+      'https://cdn.staticfile.net/xlsx/0.18.5/xlsx.full.min.js',
+      'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js',
+      'https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js'
+    ];
+    var p = Promise.reject(new Error('start'));
+    cdns.forEach(function (src) { p = p.catch(function () { return loadLibScript(src); }); });
+    return p;
+  }
+
+  function loadDataFile() {
+    // 依次尝试：设定的名单文件（默认 xlsx）→ 名单.csv → 内置名单
+    var files = [trim(CONFIG.dataFile || ''), '名单.csv'];
+    var tried = {}, idx = 0;
+
+    function loadOne(file) {
+      return fetch(file, { cache: 'no-store' })
+        .then(function (r) {
+          if (!r.ok) throw new Error('HTTP ' + r.status + ' 找不到文件');
+          return r.arrayBuffer();
+        })
+        .then(function (buf) {
+          if (/\.csv$/i.test(file)) return parseCsv(decodeBuffer(buf));
+          if (/\.xlsx?$/i.test(file)) {
+            return ensureXlsxLib().then(function (X) {
+              var wb = X.read(new Uint8Array(buf), { type: 'array' });
+              var ws = wb.Sheets[wb.SheetNames[0]];
+              return X.utils.sheet_to_json(ws, { header: 1, raw: false });
+            });
+          }
+          return null;
+        })
+        .then(function (rows) {
+          if (!rows || !rows.length) throw new Error(file + ' 里没有数据');
+          var arr = rowsToStudents(rows);
+          if (!arr.length) throw new Error(file + ' 里没有有效行');
+          students = arr;
+          console.info('[毕业祝福] 已从 ' + file + ' 载入 ' + arr.length + ' 位同学');
+          showToast('名单已载入：' + arr.length + ' 位同学');
+          return true;
+        })
+        .catch(function (err) {
+          console.warn('[毕业祝福] 名单文件 ' + file + ' 加载失败：' + err.message);
+          return false;
+        });
+    }
+
+    function next() {
+      while (idx < files.length) {
+        var f = files[idx];
+        idx++;
+        if (!f || tried[f]) continue;
+        tried[f] = true;
+        return loadOne(f).then(function (ok) { return ok ? true : next(); });
+      }
+      return Promise.resolve(false);   // 全部失败 → 使用内置名单
+    }
+    return next();
+  }
+
+  /* ---------- 集体信文本加载（两封 txt，支持 [标签]） ---------- */
+  var lettersData = [null, null];
+
+  function parseLetterText(text) {
+    var out = { sender: '', title: '', greeting: '', paragraphs: [], signature: '', date: '', seal: '' };
+    var cur = [];
+    String(text).replace(/^﻿/, '').split(/\r?\n/).forEach(function (line) {
+      var t = trim(line);
+      if (/^\[寄信人\]/.test(t)) { out.sender = t.slice(5); return; }
+      if (/^\[标题\]/.test(t)) { out.title = t.slice(4); return; }
+      if (/^\[问候\]/.test(t)) { out.greeting = t.slice(4); return; }
+      if (/^\[落款\]/.test(t)) { out.signature = t.slice(4); return; }
+      if (/^\[日期\]/.test(t)) { out.date = t.slice(4); return; }
+      if (/^\[印章\]/.test(t)) { out.seal = t.slice(4); return; }
+      if (!t) {
+        if (cur.length) { out.paragraphs.push(cur.join('\n')); cur = []; }
+        return;
+      }
+      cur.push(line);
+    });
+    if (cur.length) out.paragraphs.push(cur.join('\n'));
+    out.paragraphs = out.paragraphs.filter(function (p) { return trim(p); });
+    return out;
+  }
+
+  function loadLetterFiles() {
+    var files = CONFIG.letterFiles || [];
+    if (!files.length) return Promise.resolve();
+    return Promise.all(files.map(function (file, i) {
+      file = trim(file);
+      if (!file) return Promise.resolve(false);
+      return fetch(file, { cache: 'no-store' })
+        .then(function (r) {
+          if (!r.ok) throw new Error('找不到文件 ' + file + '（HTTP ' + r.status + '）');
+          return r.arrayBuffer();
+        })
+        .then(function (buf) {
+          var d = parseLetterText(decodeBuffer(buf));
+          if (!d.paragraphs.length) throw new Error(file + ' 里没有正文段落');
+          lettersData[i] = d;
+          console.info('[军训祝福] 已从 ' + file + ' 载入信件文本');
+          return true;
+        })
+        .catch(function (err) {
+          console.warn('[军训祝福] ' + file + ' 读取失败，用内置文本。原因：' + err.message);
+          return false;
+        });
+    })).then(function (oks) {
+      var n = oks.filter(Boolean).length;
+      if (n) showToast('信件已载入：' + n + ' 封');
+    });
+  }
+
+  function letterOf(idx) {
+    return (lettersData && lettersData[idx]) || LETTERS[idx] || null;
+  }
+
+  // 教官显示名：优先用名单表头填写的姓名（改成真实姓名后，祝福/信封/落款全同步）
+  function senderName(idx) {
+    var nm = instructorNames[idx];
+    if (nm && trim(nm)) return trim(nm);
+    var L = letterOf(idx);
+    if (L && trim(L.sender)) return trim(L.sender);
+    return idx === 0 ? '马教官' : '石教官';
+  }
+
+  /* ---------- 通用 UI ---------- */
+  var toastTimer = null;
+  function showToast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toastEl.classList.remove('show'); }, 2400);
+  }
+  function showLoading(t) { loadingText.textContent = t || '加载中…'; loadingEl.classList.add('show'); }
+  function hideLoading() { loadingEl.classList.remove('show'); }
+  function showAlert(msg) { alertMsg.textContent = msg; openModal(alertModal); }
+  function openModal(el) { el.classList.add('show'); document.body.classList.add('locked'); }
+  function closeModal(el) {
+    el.classList.remove('show');
+    if (!document.querySelector('.modal.show')) document.body.classList.remove('locked');
+  }
+  function trim(s) { return String(s == null ? '' : s).replace(/^\s+|\s+$/g, ''); }
+
+  /* ---------- emoji 渲染 ----------
+     中文衬线字体会「抢走」表情符号，导致变成方框或黑白。
+     这里把 emoji（含 ZWJ 组合序列）单独包一层，指定系统彩色表情字体。 */
+  // 基础表情 + 变体选择符/ZWJ 组合/肤色修饰符，整段作为一个整体，避免被拆开
+  var EMOJI_RE = new RegExp(
+    '(?:[\uD800-\uDBFF][\uDC00-\uDFFF]|[\u2600-\u27BF]|[\u2B00-\u2BFF])' + '(?:\uFE0F|\u200D(?:[\uD800-\uDBFF][\uDC00-\uDFFF]|[\u2600-\u27BF]|[\u2B00-\u2BFF])|\uD83C[\uDFFB-\uDFFF])*', 'g');
+  function escHtml(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+  function emjHtml(s) {
+    return escHtml(s).replace(EMOJI_RE, function (m) { return '<span class="emj">' + m + '</span>'; });
+  }
+
+  /* ---------- 视图切换（内联 display，同步生效） ---------- */
+  var current = '', stack = ['home'], pushed = 0, animTimer = null;
+
+  function applyView(name, dir) {
+    var next = VIEWS[name];
+    if (!next || name === current) return;
+    for (var i = 0; i < NAMES.length; i++) {
+      var key = NAMES[i], el = VIEWS[key];
+      if (!el) continue;
+      if (key === name) { el.style.display = 'block'; el.className = 'view active'; }
+      else { el.style.display = 'none'; el.className = 'view'; }
+    }
+    current = name;
+    try { window.scrollTo(0, 0); } catch (e) {}
+    if (!reduceMotion) {
+      next.classList.add(dir === 'back' ? 'anim-left' : 'anim-right');
+      clearTimeout(animTimer);
+      animTimer = setTimeout(function () {
+        next.classList.remove('anim-right', 'anim-left');
+      }, 700);
+
+      // 切换到首页时卡片轻盈浮起
+      if (name === 'home') {
+        var hc = document.querySelector('#viewHome .card');
+        if (hc) playRise([hc]);
+      }
+    }
+  }
+
+  function go(name) {
+    if (name === current) return;
+    stack.push(name);
+    try { history.pushState({ v: name }, ''); pushed++; } catch (e) {}
+    applyView(name, 'forward');
+  }
+
+  function goBack() {
+    if (stack.length <= 1) return;
+    if (pushed > 0) {
+      var expect = stack.length;
+      try { history.back(); } catch (e) {
+        stack.pop(); applyView(stack[stack.length - 1], 'back'); return;
+      }
+      setTimeout(function () {
+        if (stack.length === expect) {
+          pushed = Math.max(0, pushed - 1);
+          stack.pop(); applyView(stack[stack.length - 1], 'back');
+        }
+      }, 320);
+      return;
+    }
+    stack.pop();
+    applyView(stack[stack.length - 1], 'back');
+  }
+
+  window.addEventListener('popstate', function () {
+    if (pushed > 0) pushed--;
+    if (stack.length > 1) { stack.pop(); applyView(stack[stack.length - 1], 'back'); }
+  });
+
+  function playRise(els) {
+    if (reduceMotion || !els.length) return;
+    var i;
+    for (i = 0; i < els.length; i++) els[i].classList.remove('rise');
+    void document.body.offsetWidth;
+    for (i = 0; i < els.length; i++) {
+      els[i].style.animationDelay = (i * 110) + 'ms';
+      els[i].classList.add('rise');
+    }
+  }
+
+  /* ---------- 首页查询 ---------- */
+  function handleQuery() {
+    var raw = trim(nameInput.value);
+    if (!raw) {
+      showToast('请先写下你的名字');
+      nameInput.classList.remove('shake');
+      void nameInput.offsetWidth;
+      nameInput.classList.add('shake');
+      try { nameInput.focus(); } catch (e) {}
+      return;
+    }
+    showLoading('正在翻开写给你的那一页…');
+    // 先等名单文件加载完成（xlsx/csv），避免第一次点进去时名单还没就绪、命中旧数据
+    Promise.resolve(dataLoadPromise).then(function () {
+      return new Promise(function (res) { setTimeout(res, 420); });
+    }).then(function () {
+      hideLoading();
+
+      // 管理员通道：输入 001 / 002
+      var code = raw.replace(/\s/g, '');
+      if (CONFIG.admins && Object.prototype.hasOwnProperty.call(CONFIG.admins, code)) {
+        enterAdmin(CONFIG.admins[code]);
+        return;
+      }
+
+      var s = findStudent(raw);
+      if (!s) { showAlert('未找到你的专属祝福，请核对姓名。'); return; }
+      blessName.textContent = s.name;
+      // 两封祝福（教官一 / 教官二），各一段
+      blessBody.innerHTML = '';
+      var pairs = [
+        { from: senderName(0), text: s.blessing },
+        { from: senderName(1), text: s.blessing2 }
+      ];
+      pairs.forEach(function (p) {
+        if (!trim(p.text || '')) return;
+        var div = document.createElement('div');
+        div.className = 'bless-block';
+        var from = document.createElement('p');
+        from.className = 'bless-from';
+        from.textContent = p.from;
+        var txt = document.createElement('p');
+        txt.className = 'blessing-text';
+        txt.innerHTML = emjHtml(p.text);   // 表情用彩色表情字体渲染
+        div.appendChild(from);
+        div.appendChild(txt);
+        blessBody.appendChild(div);
+      });
+      if (!trim(msgName.value)) msgName.value = s.name;   // 留言时自动带上名字
+      go('blessing');
+      setTimeout(function () {
+        playRise([document.querySelector('.bless-hero .who'), blessCard, blessActions].filter(Boolean));
+      }, 200);
+      // 写下名字、翻开祝福时，两块便签依次浮现
+      setTimeout(function () {
+        var blocks = blessBody.querySelectorAll('.bless-block');
+        if (reduceMotion || !blocks.length) return;
+        var k;
+        for (k = 0; k < blocks.length; k++) {
+          blocks[k].classList.remove('bless-in');
+        }
+        void blessBody.offsetWidth;
+        for (k = 0; k < blocks.length; k++) {
+          blocks[k].style.animationDelay = (k * 130) + 'ms';
+          blocks[k].classList.add('bless-in');
+        }
+      }, 320);
+    });
+  }
+
+  /* ---------- 信件：两个信封 → 拆信 → 合回信封 ---------- */
+  var letterClosing = false;
+  var letterStage = 'envelope';   // 'envelope' | 'letter'
+  var activeLetterIdx = 0;
+  var envList = [];
+
+  function renderLetter(idx) {
+    var L = letterOf(idx);
+    if (!L) { L = LETTERS[idx] || LETTERS[0]; }
+
+    // 信纸色带随教官换色：0=教官一(暖红铁血) 1=教官二(青蓝青春)
+    letterSheet.setAttribute('data-letter', String(idx || 0));
+    letterTitle.textContent = L.title || ('写给同学们的一封信');
+    letterBody.innerHTML = '';
+
+    var lines = [];
+    if (L.greeting) {
+      var g = document.createElement('p');
+      g.className = 'letter-greeting';
+      g.textContent = L.greeting;
+      lines.push(g);
+    }
+    (L.paragraphs || []).forEach(function (text) {
+      var p = document.createElement('p');
+      p.innerHTML = emjHtml(text);
+      lines.push(p);
+    });
+
+    if (L.signature || L.date || L.seal) {
+      var sign = document.createElement('div');
+      sign.className = 'letter-sign';
+      var textBox = document.createElement('div');
+      textBox.className = 'sign-text';
+      // 落款优先用名单表头的教官姓名（真实姓名），读不到时才用信件自带的落款
+      var signText = trim(instructorNames[idx]) || L.signature || '';
+      textBox.appendChild(document.createTextNode(signText));
+      if (L.date) {
+        var d = document.createElement('span');
+        d.className = 'sign-date';
+        d.textContent = L.date;
+        textBox.appendChild(d);
+      }
+      sign.appendChild(textBox);
+      var sealText = trim(L.seal);
+      if (sealText) {
+        var seal = document.createElement('i');
+        seal.className = 'seal';
+        seal.textContent = sealText.slice(0, 4);
+        sign.appendChild(seal);
+      }
+      lines.push(sign);
+    }
+
+    lines.forEach(function (el, i) {
+      el.classList.add('lt-line');
+      el.style.animationDelay = (320 + i * 60) + 'ms';
+      letterBody.appendChild(el);
+    });
+    letterBody.scrollTop = 0;
+  }
+
+  // 渲染两个信封
+  function renderEnvelopes() {
+    envPair.innerHTML = '';
+    envList = [];
+    for (var i = 0; i < 2; i++) {
+      var env = document.createElement('div');
+      env.className = 'envelope rise';
+      env.setAttribute('role', 'button');
+      env.style.animationDelay = (i * 140) + 'ms';
+
+      var flap = document.createElement('div');
+      flap.className = 'env-flap';
+      env.appendChild(flap);
+
+      var seal = document.createElement('span');
+      seal.className = 'env-seal';
+      env.appendChild(seal);
+
+      var body = document.createElement('div');
+      body.className = 'env-body';
+      var from = document.createElement('p');
+      from.className = 'env-from';
+      from.textContent = senderName(i);
+      var hint = document.createElement('p');
+      hint.className = 'env-hint';
+      hint.textContent = '点击拆开';
+      body.appendChild(from);
+      body.appendChild(hint);
+      env.appendChild(body);
+
+      (function (idx) {
+        env.addEventListener('click', function () { openEnvelope(idx); });
+      })(i);
+      envPair.appendChild(env);
+      envList.push(env);
+    }
+  }
+
+  // 打开弹窗：先进信封层
+  function openLetterModal() {
+    if (letterClosing) return;
+    activeLetterIdx = 0;
+    renderEnvelopes();
+    showEnvStage();
+    openModal(letterModal);
+  }
+
+  function showEnvStage() {
+    letterStage = 'envelope';
+    letterSheet.style.display = 'none';
+    letterSheet.classList.remove('fold-open', 'fold-close');
+    envStage.classList.remove('hidden');
+    void envStage.offsetWidth;
+    // 重播信封入场动画
+    envList.forEach(function (env, i) {
+      env.classList.remove('rise');
+      void env.offsetWidth;
+      env.style.animationDelay = (i * 140) + 'ms';
+      env.classList.add('rise');
+    });
+  }
+
+  function openEnvelope(idx) {
+    if (letterClosing) return;
+    activeLetterIdx = idx;
+    renderLetter(idx);
+    var env = envList[idx];
+    if (env) env.classList.add('opening');
+
+    setTimeout(function () {
+      envStage.classList.add('hidden');
+      letterStage = 'letter';
+      letterSheet.style.display = 'flex';
+      letterSheet.classList.remove('fold-close');
+      void letterSheet.offsetWidth;
+      letterSheet.classList.add('fold-open');
+      if (env) env.classList.remove('opening');
+      // 信纸显示出来之后再归零滚动；display:none 时设 scrollTop 不生效，
+      // 上一封信的滚动位置会被浏览器保留，导致下一封不在开头
+      letterBody.scrollTop = 0;
+      if (window.requestAnimationFrame) {
+        window.requestAnimationFrame(function () { letterBody.scrollTop = 0; });
+      }
+    }, reduceMotion ? 0 : 340);
+  }
+
+  // 合回信封（不退出弹窗）
+  function closeLetterToEnvelopes() {
+    if (letterClosing || letterStage !== 'letter') return;
+    if (reduceMotion || !letterSheet.classList.contains('fold-open')) {
+      showEnvStage();
+      return;
+    }
+    letterClosing = true;
+    letterSheet.classList.remove('fold-open');
+    void letterSheet.offsetWidth;
+    letterSheet.classList.add('fold-close');
+    setTimeout(function () {
+      letterSheet.classList.remove('fold-close');
+      letterClosing = false;
+      showEnvStage();
+    }, 400);
+  }
+
+  // 完全退出弹窗
+  function closeLetterModal() {
+    closeModal(letterModal);
+    letterSheet.classList.remove('fold-open', 'fold-close');
+    letterSheet.style.display = 'none';
+    envStage.classList.add('hidden');
+    letterStage = 'envelope';
+  }
+
+  /* ---------- 留言墙 ---------- */
+  var likedIds = {};
+  try {
+    likedIds = JSON.parse(localStorage.getItem('grad_liked') || '{}') || {};
+  } catch (e) { likedIds = {}; }
+  function saveLiked() {
+    try { localStorage.setItem('grad_liked', JSON.stringify(likedIds)); } catch (e) {}
+  }
+
+  var wallPosts = [];         // 留言列表
+  var photoObserver = null;   // 兼容历史遗留的带图留言：滚到可见再按需拉取
+  var wallLoaded = false;     // 是否已拉取过留言
+
+  function timeText(iso) {
+    if (!iso) return '';
+    var s = String(iso);
+    return s.slice(0, 10);
+  }
+
+  function buildAvatar(name) {
+    var d = document.createElement('div');
+    d.className = 'avatar';
+    d.textContent = String(name || '同').charAt(0);
+    return d;
+  }
+
+  /* 管理员在单条留言上显示的小工具：置顶 / 改 / 删 */
+  function buildAdminTools(post, card) {
+    var box = document.createElement('span');
+    box.className = 'admin-tools';
+
+    var pin = document.createElement('button');
+    pin.type = 'button';
+    pin.className = post.pinned ? 'on' : '';
+    pin.textContent = post.pinned ? '取消置顶' : '置顶';
+    pin.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var next = !post.pinned;
+      pin.disabled = true;
+      Store.setPinned(post.id, next).then(function () {
+        post.pinned = next;
+        pin.textContent = next ? '取消置顶' : '置顶';
+        pin.className = next ? 'on' : '';
+        pin.disabled = false;
+        renderWall();
+        showToast(next ? '已置顶' : '已取消置顶');
+      }).catch(function (err) {
+        pin.disabled = false;
+        showToast('置顶没成功：' + err.message + '（请先在 Supabase 运行管理员 SQL）');
+      });
+    });
+    box.appendChild(pin);
+
+    var edit = document.createElement('button');
+    edit.type = 'button';
+    edit.textContent = '改';
+    edit.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var cur = card.querySelector('.wall-content');
+      if (!cur || cur.querySelector('textarea')) return;
+      var old = post.content || '';
+      cur.innerHTML = '';
+      var ta = document.createElement('textarea');
+      ta.className = 'field field-area';
+      ta.style.marginTop = '0';
+      ta.value = old;
+      var bar = document.createElement('div');
+      bar.style.cssText = 'display:flex;gap:8px;margin-top:8px;';
+      var ok = document.createElement('button');
+      ok.type = 'button'; ok.className = 'btn btn-primary btn-sm'; ok.textContent = '保存';
+      var no = document.createElement('button');
+      no.type = 'button'; no.className = 'btn btn-ghost btn-sm'; no.textContent = '取消';
+      bar.appendChild(ok); bar.appendChild(no);
+      cur.appendChild(ta); cur.appendChild(bar);
+      try { ta.focus(); } catch (er) {}
+
+      no.addEventListener('click', function () { renderWall(); });
+      ok.addEventListener('click', function () {
+        var v = trim(ta.value);
+        if (!v) { showToast('内容不能为空'); return; }
+        ok.disabled = true; ok.textContent = '保存中';
+        Store.editPost(post.id, v).then(function () {
+          post.content = v;
+          renderWall();
+          showToast('已修改');
+        }).catch(function (err) {
+          ok.disabled = false; ok.textContent = '保存';
+          showToast('修改没成功：' + err.message + '（请先在 Supabase 运行管理员 SQL）');
+        });
+      });
+    });
+    box.appendChild(edit);
+
+    var del = document.createElement('button');
+    del.type = 'button';
+    del.className = 'danger';
+    del.textContent = '删';
+    del.addEventListener('click', function (e) {
+      e.stopPropagation();
+      if (!window.confirm('确定删除这条留言吗？删了就找不回来了。')) return;
+      del.disabled = true;
+      Store.removePost(post.id).then(function () {
+        wallPosts = wallPosts.filter(function (p) { return p.id !== post.id; });
+        renderWall();
+        renderAdminList();
+        showToast('已删除');
+      }).catch(function (err) {
+        del.disabled = false;
+        showToast('删除没成功：' + err.message + '（请先在 Supabase 运行管理员 SQL）');
+      });
+    });
+    box.appendChild(del);
+    return box;
+  }
+
+  // withTools=true 时才渲染管理按钮（只有管理端列表才传 true，公开留言墙永远不显示）
+  function buildItem(post, pinned, isPinned, withTools) {
+    var card = document.createElement('div');
+    card.className = 'wall-item' + (isPinned ? ' is-pinned' : '');
+    if (post.id != null) card.setAttribute('data-id', post.id);
+
+    var user = document.createElement('div');
+    user.className = 'wall-user';
+    user.appendChild(buildAvatar(post.name));
+
+    var meta = document.createElement('div');
+    meta.className = 'wall-meta';
+    var nameEl = document.createElement('div');
+    nameEl.className = 'wall-name';
+    nameEl.textContent = post.name || '匿名同学';
+    if (pinned || isPinned) {
+      var tag = document.createElement('span');
+      tag.className = 'pin-tag' + (isPinned ? ' on' : '');
+      tag.textContent = '置顶';
+      nameEl.appendChild(tag);
+    }
+    // 管理员工具只在管理端列表出现，公开留言墙对所有人（包括教官）都保持原样
+    if (withTools && adminIdx !== null && post.id != null) {
+      nameEl.appendChild(buildAdminTools(post, card));
+    }
+    var timeEl = document.createElement('div');
+    timeEl.className = 'wall-time';
+    timeEl.textContent = timeText(post.created_at || post.time);
+    meta.appendChild(nameEl);
+    meta.appendChild(timeEl);
+    user.appendChild(meta);
+    card.appendChild(user);
+
+    var content = document.createElement('div');
+    content.className = 'wall-content';
+    content.innerHTML = emjHtml(post.content || '');
+    card.appendChild(content);
+
+    // 照片
+    var hasPhoto = post.has_photo || post.photo;
+    if (hasPhoto) {
+      var wrap = document.createElement('div');
+      wrap.className = 'wall-photo';
+      var img = document.createElement('img');
+      img.alt = '留言照片';
+      if (post.photo) {
+        img.src = post.photo;
+        wrap.appendChild(img);
+      } else {
+        var ph = document.createElement('div');
+        ph.className = 'ph-loading';
+        ph.textContent = '照片加载中…';
+        wrap.appendChild(ph);
+        wrap.appendChild(img);
+        img.style.display = 'none';
+        // 进入视野再拉取，避免一次拉一大堆图片
+        if (photoObserver) photoObserver.observe(img);
+      }
+      card.appendChild(wrap);
+    }
+
+    if (pinned) return card;
+
+    // 操作栏
+    var acts = document.createElement('div');
+    acts.className = 'wall-actions';
+
+    var likeBtn = document.createElement('button');
+    likeBtn.type = 'button';
+    likeBtn.className = 'act like' + (likedIds[post.id] ? ' liked' : '');
+    likeBtn.innerHTML =
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">' +
+      '<path d="M20.8 5.6a5 5 0 0 0-7.1 0L12 7.3l-1.7-1.7a5 5 0 1 0-7.1 7.1l8.8 8.8 8.8-8.8a5 5 0 0 0 0-7.1z"></path></svg>' +
+      '<span></span>';
+    likeBtn.querySelector('span').textContent = post.likes || 0;
+    likeBtn.addEventListener('click', function () { toggleLike(post, likeBtn); });
+    acts.appendChild(likeBtn);
+
+    var replyBtn = document.createElement('button');
+    replyBtn.type = 'button';
+    replyBtn.className = 'act reply';
+    replyBtn.innerHTML =
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">' +
+      '<path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-3.3-.6L3 21l1.8-4.6A8.4 8.4 0 0 1 12 3a8.4 8.4 0 0 1 9 8.5z"></path></svg>' +
+      '<em>回复</em><span></span>';
+    replyBtn.querySelector('span').textContent = (post.replies || []).length;
+    replyBtn.addEventListener('click', function () { toggleReplyBox(card, post); });
+    acts.appendChild(replyBtn);
+
+    card.appendChild(acts);
+
+    var replies = document.createElement('div');
+    replies.className = 'replies' + ((post.replies && post.replies.length) ? '' : ' hidden');
+    (post.replies || []).forEach(function (r) { replies.appendChild(buildReply(r, post, card)); });
+    card.appendChild(replies);
+
+    var box = document.createElement('div');
+    box.className = 'reply-box hidden';
+    var inp = document.createElement('input');
+    inp.className = 'field field-sm';
+    inp.type = 'text';
+    inp.maxLength = 120;
+    inp.placeholder = '回复 ' + (post.name || '同学') + '…';
+    var send = document.createElement('button');
+    send.className = 'btn btn-primary btn-sm';
+    send.type = 'button';
+    send.textContent = '发送';
+    send.addEventListener('click', function () { submitReply(post, inp, send, replies, replyBtn); });
+    inp.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.keyCode === 13) {
+        e.preventDefault();
+        submitReply(post, inp, send, replies, replyBtn);
+      }
+    });
+    box.appendChild(inp);
+    box.appendChild(send);
+    card.appendChild(box);
+
+    return card;
+  }
+
+  function buildReply(r, post, card) {
+    var d = document.createElement('div');
+    d.className = 'reply-item';
+    var n = document.createElement('span');
+    n.className = 'rn';
+    n.textContent = (r.name || '匿名同学') + '：';
+    d.appendChild(n);
+    var c = document.createElement('span');
+    c.innerHTML = emjHtml(r.content || '');
+    d.appendChild(c);
+
+    // 评论下面再加一个「回复」，可以直接回某个人
+    var re = document.createElement('button');
+    re.type = 'button';
+    re.className = 'reply-to';
+    re.textContent = '回复';
+    re.addEventListener('click', function (e) {
+      e.stopPropagation();
+      openReplyBox(card, post, '回复 ' + (r.name || '匿名同学') + '：');
+    });
+    d.appendChild(re);
+    return d;
+  }
+
+  function openReplyBox(card, post, prefix) {
+    var box = card.querySelector('.reply-box');
+    if (!box) return;
+    box.classList.remove('hidden');
+    var inp = box.querySelector('input');
+    if (inp) {
+      if (prefix && !trim(inp.value)) inp.value = prefix;
+      try { inp.focus(); } catch (e) {}
+      try { inp.setSelectionRange(inp.value.length, inp.value.length); } catch (e) {}
+    }
+    try { card.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } catch (e) {}
+  }
+
+  function toggleReplyBox(card, post) {
+    var box = card.querySelector('.reply-box');
+    if (!box) return;
+    var opening = box.classList.contains('hidden');
+    if (opening) {
+      openReplyBox(card, post, '');
+    } else {
+      box.classList.add('hidden');
+    }
+  }
+
+  function toggleLike(post, btn) {
+    var liked = !!likedIds[post.id];
+    var delta = liked ? -1 : 1;
+    var span = btn.querySelector('span');
+    var shown = parseInt(span.textContent, 10) || 0;
+
+    // 先动界面，再发请求，失败再回滚
+    likedIds[post.id] = !liked;
+    btn.classList.toggle('liked', !liked);
+    span.textContent = Math.max(0, shown + delta);
+    saveLiked();
+    post.likes = Math.max(0, (post.likes || 0) + delta);
+
+    resortWallDom();   // 按点赞排序时，立刻把这条挪到该在的位置
+
+    Store.like(post.id, delta).then(function (n) {
+      if (typeof n === 'number' && n >= 0) {
+        span.textContent = n;
+        post.likes = n;
+        resortWallDom();
+      }
+    }).catch(function (err) {
+      // 回滚
+      likedIds[post.id] = liked;
+      btn.classList.toggle('liked', liked);
+      span.textContent = shown;
+      post.likes = shown;
+      saveLiked();
+      resortWallDom();
+      showToast('点赞没成功：' + err.message);
+    });
+  }
+
+  function submitReply(post, inp, send, replies, replyBtn) {
+    var text = trim(inp.value);
+    if (!text) { showToast('回复内容不能为空'); return; }
+    var nm = trim(msgName.value) || '匿名同学';
+
+    send.disabled = true;
+    send.textContent = '发送中';
+
+    Store.reply(post.id, { name: nm, content: text }).then(function (r) {
+      post.replies = post.replies || [];
+      post.replies.push(r);
+      var cardEl = inp.closest('.wall-item');
+      replies.appendChild(buildReply(r, post, cardEl));
+      replies.classList.remove('hidden');
+      var cnt = replyBtn.querySelector('span');
+      cnt.textContent = post.replies.length;
+      inp.value = '';
+      send.disabled = false;
+      send.textContent = '发送';
+      inp.closest('.reply-box').classList.add('hidden');
+      showToast('回复成功');
+    }).catch(function (err) {
+      send.disabled = false;
+      send.textContent = '发送';
+      showToast('回复失败：' + err.message);
+    });
+  }
+
+  var sortMode = 'time';      // 'time' 按时间倒序 | 'likes' 按点赞量倒序
+  var postIndex = {};         // String(id) -> post，供点赞后就地重排用
+
+  function indexPosts() {
+    postIndex = {};
+    wallPosts.forEach(function (p) { postIndex[String(p.id)] = p; });
+  }
+
+  // 点赞后在「按点赞排序」模式下，直接搬动已渲染的卡片，不整块重建（保留展开的回复框）
+  function resortWallDom() {
+    if (sortMode !== 'likes') return;
+    var nodes = Array.prototype.slice.call(wallList.children).filter(function (c) {
+      return c.classList && c.classList.contains('wall-item');
+    });
+    if (nodes.length < 2) return;
+    nodes.sort(function (a, b) {
+      var pa = postIndex[a.getAttribute('data-id')] || {};
+      var pb = postIndex[b.getAttribute('data-id')] || {};
+      var d = (pb.pinned ? 1 : 0) - (pa.pinned ? 1 : 0);   // 置顶永远在前
+      if (d) return d;
+      d = (pb.likes || 0) - (pa.likes || 0);
+      if (d) return d;
+      return String(pb.created_at || '').localeCompare(String(pa.created_at || ''));
+    });
+    nodes.forEach(function (n) { wallList.appendChild(n); });
+  }
+
+  function sortedPosts() {
+    var arr = wallPosts.slice();
+    if (sortMode === 'likes') {
+      arr.sort(function (a, b) {
+        var d = (b.likes || 0) - (a.likes || 0);
+        if (d) return d;
+        return String(b.created_at || '').localeCompare(String(a.created_at || ''));
+      });
+    } else {
+      arr.sort(function (a, b) {
+        return String(b.created_at || '').localeCompare(String(a.created_at || ''));
+      });
+    }
+    return arr;
+  }
+
+  function updateSortBtn() {
+    if (!sortBtn) return;
+    sortBtn.textContent = sortMode === 'likes' ? '排序：点赞最多' : '排序：最新';
+  }
+
+  function renderWall() {
+    indexPosts();
+    wallList.innerHTML = '';
+
+    PINNED_MESSAGES.forEach(function (m) {
+      wallList.appendChild(buildItem(m, true, true));
+    });
+
+    // 置顶的留言永远排在最前，其余按当前排序方式
+    var list = sortedPosts();
+    var pinned = [], rest = [];
+    list.forEach(function (p) {
+      (p.pinned ? pinned : rest).push(p);
+    });
+    pinned.forEach(function (p) { wallList.appendChild(buildItem(p, false, true)); });
+    rest.forEach(function (p) { wallList.appendChild(buildItem(p, false, false)); });
+
+    if (!wallPosts.length) {
+      var e = document.createElement('div');
+      e.className = 'wall-empty';
+      e.textContent = '还没有新的留言，来说第一句吧。';
+      wallList.appendChild(e);
+    }
+    updateSortBtn();
+  }
+
+  function loadWall() {
+    return Store.list().then(function (posts) {
+      wallPosts = posts || [];
+      renderWall();
+      renderAdminList();   // 管理端若已打开，同步刷新（管理员从首页直接进来时留言还没拉过）
+      playRise(Array.prototype.slice.call(wallList.children));
+    }).catch(function (err) {
+      wallList.innerHTML = '';
+      var e = document.createElement('div');
+      e.className = 'wall-empty';
+      e.textContent = '留言加载失败：' + err.message;
+      wallList.appendChild(e);
+    });
+  }
+
+  function updateStoreHint() {
+    if (Store.mode === 'cloud') {
+      storeHint.className = 'store-hint';
+      storeHint.textContent = '已连接云端，所有人可见';
+    } else {
+      storeHint.className = 'store-hint warn';
+      storeHint.textContent = '当前是本机模式：留言只存在这台手机上，别人看不到。如果要所有人互相可见，需要在文件顶部填写云端配置。';
+    }
+  }
+
+  /* ==========================================================
+     管理端：001 / 002 登录，管理留言 + 实时改寄语和信
+     ========================================================== */
+  var lettersRaw = [null, null];   // 每封信的原始文本（[标签] 格式），供管理员直接编辑
+
+  // 内置信件对象 → [标签] 原始文本
+  function lettersToRaw(L) {
+    var out = [];
+    if (L.sender) out.push('[寄信人]' + L.sender);
+    if (L.title) out.push('[标题]' + L.title);
+    if (L.greeting) out.push('[问候]' + L.greeting);
+    if (L.signature) out.push('[落款]' + L.signature);
+    if (L.date) out.push('[日期]' + L.date);
+    if (L.seal) out.push('[印章]' + L.seal);
+    if (out.length) out.push('');
+    (L.paragraphs || []).forEach(function (p) { out.push(p); out.push(''); });
+    return out.join('\n');
+  }
+
+  // 把管理员的覆盖内容应用到学生名单与信件上
+  function applyOverrides() {
+    var i, k;
+    for (i = 0; i < students.length; i++) {
+      var nm = students[i].name;
+      k = blessKey(0, nm);
+      if (siteOverrides[k] != null) students[i].blessing = siteOverrides[k];
+      k = blessKey(1, nm);
+      if (siteOverrides[k] != null) students[i].blessing2 = siteOverrides[k];
+    }
+    for (i = 0; i < 2; i++) {
+      var raw = siteOverrides[letterKey(i)];
+      if (raw != null && trim(raw)) {
+        var d = parseLetterText(raw);
+        if (d.paragraphs && d.paragraphs.length) lettersData[i] = d;
+        lettersRaw[i] = raw;
+      } else if (lettersRaw[i] == null) {
+        var L = LETTERS[i];
+        if (L) lettersRaw[i] = lettersToRaw(L);
+      }
+    }
+  }
+
+  function enterAdmin(idx) {
+    adminIdx = idx;
+    var nm = senderName(idx);
+    adminWhoEl.textContent = '已登录：' + nm;
+    showToast('已进入' + nm + '的管理端');
+    renderAdminList();
+    buildBlessPicker();
+    buildLetterPicker();
+    go('admin');
+    switchAdminTab('wall');
+    // 管理员可能是直接输入 001 进来的，此时留言一次都还没拉过，
+    // 管理列表会显示「还没有留言」。这里补一次拉取，并在完成后刷新管理列表。
+    if (!wallLoaded) {
+      wallLoaded = true;
+      showLoading('正在载入留言…');
+      Promise.resolve(loadWall()).then(hideLoading, hideLoading);
+    }
+  }
+
+  function renderAdminList() {
+    var list = document.getElementById('adminList');
+    var hint = document.getElementById('adminHint');
+    if (!list) return;
+    list.innerHTML = '';
+    hint.textContent = Store.mode === 'cloud'
+      ? '共 ' + wallPosts.length + ' 条留言。可置顶 / 修改 / 删除。'
+      : '当前是本机模式，只能管理这台手机上的留言。';
+    var arr = sortedPosts();
+    if (!arr.length) {
+      var e = document.createElement('div');
+      e.className = 'wall-empty';
+      e.textContent = '还没有留言。';
+      list.appendChild(e);
+      return;
+    }
+    arr.forEach(function (p) { list.appendChild(buildItem(p, false, !!p.pinned, true)); });
+  }
+
+  function switchAdminTab(tab) {
+    Array.prototype.forEach.call(document.querySelectorAll('.admin-tab'), function (b) {
+      b.classList.toggle('active', b.getAttribute('data-tab') === tab);
+    });
+    var panes = { wall: 'paneWall', bless: 'paneBless', letter: 'paneLetter' };
+    Object.keys(panes).forEach(function (k) {
+      var el = document.getElementById(panes[k]);
+      if (el) el.classList.toggle('hidden', k !== tab);
+    });
+  }
+
+  function buildBlessPicker() {
+    var sel = document.getElementById('blessPick');
+    if (!sel) return;
+    sel.innerHTML = '';
+    students.forEach(function (s, i) {
+      var o = document.createElement('option');
+      o.value = String(i);
+      o.textContent = s.name;
+      sel.appendChild(o);
+    });
+    sel.onchange = function () { fillBlessEditor(); };
+    fillBlessEditor();
+  }
+
+  function fillBlessEditor() {
+    var sel = document.getElementById('blessPick');
+    if (!sel || !students.length) return;
+    var s = students[parseInt(sel.value, 10) || 0];
+    if (!s) return;
+    document.getElementById('blessLabel1').textContent = senderName(0) + ' 的寄语';
+    document.getElementById('blessLabel2').textContent = senderName(1) + ' 的寄语';
+    document.getElementById('blessEdit1').value = s.blessing || '';
+    document.getElementById('blessEdit2').value = s.blessing2 || '';
+  }
+
+  function buildLetterPicker() {
+    var sel = document.getElementById('letterPick');
+    if (!sel) return;
+    sel.innerHTML = '';
+    for (var i = 0; i < 2; i++) {
+      var o = document.createElement('option');
+      o.value = String(i);
+      o.textContent = senderName(i) + ' 的信';
+      sel.appendChild(o);
+    }
+    sel.onchange = function () { fillLetterEditor(); };
+    fillLetterEditor();
+  }
+
+  function fillLetterEditor() {
+    var sel = document.getElementById('letterPick');
+    if (!sel) return;
+    var i = parseInt(sel.value, 10) || 0;
+    if (lettersRaw[i] == null) {
+      var L = lettersData[i] || LETTERS[i];
+      lettersRaw[i] = L ? lettersToRaw(L) : '';
+    }
+    document.getElementById('letterEdit').value = lettersRaw[i] || '';
+  }
+
+  function saveOverride(key, value, okMsg) {
+    siteOverrides[key] = value;
+    return Store.saveSiteData(key, value).then(function () {
+      if (okMsg) showToast(okMsg);
+      return true;
+    }).catch(function (err) {
+      showToast('保存失败：' + err.message + (Store.mode === 'cloud' ? '（请先在 Supabase 建 site_data 表并运行管理员 SQL）' : ''));
+      return false;
+    });
+  }
+
+  /* ---------- 集体相框：读取 photos 文件夹里的照片 ---------- */
+  var galleryLoaded = false;
+
+  function loadGallery() {
+    if (galleryLoaded || !galleryTrack) return;
+    galleryLoaded = true;
+
+    var folder = trim(CONFIG.photosFolder || 'photos').replace(/\/+$/, '');
+    var manifest = trim(CONFIG.photosManifest || '');
+    var found = [];
+
+    function probe(src) {
+      // 用 HEAD 判断，并校验返回的是真图片（防止静态空间对缺失文件返回 200 HTML 软404）
+      function isImage(r) {
+        if (!r || !r.ok) return false;
+        var ct = r.headers.get('content-type') || '';
+        return /^image\//i.test(ct) || ct === 'binary/octet-stream';
+      }
+      return fetch(src, { method: 'HEAD', cache: 'no-store' })
+        .then(isImage)
+        .catch(function () {
+          // 个别主机不支持 HEAD，退回 GET 再校验一次
+          return fetch(src, { cache: 'no-store' }).then(isImage);
+        })
+        .catch(function () { return false; });
+    }
+
+    function render() {
+      if (!found.length) {
+        // 没读到照片：留一行提示，方便排查（确认 photos 文件夹是否上传、命名是否为 1.png/2.png…）
+        console.warn('[军训祝福] 没有读到合影照片：请确认 photos/ 文件夹已上传，且文件名为 1.png / 2.png …');
+        return;   // 没照片就整块不显示
+      }
+      found.forEach(function (src) {
+        var img = document.createElement('img');
+        img.loading = 'lazy';
+        img.alt = '军训合影';
+        img.src = src;
+        galleryTrack.appendChild(img);
+      });
+      galleryWrap.classList.remove('hidden');
+    }
+
+    // 方式一：按清单文件逐个读
+    function fromManifest() {
+      return fetch(manifest, { cache: 'no-store' })
+        .then(function (r) {
+          if (!r.ok) throw new Error('no manifest');
+          return r.arrayBuffer();
+        })
+        .then(function (buf) {
+          return decodeBuffer(buf).split(/\r?\n/)
+            .map(trim)
+            .filter(function (l) { return /\.(jpe?g|png|webp)$/i.test(l); });
+        })
+        .then(function (files) {
+          return Promise.all(files.map(function (f) {
+            var src = folder + '/' + f;
+            return probe(src).then(function (ok) { if (ok) found.push(src); });
+          }));
+        })
+        .then(render)
+        .catch(function () { sequential(); });
+    }
+
+    // 方式二：从 1.jpg 开始连续探测，遇到缺号就停
+    function sequential() {
+      var n = 1;
+      function step() {
+        if (n > 50) { render(); return; }
+        var idx = n;
+        var jpg = folder + '/' + idx + '.jpg';
+        var png = folder + '/' + idx + '.png';
+        probe(jpg).then(function (okJ) {
+          if (okJ) { found.push(jpg); n++; step(); return; }
+          probe(png).then(function (okP) {
+            if (okP) { found.push(png); n++; step(); }
+            else render();          // 这个序号两种格式都没有 → 认为照片到头了
+          });
+        });
+      }
+      step();
+    }
+
+    if (manifest) fromManifest(); else sequential();
+  }
+
+  /* ---------- 照片：选择 → 压缩 → 预览 ---------- */
+  var pickedPhoto = null;     // 压缩后的 dataURL
+
+  function fmtSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(0) + ' KB';
+    return (bytes / 1024 / 1024).toFixed(1) + ' MB';
+  }
+  function dataUrlBytes(u) {
+    var i = String(u).indexOf(',');
+    var b = i >= 0 ? u.slice(i + 1) : u;
+    return Math.floor(b.length * 3 / 4);
+  }
+
+  // 用 Canvas 压缩：最长边不超过 maxEdge，输出 JPEG
+  function compressImage(file, maxEdge, quality) {
+    return new Promise(function (resolve, reject) {
+      var url = URL.createObjectURL(file);
+      var img = new Image();
+      img.onload = function () {
+        URL.revokeObjectURL(url);
+        var w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
+        if (!w || !h) { reject(new Error('图片尺寸读不到')); return; }
+        var scale = Math.min(1, maxEdge / Math.max(w, h));
+        var cw = Math.max(1, Math.round(w * scale));
+        var ch = Math.max(1, Math.round(h * scale));
+        var cv = document.createElement('canvas');
+        cv.width = cw; cv.height = ch;
+        var ctx = cv.getContext('2d');
+        // 白底，避免透明 PNG 转 JPEG 变黑
+        ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cw, ch);
+        ctx.drawImage(img, 0, 0, cw, ch);
+        try {
+          resolve({ data: cv.toDataURL('image/jpeg', quality), w: cw, h: ch });
+        } catch (e) { reject(e); }
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); reject(new Error('这张图读不了，换一张试试')); };
+      img.src = url;
+    });
+  }
+
+  function clearPhoto() {
+    pickedPhoto = null;
+    photoPreview.classList.add('hidden');
+    photoBtn.classList.remove('hidden');
+    try { photoInput.value = ''; } catch (e) {}
+  }
+
+  function onPickPhoto() {
+    var f = photoInput.files && photoInput.files[0];
+    if (!f) return;
+    if (!/^image\//.test(f.type)) { showToast('请选择图片文件'); clearPhoto(); return; }
+    photoTip.textContent = '正在压缩…';
+    compressImage(f, CONFIG.maxPhotoEdge, CONFIG.photoQuality).then(function (r) {
+      pickedPhoto = r.data;
+      photoThumb.src = r.data;
+      photoSize.textContent = r.w + '×' + r.h + ' · ' + fmtSize(dataUrlBytes(r.data));
+      photoPreview.classList.remove('hidden');
+      photoBtn.classList.add('hidden');
+      photoTip.textContent = '已压缩，清晰度够用';
+    }).catch(function (err) {
+      showToast('照片处理失败：' + err.message);
+      clearPhoto();
+      photoTip.textContent = '会自动压缩，看得清又不占流量';
+    });
+  }
+
+  /* ---------- 发布留言 ---------- */
+  function handlePost() {
+    var content = trim(msgText.value);
+    if (!content && !pickedPhoto) { showToast('先写点什么再发布吧'); try { msgText.focus(); } catch (e) {} return; }
+    if (content.length > CONFIG.maxContent) {
+      showToast('留言最多 ' + CONFIG.maxContent + ' 字'); return;
+    }
+
+    var payload = {
+      name: trim(msgName.value) || '匿名同学',
+      content: content || '（分享了一张照片）',
+      photo: pickedPhoto || null
+    };
+
+    postBtn.disabled = true;
+    postBtn.textContent = '发布中';
+
+    Store.add(payload).then(function (p) {
+      wallPosts.unshift(p);
+      var empty = wallList.querySelector('.wall-empty');
+      if (empty) empty.remove();
+      var card = buildItem(p, false);
+      card.classList.add('post-new');                     // 平滑滑入置顶
+      wallList.insertBefore(card, wallList.firstChild);   // 新留言置顶展示
+      setTimeout(function () { card.classList.remove('post-new'); }, 700);
+
+      msgText.value = '';
+      clearPhoto();
+      photoTip.textContent = '会自动压缩，看得清又不占流量';
+      updateStoreHint();
+
+      postBtn.disabled = false;
+      postBtn.textContent = '发布';
+      showToast('发布成功');
+    }).catch(function (err) {
+      postBtn.disabled = false;
+      postBtn.textContent = '发布';
+      showToast('发布失败：' + err.message);
+    });
+  }
+
+  /* ---------- 事件绑定 ---------- */
+  queryBtn.addEventListener('click', handleQuery);
+  nameInput.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' || e.keyCode === 13) {
+      e.preventDefault();
+      try { nameInput.blur(); } catch (err) {}
+      handleQuery();
+    }
+  });
+  nameInput.addEventListener('input', function () { nameInput.classList.remove('shake'); });
+
+  letterBtn.addEventListener('click', openLetterModal);
+  letterClose.addEventListener('click', closeLetterToEnvelopes);
+  letterBack.addEventListener('click', closeLetterToEnvelopes);
+  envBack.addEventListener('click', closeLetterModal);
+
+  wallBtn.addEventListener('click', function () {
+    go('wall');
+    setTimeout(function () {
+      playRise(Array.prototype.slice.call(wallList.children));
+    }, 210);
+    if (!wallLoaded) {           // 留言只在第一次进入留言墙时拉取
+      wallLoaded = true;
+      loadWall();
+    }
+    loadGallery();               // 集体相框（只读一次）
+  });
+
+  Array.prototype.forEach.call(document.querySelectorAll('[data-back]'), function (b) {
+    b.addEventListener('click', goBack);
+  });
+
+  alertOk.addEventListener('click', function () { closeModal(alertModal); });
+
+  letterModal.addEventListener('click', function (e) {
+    if (e.target !== letterModal) return;
+    if (letterStage === 'letter') closeLetterToEnvelopes();   // 看信时点遮罩：合回信封
+    else closeLetterModal();                                  // 信封层点遮罩：退出
+  });
+  alertModal.addEventListener('click', function (e) {
+    if (e.target === alertModal) closeModal(alertModal);
+  });
+
+  postBtn.addEventListener('click', handlePost);
+  photoBtn.addEventListener('click', function () { try { photoInput.click(); } catch (e) {} });
+  photoInput.addEventListener('change', onPickPhoto);
+  photoDel.addEventListener('click', function () {
+    clearPhoto();
+    photoTip.textContent = '会自动压缩，看得清又不占流量';
+  });
+
+  /* ---------- 排序切换 ---------- */
+  if (sortBtn) {
+    sortBtn.addEventListener('click', function () {
+      sortMode = sortMode === 'time' ? 'likes' : 'time';
+      renderWall();
+      renderAdminList();
+      showToast(sortMode === 'likes' ? '已按点赞量排序' : '已按时间排序');
+    });
+  }
+
+  /* ---------- 管理端事件 ---------- */
+  Array.prototype.forEach.call(document.querySelectorAll('.admin-tab'), function (b) {
+    b.addEventListener('click', function () { switchAdminTab(b.getAttribute('data-tab')); });
+  });
+  (function () {
+    var bs = document.getElementById('blessSave');
+    if (bs) bs.addEventListener('click', function () {
+      var sel = document.getElementById('blessPick');
+      var i = parseInt(sel.value, 10) || 0;
+      var s = students[i];
+      if (!s) return;
+      var v1 = document.getElementById('blessEdit1').value;
+      var v2 = document.getElementById('blessEdit2').value;
+      s.blessing = v1; s.blessing2 = v2;
+      bs.disabled = true; bs.textContent = '保存中';
+      Promise.all([
+        saveOverride(blessKey(0, s.name), v1, ''),
+        saveOverride(blessKey(1, s.name), v2, '')
+      ]).then(function (rs) {
+        bs.disabled = false; bs.textContent = '保存这位同学的寄语';
+        if (rs[0] && rs[1]) showToast('已保存 ' + s.name + ' 的寄语');
+      });
+    });
+    var ls = document.getElementById('letterSave');
+    if (ls) ls.addEventListener('click', function () {
+      var sel = document.getElementById('letterPick');
+      var i = parseInt(sel.value, 10) || 0;
+      var raw = document.getElementById('letterEdit').value;
+      var d = parseLetterText(raw);
+      if (!d.paragraphs.length) { showToast('正文不能为空（段落之间空一行）'); return; }
+      lettersRaw[i] = raw;
+      lettersData[i] = d;
+      ls.disabled = true; ls.textContent = '保存中';
+      saveOverride(letterKey(i), raw, '已保存' + senderName(i) + '的信').then(function () {
+        ls.disabled = false; ls.textContent = '保存这封信';
+      });
+    });
+  })();
+
+  /* ---------- 初始化 ---------- */
+  // 兼容历史遗留的带图留言：图片进入视野再按需拉取
+  if ('IntersectionObserver' in window) {
+    photoObserver = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (!en.isIntersecting) return;
+        var img = en.target;
+        photoObserver.unobserve(img);
+        var id = img.closest('.wall-item').getAttribute('data-id');
+        Store.photo(id).then(function (data) {
+          var wrap = img.parentNode;
+          var ph = wrap.querySelector('.ph-loading');
+          if (ph) ph.remove();
+          if (data) { img.src = data; img.style.display = 'block'; }
+          else { wrap.remove(); }
+        }).catch(function () {
+          var ph = wrap.querySelector('.ph-loading');
+          if (ph) ph.textContent = '照片加载失败';
+        });
+      });
+    }, { rootMargin: '200px' });
+  }
+
+  updateStoreHint();
+  renderWall();
+  applyView('home', 'none');
+  stack = ['home'];
+
+  var dataLoadPromise = loadDataFile();  // 异步读取名单（xlsx → csv → 空），并记录 Promise 供查询等待
+  var lettersLoadPromise = loadLetterFiles();  // 异步读取两封信的 txt，失败自动回退内置文本
+  var siteDataPromise = Store.loadSiteData();  // 管理员在线上改过的寄语 / 信件
+
+  // 名单 + 信件 + 线上覆盖都就绪后，套用管理员的改动
+  Promise.all([dataLoadPromise, lettersLoadPromise, siteDataPromise]).then(function (res) {
+    siteOverrides = (res && res[2]) || {};
+    applyOverrides();
+    renderAdminList();
+    buildBlessPicker();
+    buildLetterPicker();
+    if (!students.length) console.warn('[军训祝福] 名单为空：名单文件没读到、也没有内置名单。请确认 名单.xlsx / 名单.csv 已上传。');
+  }).catch(function () {});
+})();
+</script>
+</body>
+</html>

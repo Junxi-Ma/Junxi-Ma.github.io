@@ -10,10 +10,11 @@
 ## 目录结构
 
 ```
-├── index.html              首页（hero / 精选工具 / 最新笔记 / 关于）
+├── index.html              首页（hero / 精选工具 / 分支页面 / 最新笔记 / 关于）
 ├── tools.html              工具列表
 ├── notes.html              笔记列表（搜索 + 标签筛选）
 ├── note.html               笔记详情（?path=notes/xxx.md）
+├── branches.html           分支列表（子网页索引，数据来自 data/index.json）
 ├── 404.html                自定义 404（GitHub Pages 自动生效）
 ├── .nojekyll               ★ 必须保留：禁用 Jekyll，否则 .md 文件会被它转换吃掉
 ├── .githooks/pre-commit    提交钩子：commit 时自动刷新索引（见下文）
@@ -25,6 +26,9 @@
 │   └── img/                favicon、og.png 分享图
 ├── notes/                  ★ 笔记放这里（.md 文件）
 ├── tools/<名字>/           ★ 工具放这里（每个工具一个文件夹 + index.html）
+├── branches/               ★ 分支子网页放这里（每个子网页一个文件夹）
+│   ├── index.json          分支定制清单（标题/简介/标签/排序，可选）
+│   └── junxun/             军训专属祝福（留言板）
 ├── data/index.json         内容索引（生成物，已入库，提交钩子自动维护）
 ├── scripts/build_index.py  索引生成脚本（纯标准库）
 └── README.md
@@ -106,6 +110,40 @@ description: 一句话摘要，显示在列表里。
 
 ---
 
+## 新增一个分支子网页
+
+「分支」是给**独立成篇的小网页**准备的收纳区 —— 和「工具」不同，它们不必是
+单一功能的效率工具，可以有自己完整的视觉风格与交互，只是和主站同源部署。
+
+1. 新建文件夹 `branches/<你的页面名>/`
+2. 放入 `index.html` 作为入口（页面内部的相对路径按自己的目录算即可）
+3. 可选 `meta.json` 自定义列表展示：
+
+```json
+{
+  "title": "页面显示名",
+  "description": "一句话介绍。",
+  "tags": ["纪念"],
+  "icon": "🎖️",
+  "order": 1
+}
+```
+
+4. 也建议在 `branches/index.json` 的 `branches` 数组里登记一条
+   （字段同上，外加 `folder` 和可选的 `url`）。
+
+**两条路都能上线**：登记过的走清单；没登记的子目录也会被
+`scripts/build_index.py` 自动扫描到，用它的 `meta.json` 兜底 —— 所以不会因为
+忘了登记而漏掉页面。清单方式优先级更高，适合想改标题/简介/排序的情况。
+
+页面里想跳回站点，用相对路径指 `../../branches.html` 或 `../../index.html`。
+同样 commit + push 即可上线。
+
+> 现有示例：`branches/junxun/`（军训专属祝福留言板）。它保留了原本的军绿色
+> 纸感设计，只额外加了一个常驻左下角的「返回站点」入口。
+
+---
+
 ## 部署说明（GitHub Pages）
 
 **当前方案：Deploy from a branch（分支部署）**。
@@ -167,7 +205,9 @@ git config core.hooksPath .githooks
 | 钩子没生效（commit 时没有 `[pre-commit]` 输出） | 执行 `git config core.hooksPath .githooks` 重新挂上 |
 | 双击打开全部空白 | 必须用 HTTP 服务器（见「本地预览」） |
 | `.nojekyll` 删了之后笔记 404 | Jekyll 会把 .md 转成 .html，**别删这个文件** |
-| 导航菜单改了没生效 | 导航/页脚在 7 个 html 里各有一份，需同步修改（无构建的代价） |
+| 导航菜单改了没生效 | 导航/页脚在 5 个主页面 + 6 个工具页里各有一份，需同步修改（无构建的代价） |
+| 新增分支页面后列表里没有 | `data/index.json` 缺失或过期 → 跑 `python scripts/build_index.py` 后重新提交 |
+| 分支页面从子目录跳不回站点 | 用相对路径 `../../branches.html`，别写绝对路径 `/branches.html`（站内需兼容子路径部署） |
 | 页面一闪而过变色（深→浅） | 正常：主题在 `<head>` 内联脚本里就已确定，闪的是浏览器首次绘制 |
 | 新笔记文件名是中文 | 能用，但 URL 会带编码，建议英文 slug |
 | 网页版 GitHub 改了笔记但列表没更新 | 网页编辑不走钩子，本地 pull 后下次提交自动追平 |
@@ -177,7 +217,7 @@ git config core.hooksPath .githooks
 纯静态站点没有服务端目录列表，所以：
 
 ```
-你写笔记 → git commit（钩子自动运行 build_index.py 扫描 notes/ 和 tools/）
+你写笔记 → git commit（钩子自动运行 build_index.py 扫描 notes/ 和 tools/ 和 branches/）
          → data/index.json 随提交入库（幂等：内容没变则字节级一致）
          → git push → GitHub 分支部署 → 前端读同源的 index.json
 ```
@@ -194,6 +234,16 @@ git config core.hooksPath .githooks
 | 全站访客统计 | 页脚展示 总访问 / 独立访客 / 今日访问 | `visits` 表（匿名，仅随机访客 id + 路径） |
 | 登录注册 | 导航栏入口，邮箱 + 密码（Supabase Auth 托管） | `profiles` 表（触发器自动建档） |
 | 管理后台 | `admin.html`：账号封禁/解封、访客黑名单、访客行为轨迹、管理员名单 | `admins` / `banned_visitors` + 管理员可读 `visits` |
+| 留言板 | 分支页 `branches/junxun/` 的共享留言墙：留言/点赞/回复 + 管理员置顶改删 | `wall_posts` / `wall_replies` / `site_data` |
+
+`supabase/schema.sql` 里**同时包含**留言板那三张表的建表语句，整段都是幂等的
+（表已存在就什么都不做，不会动任何一行数据），仅供「这个项目的完整结构有据可查」；
+万一要重建项目，跑一遍本文件就能恢复出同样的结构。
+
+> 留言板前端**没有引用站点的 `assets/js/supabase.js`**：它是一个自包含的单文件页面
+> （`branches/junxun/index.html`），把 URL 与 publishable key 直接写在文件里的
+> `CONFIG` 常量中，走 REST 而非 supabase-js。两处配置是**同一个项目、同一个
+> publishable key**，改的时候记得各改各的，别只改一边。
 
 管理后台要点：
 

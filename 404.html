@@ -72,6 +72,24 @@
       transition: background 0.2s ease, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .btn:hover { background: var(--accent-fill-hover); transform: translateY(-1px); }
+
+    /* 回到主要栏目：主按钮给首页，其余走文字链接 */
+    .links {
+      margin-top: 28px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 22px;
+      justify-content: center;
+      font-size: 14.5px;
+    }
+    .links a {
+      color: var(--text-2);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      transition: color 0.2s ease, border-color 0.2s ease;
+    }
+    .links a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+
     a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
     @media (prefers-reduced-motion: reduce) {
       body, .btn { transition: none; }
@@ -94,6 +112,11 @@
     <div class="code">404 <span>/</span> Not Found</div>
     <p>这个地址不存在 —— 可能是链接过期，或者我把它挪了地方。</p>
     <a class="btn" id="home" href="/">回到首页</a>
+    <nav class="links" aria-label="主要栏目">
+      <a href="/tools.html" data-rel="tools.html">工具</a>
+      <a href="/notes.html" data-rel="notes.html">笔记</a>
+      <a href="/branches.html" data-rel="branches.html">分支</a>
+    </nav>
   </main>
 
   <script>
@@ -101,15 +124,22 @@
     // 向上探测根目录的 index.html（最多 3 层），兼容：
     //   user.github.io / user.github.io/repo / 任意深度的错误路径
     (function () {
+      var links = document.querySelectorAll('[data-rel]');
       var candidates = ['index.html', '../index.html', '../../index.html', '../../../index.html'];
       var i = 0;
+      function apply(base) {
+        document.getElementById('home').setAttribute('href', base);
+        links.forEach(function (a) {
+          a.setAttribute('href', base.replace(/index\.html$/, '') + a.getAttribute('data-rel'));
+        });
+      }
       function next() {
-        if (i >= candidates.length) return; // 保底：保持 href="/"
+        if (i >= candidates.length) return; // 保底：保持原始 href
         var url = candidates[i++];
         fetch(url, { method: 'HEAD' })
           .then(function (res) {
             if (res.ok) {
-              document.getElementById('home').setAttribute('href', url);
+              apply(url);
             } else {
               next();
             }

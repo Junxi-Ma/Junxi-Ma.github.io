@@ -138,5 +138,19 @@
       "icon": "☁️",
       "order": 6
     }
+  ],
+  "branches": [
+    {
+      "path": "branches/junxun/",
+      "url": "branches/junxun/index.html",
+      "title": "军训专属祝福",
+      "description": "二〇二六夏军训纪念页：输入姓名查到教官写给你的专属祝福，拆开两位教官写给全体同学的信，并在共享留言墙上留言、点赞与回复。",
+      "tags": [
+        "纪念",
+        "留言板"
+      ],
+      "icon": "🎖️",
+      "order": 1
+    }
   ]
 }

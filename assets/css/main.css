@@ -983,6 +983,13 @@ html[data-theme="light"] .nav__icon .ico-moon {
   margin-top: 34px;
 }
 
+/* ---------- 简单页面导航（404 等没有完整 nav 的页面） ---------- */
+.nav--simple {
+  position: static;
+  background: none;
+  border-bottom-color: transparent;
+}
+
 /* ---------- 响应式 ---------- */
 @media (max-width: 900px) {
   .nav__toggle {

@@ -20,6 +20,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 NOTES_DIR = ROOT / "notes"
 TOOLS_DIR = ROOT / "tools"
+BRANCHES_DIR = ROOT / "branches"
+BRANCHES_CATALOG = BRANCHES_DIR / "index.json"
 OUT_FILE = ROOT / "data" / "index.json"
 
 VERSION = 1
@@ -235,12 +237,115 @@ def scan_tools() -> list[dict]:
     return tools
 
 
+# ------------------------------------------------------------------- 扫描分支
+
+
+def _read_html(rel_dir: str) -> str:
+    try:
+        return (ROOT / rel_dir / "index.html").read_text(encoding="utf-8")
+    except (UnicodeDecodeError, OSError):
+        return ""
+
+
+def _branch_entry(rel_dir: str, meta: dict, default_icon: str) -> dict:
+    """把一条分支元数据规整成 data/index.json 里的结构。
+
+    url 一律输出成 **相对站点根目录** 的路径（如 `branches/junxun/index.html`），
+    绝不用 `junxun/index.html` 这种相对「所在页面」的写法 —— 因为 branches.html
+    也可能被 GitHub Pages 用无扩展名的 URL（/branches）提供服务，此时页面的
+    基准目录不是根目录，相对路径会被解析到 `/junxun/…` 而 404。
+    """
+    order = meta.get("order")
+    if not isinstance(order, int):
+        order = 100
+
+    fallback_name = rel_dir.rstrip("/").split("/")[-1]
+    html = _read_html(rel_dir)
+
+    title = str(meta.get("title") or "").strip()
+    if not title:
+        t = TITLE_TAG_RE.search(html)
+        raw = t.group(1).strip() if t else fallback_name
+        # 站内页面的 <title> 习惯写作「主标题 · 站点名」，只取前半段
+        title = re.split(r"\s+[—|–·]\s+", raw)[0].strip() or fallback_name
+
+    desc = str(meta.get("description") or "").strip()
+    if not desc:
+        d = DESC_TAG_RE.search(html)
+        desc = d.group(1).strip() if d else ""
+
+    # 自定义 url：去掉开头的 ./ 与 /，统一成「相对站点根」的形式
+    url = str(meta.get("url") or "").strip().lstrip("./") or f"{rel_dir}index.html"
+
+    return {
+        "path": rel_dir,
+        "url": url,
+        "title": title,
+        "description": desc,
+        "tags": normalize_tags(meta.get("tags")),
+        "icon": str(meta.get("icon") or default_icon).strip(),
+        "order": order,
+    }
+
+
+def scan_branches() -> list[dict]:
+    """扫描 branches/ 下的每个子网页。
+
+    优先取 branches/index.json 里的定制清单（可写标题、简介、标签、图标、
+    排序与自定义 url）；没被清单覆盖的子目录再从它的 meta.json / index.html
+    自动提取全文 —— 所以忘了登记也不会漏，页面照样出现在列表里。
+    """
+    if not BRANCHES_DIR.is_dir():
+        return []
+
+    listed: dict[str, dict] = {}
+
+    if BRANCHES_CATALOG.is_file():
+        try:
+            catalog = json.loads(BRANCHES_CATALOG.read_text(encoding="utf-8"))
+        except (UnicodeDecodeError, OSError, json.JSONDecodeError) as e:
+            warn(f"branches/index.json 读取失败，改为自动扫描：{e!r}")
+            catalog = {}
+        for item in catalog.get("branches") or []:
+            if not isinstance(item, dict):
+                continue
+            folder = str(item.get("folder") or "").strip().strip("/")
+            if not folder or not (BRANCHES_DIR / folder).is_dir():
+                warn(f"branches/index.json 里的 folder「{folder}」不存在，已跳过")
+                continue
+            rel_dir = f"branches/{folder}/"
+            listed[rel_dir] = _branch_entry(rel_dir, item, "📄")
+
+    for index in sorted(BRANCHES_DIR.glob("*/index.html")):
+        folder = index.parent
+        if folder.name.startswith((".", "_")):
+            continue
+        rel_dir = folder.relative_to(ROOT).as_posix() + "/"
+        if rel_dir in listed:
+            continue
+        try:
+            meta: dict = {}
+            meta_file = folder / "meta.json"
+            if meta_file.is_file():
+                meta = json.loads(meta_file.read_text(encoding="utf-8"))
+            listed[rel_dir] = _branch_entry(rel_dir, meta, "📄")
+        except Exception as e:
+            warn(f"跳过 {rel_dir}: 解析失败（{e!r}）")
+
+    return sorted(listed.values(), key=lambda b: (b["order"], b["title"], b["path"]))
+
+
 # ----------------------------------------------------------------------- main
 
 
 def build() -> dict:
     # 不写时间戳：保证同输入 → 同输出（CI 幂等判断依赖这一点）
-    return {"version": VERSION, "notes": scan_notes(), "tools": scan_tools()}
+    return {
+        "version": VERSION,
+        "notes": scan_notes(),
+        "tools": scan_tools(),
+        "branches": scan_branches(),
+    }
 
 
 def main() -> int:
@@ -263,7 +368,8 @@ def main() -> int:
 
     print(
         f"OK → {OUT_FILE.relative_to(ROOT).as_posix()}  "
-        f"(notes: {len(data['notes'])}, tools: {len(data['tools'])})"
+        f"(notes: {len(data['notes'])}, tools: {len(data['tools'])}, "
+        f"branches: {len(data.get('branches', []))})"
     )
     return 0
 

@@ -1,0 +1,23 @@
+{
+  "_说明": "「分支」目录的定制清单。这里登记过的子网页按本文件的标题/简介/排序展示；没登记的子目录也会被 scripts/build_index.py 自动扫描到（用它的 meta.json 或 index.html 兜底），不会漏。",
+  "_字段": {
+    "folder": "branches/ 下的文件夹名（必填）",
+    "title": "列表上显示的名字",
+    "description": "一句话介绍",
+    "tags": ["用于列表页标签筛选"],
+    "icon": "卡片图标",
+    "order": "排序，数字越小越靠前，缺省 100",
+    "url": "页面入口，必须是「相对站点根目录」的路径（如 branches/junxun/index.html）；留空则自动按 folder 生成"
+  },
+  "branches": [
+    {
+      "folder": "junxun",
+      "url": "branches/junxun/index.html",
+      "title": "军训专属祝福",
+      "description": "二〇二六夏军训纪念页：输入姓名查到教官写给你的专属祝福，拆开两位教官写给全体同学的信，并在共享留言墙上留言、点赞与回复。",
+      "tags": ["纪念", "留言板"],
+      "icon": "🎖️",
+      "order": 1
+    }
+  ]
+}
