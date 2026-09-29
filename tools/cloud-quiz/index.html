@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>云的分类速记 — Michael</title>
-  <meta name="description" content="大气探测学云的分类：三族十属二十九类的中文名、英文简写与拉丁学名，速记表可遮罩自测，测验模式反复出题，错题自动留存本机。">
+  <meta name="description" content="大气探测学云的分类与识别：三族十属二十九类速记表可遮罩自测；测验支持说法判断多选、成因演变、谚语对应、视张角判别、看图识云五类新课型，错题自动留存本机。">
   <meta name="theme-color" content="#0a0a0b">
   <meta name="color-scheme" content="dark">
   <link rel="icon" type="image/svg+xml" href="../../assets/img/favicon.svg">
@@ -22,7 +22,7 @@
   </script>
   <link rel="stylesheet" href="../../assets/css/tokens.css">
   <link rel="stylesheet" href="../../assets/css/main.css">
-  <link rel="stylesheet" href="style.css?v=3">
+  <link rel="stylesheet" href="style.css?v=5">
 </head>
 <body>
   <a class="skip-link" href="#main">跳到主要内容</a>
@@ -61,7 +61,7 @@
         <a class="article-back" href="../../tools.html"><span class="arr">←</span>全部工具</a>
         <p class="mono-label">Tool <span>/</span> 06</p>
         <h1>云的分类速记</h1>
-        <p>大气探测学第一关：三族、十属、二十九类的中文名、英文简写与拉丁学名。速记表支持遮罩自测，测验模式反复出题、答错自动重排，错题本存在本机浏览器。</p>
+        <p>大气探测学第一关：三族、十属、二十九类。速记表支持遮罩自测；测验覆盖词根速记、特征说法多选、成因演变、谚语对应、视张角判别、看图识云，答错自动重排，错题本存在本机浏览器。</p>
       </div>
 
       <div class="cq-toolbar">
@@ -95,6 +95,10 @@
                 <option value="all" selected>全科混合</option>
                 <option value="species">云类速记（简写 ↔ 中文 ↔ 拉丁）</option>
                 <option value="genus">云属框架（族属 · 简写 · 形态）</option>
+                <option value="judge">特征说法与成因（含多选）</option>
+                <option value="proverb">谚语对应</option>
+                <option value="angle">视张角判别</option>
+                <option value="scene">看图识云</option>
               </select>
             </label>
           </div>
@@ -120,7 +124,7 @@
             <button class="btn btn--ghost" id="cq-wrong-mode" type="button">错题重练</button>
             <button class="btn btn--ghost" id="cq-clear-wrong" type="button">清空错题本</button>
           </div>
-          <p class="cq-fam-morph" style="margin-top: 16px;">键盘：1–4 / A–D 选答案，Enter 下一题。答错的题本轮内会自动重排，直到答对；并记入错题本。</p>
+          <p class="cq-fam-morph" style="margin-top: 16px;">键盘：1–6 / A–F 选答案（多选题为勾选），Enter 确认或下一题。多选题要选得和正确答案完全一致才得分；答错的题本轮内会自动重排，直到答对；并记入错题本。</p>
         </div>
 
         <div id="cq-stage" hidden>
@@ -131,6 +135,7 @@
           </div>
           <div class="cq-progressbar" aria-hidden="true"><i id="cq-progressbar-fill"></i></div>
           <div class="cq-prompt-card">
+            <div class="cq-scene" id="cq-scene" hidden></div>
             <div class="cq-prompt" id="cq-prompt"></div>
             <div class="cq-prompt-sub" id="cq-prompt-sub"></div>
           </div>
@@ -157,7 +162,7 @@
 
   <footer class="footer">
     <div class="container footer__inner">
-      <span>© <span data-year>2026</span> Michael · <span class="footer__heart">♥</span> 纯静态手工打造</span>
+      <span>© <span data-year>2026</span> Michael · <span class="footer__heart">♥</span> 手工打造 · 动静结合</span>
       <nav class="footer__links" aria-label="页脚导航">
         <a href="../../tools.html">Tools</a>
         <a href="../../notes.html">Notes</a>
@@ -167,7 +172,7 @@
   </footer>
 
   <script type="module" src="../../assets/js/main.js"></script>
-  <script src="data.js"></script>
-  <script src="app.js"></script>
+  <script src="data.js?v=4"></script>
+  <script src="app.js?v=6"></script>
 </body>
 </html>

@@ -2,7 +2,7 @@
 title: 欢迎来到我的数字工坊
 date: 2026-09-25
 tags: [建站, 元]
-description: 这个网站是怎么运作的：纯静态架构、自动内容索引与 GitHub Pages 部署。
+description: 这个网站是怎么运作的：纯静态前端加 Supabase 动态后端、自动内容索引与 GitHub Pages 部署。
 ---
 
 # 欢迎来到我的数字工坊

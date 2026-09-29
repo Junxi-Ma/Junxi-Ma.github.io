@@ -64,9 +64,16 @@ const CQ_TYPES = {
   abbr2genus: '云属简写 → 中文名',
   genus2family: '云属属于哪一云族',
   genus2morph: '云属的形态',
+  stmt: '特征说法 · 多选',
+  cause: '成因与演变',
+  proverb: '谚语对应',
+  angle: '视张角判别',
+  scene: '看图识云',
 };
 const SPECIES_TYPES = ['abbr2cn', 'cn2abbr', 'latin2cn', 'sp2genus'];
 const GENUS_TYPES = ['genus2abbr', 'abbr2genus', 'genus2family', 'genus2morph'];
+/** 题干是完整句子的题型 → 用小号文本样式渲染 */
+const CQ_TEXTY_TYPES = new Set(['stmt', 'cause', 'proverb', 'angle']);
 
 /** 从候选数组里挑 n 个与 answer(字符串)不同的干扰项，按优先级逐组取 */
 function pickDistractors(groups, answer, n, allPool) {
@@ -99,6 +106,9 @@ const sameSuffixSp = (s) => {
   return suf ? CLOUD_SPECIES.filter(x => x.id !== s.id && suffixOf(x.abbr) === suf) : [];
 };
 const genusAbbrsOf = fam => CLOUD_GENERA.filter(g => !fam || g.family === fam).map(g => g.abbr);
+
+/** 五类新课型（成因/谚语/张角/场景/说法），targetSpecies 传条目 id 字符串以便错题重练复现 */
+const CQ_BANK_TYPES = ['stmt', 'cause', 'proverb', 'angle', 'scene'];
 
 /** 构造一道题；pool 为当前范围允许的属 id 集合；
  *  targetSpecies/targetGenus 用于错题重练时定向复现同一题 */
@@ -175,6 +185,69 @@ function makeQuestion(type, genusIds, targetSpecies, targetGenus) {
     prompt = g.cn;
     sub = '它属于哪一云族？';
     explain = `${g.cn} ${g.abbr} 属${answerVal}，${morphFull(g.morph)}云`;
+  } else if (type === 'stmt') {
+    // 说法判断（多选）：targetSpecies 传 'id+id+…' 时精确复现
+    let items;
+    if (targetSpecies) {
+      items = String(targetSpecies).split('+')
+        .map(id => CQ_STATEMENTS.find(x => x.id === id)).filter(Boolean);
+    } else {
+      const nOk = Math.random() < 0.5 ? 2 : 3;
+      items = shuffle(shuffle(CQ_STATEMENTS.filter(x => x.ok)).slice(0, nOk)
+        .concat(shuffle(CQ_STATEMENTS.filter(x => !x.ok)).slice(0, 4 - nOk)));
+    }
+    q.multi = true;
+    q.targetId = items.map(x => x.id).join('+');
+    q.stmtItems = items;
+    q.okSet = new Set(items.filter(x => x.ok).map(x => x.t));
+    q.options = items.map(x => x.t);
+    prompt = '下列关于云的说法，正确的有：';
+    sub = '多选题：点选所有正确说法，再点「确认答案」';
+  } else if (type === 'cause') {
+    const entry = (targetSpecies && CQ_CAUSES.find(x => x.id === targetSpecies))
+      || CQ_CAUSES[Math.floor(Math.random() * CQ_CAUSES.length)];
+    q.targetId = entry.id;
+    q.whyText = entry.why;
+    prompt = entry.q;
+    if (entry.multi) {
+      q.multi = true;
+      q.okSet = new Set(entry.answers);
+      q.options = shuffle(entry.answers.concat(entry.ds).slice());
+      sub = '多选题：点选所有正确选项，再点「确认答案」';
+    } else {
+      opts = entry.ds.slice();
+      answerVal = entry.answers[0];
+      explain = entry.why;
+      sub = '单选题';
+    }
+  } else if (type === 'proverb') {
+    const entry = (targetSpecies && CQ_PROVERBS.find(x => x.id === targetSpecies))
+      || CQ_PROVERBS[Math.floor(Math.random() * CQ_PROVERBS.length)];
+    q.targetId = entry.id;
+    prompt = entry.p;
+    sub = '这句谚语说的是哪种云？';
+    opts = entry.ds.slice();
+    answerVal = entry.cn;
+    explain = `${entry.cn}（${entry.abbr}）。${entry.why}`;
+  } else if (type === 'angle') {
+    const entry = (targetSpecies && CQ_ANGLES.find(x => x.id === targetSpecies))
+      || CQ_ANGLES[Math.floor(Math.random() * CQ_ANGLES.length)];
+    q.targetId = entry.id;
+    prompt = entry.q;
+    sub = '单选题：波状家族靠视张角大小区分';
+    opts = entry.ds.slice();
+    answerVal = entry.cn;
+    explain = `${entry.cn}（${entry.abbr}）。${entry.why}`;
+  } else if (type === 'scene') {
+    const entry = (targetSpecies && CQ_SCENES.find(x => x.id === targetSpecies))
+      || CQ_SCENES[Math.floor(Math.random() * CQ_SCENES.length)];
+    q.targetId = entry.id;
+    q.sceneSvg = entry.svg();
+    prompt = '图中是哪种云？';
+    sub = entry.desc;
+    opts = entry.ds.slice();
+    answerVal = entry.cn;
+    explain = `${entry.cn}（${entry.abbr}）。${entry.why}`;
   } else { // genus2morph
     const g = targetGenus || genera[Math.floor(Math.random() * genera.length)];
     answerVal = morphFull(g.morph) + '云';
@@ -185,11 +258,29 @@ function makeQuestion(type, genusIds, targetSpecies, targetGenus) {
     explain = `${g.cn} ${g.abbr} 属${familyName(g.family)}，${morphFull(g.morph)}云`;
   }
 
-  opts.push(answerVal);
-  shuffle(opts);
+  if (q.multi) {
+    // 多选：q.options 已备好，打乱后按 okSet 求正确下标，解释里给出字母答案
+    shuffle(q.options);
+    q.answerIdxs = q.options.map((t, i) => (q.okSet.has(t) ? i : -1)).filter(i => i >= 0);
+    const letters = q.answerIdxs.map(i => 'ABCDEF'[i]).join('、');
+    if (type === 'stmt') {
+      const falses = q.stmtItems.filter(x => !x.ok);
+      explain = `正确答案：${letters}。`
+        + falses.map(x => `「${x.t}」不对——${x.why}`).join('　');
+    } else {
+      explain = `正确答案：${letters}。${q.whyText}`;
+    }
+  } else {
+    opts.push(answerVal);
+    shuffle(opts);
+  }
   q.prompt = prompt; q.sub = sub; q.explain = explain;
-  q.options = opts;
-  q.answerIdx = opts.indexOf(answerVal);
+  if (q.multi) {
+    q.answerIdx = -1;
+  } else {
+    q.options = opts;
+    q.answerIdx = opts.indexOf(answerVal);
+  }
   return q;
 }
 
@@ -199,6 +290,10 @@ function buildQueue(mode, familyId, count) {
   let types;
   if (mode === 'species') types = SPECIES_TYPES;
   else if (mode === 'genus') types = GENUS_TYPES;
+  else if (mode === 'judge') types = ['stmt', 'cause'];
+  else if (mode === 'proverb') types = ['proverb'];
+  else if (mode === 'angle') types = ['angle'];
+  else if (mode === 'scene') types = ['scene'];
   else if (mode === 'wrong') {
     // 错题重练：只出错题本里的题，按记录的 type+targetId 精确复现
     const entries = Object.keys(CQStore.data.wrong)
@@ -210,6 +305,7 @@ function buildQueue(mode, familyId, count) {
       const g = genusById(e.targetId);
       if (s && SPECIES_TYPES.includes(e.type)) return makeQuestion(e.type, CLOUD_GENERA.map(x => x.id), s, null);
       if (g && GENUS_TYPES.includes(e.type)) return makeQuestion(e.type, CLOUD_GENERA.map(x => x.id), null, g);
+      if (CQ_BANK_TYPES.includes(e.type)) return makeQuestion(e.type, CLOUD_GENERA.map(x => x.id), e.targetId, null);
       const t = Object.keys(CQ_TYPES)[Math.floor(Math.random() * Object.keys(CQ_TYPES).length)];
       return makeQuestion(t, CLOUD_GENERA.map(x => x.id));
     });
@@ -299,11 +395,16 @@ function renderLearn() {
       box.className = 'cq-genus';
       box.id = 'cq-genus-' + g.id;
       const rows = CLOUD_SPECIES.filter(s => s.genus === g.id);
+      const trait = GENUS_TRAITS[g.id] ? `<p class="cq-genus-trait">${GENUS_TRAITS[g.id]}</p>` : '';
+      const angleTag = CLOUD_ANGLE[g.id]
+        ? `<span class="cq-angle-tag" title="视张角判别">视张角 ${CLOUD_ANGLE[g.id]}</span>` : '';
       box.innerHTML = `
         <div class="cq-genus-head">
           <b>${g.cn}</b><code>${g.abbr}</code>
+          ${angleTag}
           <span class="cq-morph cq-morph-${CLOUD_MORPH_COLOR[g.morph]}">${g.morph}</span>
         </div>
+        ${trait}
         <table class="cq-table"><tbody>
           ${rows.map(s => `
             <tr>
@@ -316,6 +417,15 @@ function renderLearn() {
     }
     wrap.appendChild(card);
   }
+  // 图片来源致谢（Wikimedia Commons 署名要求）
+  const credit = document.createElement('section');
+  credit.className = 'cq-credit';
+  credit.innerHTML = '<h4>看图识云 · 图片来源（Wikimedia Commons）</h4><ul>' +
+    CQ_SCENES.filter(s => CQ_SCENE_IMG[s.id]).map(s => {
+      const [path, title, author, license] = CQ_SCENE_IMG[s.id];
+      return `<li>${s.cn}（${s.abbr}）— ${title}，作者 ${author}，${license}</li>`;
+    }).join('') + '</ul>';
+  wrap.appendChild(credit);
   applyMasks();
 }
 
@@ -354,11 +464,31 @@ const Quiz = {
     $('cq-progressbar-fill').style.width = ((this.idx + 1) / this.queue.length * 100) + '%';
     this.renderScore();
     $('cq-type-tag').textContent = CQ_TYPES[q.type];
+    const sceneBox = $('cq-scene');
+    if (q.sceneSvg) {
+      sceneBox.hidden = false;
+      const entry = CQ_SCENES.find(x => x.id === q.targetId);
+      const im = entry && CQ_SCENE_IMG[entry.id];
+      if (im) {
+        sceneBox.innerHTML = '';
+        const img = document.createElement('img');
+        img.src = im[0];
+        img.alt = '云的实拍照片';
+        img.loading = 'eager';
+        img.addEventListener('error', () => { sceneBox.innerHTML = q.sceneSvg; });
+        sceneBox.appendChild(img);
+      } else {
+        sceneBox.innerHTML = q.sceneSvg;
+      }
+    } else { sceneBox.hidden = true; sceneBox.innerHTML = ''; }
     $('cq-prompt').textContent = q.prompt;
+    // 句子类题干（说法/成因/谚语/张角）用小号文本样式；简写、词根、拉丁学名保持大字
+    $('cq-prompt').classList.toggle('cq-prompt--text', CQ_TEXTY_TYPES.has(q.type));
     $('cq-prompt-sub').textContent = q.sub;
+    if (q.multi) q.confirmed = false;
     const box = $('cq-options');
     box.innerHTML = '';
-    const keys = ['A', 'B', 'C', 'D'];
+    const keys = ['A', 'B', 'C', 'D', 'E', 'F'];
     q.options.forEach((opt, i) => {
       const btn = document.createElement('button');
       btn.type = 'button';
@@ -368,9 +498,12 @@ const Quiz = {
       btn.addEventListener('click', () => this.answer(i));
       box.appendChild(btn);
     });
+    const nextBtn = $('cq-next');
+    nextBtn.textContent = q.multi ? '确认答案（Enter）' : '下一题（Enter）';
+    // 多选题该按钮兼任"确认"；单选题答完才出现
+    nextBtn.hidden = !q.multi;
     $('cq-feedback').hidden = true;
     $('cq-feedback').className = 'cq-feedback';
-    $('cq-next').hidden = true;
   },
 
   renderScore() {
@@ -382,6 +515,11 @@ const Quiz = {
   answer(i) {
     const q = this.cur();
     if (q.answered) return;
+    if (q.multi && !q.confirmed) {          // 多选先勾选，确认后统一判分
+      const btn = $('cq-options').children[i];
+      if (btn) btn.classList.toggle('is-pick');
+      return;
+    }
     q.answered = true;
     const ok = i === q.answerIdx;
     const btns = [...$('cq-options').children];
@@ -405,6 +543,43 @@ const Quiz = {
     }
     CQStore.record(q.type, q.targetId, ok);
     this.renderScore();
+    $('cq-next').hidden = false;
+    $('cq-next').focus();
+    refreshStats();
+  },
+
+  /** 多选题确认：勾选集合与正确集合完全一致才算对 */
+  confirm() {
+    const q = this.cur();
+    if (q.answered || !q.multi) return;
+    q.answered = true;
+    q.confirmed = true;
+    const btns = [...$('cq-options').children];
+    const picked = new Set(btns.map((b, i) => (b.classList.contains('is-pick') ? i : -1)).filter(i => i >= 0));
+    const answerSet = new Set(q.answerIdxs);
+    const ok = picked.size === answerSet.size && q.answerIdxs.every(i => picked.has(i));
+    btns.forEach((b, bi) => {
+      b.disabled = true;
+      b.classList.remove('is-pick');
+      if (answerSet.has(bi)) b.classList.add('is-right');
+      else if (picked.has(bi)) b.classList.add('is-wrong');
+    });
+    const fb = $('cq-feedback');
+    fb.hidden = false;
+    fb.className = 'cq-feedback ' + (ok ? 'is-ok' : 'is-err');
+    fb.textContent = (ok ? '✓ 答对了　' : '✕ 答错了　') + q.explain;
+    if (ok) {
+      this.right++;
+      this.streak++;
+      this.bestStreak = Math.max(this.bestStreak, this.streak);
+    } else {
+      this.streak = 0;
+      this.wrongList.push(q);
+      q.missedOnce = true;
+    }
+    CQStore.record(q.type, q.targetId, ok);
+    this.renderScore();
+    $('cq-next').textContent = '下一题（Enter）';
     $('cq-next').hidden = false;
     $('cq-next').focus();
     refreshStats();
@@ -515,7 +690,11 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   $('cq-quit').addEventListener('click', () => Quiz.stop());
   $('cq-back').addEventListener('click', () => Quiz.stop());
-  $('cq-next').addEventListener('click', () => Quiz.next());
+  $('cq-next').addEventListener('click', () => {
+    const q = Quiz.active ? Quiz.cur() : null;
+    if (q && q.multi && !q.answered) { Quiz.confirm(); return; }
+    Quiz.next();
+  });
   $('cq-again').addEventListener('click', () => {
     Quiz.start($('cq-mode').value, $('cq-family').value, Number($('cq-count').value));
   });
@@ -533,9 +712,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const q = Quiz.active ? Quiz.cur() : null;
     if (Quiz.active && q && !q.answered) {
       const k = e.key.toLowerCase();
-      const idx = ['1', '2', '3', '4'].indexOf(k) >= 0 ? Number(k) - 1
-        : ['a', 'b', 'c', 'd'].indexOf(k);
+      const idx = ['1', '2', '3', '4', '5', '6'].indexOf(k) >= 0 ? Number(k) - 1
+        : ['a', 'b', 'c', 'd', 'e', 'f'].indexOf(k);
       if (idx >= 0 && idx < q.options.length) { e.preventDefault(); Quiz.answer(idx); return; }
+      if (q.multi && e.key === 'Enter') { e.preventDefault(); Quiz.confirm(); return; }
     }
     if (e.key === 'Enter') {
       if (Quiz.active && q && q.answered) { e.preventDefault(); Quiz.next(); }
