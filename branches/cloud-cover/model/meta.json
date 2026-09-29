@@ -1,0 +1,11 @@
+{
+  "input_size": 256,
+  "normalize": "x/255",
+  "classes": [
+    "sky",
+    "cloud",
+    "obstruction"
+  ],
+  "test_cloud_iou": 0.9332,
+  "test_cover_mae_cheng": 0.091
+}
