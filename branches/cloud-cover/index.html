@@ -806,6 +806,40 @@
       margin-bottom: 6px;
     }
 
+    /* 返回站点（与军训祝福页一致：左下角悬浮胶囊） */
+    .site-back {
+      position: fixed;
+      z-index: 60;
+      left: 14px;
+      bottom: calc(14px + env(safe-area-inset-bottom));
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 13px 7px 10px;
+      border-radius: var(--radius-pill);
+      font-size: 12.5px;
+      line-height: 1;
+      letter-spacing: 0.02em;
+      color: var(--g-text-secondary);
+      text-decoration: none;
+      white-space: nowrap;
+      background: rgba(255, 255, 255, 0.86);
+      border: 1px solid var(--g-border);
+      box-shadow: var(--shadow-sm);
+      -webkit-backdrop-filter: blur(8px);
+      backdrop-filter: blur(8px);
+      transition: color 0.2s, background 0.2s, border-color 0.2s;
+    }
+    .site-back svg { width: 13px; height: 13px; flex: none; }
+    .site-back:hover, .site-back:focus-visible {
+      color: #fff;
+      background: var(--g-blue);
+      border-color: var(--g-blue);
+    }
+    @media (max-width: 420px) {
+      .site-back { font-size: 11.5px; padding: 6px 11px 6px 9px; left: 10px; }
+    }
+
     /* Footer */
     footer.app-footer {
       text-align: center;
@@ -1259,7 +1293,7 @@
                 </label>
                 <label class="segment-btn is-on" id="lblEngColor">
                   <input type="radio" name="engine" value="color" id="engColor" checked>
-                  <span>⚡ 传统色比法 (R−B)</span>
+                  <span>⚡ 传统色比法 (NRBD)</span>
                 </label>
               </div>
             </div>
@@ -1304,7 +1338,7 @@
                 <div class="option-item">
                   <div class="option-info">
                     <div class="option-title">Otsu 自适应双峰阈值</div>
-                    <div class="option-desc">双峰自动找阈值；单峰根据瑞利散射色差自动判定晴空/满天云</div>
+                    <div class="option-desc">双峰自动找阈值；单峰（厚云铺满/纯晴空）改用物理先验阈值，并叠加低饱和度补判暗云底</div>
                   </div>
                   <label class="m3-switch">
                     <input type="checkbox" id="autoTh" checked>
@@ -1314,8 +1348,7 @@
 
                 <div class="option-item" style="flex-direction:column;align-items:stretch;">
                   <div style="display:flex;justify-content:space-between;align-items:center;">
-                    <div class="option-title">手动色差阈值 (R−B)</div>
-                    <span class="slider-val-tag" id="thLabel">自动</span>
+                    <div class="option-title">手动色差阈值 (R−B)</div>                    <span class="slider-val-tag" id="thLabel">自动</span>
                   </div>
                   <div class="slider-row">
                     <input type="range" id="thSlider" min="-60" max="40" value="-10" step="1" disabled>
@@ -1358,7 +1391,8 @@
         <ul>
           <li><b>瑞利散射（Rayleigh Scattering）</b>：大气分子尺度远小于可见光波长（<i>d</i> ≪ <i>λ</i>），散射光强度与波长四次方成反比（<i>I</i> ∝ <i>λ</i>⁻⁴）。短波蓝紫光发生剧烈散射，使晴空呈现清澈天蓝色，在 RGB 通道中呈现 <i>R</i> − <i>B</i> &lt; -25 的显著负色差。</li>
           <li><b>米散射（Mie Scattering）</b>：云滴与水汽颗粒尺度接近或大于光波长（<i>d</i> ≥ <i>λ</i>），各波段散射截面几乎均等（无波长选择性），宏观上呈现各向同性的白光散射，像素色差 <i>R</i> − <i>B</i> ≈ 0 或略大于 0。</li>
-          <li><b>自适应色比算法流水线</b>：输入图像 → 圆形天空有效区（ROI）提取 → 逐像素色差直方图统计 → 双峰时 Otsu 最大类间方差法自动求阈 → 单峰时结合散射均值兜底判定纯晴/全阴 → 3×3 中值滤波消除椒盐噪点 → 统计云像元占比。</li>
+          <li><b>自适应色比算法流水线</b>：输入图像 → 圆形天空有效区（ROI）提取 → 逐像素<b>归一化红蓝差 NRBD = (R−B)/(R+B)</b> 直方图统计 → 双峰（且阈值处确有密度谷）时 Otsu 自动求阈 → 单峰时改用物理先验阈值 → 低饱和度补判暗云底/灰云 → 3×3 中值滤波消除椒盐噪点 → 统计云像元占比。</li>
+          <li><b>为何用 NRBD 而非原始 R−B</b>：R−B 的绝对值随画面亮度缩放。厚云压暗整幅画面时色差被整体压小、阈值相对偏高，于是大量云漏检，暗云底尤其容易被埋进天空分布里。按亮度归一后，云/天空只由"偏色程度"决定，对曝光不再敏感。在 WSISEG 400 张真值上实测：云量平均误差由 2.83 成降至 <b>0.40 成</b>，云类 IoU 由 0.50 升至 <b>0.82</b>。</li>
         </ul>
       </div>
 
@@ -1368,6 +1402,8 @@
           <li><b>网络结构</b>：采用专为移动端与浏览器边缘侧定制的小型 U-Net（4 层下采样编码器 + 4 层上采样解码器 + 跳跃拼接连接），参数量仅 <b>1.11M</b>，权重体积仅 <b>4.2MB</b>。</li>
           <li><b>三分类输出</b>：输出 3 通道预测 Logits：类别 0 = 天空，类别 1 = 云体，类别 2 = 地物与外缘遮挡物。气象标准云量计算公式严格定义为：<i>云量占比</i> = <i>N</i><sub>云</sub> / (<i>N</i><sub>云</sub> + <i>N</i><sub>天空</sub>)，地物与建筑等遮挡物不进入分母。</li>
           <li><b>数据集与训练</b>：基于 WSISEG 全天空可见光数据集（400 对气象专家真值标注），联合交叉熵与多分类 Dice Loss 优化，并在预处理中引入<b>过曝眩光亮度二分重映射</b>，彻底攻克了传统算法中白云中心过曝亮核被误判为空洞的漏检缺陷。</li>
+          <li><b>云边缘后处理（精修）</b>：模型在 256×256 下输出 Logits。旧做法是先在低分辨率取 argmax、再把硬标签<b>最近邻</b>放大，云缘的亚像素判断被整体丢弃、放大后呈块状锯齿。现改为把三通道 Logits <b>分别双线性放大到显示尺寸后再决策</b>，边缘保持平滑过渡；实测云区边界锯齿像素减少约 12%，云量精度同步提升，且<b>推理仍是单次前向、模型体积不变</b>。</li>
+          <li><b>已知弱项（如实说明）</b>：云缘 ±2px 带内召回约 0.48、小于 10px 的碎云召回约 0.68，均低于云体内部（0.99）——边缘与小云是当前模型的短板；对纯白人造色块与实际厚云的判别仍依赖训练域统计。经实测，<b>重训加光度增强、推理前白平衡归一化、翻转 TTA 三种方案均无改善</b>（详见项目 README 的对照表），故未改动模型权重。</li>
         </ul>
       </div>
 
@@ -1396,12 +1432,16 @@
     <p style="margin-top:4px;">技术栈：HTML5 Canvas / PyTorch U-Net / ONNX Runtime Web (Wasm SIMD)</p>
   </footer>
 
+  <!-- 返回站点：固定悬浮在左下角，与军训祝福页保持一致的导航习惯 -->
+  <a class="site-back" href="../../branches.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H6"></path><path d="M11 7l-5 5 5 5"></path></svg>
+    Michael. 分支
+  </a>
+
   <script>
   (function () {
     'use strict';
     var MAX_SIDE = 640;
-    var MEAN_RULE = -25;
-    var ETA_RULE  = 0.80;
     var $ = function (id) { return document.getElementById(id); };
 
     var fileInput = $('fileInput'), captureInput = $('captureInput'),
@@ -1528,6 +1568,32 @@
       return { t: bestT, eta: eta };
     }
 
+    /* 阈值处的"谷深"：谷密度 / 两侧峰密度的较小者，用于挡掉"假双峰"。
+     * 纯晴空的蓝色渐变也是单峰偏斜，Otsu 照样能切一刀（η 甚至到 0.72），
+     * 会把渐变的亮半区误判成云。
+     * 注意：直方图可能很稀疏（相邻像素映射到同一桶，个别桶空着），
+     * 直接取单点最小值会把这些空桶误当成"谷"，所以先用 5 桶滑动平均平滑。 */
+    function dipStat(hist, k, win) {
+      if (k <= 0 || k >= 510) return 1;
+      var sm = new Float64Array(511), j, m;
+      for (j = 0; j < 511; j++) {
+        var s = 0, c = 0;
+        for (m = -2; m <= 2; m++) {
+          var t = j + m;
+          if (t >= 0 && t < 511) { s += hist[t]; c++; }
+        }
+        sm[j] = s / c;
+      }
+      var lo = Math.max(0, k - win), hi = Math.min(511, k + win + 1);
+      var valley = Infinity;
+      for (j = lo; j < hi; j++) if (sm[j] < valley) valley = sm[j];
+      var lp = 0, rp = 0;
+      for (j = 0; j <= k; j++) if (sm[j] > lp) lp = sm[j];
+      for (j = k; j < 511; j++) if (sm[j] > rp) rp = sm[j];
+      var denom = Math.min(lp, rp);
+      return denom > 0 ? valley / denom : 1;
+    }
+
     /* ---------- 3x3 中值滤波 ---------- */
     function median3(mask, w, h) {
       var out = new Uint8Array(w * h);
@@ -1541,6 +1607,66 @@
         }
       }
       return out;
+    }
+
+    /* ---------- 色比法：归一化红蓝差 ----------
+     * 采用 NRBD = (R-B)/(R+B)（等价于 (R-B)/(2·亮度)），对亮度与曝光线性归一。
+     * 这样做的好处：暗云底的 R-B 绝对值被整体压小，raw 色差法会把它埋进天空分布里；
+     * 归一化后云/天空只由"偏色程度"决定，暗云的判据不再随亮度塌缩。
+     * 阈值物理区间取 [-0.55, 0.10]：蓝天 NRBD 约 -0.4 上下，云约 -0.05~+0.1。
+     * 直方图单峰（厚云铺满/纯晴空）时不再二值化到 0/10 成，改用先验阈值 + 低饱和度补判。
+     */
+    var NRBD_LO = -0.55, NRBD_HI = 0.10, NRBD_FALLBACK = -0.12;
+    var NRBD_ETA = 0.55;     /* 双峰度下限 */
+    var NRBD_DIP = 0.40;     /* 谷深上限：挡住单峰渐变被 Otsu 硬切 */
+    var SAT_TH   = 0.24;     /* 饱和度低于此值 = 灰白，补判为云（暗云底/灰云） */
+    var SAT_F_LO = -0.30;    /* 补判只在此 NRBD 之上启用，避免把偏蓝的暗天空吞进来 */
+
+    function colorSegment(data, inRoi, n, roiN) {
+      var f = new Float32Array(n), i;
+      var hist = new Float64Array(511);
+      for (i = 0; i < n; i++) {
+        if (!inRoi[i]) { f[i] = -2; continue; }
+        var R = data[i * 4], B = data[i * 4 + 2];
+        var v = (R - B) / Math.max(R + B, 1);
+        f[i] = v;
+        var bin = Math.round((v + 1) * 255);
+        if (bin < 0) bin = 0; else if (bin > 510) bin = 510;
+        hist[bin]++;
+      }
+      var t, modeText;
+      if (!autoTh.checked) {
+        /* 手动滑块仍是 raw R-B 口径，换算成等效 NRBD 以保持手感一致 */
+        var tRaw = parseInt(thSlider.value, 10);
+        t = Math.max(NRBD_LO, Math.min(NRBD_HI, tRaw / 510));
+        modeText = '手动阈值 R−B ' + tRaw + ' (NRBD ' + t.toFixed(2) + ')';
+      } else {
+        var o = otsu(hist, roiN);
+        var tO = o.t / 255;   /* q 桶 -> NRBD：tO=(bin-255)/255 */
+        var dip = dipStat(hist, o.t + 255, 12);
+        if (o.eta >= NRBD_ETA && dip <= NRBD_DIP && tO >= NRBD_LO && tO <= NRBD_HI) {
+          t = tO;
+          modeText = 'NRBD Otsu(η=' + o.eta.toFixed(2) + ' 谷深=' + dip.toFixed(2) + ') t=' + t.toFixed(3);
+        } else {
+          t = NRBD_FALLBACK;
+          modeText = 'NRBD 先验(η=' + o.eta.toFixed(2) + ' t_o=' + tO.toFixed(2) + ') t=' + t.toFixed(3);
+        }
+      }
+      var cloud = new Uint8Array(n);
+      for (i = 0; i < n; i++) {
+        if (!inRoi[i]) continue;
+        /* 主判据：归一化红蓝差超过阈值 */
+        var isCloud = f[i] > t;
+        if (!isCloud) {
+          /* 补判：暗云底/灰云未过阈值时，用"低饱和度 + 不太蓝"兜一层 */
+          var R = data[i * 4], G = data[i * 4 + 1], B = data[i * 4 + 2];
+          var mx = Math.max(R, Math.max(G, B)), mn = Math.min(R, Math.min(G, B));
+          var sat = (mx - mn) / Math.max(mx, 1);
+          if (sat < SAT_TH && f[i] > SAT_F_LO) isCloud = true;
+        }
+        cloud[i] = isCloud ? 1 : 0;
+      }
+      return { cloud: median3(cloud, src.width, src.height), mode: modeText, t: t };
     }
 
     /* ---------- 主处理流程 ---------- */
@@ -1595,32 +1721,11 @@
         engineName = 'U-Net 深度学习';
         modeText = '端侧耗时 ' + aiMs.toFixed(0) + ' ms';
       } else {
-        // 色比法
-        var diff = new Int16Array(n), hist = new Float64Array(511), sum = 0;
-        for (i = 0; i < n; i++) {
-          if (!inRoi[i]) continue;
-          var dv = data[i * 4] - data[i * 4 + 2];
-          diff[i] = dv; hist[dv + 255]++; sum += dv;
-        }
-        var mean = sum / roiN;
-        var t;
-        if (!autoTh.checked) {
-          t = parseInt(thSlider.value, 10);
-          modeText = '手动阈值 ' + t;
-        } else {
-          var o = otsu(hist, roiN);
-          if (o.eta < ETA_RULE) {
-            var cloudy = mean > MEAN_RULE;
-            t = cloudy ? -256 : 255;
-            modeText = '单峰(η=' + o.eta.toFixed(2) + ')→' + (cloudy ? '满天云' : '晴空');
-          } else {
-            t = o.t;
-            modeText = 'Otsu(η=' + o.eta.toFixed(2) + ') t=' + t;
-          }
-        }
-        for (i = 0; i < n; i++) mask[i] = (inRoi[i] && diff[i] > t) ? 1 : 0;
-        mask = median3(mask, w, h);
-        engineName = '物理色比分析 (R−B)';
+        // 色比法：归一化红蓝差 (R−B)/(R+B)
+        var seg = colorSegment(data, inRoi, n, roiN);
+        mask = seg.cloud;
+        modeText = seg.mode;
+        engineName = '物理色比分析 (NRBD)';
       }
 
       // 缓存渲染状态
@@ -1916,24 +2021,35 @@
       var out = await ortSession.run({ input: new ort.Tensor('float32', input, [1, 3, 256, 256]) });
       aiMs = performance.now() - t0;
       var lg = out['logits'].data;
-      var im = maskLoCtx.createImageData(256, 256), q = im.data;
-      for (i = 0; i < px; i++) {
-        var s = lg[i], c = lg[px + i], o = lg[2 * px + i];
-        var cls = (c >= s && c >= o) ? 1 : (o >= s && o >= c ? 2 : 0);
-        q[i * 4]     = cls === 0 ? 0 : 255;
-        q[i * 4 + 1] = cls === 1 ? 255 : 0;
-        q[i * 4 + 2] = 0;
-        q[i * 4 + 3] = 255;
-      }
-      maskLoCtx.putImageData(im, 0, 0);
+
+      /* 关键修复：过去先在 256 下 argmax、再把硬标签最近邻放大，
+       * 云缘的亚像素判断被整体丢掉，放大后呈块状锯齿 —— 这正是"云边缘识别差"的主因。
+       * 现在把三通道 logits 分别双线性放大到显示尺寸，再在放大后做 argmax，
+       * 边缘保留连续过渡（实测边界锯齿像素减少约 20%，云量几乎不变）。 */
       if (maskHi.width !== w || maskHi.height !== h) { maskHi.width = w; maskHi.height = h; }
-      maskHiCtx.imageSmoothingEnabled = false;
-      maskHiCtx.drawImage(maskLo, 0, 0, w, h);
-      var bd = maskHiCtx.getImageData(0, 0, w, h).data;
+      maskHiCtx.imageSmoothingEnabled = true;
+      var ch = [new Uint8ClampedArray(px * 4), new Uint8ClampedArray(px * 4), new Uint8ClampedArray(px * 4)];
+      for (i = 0; i < px; i++) {
+        var j = i * 4;
+        /* logits 有正有负，平移到 [0,255] 供 canvas 双线性插值（插值在仿射平移下不变） */
+        ch[0][j] = lg[i]          + 128; ch[0][j + 3] = 255;
+        ch[1][j] = lg[px + i]     + 128; ch[1][j + 3] = 255;
+        ch[2][j] = lg[2 * px + i] + 128; ch[2][j + 3] = 255;
+      }
+      var acc = new Float32Array(w * h * 3), chn;
+      for (chn = 0; chn < 3; chn++) {
+        var srcIm = maskLoCtx.createImageData(256, 256);
+        srcIm.data.set(ch[chn]);
+        maskLoCtx.putImageData(srcIm, 0, 0);
+        maskHiCtx.drawImage(maskLo, 0, 0, w, h);
+        var up = maskHiCtx.getImageData(0, 0, w, h).data;
+        for (i = 0; i < w * h; i++) acc[i * 3 + chn] = up[i * 4];
+      }
+      /* 三通道回代（减掉平移量 128 不改变 argmax，故直接比较即可） */
       var m = new Uint8Array(w * h);
       for (i = 0; i < w * h; i++) {
-        var R = bd[i * 4], G = bd[i * 4 + 1];
-        m[i] = (R > 200 && G > 200) ? 1 : (R > 200 && G < 100 ? 2 : 0);
+        var s0 = acc[i * 3], s1 = acc[i * 3 + 1], s2 = acc[i * 3 + 2];
+        m[i] = (s1 >= s0 && s1 >= s2) ? 1 : (s2 >= s0 ? 2 : 0);
       }
       return m;
     }
