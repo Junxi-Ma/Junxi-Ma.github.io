@@ -4,8 +4,9 @@
    ============================================================ */
 
 /* ---------- 笔记详情页骨架 ---------- */
+/* 阅读页无固定导航，顶部留白全由 article-head 自理 */
 .article-head {
-  padding-top: calc(var(--nav-h) + clamp(40px, 7vw, 72px));
+  padding-top: clamp(56px, 9vw, 104px);
   padding-bottom: clamp(28px, 4vw, 44px);
   border-bottom: 1px solid var(--border);
 }
@@ -30,6 +31,20 @@
 }
 .article-back:hover .arr {
   transform: translateX(-4px);
+}
+
+/* ---------- 悬浮主题切换（阅读页无导航栏） ---------- */
+.reading-actions {
+  position: fixed;
+  top: 12px;
+  right: clamp(12px, 2.5vw, 24px);
+  z-index: 90; /* 低于阅读进度条(--z-progress: 110)，高于正文 */
+}
+.reading-actions .nav__icon {
+  background: var(--nav-bg);
+  -webkit-backdrop-filter: blur(10px) saturate(140%);
+  backdrop-filter: blur(10px) saturate(140%);
+  border: 1px solid var(--border);
 }
 
 .article-head h1 {
@@ -71,8 +86,8 @@
 /* ---------- 侧边目录（TOC） ---------- */
 .toc {
   position: sticky;
-  top: calc(var(--nav-h) + 28px);
-  max-height: calc(100vh - var(--nav-h) - 56px);
+  top: 28px;
+  max-height: calc(100vh - 56px);
   overflow-y: auto;
   padding-left: 2px;
 }

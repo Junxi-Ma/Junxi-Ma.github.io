@@ -10,7 +10,7 @@
   <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
   <link rel="stylesheet" href="assets/css/tokens.css">
   <link rel="stylesheet" href="assets/css/main.css">
-  <link rel="stylesheet" href="assets/css/markdown.css">
+  <link rel="stylesheet" href="assets/css/markdown.css?v=2">
   <link rel="stylesheet" href="assets/vendor/katex/katex.min.css">
   <script>
     /* 首帧前定下主题，避免闪烁；无记录时默认暗色（站点基调） */
@@ -29,33 +29,18 @@
   <a class="skip-link" href="#main">跳到主要内容</a>
   <div class="progress" id="progress" aria-hidden="true"></div>
 
-  <header class="nav" id="nav">
-    <div class="container nav__inner">
-      <a class="nav__logo" href="index.html" aria-label="Michael 首页">Michael<i>.</i></a>
-      <nav class="nav__links" id="nav-links" aria-label="主导航">
-        <a href="index.html">首页</a>
-        <a href="tools.html">工具</a>
-        <a href="notes.html" aria-current="page">笔记</a>
-        <a href="index.html#about">关于</a>
-      </nav>
-      <div class="nav__actions">
-        <button class="nav__icon" id="theme-toggle" type="button" aria-label="切换到浅色模式" title="浅色模式">
-          <svg class="ico-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
-            <circle cx="12" cy="12" r="4"/>
-            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
-          </svg>
-          <svg class="ico-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-          </svg>
-        </button>
-        <button class="nav__toggle" id="nav-toggle" aria-label="打开菜单" aria-expanded="false" aria-controls="nav-links">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
-            <path d="M4 7h16M4 12h16M4 17h16"/>
-          </svg>
-        </button>
-      </div>
-    </div>
-  </header>
+  <!-- 阅读页刻意不设站点导航栏（返回入口在下方「← 全部笔记」），仅保留右上角主题切换 -->
+  <div class="reading-actions">
+    <button class="nav__icon" id="theme-toggle" type="button" aria-label="切换到浅色模式" title="浅色模式">
+      <svg class="ico-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="4"/>
+        <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+      </svg>
+      <svg class="ico-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+      </svg>
+    </button>
+  </div>
 
   <noscript>
     <div class="ns-banner">阅读笔记需要 JavaScript（用于获取并渲染 Markdown 文件），请启用后刷新。</div>
