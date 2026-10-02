@@ -198,10 +198,6 @@ async function loadEntries() {
   renderResultBanner();
 }
 
-function myEntry() {
-  return entries.find((x) => x.client_id === clientId()) || null;
-}
-
 async function submitEntry() {
   const name = $('onName').value.trim();
   if (!name) { toast('请填写姓名', true); return; }
@@ -221,21 +217,22 @@ async function submitEntry() {
     client_id: clientId(),
     updated_at: new Date().toISOString(),
   };
+  // 同名视为同一人：覆盖其报名；填新名字 = 新增一条（可帮没有手机的同学代填）
+  const sameName = editingId ? null : entries.find((e) => e.name === name);
   let error;
   if (editingId) {
     ({ error } = await sb.from('outing_entries').update(row).eq('id', editingId));
+  } else if (sameName) {
+    ({ error } = await sb.from('outing_entries').update(row).eq('id', sameName.id));
   } else {
-    // 同一设备同一房间只保留一条本人条目，重复提交视为修改
-    const mine = myEntry();
-    if (mine) ({ error } = await sb.from('outing_entries').update(row).eq('id', mine.id));
-    else ({ error } = await sb.from('outing_entries').insert(row));
+    ({ error } = await sb.from('outing_entries').insert(row));
   }
   if (error) { toast('提交失败：' + (error.message || error), true); return; }
   editingId = null;
   $('onCancelEdit').hidden = true;
-  $('onFormTitle').textContent = '填报 / 修改我的外出';
-  resetForm(false);
-  toast('已提交，房间内所有人可见');
+  $('onFormTitle').textContent = '填报外出（可帮他人代填）';
+  resetForm(true);
+  toast(!sameName ? '已提交，房间内所有人可见' : `已更新「${name}」的报名`);
 }
 
 async function deleteEntry(id) {
@@ -271,7 +268,7 @@ function editEntry(id) {
 function cancelEdit() {
   editingId = null;
   $('onCancelEdit').hidden = true;
-  $('onFormTitle').textContent = '填报 / 修改我的外出';
+  $('onFormTitle').textContent = '填报外出（可帮他人代填）';
   resetForm(true);
 }
 
@@ -358,7 +355,6 @@ function tiebreak(name) {
 
 function allocateOnline() {
   if (!entries.length) throw new Error('还没有人报名');
-  const maxPast = Math.max(0, ...entries.map((e) => e.past));
   const people = entries.map((e) => {
     const idx = (e.accepts || []).filter((n) => n >= 0 && n < room.dates.length);
     const wi = e.reason_idx === CUSTOM ? REASONS.length - 1 : e.reason_idx;
@@ -367,26 +363,40 @@ function allocateOnline() {
       id: e.id,
       name: e.name,
       reason: e.reason_idx === CUSTOM ? (e.reason_text || '其他') : (REASONS[e.reason_idx] || '其他'),
+      weight,
       past: e.past,
       need: Math.min(e.days, room.dates.length),
       accept: idx,
       got: [],
-      score: (maxPast - e.past) * 1000 + weight * 100 + tiebreak(e.name),
     };
   });
-  const order = [...people].sort((a, b) => b.score - a.score || a.name.localeCompare(b.name, 'zh'));
+  // 优先分 = 理由权重 × 100 ÷ 2^有效外出次数
+  // 有效外出次数 = 历史次数 + 本轮已排上的天数（连出两天的人，第二天按多外出一次计）
+  const effPast = (p) => Math.min(30, p.past + p.got.length);
+  const scoreOf = (p) => p.weight * 100 / Math.pow(2, effPast(p));
+  const byScore = (a, b) =>
+    scoreOf(b) - scoreOf(a)
+    || tiebreak(a.name) - tiebreak(b.name)
+    || a.name.localeCompare(b.name, 'zh');
+
   const demand = people.reduce((s, p) => s + p.need, 0);
   const slot = room.dates.map((_, di) => capOf(di));
   const days = room.dates.map(() => []);
 
+  const take = (p, di, fill) => {
+    const ep = effPast(p);                 // 排上这天前的有效次数（本天是该人第 got.length+1 天）
+    const score = Math.round(scoreOf(p));
+    p.got.push(di);
+    p.need--;
+    slot[di]--;
+    days[di].push({ p, fill, ep, score });
+  };
+
   room.dates.forEach((_, di) => {
-    const cands = order.filter((p) => p.need > 0 && p.accept.includes(di));
+    const cands = people.filter((p) => p.need > 0 && p.accept.includes(di)).sort(byScore);
     for (const p of cands) {
       if (slot[di] <= 0) break;
-      p.got.push(di);
-      p.need--;
-      slot[di]--;
-      days[di].push({ p, fill: false });
+      take(p, di, false);
     }
   });
 
@@ -394,26 +404,29 @@ function allocateOnline() {
   if (room.allow_fill) {
     room.dates.forEach((_, di) => {
       while (slot[di] > 0) {
-        const cands = order.filter((p) => p.need > 0 && !p.got.includes(di));
+        const cands = people.filter((p) => p.need > 0 && !p.got.includes(di)).sort(byScore);
         if (!cands.length) break;
-        const p = cands[0];
-        p.got.push(di);
-        p.need--;
-        slot[di]--;
-        days[di].push({ p, fill: true });
+        take(cands[0], di, true);
         fillCount++;
       }
     });
   }
 
-  days.forEach((list) => list.sort((a, b) => b.p.score - a.p.score));
-  const unsatisfied = order.filter((p) => p.need > 0).map((p) => ({ name: p.name, need: p.need, past: p.past }));
+  days.forEach((list) => list.sort((a, b) => b.score - a.score || a.p.name.localeCompare(b.p.name, 'zh')));
+  const unsatisfied = people.filter((p) => p.need > 0).map((p) => ({ name: p.name, need: p.need, past: p.past }));
   const filled = days.reduce((s, l) => s + l.length, 0);
   return {
     at: new Date().toISOString(),
     days: days.map((list, di) => ({
       iso: room.dates[di],
-      names: list.map((x) => ({ name: x.p.name, reason: x.p.reason, past: x.p.past, fill: x.fill, score: x.p.score })),
+      names: list.map((x) => ({
+        name: x.p.name,
+        reason: x.p.reason,
+        past: x.p.past,
+        extra: x.ep - x.p.past,          // 本轮已排上的天数（第二天起有效次数会加）
+        fill: x.fill,
+        score: x.score,
+      })),
     })),
     unsatisfied,
     stats: { people: people.length, cap: room.dates.length * room.daily_cap, filled, fillCount, demand },
@@ -469,7 +482,7 @@ function renderResultBanner() {
               <span class="pick__rank">${n + 1}</span>
               <div class="pick__main">
                 <div class="pick__name">${esc(x.name)}${x.fill ? ' <span class="badge badge--err">调剂</span>' : ''}</div>
-                <div class="pick__meta">${esc(x.reason)} · 历史外出 ${x.past} 次 · 优先分 ${x.score}</div>
+                <div class="pick__meta">${esc(x.reason)} · 历史外出 ${x.past} 次${x.extra ? ` · 本轮已排 ${x.extra} 天，按 ${x.past + x.extra} 次计` : ''} · 优先分 ${x.score ?? '—'}</div>
               </div>
             </div>`).join('')}</div>`
         : '<div class="day-empty">无人报名这天</div>'}

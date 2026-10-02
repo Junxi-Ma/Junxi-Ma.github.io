@@ -343,7 +343,7 @@
         <a class="article-back" href="../../tools.html"><span class="arr">←</span>全部工具</a>
         <p class="mono-label">Tool <span>/</span> 03</p>
         <h1>外出名额分配</h1>
-        <p>推荐用<b>在线房间</b>：班长创建房间得一个房间码，成员输码进入、实时共同编辑报名，班长分配后结果全房间可见。外出理由扩至 8 类并可自定义，按「已外出次数优先 + 理由加权」分配。离线邀请码模式保留备用。</p>
+        <p>推荐用<b>在线房间</b>：班长创建房间得一个房间码，成员输码进入、实时共同编辑报名，班长分配后结果全房间可见，一台设备也能帮多名成员代填。外出理由扩至 8 类并可自定义，按「外出次数越少优先分越高（每多一次减半）＋ 理由加权」分配。离线邀请码模式保留备用。</p>
       </div>
 
       <div class="seg-wrap">
@@ -438,14 +438,14 @@
 
             <div class="panel" style="margin-top:16px; background:var(--surface-2)">
               <div class="panel__head">
-                <span class="panel__title" id="onFormTitle">填报 / 修改我的外出</span>
+                <span class="panel__title" id="onFormTitle">填报外出（可帮他人代填）</span>
                 <button class="btn btn--ghost btn--sm" id="onCancelEdit" type="button" hidden>取消编辑</button>
               </div>
               <div class="panel__body">
                 <div class="field-row">
                   <div class="field">
                     <label class="field__label" for="onName">姓名</label>
-                    <input class="input" id="onName" maxlength="20" autocomplete="name" placeholder="你的名字">
+                    <input class="input" id="onName" maxlength="20" autocomplete="name" placeholder="姓名（代填时填对方的名字）">
                   </div>
                   <div class="field">
                     <label class="field__label" for="onDays">一共要出的天数</label>
@@ -454,7 +454,7 @@
                   <div class="field">
                     <label class="field__label" for="onPast">已外出次数</label>
                     <input class="input" type="number" id="onPast" min="0" max="99" value="0" inputmode="numeric">
-                    <span class="field__hint">填 0 的人优先级最高</span>
+                    <span class="field__hint">次数越少优先分越高（每多一次减半）</span>
                   </div>
                 </div>
                 <div class="field" style="margin-top:16px">
@@ -473,7 +473,7 @@
                 </div>
                 <div class="action-row" style="margin-top:18px">
                   <button class="btn btn--primary" id="onSubmit" type="button">提交报名（实时同步全房间）</button>
-                  <span class="field__hint">房间内人人可互相编辑，请谨慎操作</span>
+                  <span class="field__hint">同名提交视为修改该成员的报名；填新名字会新增一条，可帮没有手机的同学代填</span>
                 </div>
               </div>
             </div>
@@ -590,7 +590,7 @@
               <div class="field">
                 <label class="field__label" for="mPast">已外出次数</label>
                 <input class="input" type="number" id="mPast" min="0" max="99" value="0" inputmode="numeric">
-                <span class="field__hint">填 0 的人优先级最高</span>
+                <span class="field__hint">次数越少优先分越高（每多一次减半）</span>
               </div>
             </div>
 
@@ -745,7 +745,7 @@
   </noscript>
 
   <script type="module" src="../../assets/js/main.js"></script>
-  <script type="module" src="online.js?v=2"></script>
+  <script type="module" src="online.js?v=3"></script>
   <script>
   (() => {
     'use strict';
@@ -1273,8 +1273,6 @@
       const wrongRoom = subs.length - valid.length;
       if (!valid.length) throw new Error('提交码的房间码都与当前房间不符');
 
-      const maxPast = Math.max(0, ...valid.map(s => s.p));
-
       const people = valid.map((s, i) => {
         const idx = String(s.a).split(',').filter(x => x !== '').map(Number)
           .filter(n => n >= 0 && n < room.dates.length);
@@ -1284,35 +1282,45 @@
           i,
           name: s.n,
           reason: (s.g | 0) === CUSTOM ? (s.x || '其他') : (REASONS[s.g] || '其他'),
+          weight,
           past: s.p,
           // 需求以「要出的天数」为准；可接受日期只约束阶段一（严格匹配），
           // 阶段二调剂可满足其超额需求（会标注「调剂」）
           need: Math.min(s.d, room.dates.length),
-          wants: Math.min(s.d, room.dates.length),
           accept: idx,
-          got: [],
-          // 主导：外出次数少的绝对优先（相差1次 = 1000分）
-          // 次级：理由权重（相差1 = 100分）
-          // 末级：确定性平局
-          score: (maxPast - s.p) * 1000 + weight * 100 + tiebreak(s.n)
+          got: []
         };
       });
 
-      const order = [...people].sort((a, b) => b.score - a.score || a.name.localeCompare(b.name, 'zh'));
+      // 优先分 = 理由权重 × 100 ÷ 2^有效外出次数
+      // 有效外出次数 = 历史次数 + 本轮已排上的天数（连出两天的人，第二天按多外出一次计）
+      const effPast = (p) => Math.min(30, p.past + p.got.length);
+      const scoreOf = (p) => p.weight * 100 / Math.pow(2, effPast(p));
+      const byScore = (a, b) =>
+        scoreOf(b) - scoreOf(a)
+        || tiebreak(a.name) - tiebreak(b.name)
+        || a.name.localeCompare(b.name, 'zh');
+
       // 需求总量必须在分配前记录（p.need 在分配过程中会递减）
       const demand = people.reduce((s, p) => s + p.need, 0);
       const slot = room.dates.map(() => room.q);
       const days = room.dates.map(() => []);
 
-      // 阶段一：严格匹配（只在成员自己勾选的日子）
+      const take = (p, di, fill) => {
+        const ep = effPast(p);               // 排上这天前的有效次数（本天是该人第 got.length+1 天）
+        const score = Math.round(scoreOf(p));
+        p.got.push(di);
+        p.need--;
+        slot[di]--;
+        days[di].push({ p, fill, ep, score });
+      };
+
+      // 阶段一：严格匹配（只在成员自己勾选的日子），每天按当前优先分现场排序
       room.dates.forEach((_, di) => {
-        const cands = order.filter(p => p.need > 0 && p.accept.includes(di));
+        const cands = people.filter(p => p.need > 0 && p.accept.includes(di)).sort(byScore);
         for (const p of cands) {
           if (slot[di] <= 0) break;
-          p.got.push(di);
-          p.need--;
-          slot[di]--;
-          days[di].push({ p, fill: false });
+          take(p, di, false);
         }
       });
 
@@ -1321,25 +1329,21 @@
       if (allowFill) {
         room.dates.forEach((_, di) => {
           while (slot[di] > 0) {
-            const cands = order.filter(p => p.need > 0 && !p.got.includes(di));
+            const cands = people.filter(p => p.need > 0 && !p.got.includes(di)).sort(byScore);
             if (!cands.length) break;
-            const p = cands[0];
-            p.got.push(di);
-            p.need--;
-            slot[di]--;
-            days[di].push({ p, fill: true });
+            take(cands[0], di, true);
             fillCount++;
           }
         });
       }
 
-      days.forEach(list => list.sort((a, b) => b.p.score - a.p.score));
+      days.forEach(list => list.sort((a, b) => b.score - a.score || a.p.name.localeCompare(b.p.name, 'zh')));
 
-      const unsatisfied = order.filter(p => p.need > 0);
+      const unsatisfied = people.filter(p => p.need > 0);
       const totalCap = room.dates.length * room.q;
       const filled = days.reduce((s, l) => s + l.length, 0);
       return {
-        days, unsatisfied, order, wrongRoom,
+        days, unsatisfied, wrongRoom,
         stats: { people: people.length, cap: totalCap, filled, fillCount, demand }
       };
     }
@@ -1379,7 +1383,7 @@
       note.innerHTML = txt;
 
       $('scoreNote').innerHTML =
-        '排序规则：已外出次数越少越优先（差 1 次 = 差 1000 分）→ 理由权重（家长看望 &gt; 同学看望 &gt; 外出游玩 &gt; 其他）→ 同分时按姓名散列，保证结果可复现。';
+        '排序规则：优先分 = 理由权重 × 100 ÷ 2<sup>有效外出次数</sup> —— 每多外出一次优先分减半，理由权重成正比（如家长看望 5 分 vs 采购物品 1 分 = 5 倍）；本轮已被排上的天数会临时计入外出次数，想连出两天的人，第二天按「多外出一次」计。同分时按姓名散列，保证结果可复现。';
 
       $('daysWrap').innerHTML = room.dates.map((iso, di) => {
         const list = r.days[di];
@@ -1396,7 +1400,7 @@
                 <div class="pick__name">${esc(x.p.name)}
                   ${x.fill ? '<span class="badge badge--err">调剂</span>' : ''}
                 </div>
-                <div class="pick__meta">${esc(x.p.reason)} · 历史外出 ${x.p.past} 次 · 优先分 ${x.p.score}</div>
+                <div class="pick__meta">${esc(x.p.reason)} · 历史外出 ${x.p.past} 次${x.ep > x.p.past ? ` · 本轮已排 ${x.ep - x.p.past} 天，按 ${x.ep} 次计` : ''} · 优先分 ${x.score}</div>
               </div>
             </div>`).join('')}</div>`
             : `<div class="day-empty">无人报名这天</div>`}
