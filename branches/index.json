@@ -27,6 +27,15 @@
       "tags": ["课程项目", "大气探测", "AI"],
       "icon": "🌤️",
       "order": 2
+    },
+    {
+      "folder": "shiroha-quiz",
+      "url": "branches/shiroha-quiz/index.html",
+      "title": "Shiroha 刷题",
+      "description": "嫁接自开源项目 Shiroha Quiz 的刷题工具：导入 Word / Excel / TXT / JSON / PDF 题库，支持练习、考试、错题本与收藏，数据保存在浏览器本地，下次打开自动恢复。",
+      "tags": ["刷题", "题库", "考试"],
+      "icon": "📝",
+      "order": 3
     }
   ]
 }
