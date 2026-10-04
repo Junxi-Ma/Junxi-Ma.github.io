@@ -295,6 +295,32 @@ body.ms-page {
   .ms-lb { width: min(100%, 320px); }
 }
 
+/* ---------- 全屏：整个屏幕只显示扫雷界面 ---------- */
+.ms-layout:fullscreen,
+.ms-layout:-webkit-full-screen {
+  width: 100%;
+  height: 100%;
+  background: var(--bg);
+  align-items: center;
+  padding: 20px;
+  overflow: auto;
+}
+.ms-layout:fullscreen .ms-stage,
+.ms-layout:-webkit-full-screen .ms-stage,
+body.ms-fs-fake .ms-stage {
+  flex: 1 1 520px;
+  min-width: 0;
+}
+/* Fullscreen API 不可用时的降级：CSS 假全屏 */
+body.ms-fs-fake .ms-layout {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  background: var(--bg);
+  padding: 20px;
+  overflow: auto;
+}
+
 /* ---------- 窗体下方的站点风格操作条 ---------- */
 .ms-under {
   display: flex;
@@ -304,7 +330,8 @@ body.ms-page {
   gap: 8px 14px;
   max-width: 760px;
 }
-.ms-flagmode {
+.ms-flagmode,
+.ms-fullscreen {
   font: 13px/1.4 inherit;
   color: var(--text-2);
   background: var(--surface-1);
@@ -314,7 +341,8 @@ body.ms-page {
   cursor: pointer;
   transition: border-color var(--dur-fast) ease, color var(--dur-fast) ease, background var(--dur-fast) ease;
 }
-.ms-flagmode:hover { border-color: var(--border-hover); color: var(--text-1); }
+.ms-flagmode:hover,
+.ms-fullscreen:hover { border-color: var(--border-hover); color: var(--text-1); }
 .ms-flagmode[aria-pressed="true"] {
   color: var(--text-1);
   border-color: rgba(242, 169, 59, 0.55);

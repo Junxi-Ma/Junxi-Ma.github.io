@@ -175,11 +175,61 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
   }
 
   function fitBoard() {
-    // 34 = 窗体边框与内边距，6 = 雷区凹槽边框；过小则保底 20px 交给横向滚动
+    // 40 = 窗体边框与内边距，6 = 雷区凹槽边框；过小则保底 20px 交给横向滚动
     let cs = Math.floor((stageEl.clientWidth - 40) / cols);
-    cs = clamp(cs, 20, 30);
+    if (isFullscreen()) {
+      // 全屏时高度也参与：标题栏+菜单+HUD+底栏约 210px
+      cs = Math.min(cs, Math.floor((window.innerHeight - 210) / rows));
+    }
+    cs = clamp(cs, 20, isFullscreen() ? 44 : 30);
     boardEl.style.setProperty('--cs', cs + 'px');
   }
+
+  /* ---------- 全屏：整屏只显示扫雷界面 ----------
+     优先 Fullscreen API（连系统浏览器菜单一起隐藏）；
+     API 不可用/被拒绝时降级为 CSS 假全屏（盖满视口）。 */
+  const fsBtn = $('#ms-fullscreen');
+  const fsTarget = document.querySelector('.ms-layout');
+
+  function isFullscreen() {
+    return Boolean(
+      document.fullscreenElement === fsTarget ||
+      document.webkitFullscreenElement === fsTarget ||
+      document.body.classList.contains('ms-fs-fake')
+    );
+  }
+  function renderFs() {
+    if (fsBtn) fsBtn.textContent = isFullscreen() ? '⛶ 退出全屏（Esc）' : '⛶ 全屏';
+    fitBoard();
+  }
+  async function toggleFullscreen() {
+    const api = fsTarget && (fsTarget.requestFullscreen || fsTarget.webkitRequestFullscreen);
+    if (isFullscreen()) {
+      if (document.fullscreenElement || document.webkitFullscreenElement) {
+        const exit = document.exitFullscreen || document.webkitExitFullscreen;
+        exit.call(document);
+      } else {
+        document.body.classList.remove('ms-fs-fake');
+      }
+      renderFs();
+      return;
+    }
+    if (api) {
+      try {
+        await api.call(fsTarget);
+        // full-screenchange 事件里也会同步，这里兜底一次布局
+        setTimeout(renderFs, 50);
+        return;
+      } catch {
+        /* 被拒绝（如无用户手势/iframe 限制）→ 走假全屏 */
+      }
+    }
+    document.body.classList.add('ms-fs-fake');
+    renderFs();
+  }
+  if (fsBtn) fsBtn.addEventListener('click', toggleFullscreen);
+  document.addEventListener('fullscreenchange', renderFs);
+  document.addEventListener('webkitfullscreenchange', renderFs);
 
   /* 首击后布雷：格子够时避开首击 3×3，保证开局舒服（原版至少保证首击不踩雷）。
      无猜模式会反复调用换盘 —— 必须先清空上一盘的雷与邻数，否则旧雷累积、局面被污染。 */
@@ -911,6 +961,10 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     } else if (e.key === 'Escape') {
       closeMenus();
       closeDialog();
+      if (document.body.classList.contains('ms-fs-fake')) {
+        document.body.classList.remove('ms-fs-fake');
+        renderFs();
+      }
     }
   });
 
