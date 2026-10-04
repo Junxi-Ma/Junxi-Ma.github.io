@@ -507,3 +507,69 @@ create policy "not banned can insert ms records"
   );
 
 notify pgrst, 'reload schema';
+
+-- ############################################################
+-- 九、数独排行榜（纸感数独 /tools/sudoku/）
+-- ############################################################
+
+-- 1) 成绩表：完成一局写入一行；登录用户带 user_id（游客为 NULL）
+create table if not exists public.sudoku_records (
+  id         uuid primary key default gen_random_uuid(),
+  user_id    uuid references auth.users(id) on delete cascade,
+  name       text not null default '匿名',
+  difficulty text not null check (difficulty in ('easy','medium','hard','expert')),
+  seconds    int  not null check (seconds >= 0 and seconds <= 35999),
+  mistakes   int  not null default 0,
+  hints      int  not null default 0,
+  created_at timestamptz not null default now()
+);
+create index if not exists sudoku_records_lb_idx   on public.sudoku_records (difficulty, seconds);
+create index if not exists sudoku_records_user_idx on public.sudoku_records (user_id);
+
+-- 2) 登录用户的署名以账号资料为准（防冒名），与扫雷同一套路
+create or replace function public.sudoku_resolve_name()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare pname text;
+begin
+  if new.user_id is not null then
+    select coalesce(p.display_name, split_part(p.email, '@', 1))
+      into pname
+      from public.profiles p
+      where p.id = new.user_id;
+    if pname is not null then
+      new.name := pname;
+    end if;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists sudoku_resolve_name_trg on public.sudoku_records;
+create trigger sudoku_resolve_name_trg
+  before insert on public.sudoku_records
+  for each row execute function public.sudoku_resolve_name();
+
+-- 3) 行级安全：榜单全员可读；写入仅限未被封禁者，登录用户只能挂自己的 user_id
+alter table public.sudoku_records enable row level security;
+
+drop policy if exists "sudoku records readable" on public.sudoku_records;
+create policy "sudoku records readable" on public.sudoku_records
+  for select to anon, authenticated using (true);
+
+drop policy if exists "not banned can insert sudoku records" on public.sudoku_records;
+create policy "not banned can insert sudoku records"
+  on public.sudoku_records
+  for insert
+  to anon, authenticated
+  with check (
+    seconds between 0 and 35999
+    and difficulty in ('easy','medium','hard','expert')
+    and (user_id is null or user_id = auth.uid())
+    and not coalesce(public.is_banned(), false)
+  );
+
+notify pgrst, 'reload schema';

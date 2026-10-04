@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>纸感数独 — Michael</title>
+  <meta name="description" content="现代纸感数独：入门到专家四档唯一解棋盘，铅笔笔记、提示、撤销与三次失误上限；成绩自动署名上云，英雄榜每人只计最快。">
+  <meta name="theme-color" content="#0a0a0b">
+  <meta name="color-scheme" content="dark light">
+  <link rel="icon" type="image/svg+xml" href="../../assets/img/favicon.svg">
+  <script>
+    /* 首帧前定下主题，避免闪烁；无记录时默认暗色（站点基调） */
+    (function () {
+      var t = null;
+      try { t = localStorage.getItem('site-theme'); } catch (e) {}
+      if (t !== 'dark' && t !== 'light') t = 'dark';
+      document.documentElement.dataset.theme = t;
+      document.documentElement.classList.add('js');
+      var m = document.querySelector('meta[name="theme-color"]');
+      if (m) m.content = t === 'light' ? '#faf8f5' : '#0a0a0b';
+    })();
+  </script>
+  <link rel="stylesheet" href="../../assets/css/tokens.css">
+  <link rel="stylesheet" href="../../assets/css/main.css">
+  <link rel="stylesheet" href="style.css?v=1">
+  <style>
+    /* ---- 页面骨架：与 json-formatter 逐字一致，顶距内联提供 ---- */
+    .tool {
+      padding-top: calc(var(--nav-h) + clamp(40px, 7vw, 72px));
+      padding-bottom: var(--section-y);
+    }
+    .tool__head {
+      max-width: 720px;
+      margin-bottom: 32px;
+    }
+    .tool__head h1 {
+      font-size: var(--fs-h1);
+      letter-spacing: -0.02em;
+      margin-top: 22px;
+    }
+    .tool__head p {
+      margin-top: 14px;
+      color: var(--text-2);
+      line-height: 1.7;
+    }
+    @media (max-width: 640px) {
+      .tool__head h1 {
+        font-size: clamp(28px, 8vw, 36px);
+      }
+    }
+  </style>
+</head>
+<body class="sk-page">
+  <a class="skip-link" href="#main">跳到主要内容</a>
+
+  <header class="nav" id="nav">
+    <div class="container nav__inner">
+      <a class="nav__logo" href="../../index.html" aria-label="Michael 首页">Michael<i>.</i></a>
+      <nav class="nav__links" id="nav-links" aria-label="主导航">
+        <a href="../../index.html">首页</a>
+        <a href="../../tools.html" aria-current="page">工具</a>
+        <a href="../../notes.html">笔记</a>
+        <a href="../../branches.html">分支</a>
+        <a href="../../index.html#about">关于</a>
+      </nav>
+      <div class="nav__actions">
+        <button class="nav__icon" id="theme-toggle" type="button" aria-label="切换到浅色模式" title="浅色模式">
+          <svg class="ico-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="4"/>
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+          </svg>
+          <svg class="ico-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+        </button>
+        <button class="nav__toggle" id="nav-toggle" aria-label="打开菜单" aria-expanded="false" aria-controls="nav-links">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+            <path d="M4 7h16M4 12h16M4 17h16"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <div class="container tool">
+      <div class="tool__head">
+        <a class="article-back" href="../../tools.html"><span class="arr">←</span>全部工具</a>
+        <p class="mono-label">Tool <span>/</span> 08</p>
+        <h1>纸感数独</h1>
+        <p>现代纸感设计的数独棋盘：四档难度全部唯一解，铅笔笔记、提示、撤销与三次失误上限。登录后成绩自动署名上云，右侧英雄榜收录全站四档的最快纪录；手机与平板点按即可作答。</p>
+      </div>
+
+      <div class="sk-layout">
+        <div class="sk-stage">
+          <!-- 纸张质感的数独纸 -->
+          <div class="sk-sheet" id="sk-sheet">
+            <header class="sk-head">
+              <span class="sk-diff" id="sk-diff-label">入门</span>
+              <span class="sk-timer" id="sk-timer">00:00</span>
+              <span class="sk-lives" id="sk-lives" aria-label="失误次数">
+                <i></i><i></i><i></i>
+              </span>
+            </header>
+            <div class="sk-grid" id="sk-grid" role="grid" aria-label="数独棋盘"></div>
+            <div class="sk-pad">
+              <div class="sk-nums" id="sk-nums"></div>
+              <div class="sk-tools">
+                <button type="button" class="sk-btn" id="sk-undo" title="撤销上一步">↩ 撤销</button>
+                <button type="button" class="sk-btn" id="sk-erase" title="清除所选格">⌫ 擦除</button>
+                <button type="button" class="sk-btn" id="sk-note" aria-pressed="false" title="铅笔笔记开关（N）">✏ 笔记</button>
+                <button type="button" class="sk-btn" id="sk-hint" title="填入正确答案（每局 3 次）">💡 提示 ×3</button>
+                <button type="button" class="sk-btn" id="sk-best" title="我的最快纪录">🏆 记录</button>
+                <button type="button" class="sk-btn" id="sk-fs" title="全屏">⛶ 全屏</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 难度选择：点击开新局 -->
+          <div class="sk-diffs" role="group" aria-label="难度">
+            <button type="button" class="sk-diffbtn on" data-diff="easy">入门</button>
+            <button type="button" class="sk-diffbtn" data-diff="medium">进阶</button>
+            <button type="button" class="sk-diffbtn" data-diff="hard">困难</button>
+            <button type="button" class="sk-diffbtn" data-diff="expert">专家</button>
+          </div>
+
+          <p class="sk-tip">点格选中 → 数字键或下方键作答；✏ 笔记模式写候选数；键盘方向键可移动，N 切笔记，⌫ 擦除</p>
+        </div>
+
+        <!-- 右侧全站英雄榜：四档难度各自的最快纪录 -->
+        <aside class="sk-lb" aria-label="全站数独英雄榜">
+          <div class="sk-lb-head">
+            <h2>英雄榜</h2>
+            <span class="sk-lb-note" id="sk-lb-note">云端</span>
+          </div>
+          <div class="sk-lb-tabs" role="tablist" aria-label="难度">
+            <button type="button" class="sk-lb-tab on" data-diff="easy" role="tab" aria-selected="true">入门</button>
+            <button type="button" class="sk-lb-tab" data-diff="medium" role="tab" aria-selected="false">进阶</button>
+            <button type="button" class="sk-lb-tab" data-diff="hard" role="tab" aria-selected="false">困难</button>
+            <button type="button" class="sk-lb-tab" data-diff="expert" role="tab" aria-selected="false">专家</button>
+          </div>
+          <ol class="sk-lb-list" id="sk-lb-list"></ol>
+          <div class="sk-lb-foot">
+            <span>全站共享 · 每人只计最快</span>
+            <button type="button" class="sk-lb-refresh" id="sk-lb-refresh">刷新</button>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </main>
+
+  <!-- 现代卡片式对话框（胜利 / 失败 / 新纪录 / 纪录） -->
+  <div class="sk-modal" id="sk-modal" hidden>
+    <div class="sk-card" role="dialog" aria-modal="true" aria-labelledby="sk-card-title">
+      <h3 id="sk-card-title"></h3>
+      <div class="sk-card-body" id="sk-card-body"></div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="container footer__inner">
+      <span>© <span data-year>2026</span> Michael · <span class="footer__heart">♥</span> 手工打造 · 动静结合</span>
+      <nav class="footer__links" aria-label="页脚导航">
+        <a href="../../tools.html">Tools</a>
+        <a href="../../notes.html">Notes</a>
+        <a href="https://github.com/" target="_blank" rel="noopener noreferrer">GitHub</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script type="module" src="../../assets/js/main.js"></script>
+  <script type="module" src="app.js?v=1"></script>
+</body>
+</html>

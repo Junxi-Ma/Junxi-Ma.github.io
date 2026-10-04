@@ -171,6 +171,17 @@
       ],
       "icon": "💣",
       "order": 7
+    },
+    {
+      "path": "tools/sudoku/",
+      "title": "纸感数独",
+      "description": "现代纸感数独：入门到专家四档唯一解棋盘，铅笔笔记、提示、撤销与三次失误上限；成绩自动署名上云，英雄榜每人只计最快。",
+      "tags": [
+        "游戏",
+        "益智"
+      ],
+      "icon": "🔢",
+      "order": 8
     }
   ],
   "branches": [
@@ -198,6 +209,15 @@
       ],
       "icon": "🌤️",
       "order": 2
+    },
+    {
+      "path": "branches/shiroha-quiz/",
+      "url": "branches/shiroha-quiz/index.html",
+      "title": "Shiroha 刷题",
+      "description": "Shiroha Quiz 刷题分支：导入 Word / Excel / TXT / JSON / PDF 题库，支持练习、考试、错题本与收藏，数据保存在浏览器本地，下次打开自动恢复。",
+      "tags": [],
+      "icon": "📄",
+      "order": 100
     }
   ]
 }
