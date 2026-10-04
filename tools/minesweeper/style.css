@@ -1,0 +1,338 @@
+/* ============================================================
+   经典扫雷 — Windows 9x 复刻外观
+   页面骨架（tool__head 等）用站点 tokens；游戏窗体固定 Win98 调色，
+   在暗色主题下也保持原版的灰窗体（这正是“复刻”的意义）。
+   ============================================================ */
+
+/* 局部样式显式 display 会覆盖 hidden 属性（掼蛋页的教训），统一兜底 */
+body.ms-page [hidden] { display: none !important; }
+
+.ms-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding-bottom: 8px;
+}
+
+/* ---------- 窗体 ---------- */
+.ms-window {
+  --f: #c0c0c0;   /* 窗体灰 */
+  --hi: #ffffff;  /* 高光 */
+  --sh: #808080;  /* 阴影 */
+  background: var(--f);
+  border: 3px solid;
+  border-color: var(--hi) var(--sh) var(--sh) var(--hi);
+  box-shadow: 0 0 0 1px #000, 12px 14px 32px rgba(0, 0, 0, 0.35);
+  padding: 0 6px 7px;
+  width: max-content;
+  max-width: 100%;
+  color: #000;
+  font: 13px/1.4 "SimSun", "NSimSun", "Microsoft YaHei", sans-serif;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.ms-window *, .ms-window *::before, .ms-window *::after { box-sizing: border-box; }
+
+/* ---------- 标题栏 ---------- */
+.ms-title {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 24px;
+  margin: 0 -6px 3px;
+  padding: 0 3px 0 5px;
+  background: linear-gradient(90deg, #000080, #1084d0);
+  color: #fff;
+  font: 700 13px/1 "Microsoft YaHei", "SimSun", sans-serif;
+}
+.ms-title .t-ico { width: 14px; height: 14px; flex: none; }
+.ms-title .t-btns { margin-left: auto; display: flex; gap: 2px; }
+.ms-tbtn {
+  min-width: 18px;
+  height: 16px;
+  padding: 0 2px;
+  display: grid;
+  place-items: center;
+  background: var(--f);
+  color: #000;
+  text-decoration: none;
+  border: 1px solid;
+  border-color: var(--hi) var(--sh) var(--sh) var(--hi);
+  font: 700 11px/1 Tahoma, "Microsoft YaHei", sans-serif;
+  cursor: pointer;
+}
+.ms-tbtn:active { border-color: var(--sh) var(--hi) var(--hi) var(--sh); }
+.ms-tbtn[disabled] { color: #808080; cursor: default; }
+
+/* ---------- 菜单栏 ---------- */
+.ms-menubar { display: flex; gap: 2px; }
+.ms-menu { position: relative; }
+.ms-menu-btn {
+  font: 13px/1 "SimSun", "NSimSun", "Microsoft YaHei", sans-serif;
+  color: #000;
+  background: none;
+  border: 1px solid transparent;
+  padding: 4px 8px;
+  cursor: default;
+}
+.ms-menu.open .ms-menu-btn { background: #000080; color: #fff; border-color: #000080; }
+.ms-drop {
+  position: absolute;
+  top: calc(100% + 1px);
+  left: 0;
+  z-index: 40;
+  min-width: 200px;
+  padding: 3px;
+  background: var(--f);
+  border: 3px solid;
+  border-color: var(--hi) var(--sh) var(--sh) var(--hi);
+  box-shadow: 0 0 0 1px #000, 4px 4px 0 rgba(0, 0, 0, 0.3);
+}
+.ms-mi {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 6px 14px 6px 4px;
+  background: none;
+  border: 0;
+  color: #000;
+  text-align: left;
+  font: 13px/1 "SimSun", "NSimSun", "Microsoft YaHei", sans-serif;
+  white-space: nowrap;
+  cursor: default;
+}
+.ms-mi:hover, .ms-mi:focus-visible { background: #000080; color: #fff; outline: none; }
+.ms-mi .chk { width: 16px; flex: none; text-align: center; font-family: "Microsoft YaHei", sans-serif; }
+.ms-mi .acc { margin-left: auto; padding-left: 20px; opacity: 0.85; }
+.ms-msep { border-top: 1px solid var(--sh); border-bottom: 1px solid var(--hi); margin: 3px 2px; }
+
+/* ---------- 主体：LED 计数器 + 笑脸 + 雷区 ---------- */
+.ms-body { padding-top: 4px; }
+.ms-hud {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border: 3px solid;
+  border-color: var(--sh) var(--hi) var(--hi) var(--sh);
+  padding: 5px 6px;
+  margin-bottom: 6px;
+}
+
+/* 七段 LED 数码管 */
+.ms-led {
+  display: flex;
+  gap: 1px;
+  padding: 2px;
+  background: #000;
+  border: 2px solid;
+  border-color: var(--sh) var(--hi) var(--hi) var(--sh);
+}
+.ms-digit { position: relative; width: 14px; height: 25px; }
+.ms-seg { position: absolute; background: #3a0000; border-radius: 1px; }
+.ms-seg.on { background: #ff2200; box-shadow: 0 0 3px rgba(255, 34, 0, 0.6); }
+.s-a { top: 0;      left: 2px;  width: 10px; height: 3px; }
+.s-b { top: 2px;    right: 0;   width: 3px;  height: 9px; }
+.s-c { bottom: 2px; right: 0;   width: 3px;  height: 9px; }
+.s-d { bottom: 0;   left: 2px;  width: 10px; height: 3px; }
+.s-e { bottom: 2px; left: 0;    width: 3px;  height: 9px; }
+.s-f { top: 2px;    left: 0;    width: 3px;  height: 9px; }
+.s-g { top: 11px;   left: 2px;  width: 10px; height: 3px; }
+
+.ms-face {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  background: var(--f);
+  border: 2px solid;
+  border-color: var(--hi) var(--sh) var(--sh) var(--hi);
+  cursor: pointer;
+}
+.ms-face:active { border-color: var(--sh) var(--hi) var(--hi) var(--sh); }
+.ms-face svg { width: 24px; height: 24px; display: block; }
+
+.ms-board-outer {
+  border: 3px solid;
+  border-color: var(--sh) var(--hi) var(--hi) var(--sh);
+  overflow: auto;
+  max-width: 100%;
+  overscroll-behavior: contain;
+}
+.ms-board {
+  display: grid;
+  width: max-content;
+  background: var(--f);
+  touch-action: pan-x pan-y; /* 允许页面/容器滚动，同时禁掉双击缩放 */
+}
+
+/* 格子：闭合凸起 / 按下与揭开变平，经典配色数字 */
+.ms-cell {
+  width: var(--cs, 26px);
+  height: var(--cs, 26px);
+  background: var(--f);
+  border: 2px solid;
+  border-color: var(--hi) var(--sh) var(--sh) var(--hi);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: 700 calc(var(--cs, 26px) * 0.56)/1 Verdana, "Microsoft YaHei", sans-serif;
+  -webkit-touch-callout: none;
+}
+.ms-cell.open, .ms-cell.is-down {
+  border: 0;
+  box-shadow: inset 0 0 0 1px #8d8d8d;
+}
+.n1 { color: #0000fa; }
+.n2 { color: #007b00; }
+.n3 { color: #fa0000; }
+.n4 { color: #00007b; }
+.n5 { color: #7b0000; }
+.n6 { color: #007b7b; }
+.n7 { color: #000000; }
+.n8 { color: #7b7b7b; }
+.ms-cell.qm { color: #000; }
+
+.ms-cell.flag {
+  background: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2016%2016'%3E%3Crect%20x='4.6'%20y='2'%20width='1.5'%20height='11'%20fill='%23000'/%3E%3Cpolygon%20points='6.1,2%2011.6,4.7%206.1,7.4'%20fill='%23f00'/%3E%3Crect%20x='2.4'%20y='13'%20width='7.6'%20height='2'%20fill='%23000'/%3E%3C/svg%3E") center / 72% no-repeat;
+}
+.ms-cell.mine {
+  background: var(--f) url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2016%2016'%3E%3Cg%20stroke='%23000'%20stroke-width='1.3'%3E%3Cpath%20d='M8,1V15M1,8H15M3.2,3.2L12.8,12.8M12.8,3.2L3.2,12.8'/%3E%3C/g%3E%3Ccircle%20cx='8'%20cy='8'%20r='4.4'%20fill='%23000'/%3E%3Crect%20x='5.4'%20y='5.4'%20width='1.7'%20height='1.7'%20fill='%23fff'/%3E%3C/svg%3E") center / 76% no-repeat;
+}
+.ms-cell.boom { background-color: #fa0000; }
+.ms-cell.wrong {
+  background:
+    url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2016%2016'%3E%3Cpath%20d='M2.5,2.5L13.5,13.5M13.5,2.5L2.5,13.5'%20stroke='%23f00'%20stroke-width='2.4'/%3E%3C/svg%3E") center / 86% no-repeat,
+    var(--f) url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2016%2016'%3E%3Cg%20stroke='%23000'%20stroke-width='1.3'%3E%3Cpath%20d='M8,1V15M1,8H15M3.2,3.2L12.8,12.8M12.8,3.2L3.2,12.8'/%3E%3C/g%3E%3Ccircle%20cx='8'%20cy='8'%20r='4.4'%20fill='%23000'/%3E%3Crect%20x='5.4'%20y='5.4'%20width='1.7'%20height='1.7'%20fill='%23fff'/%3E%3C/svg%3E") center / 76% no-repeat;
+}
+
+/* ---------- 窗体下方的站点风格操作条 ---------- */
+.ms-under {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px 14px;
+  max-width: 760px;
+}
+.ms-flagmode {
+  font: 13px/1.4 inherit;
+  color: var(--text-2);
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-btn);
+  padding: 9px 14px;
+  cursor: pointer;
+  transition: border-color var(--dur-fast) ease, color var(--dur-fast) ease, background var(--dur-fast) ease;
+}
+.ms-flagmode:hover { border-color: var(--border-hover); color: var(--text-1); }
+.ms-flagmode[aria-pressed="true"] {
+  color: var(--text-1);
+  border-color: rgba(242, 169, 59, 0.55);
+  background: var(--accent-glow);
+}
+.ms-tip {
+  margin: 0;
+  color: var(--text-3);
+  font-size: 12.5px;
+  text-align: center;
+}
+
+/* ---------- 仿 Win98 模态对话框 ---------- */
+.ms-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 16px;
+}
+.ms-dlg {
+  width: min(370px, 100%);
+  background: var(--f);
+  color: #000;
+  border: 3px solid;
+  border-color: var(--hi) var(--sh) var(--sh) var(--hi);
+  box-shadow: 0 0 0 1px #000, 8px 10px 0 rgba(0, 0, 0, 0.35);
+  font-family: "Microsoft YaHei", "SimSun", sans-serif;
+}
+.ms-dlg-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 3px 0 8px;
+  background: linear-gradient(90deg, #000080, #1084d0);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+}
+.ms-dlg-x {
+  margin-left: auto;
+  width: 20px;
+  height: 18px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  background: var(--f);
+  color: #000;
+  border: 1px solid;
+  border-color: var(--hi) var(--sh) var(--sh) var(--hi);
+  font: 700 12px/1 Tahoma, sans-serif;
+  cursor: pointer;
+}
+.ms-dlg-x:active { border-color: var(--sh) var(--hi) var(--hi) var(--sh); }
+.ms-dlg-body { padding: 16px 16px 14px; font-size: 13px; }
+.ms-dlg-body p { margin: 0 0 10px; line-height: 1.65; }
+.ms-dlg-foot { display: flex; justify-content: center; gap: 10px; margin-top: 14px; }
+.ms-dlg-foot.right { justify-content: flex-end; }
+.ms-btn {
+  min-width: 76px;
+  padding: 6px 14px;
+  background: var(--f);
+  color: #000;
+  border: 2px solid;
+  border-color: var(--hi) var(--sh) var(--sh) var(--hi);
+  font: 13px "Microsoft YaHei", sans-serif;
+  cursor: pointer;
+}
+.ms-btn:active { border-color: var(--sh) var(--hi) var(--hi) var(--sh); }
+.ms-btn.default { outline: 1px solid #000; outline-offset: -3px; }
+.ms-field { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.ms-field label { width: 58px; flex: none; }
+.ms-input {
+  width: 96px;
+  padding: 4px 8px;
+  background: #fff;
+  color: #000;
+  border: 2px solid;
+  border-color: var(--sh) var(--hi) var(--hi) var(--sh);
+  font: 13px "Microsoft YaHei", sans-serif;
+}
+.ms-input:focus { outline: none; }
+.ms-best-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 8px 2px;
+  border-bottom: 1px dotted #999;
+}
+.ms-best-row:last-of-type { border-bottom: 0; }
+.ms-best-row .k { width: 44px; flex: none; }
+.ms-best-row b { min-width: 64px; }
+.ms-best-row .n { margin-left: auto; color: #444; }
+.ms-note { color: #666; font-size: 12px; }
+.ms-sub { color: #555; }
+
+@media (max-width: 480px) {
+  .ms-window { padding: 0 4px 5px; }
+  .ms-title { margin: 0 -4px 3px; }
+  .ms-hud { padding: 4px 5px; }
+  .ms-tip { font-size: 12px; }
+}

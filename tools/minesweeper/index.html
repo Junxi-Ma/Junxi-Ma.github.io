@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>经典扫雷 — Michael</title>
+  <meta name="description" content="复刻 Windows 9x 经典扫雷：初/中/高级与自定义棋盘、首击必安全、双键快开、（?）标记与最佳纪录；手机点按挖雷、长按插旗。">
+  <meta name="theme-color" content="#0a0a0b">
+  <meta name="color-scheme" content="dark light">
+  <link rel="icon" type="image/svg+xml" href="../../assets/img/favicon.svg">
+  <script>
+    /* 首帧前定下主题，避免闪烁；无记录时默认暗色（站点基调） */
+    (function () {
+      var t = null;
+      try { t = localStorage.getItem('site-theme'); } catch (e) {}
+      if (t !== 'dark' && t !== 'light') t = 'dark';
+      document.documentElement.dataset.theme = t;
+      document.documentElement.classList.add('js');
+      var m = document.querySelector('meta[name="theme-color"]');
+      if (m) m.content = t === 'light' ? '#faf8f5' : '#0a0a0b';
+    })();
+  </script>
+  <link rel="stylesheet" href="../../assets/css/tokens.css">
+  <link rel="stylesheet" href="../../assets/css/main.css">
+  <link rel="stylesheet" href="style.css?v=1">
+  <style>
+    /* ---- 页面骨架：与 json-formatter 逐字一致，顶距内联提供 ----
+       （放在页内而不是外部 CSS，确保返回按钮永远不会被固定导航压住） */
+    .tool {
+      padding-top: calc(var(--nav-h) + clamp(40px, 7vw, 72px));
+      padding-bottom: var(--section-y);
+    }
+    .tool__head {
+      max-width: 720px;
+      margin-bottom: 32px;
+    }
+    .tool__head h1 {
+      font-size: var(--fs-h1);
+      letter-spacing: -0.02em;
+      margin-top: 22px;
+    }
+    .tool__head p {
+      margin-top: 14px;
+      color: var(--text-2);
+      line-height: 1.7;
+    }
+    @media (max-width: 640px) {
+      .tool__head h1 {
+        font-size: clamp(28px, 8vw, 36px);
+      }
+    }
+  </style>
+</head>
+<body class="ms-page">
+  <a class="skip-link" href="#main">跳到主要内容</a>
+
+  <header class="nav" id="nav">
+    <div class="container nav__inner">
+      <a class="nav__logo" href="../../index.html" aria-label="Michael 首页">Michael<i>.</i></a>
+      <nav class="nav__links" id="nav-links" aria-label="主导航">
+        <a href="../../index.html">首页</a>
+        <a href="../../tools.html" aria-current="page">工具</a>
+        <a href="../../notes.html">笔记</a>
+        <a href="../../branches.html">分支</a>
+        <a href="../../index.html#about">关于</a>
+      </nav>
+      <div class="nav__actions">
+        <button class="nav__icon" id="theme-toggle" type="button" aria-label="切换到浅色模式" title="浅色模式">
+          <svg class="ico-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="4"/>
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+          </svg>
+          <svg class="ico-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+        </button>
+        <button class="nav__toggle" id="nav-toggle" aria-label="打开菜单" aria-expanded="false" aria-controls="nav-links">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+            <path d="M4 7h16M4 12h16M4 17h16"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <div class="container tool">
+      <div class="tool__head">
+        <a class="article-back" href="../../tools.html"><span class="arr">←</span>全部工具</a>
+        <p class="mono-label">Tool <span>/</span> 07</p>
+        <h1>经典扫雷</h1>
+        <p>1:1 复刻 Windows 9x 自带的经典扫雷：初/中/高级与自定义棋盘、首击必安全、双键快开、（?）标记与最佳纪录。手机与平板点按挖雷、长按插旗。</p>
+      </div>
+
+      <div class="ms-stage">
+        <div class="ms-window">
+          <!-- 仿 Win98 标题栏：× 等于“退出程序”（回工具页） -->
+          <div class="ms-title">
+            <svg class="t-ico" viewBox="0 0 16 16" aria-hidden="true"><g stroke="#000" stroke-width="1.3"><path d="M8,1V15M1,8H15M3.2,3.2L12.8,12.8M12.8,3.2L3.2,12.8"/></g><circle cx="8" cy="8" r="4.4" fill="#000"/><rect x="5.4" y="5.4" width="1.7" height="1.7" fill="#fff"/></svg>
+            <span>扫雷</span>
+            <span class="t-btns">
+              <button class="ms-tbtn" type="button" disabled aria-label="最小化（装饰）">_</button>
+              <a class="ms-tbtn" href="../../tools.html" aria-label="关闭，返回全部工具">×</a>
+            </span>
+          </div>
+
+          <!-- 菜单栏 -->
+          <div class="ms-menubar">
+            <div class="ms-menu" id="ms-menu-game">
+              <button type="button" class="ms-menu-btn" aria-haspopup="menu" aria-expanded="false">游戏(G)</button>
+              <div class="ms-drop" role="menu" hidden>
+                <button type="button" class="ms-mi" role="menuitem" data-act="new"><span class="chk"></span><span class="lbl">新局(N)</span><span class="acc">F2</span></button>
+                <div class="ms-msep"></div>
+                <button type="button" class="ms-mi" role="menuitem" data-diff="b"><span class="chk"></span><span class="lbl">初级(B)</span></button>
+                <button type="button" class="ms-mi" role="menuitem" data-diff="i"><span class="chk"></span><span class="lbl">中级(I)</span></button>
+                <button type="button" class="ms-mi" role="menuitem" data-diff="e"><span class="chk"></span><span class="lbl">高级(E)</span></button>
+                <button type="button" class="ms-mi" role="menuitem" data-act="custom"><span class="chk"></span><span class="lbl">自定义(C)…</span></button>
+                <div class="ms-msep"></div>
+                <button type="button" class="ms-mi" role="menuitem" data-act="marks"><span class="chk">✓</span><span class="lbl">标记（?）(M)</span></button>
+                <button type="button" class="ms-mi" role="menuitem" data-act="best"><span class="chk"></span><span class="lbl">最佳纪录(T)…</span></button>
+                <div class="ms-msep"></div>
+                <button type="button" class="ms-mi" role="menuitem" data-act="exit"><span class="chk"></span><span class="lbl">退出(X)</span></button>
+              </div>
+            </div>
+            <div class="ms-menu" id="ms-menu-help">
+              <button type="button" class="ms-menu-btn" aria-haspopup="menu" aria-expanded="false">帮助(H)</button>
+              <div class="ms-drop" role="menu" hidden>
+                <button type="button" class="ms-mi" role="menuitem" data-act="about"><span class="chk"></span><span class="lbl">关于扫雷(A)…</span></button>
+              </div>
+            </div>
+          </div>
+
+          <div class="ms-body">
+            <div class="ms-hud">
+              <div class="ms-led" id="ms-led-mines" role="img" aria-label="剩余雷数"></div>
+              <button class="ms-face" id="ms-face" type="button" aria-label="笑脸按钮：点击新开一局"></button>
+              <div class="ms-led" id="ms-led-time" role="img" aria-label="计时秒数"></div>
+            </div>
+            <div class="ms-board-outer">
+              <div class="ms-board" id="ms-board" role="application" aria-label="扫雷棋盘"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="ms-under">
+          <button class="ms-flagmode" id="ms-flagmode" type="button" aria-pressed="false"></button>
+          <p class="ms-tip">电脑：左键挖雷 · 右键插旗 · 中键/双键快开 · F2 重开｜触屏：点按挖雷 · 长按插旗</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- 仿 Win98 模态对话框（自定义棋盘 / 最佳纪录 / 关于 / 新纪录） -->
+  <div class="ms-modal" id="ms-modal" hidden>
+    <div class="ms-dlg" role="dialog" aria-modal="true" aria-labelledby="ms-dlg-cap">
+      <div class="ms-dlg-title">
+        <span id="ms-dlg-cap"></span>
+        <button class="ms-dlg-x" id="ms-dlg-x" type="button" aria-label="关闭">×</button>
+      </div>
+      <div class="ms-dlg-body" id="ms-dlg-body"></div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="container footer__inner">
+      <span>© <span data-year>2026</span> Michael · <span class="footer__heart">♥</span> 手工打造 · 动静结合</span>
+      <nav class="footer__links" aria-label="页脚导航">
+        <a href="../../tools.html">Tools</a>
+        <a href="../../notes.html">Notes</a>
+        <a href="https://github.com/" target="_blank" rel="noopener noreferrer">GitHub</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script type="module" src="../../assets/js/main.js"></script>
+  <script src="app.js?v=1"></script>
+</body>
+</html>
