@@ -931,14 +931,24 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
         .eq('difficulty', lbTab)
         .order('seconds', { ascending: true })
         .order('created_at', { ascending: true })
-        .limit(10);
+        .limit(200);
       if (error) throw error;
-      lbNoteEl.textContent = '全站共享 · 最短用时';
-      if (!data || !data.length) {
-        renderLbNote('全站共享 · 最短用时', '虚位以待，快来霸榜！');
+      lbNoteEl.textContent = '全站共享 · 每人最快';
+      // 每人只取最快一局：登录用户按账号去重，游客按名字去重
+      const seen = new Set();
+      const top = [];
+      for (const r of data || []) {
+        const key = r.user_id ? 'u:' + r.user_id : 'n:' + (r.name || '');
+        if (seen.has(key)) continue;
+        seen.add(key);
+        top.push(r);
+        if (top.length === 10) break;
+      }
+      if (!top.length) {
+        renderLbNote('全站共享 · 每人最快', '虚位以待，快来霸榜！');
         return;
       }
-      const rows = data.map((r, idx) => {
+      const rows = top.map((r, idx) => {
         const li = document.createElement('li');
         li.className = 'ms-lb-row' + (cloudUser && r.user_id === cloudUser.id ? ' me' : '');
         const rk = document.createElement('span');
