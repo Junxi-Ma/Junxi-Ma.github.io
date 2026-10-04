@@ -104,7 +104,7 @@ function buildModal() {
         <p class="auth-account-mail"></p>
         <p class="auth-account-msg" hidden></p>
         <div class="auth-account-actions">
-          <a class="btn btn--ghost auth-admin-link" href="admin.html" hidden>管理后台 →</a>
+          <a class="btn btn--ghost auth-admin-link" href="/admin.html" hidden>管理后台 →</a>
           <button type="button" class="btn btn--ghost auth-claim" hidden
             title="本站第一个认领的账号将成为管理员">认领管理员</button>
           <button type="button" class="btn btn--ghost auth-logout">退出登录</button>
