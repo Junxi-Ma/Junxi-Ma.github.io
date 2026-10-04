@@ -178,28 +178,34 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     // 40 = 窗体边框与内边距，6 = 雷区凹槽边框；过小则保底 20px 交给横向滚动
     let cs = Math.floor((stageEl.clientWidth - 40) / cols);
     if (isFullscreen()) {
-      // 全屏时高度也参与：标题栏+菜单+HUD+底栏约 210px
-      cs = Math.min(cs, Math.floor((window.innerHeight - 210) / rows));
+      // 窗口全屏：宽高都参与，150 ≈ 标题栏+菜单+HUD+凹槽边框+窗体内边距
+      cs = Math.min(
+        Math.floor((window.innerWidth - 44) / cols),
+        Math.floor((window.innerHeight - 150) / rows)
+      );
     }
     cs = clamp(cs, 20, isFullscreen() ? 44 : 30);
     boardEl.style.setProperty('--cs', cs + 'px');
   }
 
-  /* ---------- 全屏：整屏只显示扫雷界面 ----------
+  /* ---------- 全屏（标题栏 □ 按钮）：窗口本体铺满整屏，英雄榜不显示 ----------
      优先 Fullscreen API（连系统浏览器菜单一起隐藏）；
-     API 不可用/被拒绝时降级为 CSS 假全屏（盖满视口）。 */
-  const fsBtn = $('#ms-fullscreen');
-  const fsTarget = document.querySelector('.ms-layout');
+     API 不可用/被拒时降级为 CSS 假全屏（窗口 fixed 盖满视口）。 */
+  const maxBtn = $('#ms-max');
+  const fsTarget = document.querySelector('.ms-window');
 
   function isFullscreen() {
     return Boolean(
       document.fullscreenElement === fsTarget ||
       document.webkitFullscreenElement === fsTarget ||
-      document.body.classList.contains('ms-fs-fake')
+      document.body.classList.contains('ms-win-fake')
     );
   }
   function renderFs() {
-    if (fsBtn) fsBtn.textContent = isFullscreen() ? '⛶ 退出全屏（Esc）' : '⛶ 全屏';
+    if (maxBtn) {
+      maxBtn.textContent = isFullscreen() ? '❐' : '□';
+      maxBtn.title = isFullscreen() ? '还原' : '全屏';
+    }
     fitBoard();
   }
   async function toggleFullscreen() {
@@ -207,29 +213,44 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     if (isFullscreen()) {
       if (document.fullscreenElement || document.webkitFullscreenElement) {
         const exit = document.exitFullscreen || document.webkitExitFullscreen;
-        exit.call(document);
+        const p = exit.call(document);
+        // 某些环境退出时 fullscreenchange 不触发：主动多同步几次
+        if (p && p.then) { p.then(renderFs).catch(renderFs); }
+        setTimeout(renderFs, 120);
+        setTimeout(renderFs, 400);
       } else {
-        document.body.classList.remove('ms-fs-fake');
+        document.body.classList.remove('ms-win-fake');
       }
       renderFs();
       return;
     }
     if (api) {
       try {
-        await api.call(fsTarget);
-        // full-screenchange 事件里也会同步，这里兜底一次布局
+        // 无用户激活的合成点击会让 requestFullscreen 永远挂起 → 800ms 超时转假全屏
+        let entered = false;
+        await Promise.race([
+          api.call(fsTarget).then(() => { entered = true; }),
+          new Promise((_, rej) => setTimeout(() => rej(new Error('fs-timeout')), 800)),
+        ]);
         setTimeout(renderFs, 50);
+        setTimeout(renderFs, 400);
         return;
       } catch {
-        /* 被拒绝（如无用户手势/iframe 限制）→ 走假全屏 */
+        /* 超时/被拒 → 先假全屏兜底；若真全屏迟到生效，fullscreenchange 会摘掉假全屏 */
       }
     }
-    document.body.classList.add('ms-fs-fake');
+    document.body.classList.add('ms-win-fake');
     renderFs();
   }
-  if (fsBtn) fsBtn.addEventListener('click', toggleFullscreen);
-  document.addEventListener('fullscreenchange', renderFs);
+  document.addEventListener('fullscreenchange', () => {
+    // 迟到的真全屏成功时，自动撤掉假全屏
+    if (document.fullscreenElement && document.body.classList.contains('ms-win-fake')) {
+      document.body.classList.remove('ms-win-fake');
+    }
+    renderFs();
+  });
   document.addEventListener('webkitfullscreenchange', renderFs);
+  if (maxBtn) maxBtn.addEventListener('click', toggleFullscreen);
 
   /* 首击后布雷：格子够时避开首击 3×3，保证开局舒服（原版至少保证首击不踩雷）。
      无猜模式会反复调用换盘 —— 必须先清空上一盘的雷与邻数，否则旧雷累积、局面被污染。 */
@@ -961,8 +982,8 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     } else if (e.key === 'Escape') {
       closeMenus();
       closeDialog();
-      if (document.body.classList.contains('ms-fs-fake')) {
-        document.body.classList.remove('ms-fs-fake');
+      if (document.body.classList.contains('ms-win-fake')) {
+        document.body.classList.remove('ms-win-fake');
         renderFs();
       }
     }

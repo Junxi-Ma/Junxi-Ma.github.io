@@ -295,31 +295,50 @@ body.ms-page {
   .ms-lb { width: min(100%, 320px); }
 }
 
-/* ---------- 全屏：整个屏幕只显示扫雷界面 ---------- */
-.ms-layout:fullscreen,
-.ms-layout:-webkit-full-screen {
+/* ---------- 窗口全屏（标题栏 □）：窗口本体铺满整屏，英雄榜不参与 ---------- */
+.ms-window:fullscreen,
+.ms-window:-webkit-full-screen {
   width: 100%;
   height: 100%;
-  background: var(--bg);
-  align-items: center;
-  padding: 20px;
-  overflow: auto;
+  max-width: none;
+  display: flex;
+  flex-direction: column;
+  padding: 0 8px 8px;
+  overflow: hidden;
 }
-.ms-layout:fullscreen .ms-stage,
-.ms-layout:-webkit-full-screen .ms-stage,
-body.ms-fs-fake .ms-stage {
-  flex: 1 1 520px;
-  min-width: 0;
+.ms-window:fullscreen .ms-title,
+.ms-window:-webkit-full-screen .ms-title { margin: 0 -8px 3px; }
+.ms-window:fullscreen .ms-body,
+.ms-window:-webkit-full-screen .ms-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
 }
-/* Fullscreen API 不可用时的降级：CSS 假全屏 */
-body.ms-fs-fake .ms-layout {
+.ms-window:fullscreen .ms-board-outer,
+.ms-window:-webkit-full-screen .ms-board-outer {
+  flex: 1;
+  min-height: 0;
+}
+.ms-window:fullscreen .ms-board,
+.ms-window:-webkit-full-screen .ms-board { margin: 0 auto; }
+
+/* Fullscreen API 不可用/被拒时的降级：CSS 假全屏（盖满视口） */
+body.ms-win-fake .ms-window {
   position: fixed;
   inset: 0;
-  z-index: 70;
-  background: var(--bg);
-  padding: 20px;
-  overflow: auto;
+  z-index: 80;
+  width: auto;
+  max-width: none;
+  display: flex;
+  flex-direction: column;
+  padding: 0 8px 8px;
+  overflow: hidden;
 }
+body.ms-win-fake .ms-title { margin: 0 -8px 3px; }
+body.ms-win-fake .ms-body { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+body.ms-win-fake .ms-board-outer { flex: 1; min-height: 0; }
+body.ms-win-fake .ms-board { margin: 0 auto; }
 
 /* ---------- 窗体下方的站点风格操作条 ---------- */
 .ms-under {
@@ -330,8 +349,7 @@ body.ms-fs-fake .ms-layout {
   gap: 8px 14px;
   max-width: 760px;
 }
-.ms-flagmode,
-.ms-fullscreen {
+.ms-flagmode {
   font: 13px/1.4 inherit;
   color: var(--text-2);
   background: var(--surface-1);
@@ -341,8 +359,7 @@ body.ms-fs-fake .ms-layout {
   cursor: pointer;
   transition: border-color var(--dur-fast) ease, color var(--dur-fast) ease, background var(--dur-fast) ease;
 }
-.ms-flagmode:hover,
-.ms-fullscreen:hover { border-color: var(--border-hover); color: var(--text-1); }
+.ms-flagmode:hover { border-color: var(--border-hover); color: var(--text-1); }
 .ms-flagmode[aria-pressed="true"] {
   color: var(--text-1);
   border-color: rgba(242, 169, 59, 0.55);

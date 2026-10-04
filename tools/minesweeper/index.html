@@ -22,7 +22,7 @@
   </script>
   <link rel="stylesheet" href="../../assets/css/tokens.css">
   <link rel="stylesheet" href="../../assets/css/main.css">
-  <link rel="stylesheet" href="style.css?v=4">
+  <link rel="stylesheet" href="style.css?v=5">
   <style>
     /* ---- 页面骨架：与 json-formatter 逐字一致，顶距内联提供 ----
        （放在页内而不是外部 CSS，确保返回按钮永远不会被固定导航压住） */
@@ -101,6 +101,7 @@
             <span>扫雷</span>
             <span class="t-btns">
               <button class="ms-tbtn" type="button" disabled aria-label="最小化（装饰）">_</button>
+              <button class="ms-tbtn" id="ms-max" type="button" aria-label="最大化：窗口铺满全屏" title="全屏">□</button>
               <a class="ms-tbtn" href="../../tools.html" aria-label="关闭，返回全部工具">×</a>
             </span>
           </div>
@@ -146,8 +147,7 @@
 
         <div class="ms-under">
           <button class="ms-flagmode" id="ms-flagmode" type="button" aria-pressed="false"></button>
-          <button class="ms-fullscreen" id="ms-fullscreen" type="button">⛶ 全屏</button>
-          <p class="ms-tip">电脑：左键挖雷 · 右键插旗 · 中键/双键快开 · F2 重开｜触屏：点按挖雷 · 长按插旗</p>
+          <p class="ms-tip">电脑：左键挖雷 · 右键插旗 · 中键/双键快开 · F2 重开｜触屏：点按挖雷 · 长按插旗｜□ 一键全屏</p>
         </div>
         </div>
 
@@ -196,6 +196,6 @@
   </footer>
 
   <script type="module" src="../../assets/js/main.js"></script>
-  <script type="module" src="app.js?v=5"></script>
+  <script type="module" src="app.js?v=8"></script>
 </body>
 </html>
