@@ -443,3 +443,67 @@ grant execute on function public.admin_edit_post(bigint, text)    to anon, authe
 
 -- 8) 让 PostgREST 立刻刷新接口缓存，否则刚建的函数会报 PGRST202「找不到函数」
 notify pgrst, 'reload schema';
+
+-- ############################################################
+-- 八、扫雷排行榜（经典扫雷工具 /tools/minesweeper/）
+-- ############################################################
+
+-- 1) 成绩表：每次通关写入一行；登录用户带 user_id（游客为 NULL）
+create table if not exists public.minesweeper_records (
+  id         uuid primary key default gen_random_uuid(),
+  user_id    uuid references auth.users(id) on delete cascade,
+  name       text not null default '匿名',
+  difficulty text not null check (difficulty in ('b','i','e')),
+  seconds    int  not null check (seconds >= 0 and seconds <= 999),
+  created_at timestamptz not null default now()
+);
+create index if not exists ms_records_lb_idx   on public.minesweeper_records (difficulty, seconds);
+create index if not exists ms_records_user_idx on public.minesweeper_records (user_id);
+
+-- 2) 登录用户的署名以账号资料为准（防冒名）：插入前改写 name
+create or replace function public.ms_resolve_name()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare pname text;
+begin
+  if new.user_id is not null then
+    select coalesce(p.display_name, split_part(p.email, '@', 1))
+      into pname
+      from public.profiles p
+      where p.id = new.user_id;
+    if pname is not null then
+      new.name := pname;
+    end if;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists ms_resolve_name_trg on public.minesweeper_records;
+create trigger ms_resolve_name_trg
+  before insert on public.minesweeper_records
+  for each row execute function public.ms_resolve_name();
+
+-- 3) 行级安全：榜单全员可读；写入仅限未被封禁者，登录用户只能挂自己的 user_id
+alter table public.minesweeper_records enable row level security;
+
+drop policy if exists "ms records readable" on public.minesweeper_records;
+create policy "ms records readable" on public.minesweeper_records
+  for select to anon, authenticated using (true);
+
+drop policy if exists "not banned can insert ms records" on public.minesweeper_records;
+create policy "not banned can insert ms records"
+  on public.minesweeper_records
+  for insert
+  to anon, authenticated
+  with check (
+    seconds between 0 and 999
+    and difficulty in ('b','i','e')
+    and (user_id is null or user_id = auth.uid())
+    and not coalesce(public.is_banned(), false)
+  );
+
+notify pgrst, 'reload schema';

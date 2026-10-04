@@ -40,18 +40,18 @@ body.ms-page {
 }
 .ms-window *, .ms-window *::before, .ms-window *::after { box-sizing: border-box; }
 
-/* ---------- 标题栏 ---------- */
+/* ---------- 标题栏（游戏窗体与英雄榜面板共用） ---------- */
 .ms-title {
   display: flex;
   align-items: center;
   gap: 5px;
   height: 24px;
-  margin: 0 -6px 3px;
   padding: 0 3px 0 5px;
   background: linear-gradient(90deg, #000080, #1084d0);
   color: #fff;
   font: 700 13px/1 "Microsoft YaHei", "SimSun", sans-serif;
 }
+.ms-window .ms-title { margin: 0 -6px 3px; }
 .ms-title .t-ico { width: 14px; height: 14px; flex: none; }
 .ms-title .t-btns { margin-left: auto; display: flex; gap: 2px; }
 .ms-tbtn {
@@ -215,6 +215,86 @@ body.ms-page {
     var(--f) url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2016%2016'%3E%3Cg%20stroke='%23000'%20stroke-width='1.3'%3E%3Cpath%20d='M8,1V15M1,8H15M3.2,3.2L12.8,12.8M12.8,3.2L3.2,12.8'/%3E%3C/g%3E%3Ccircle%20cx='8'%20cy='8'%20r='4.4'%20fill='%23000'/%3E%3Crect%20x='5.4'%20y='5.4'%20width='1.7'%20height='1.7'%20fill='%23fff'/%3E%3C/svg%3E") center / 76% no-repeat;
 }
 
+/* ---------- 双栏布局：游戏窗体 + 右侧英雄榜 ---------- */
+.ms-layout {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 22px;
+  flex-wrap: wrap;
+}
+.ms-lb {
+  width: 252px;
+  background: var(--f);
+  color: #000;
+  border: 3px solid;
+  border-color: var(--hi) var(--sh) var(--sh) var(--hi);
+  box-shadow: 0 0 0 1px #000, 12px 14px 32px rgba(0, 0, 0, 0.35);
+  font: 13px/1.4 "SimSun", "NSimSun", "Microsoft YaHei", sans-serif;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.ms-lb .ms-lb-live {
+  margin-left: auto;
+  font-weight: 400;
+  font-size: 11px;
+  opacity: 0.85;
+}
+.ms-lb-tabs { display: flex; gap: 3px; padding: 8px 6px 0; }
+.ms-lb-tab {
+  flex: 1;
+  padding: 5px 0;
+  background: var(--f);
+  color: #000;
+  border: 2px solid;
+  border-bottom: 0;
+  border-color: var(--hi) var(--sh) var(--sh) var(--hi);
+  font: 13px "Microsoft YaHei", sans-serif;
+  cursor: pointer;
+}
+.ms-lb-tab.on { background: #000080; color: #fff; border-color: #000080; }
+.ms-lb-list {
+  list-style: none;
+  margin: 0;
+  padding: 8px 10px;
+  min-height: 262px;
+}
+.ms-lb-row { display: flex; align-items: baseline; gap: 8px; padding: 4px 2px; }
+.ms-lb-row + .ms-lb-row { border-top: 1px dotted #a0a0a0; }
+.ms-lb-row .rk { width: 16px; text-align: center; color: #555; font-weight: 700; flex: none; }
+.ms-lb-row .rk1 { color: #b8860b; }
+.ms-lb-row .rk2 { color: #666; }
+.ms-lb-row .rk3 { color: #8c5a2b; }
+.ms-lb-row .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ms-lb-row .tm { font: 700 12px Verdana, "Microsoft YaHei", sans-serif; }
+.ms-lb-row.me { background: #000080; color: #fff; }
+.ms-lb-row.me .rk { color: #ffd; }
+.ms-lb-empty { padding: 26px 4px; text-align: center; color: #555; }
+.ms-lb-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 10px;
+  border-top: 1px solid var(--sh);
+  box-shadow: inset 0 1px 0 var(--hi);
+  color: #444;
+  font-size: 12px;
+}
+.ms-lb-refresh {
+  padding: 2px 10px;
+  background: var(--f);
+  color: #000;
+  cursor: pointer;
+  border: 1px solid;
+  border-color: var(--hi) var(--sh) var(--sh) var(--hi);
+  font: 12px "Microsoft YaHei", sans-serif;
+}
+.ms-lb-refresh:active { border-color: var(--sh) var(--hi) var(--hi) var(--sh); }
+@media (max-width: 900px) {
+  .ms-lb { width: min(100%, 320px); }
+}
+
 /* ---------- 窗体下方的站点风格操作条 ---------- */
 .ms-under {
   display: flex;
@@ -329,8 +409,10 @@ body.ms-page {
 }
 .ms-best-row:last-of-type { border-bottom: 0; }
 .ms-best-row .k { width: 44px; flex: none; }
-.ms-best-row b { min-width: 64px; }
+.ms-best-row b { min-width: 70px; }
 .ms-best-row .n { margin-left: auto; color: #444; }
+.ms-best-row .c { margin-left: auto; color: #444; font: 700 12px Verdana, "Microsoft YaHei", sans-serif; }
+.ms-best-head { color: #444; font-size: 12px; border-bottom: 1px solid #999; padding-bottom: 5px; }
 .ms-note { color: #666; font-size: 12px; }
 .ms-sub { color: #555; }
 

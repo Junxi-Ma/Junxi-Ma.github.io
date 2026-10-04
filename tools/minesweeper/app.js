@@ -3,7 +3,11 @@
    与原版对齐的规则：首击必安全（格子够时避开 3×3）、右键插旗、
    （?）标记、中键/双键快开（chording）、计时上限 999、
    计数器可为负；触屏适配：点按挖雷、长按插旗、点按已开数字快开。
+   云端（Supabase）：登录用户破纪录自动署名上云；右侧英雄榜为
+   全站初/中/高级最短用时 Top 10；云端不可用时静默回退纯本地。
    ============================================================ */
+import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
+
 (() => {
   'use strict';
 
@@ -97,6 +101,13 @@
   let marksOn = store.get(KEYS.marks, true) !== false;
   let flagMode = store.get(KEYS.fm, false) === true;
   let noGuess = store.get(KEYS.ng, true) !== false;
+
+  /* ---------- 云端（Supabase）状态 ----------
+     cloudSb 为 null 时全部功能静默降级为纯本地（后端未配置/加载失败）；
+     cloudUser 为 null 表示游客（破纪录时才需要输入署名）。 */
+  let cloudSb = null;
+  let cloudUser = null;
+  let lbTab = 'b';
 
   let cols, rows, mines, n;
   let isMine, adj, open, mark; // mark: 0 无 / 1 旗 / 2 问号
@@ -629,6 +640,19 @@
   function openBest() {
     showDialog('最佳纪录', (body) => {
       const best = store.get(KEYS.best, {});
+      const head = document.createElement('div');
+      head.className = 'ms-best-row ms-best-head';
+      const h0 = document.createElement('span');
+      h0.className = 'k';
+      h0.textContent = '等级';
+      const h1 = document.createElement('b');
+      h1.textContent = '本机纪录';
+      const h2 = document.createElement('span');
+      h2.className = 'c';
+      h2.textContent = '云端我的最好';
+      head.append(h0, h1, h2);
+      body.appendChild(head);
+      const cloudCells = {};
       for (const k of ['b', 'i', 'e']) {
         const row = document.createElement('div');
         row.className = 'ms-best-row';
@@ -636,24 +660,46 @@
         kEl.className = 'k';
         kEl.textContent = PRESETS[k].name;
         const tEl = document.createElement('b');
-        tEl.textContent = best[k] ? `${best[k].t} 秒` : '999 秒';
-        const nEl = document.createElement('span');
-        nEl.className = 'n';
-        nEl.textContent = best[k] ? best[k].n : '匿名';
-        row.append(kEl, tEl, nEl);
+        tEl.textContent = best[k] ? `${best[k].t} 秒` : '—';
+        const cEl = document.createElement('span');
+        cEl.className = 'c';
+        cEl.textContent = '…';
+        cloudCells[k] = cEl;
+        row.append(kEl, tEl, cEl);
         body.appendChild(row);
+      }
+      // 云端该登录账号各难度的最好成绩（换设备也看得到）
+      if (cloudSb && cloudUser) {
+        cloudSb.from('minesweeper_records')
+          .select('difficulty,seconds')
+          .eq('user_id', cloudUser.id)
+          .then(({ data, error }) => {
+            if (error) throw error;
+            const top = {};
+            for (const r of data || []) {
+              if (!(r.difficulty in top) || r.seconds < top[r.difficulty]) top[r.difficulty] = r.seconds;
+            }
+            for (const k of ['b', 'i', 'e']) cloudCells[k].textContent = k in top ? `${top[k]} 秒` : '—';
+          })
+          .catch(() => {
+            for (const k of ['b', 'i', 'e']) cloudCells[k].textContent = '—';
+          });
+      } else {
+        for (const k of ['b', 'i', 'e']) cloudCells[k].textContent = '—';
       }
       const note = document.createElement('p');
       note.className = 'ms-note';
       note.style.marginTop = '10px';
-      note.textContent = '自定义棋盘不计入纪录。';
+      note.textContent = cloudUser
+        ? '本机纪录存在这台设备；云端成绩登录后全设备同步，并参与右侧全站英雄榜。自定义棋盘不计入。'
+        : '本机纪录保存在这台设备。登录后成绩自动署名上云、全设备同步并参与右侧全站英雄榜。自定义棋盘不计入。';
       body.appendChild(note);
       const foot = document.createElement('div');
       foot.className = 'ms-dlg-foot right';
       const reset = document.createElement('button');
       reset.className = 'ms-btn';
       reset.type = 'button';
-      reset.textContent = '清除纪录';
+      reset.textContent = '清除本机纪录';
       reset.addEventListener('click', () => {
         store.set(KEYS.best, {});
         closeDialog();
@@ -673,7 +719,8 @@
     showDialog('关于扫雷', (body) => {
       body.innerHTML = `
         <p style="text-align:center; font-size:15px;"><b>经典扫雷 · 复刻版</b></p>
-        <p>忠实复刻 Windows 9x 自带的扫雷：三档难度与自定义棋盘、（?）标记、双键快开与最佳纪录。默认开启无猜模式——每盘都经过求解器验证，纯逻辑可通关，不会遇到只能二选一的死局；可在「游戏」菜单关闭，回归原版随机。</p>
+        <p>忠实复刻 Windows 9x 自带的扫雷：三档难度与自定义棋盘、（?）标记、双键快开。默认开启无猜模式——每盘都经过求解器验证，纯逻辑可通关，不会遇到只能二选一的死局；可在「游戏」菜单关闭，回归原版随机。</p>
+        <p class="ms-sub">通关成绩上云参与右侧「英雄榜」（初/中/高级各自的全站最短用时 Top 10）：登录后自动用账号昵称署名、全设备同步；游客破纪录时输入一次大名即可上榜。</p>
         <p class="ms-sub">电脑：左键挖雷 · 右键插旗 · 中键/双键快开 · F2 重开<br>触屏：点按挖雷 · 长按插旗 · 底部可切换插旗模式</p>
         <p class="ms-sub">Michael 的工具站 · 全程本地运行</p>
         <div class="ms-dlg-foot"><button class="ms-btn default" id="ms-aok" type="button">确定</button></div>`;
@@ -681,19 +728,93 @@
     });
   }
 
+  /* ---------- 云端：身份 / 成绩上报 ---------- */
+  async function initCloud() {
+    if (!isConfigured()) {
+      renderLbNote('未连接云端');
+      return;
+    }
+    try {
+      const sb = await getSupabase();
+      if (!sb) {
+        renderLbNote('云端暂不可用');
+        return;
+      }
+      cloudSb = sb;
+      const { data } = await sb.auth.getSession();
+      setCloudUser(data?.session?.user ?? null);
+      sb.auth.onAuthStateChange(() => {
+        sb.auth.getSession()
+          .then(({ data }) => setCloudUser(data?.session?.user ?? null))
+          .catch(() => {});
+      });
+      loadLeaderboard();
+    } catch {
+      renderLbNote('云端暂不可用');
+    }
+  }
+
+  function setCloudUser(u) {
+    cloudUser = u ? {
+      id: u.id,
+      name: u.user_metadata?.display_name || (u.email ? u.email.split('@')[0] : '用户'),
+    } : null;
+    if (cloudSb) loadLeaderboard(); // 登录态变化后重新高亮榜上自己的记录
+  }
+
+  /* 每次通关（初/中/高级）都上报云端榜；失败静默，本地纪录不受影响 */
+  async function submitRecord(diffKey, seconds) {
+    if (!cloudSb) return;
+    const name = cloudUser ? cloudUser.name : (store.get(KEYS.name, '') || '匿名');
+    try {
+      const { error } = await cloudSb.from('minesweeper_records').insert({
+        user_id: cloudUser ? cloudUser.id : null,
+        name,
+        difficulty: diffKey,
+        seconds,
+      });
+      if (error) throw error;
+      loadLeaderboard();
+    } catch (e) {
+      console.warn('[扫雷] 云端成绩提交失败：', e?.message || e);
+    }
+  }
+
   function maybeRecord() {
     if (!PRESETS[presetKey]) return; // 自定义不入榜
     const best = store.get(KEYS.best, {});
     const old = best[presetKey];
-    if (old && time >= old.t) return;
+    if (old && time >= old.t) {
+      // 不是本机新纪录：不弹窗，成绩仍上报云端榜
+      submitRecord(presetKey, time);
+      return;
+    }
     const diffName = PRESETS[presetKey].name;
     showDialog('新纪录！', (body) => {
       const p = document.createElement('p');
-      p.innerHTML = `你用 <b>${time}</b> 秒完成${diffName}，荣登榜首！<br>留下大名：`;
-      const input = document.createElement('input');
-      input.className = 'ms-input';
-      input.maxLength = 16;
-      input.value = store.get(KEYS.name, '匿名');
+      p.innerHTML = `你用 <b>${time}</b> 秒完成${diffName}，刷新本机纪录！`;
+      body.appendChild(p);
+      let nameInput = null;
+      if (cloudUser) {
+        // 登录用户：直接用登录名，免输入
+        const signed = document.createElement('p');
+        signed.className = 'ms-sub';
+        signed.textContent = `署名：${cloudUser.name}（登录账号自动署名）`;
+        body.appendChild(signed);
+      } else {
+        const field = document.createElement('div');
+        field.className = 'ms-field';
+        const lab = document.createElement('label');
+        lab.textContent = '留下大名：';
+        lab.htmlFor = 'ms-rn';
+        nameInput = document.createElement('input');
+        nameInput.className = 'ms-input';
+        nameInput.id = 'ms-rn';
+        nameInput.maxLength = 16;
+        nameInput.value = store.get(KEYS.name, '匿名');
+        field.append(lab, nameInput);
+        body.appendChild(field);
+      }
       const foot = document.createElement('div');
       foot.className = 'ms-dlg-foot';
       const ok = document.createElement('button');
@@ -701,19 +822,84 @@
       ok.type = 'button';
       ok.textContent = '确定';
       const save = () => {
-        const name = input.value.trim() || '匿名';
-        store.set(KEYS.name, name);
+        const name = cloudUser ? cloudUser.name : (nameInput.value.trim() || '匿名');
+        if (nameInput) store.set(KEYS.name, name);
         best[presetKey] = { t: time, n: name, d: new Date().toISOString().slice(0, 10) };
         store.set(KEYS.best, best);
+        submitRecord(presetKey, time);
         closeDialog();
       };
       ok.addEventListener('click', save);
-      input.addEventListener('keydown', (e) => { if (e.key === 'Enter') save(); });
+      if (nameInput) nameInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') save(); });
       foot.appendChild(ok);
-      body.append(p, input, foot);
-      setTimeout(() => { input.focus(); input.select(); }, 0);
+      body.append(foot);
+      if (nameInput) setTimeout(() => { nameInput.focus(); nameInput.select(); }, 0);
     });
   }
+
+  /* ---------- 右侧全站英雄榜 ---------- */
+  const lbListEl = $('#ms-lb-list');
+  const lbNoteEl = $('#ms-lb-note');
+
+  function renderLbNote(msg, emptyText) {
+    if (!lbNoteEl) return;
+    lbNoteEl.textContent = msg;
+    if (!lbListEl) return;
+    const li = document.createElement('li');
+    li.className = 'ms-lb-empty';
+    li.textContent = emptyText || '—';
+    lbListEl.replaceChildren(li);
+  }
+
+  async function loadLeaderboard() {
+    if (!cloudSb || !lbListEl) return;
+    lbNoteEl.textContent = '读取中…';
+    try {
+      const { data, error } = await cloudSb.from('minesweeper_records')
+        .select('name,seconds,user_id')
+        .eq('difficulty', lbTab)
+        .order('seconds', { ascending: true })
+        .order('created_at', { ascending: true })
+        .limit(10);
+      if (error) throw error;
+      lbNoteEl.textContent = '全站共享 · 最短用时';
+      if (!data || !data.length) {
+        renderLbNote('全站共享 · 最短用时', '虚位以待，快来霸榜！');
+        return;
+      }
+      const rows = data.map((r, idx) => {
+        const li = document.createElement('li');
+        li.className = 'ms-lb-row' + (cloudUser && r.user_id === cloudUser.id ? ' me' : '');
+        const rk = document.createElement('span');
+        rk.className = 'rk' + (idx < 3 ? ' rk' + (idx + 1) : '');
+        rk.textContent = idx + 1;
+        const nm = document.createElement('span');
+        nm.className = 'nm';
+        nm.textContent = r.name || '匿名';
+        const tm = document.createElement('span');
+        tm.className = 'tm';
+        tm.textContent = `${r.seconds} 秒`;
+        li.append(rk, nm, tm);
+        return li;
+      });
+      lbListEl.replaceChildren(...rows);
+    } catch (e) {
+      console.warn('[扫雷] 排行榜读取失败：', e?.message || e);
+      renderLbNote('云端暂不可用', '榜单暂时读不到');
+    }
+  }
+
+  for (const btn of document.querySelectorAll('.ms-lb-tab')) {
+    btn.addEventListener('click', () => {
+      lbTab = btn.dataset.lb;
+      for (const t of document.querySelectorAll('.ms-lb-tab')) {
+        t.classList.toggle('on', t === btn);
+        t.setAttribute('aria-selected', String(t === btn));
+      }
+      loadLeaderboard();
+    });
+  }
+  $('#ms-lb-refresh')?.addEventListener('click', loadLeaderboard);
 
   /* ---------- 其余入口 ---------- */
   faceEl.addEventListener('click', newGame);
@@ -748,4 +934,5 @@
   syncMenuChecks();
   newGame();
   window.addEventListener('resize', fitBoard);
+  initCloud();
 })();
