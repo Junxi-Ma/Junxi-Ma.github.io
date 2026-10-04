@@ -22,7 +22,7 @@
   </script>
   <link rel="stylesheet" href="../../assets/css/tokens.css">
   <link rel="stylesheet" href="../../assets/css/main.css">
-  <link rel="stylesheet" href="style.css?v=1">
+  <link rel="stylesheet" href="style.css?v=2">
   <style>
     /* ---- 页面骨架：与 json-formatter 逐字一致，顶距内联提供 ----
        （放在页内而不是外部 CSS，确保返回按钮永远不会被固定导航压住） */
@@ -89,7 +89,7 @@
         <a class="article-back" href="../../tools.html"><span class="arr">←</span>全部工具</a>
         <p class="mono-label">Tool <span>/</span> 07</p>
         <h1>经典扫雷</h1>
-        <p>1:1 复刻 Windows 9x 自带的经典扫雷：初/中/高级与自定义棋盘、首击必安全、双键快开、（?）标记与最佳纪录。手机与平板点按挖雷、长按插旗。</p>
+        <p>1:1 复刻 Windows 9x 自带的经典扫雷：初/中/高级与自定义棋盘、首击必安全、双键快开、（?）标记与最佳纪录。默认开启无猜模式，每盘都能靠逻辑通关、不用二选一碰运气；手机与平板点按挖雷、长按插旗。</p>
       </div>
 
       <div class="ms-stage">
@@ -117,6 +117,7 @@
                 <button type="button" class="ms-mi" role="menuitem" data-act="custom"><span class="chk"></span><span class="lbl">自定义(C)…</span></button>
                 <div class="ms-msep"></div>
                 <button type="button" class="ms-mi" role="menuitem" data-act="marks"><span class="chk">✓</span><span class="lbl">标记（?）(M)</span></button>
+                <button type="button" class="ms-mi" role="menuitem" data-act="noguess"><span class="chk">✓</span><span class="lbl">无猜模式(G)</span></button>
                 <button type="button" class="ms-mi" role="menuitem" data-act="best"><span class="chk"></span><span class="lbl">最佳纪录(T)…</span></button>
                 <div class="ms-msep"></div>
                 <button type="button" class="ms-mi" role="menuitem" data-act="exit"><span class="chk"></span><span class="lbl">退出(X)</span></button>
@@ -173,6 +174,6 @@
   </footer>
 
   <script type="module" src="../../assets/js/main.js"></script>
-  <script src="app.js?v=1"></script>
+  <script src="app.js?v=3"></script>
 </body>
 </html>

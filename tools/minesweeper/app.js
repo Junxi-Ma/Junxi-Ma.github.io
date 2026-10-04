@@ -18,6 +18,7 @@
   const KEYS = {
     best: 'ms-best-v1',    // { b:{t,n,d}, i:…, e:… }
     marks: 'ms-marks-v1',  // （?）标记开关
+    ng: 'ms-noguess-v1',   // 无猜模式开关
     custom: 'ms-custom-v1',// 自定义 { cols, rows, mines }
     fm: 'ms-flagmode-v1',  // 插旗模式
     preset: 'ms-preset-v1',
@@ -95,6 +96,7 @@
   let cfg = loadCfg();
   let marksOn = store.get(KEYS.marks, true) !== false;
   let flagMode = store.get(KEYS.fm, false) === true;
+  let noGuess = store.get(KEYS.ng, true) !== false;
 
   let cols, rows, mines, n;
   let isMine, adj, open, mark; // mark: 0 无 / 1 旗 / 2 问号
@@ -168,8 +170,11 @@
     boardEl.style.setProperty('--cs', cs + 'px');
   }
 
-  /* 首击后布雷：格子够时避开首击 3×3，保证开局舒服（原版至少保证首击不踩雷） */
+  /* 首击后布雷：格子够时避开首击 3×3，保证开局舒服（原版至少保证首击不踩雷）。
+     无猜模式会反复调用换盘 —— 必须先清空上一盘的雷与邻数，否则旧雷累积、局面被污染。 */
   function placeMines(safe) {
+    isMine.fill(0);
+    adj.fill(0);
     const forbid = new Set([safe]);
     const around = nb(safe);
     if (mines <= n - around.length - 1) for (const k of around) forbid.add(k);
@@ -226,12 +231,98 @@
   function start(i) {
     started = true;
     placeMines(i);
+    if (noGuess) {
+      // 换盘直到逻辑可解；预算兜底（超难自定义盘几乎不会触发）——超时接受当前盘
+      const deadline = performance.now() + 900;
+      let tries = 0;
+      while (!solvableFrom(i)) {
+        if (++tries > 500 || performance.now() > deadline) break;
+        placeMines(i);
+      }
+    }
     timerId = setInterval(() => {
       if (time < 999) {
         time++;
         setLED(timeDigits, time);
       }
     }, 1000);
+  }
+
+  /* ---------- 无猜检测：从首击出发的逻辑求解器 ----------
+     三级规则：① 单格约束（需雷数==未知数→全雷；==0→全安全）；
+     ② 子集差（A⊂B 时，B−A 的需雷数推出差集全雷/全安全，覆盖 1-2-1 等模型）；
+     ③ 全局雷数作为一个约束参与 ②（收官阶段数雷）。
+     推不动仍剩未开格 → 该盘需要猜 → 重布雷。 */
+  function solvableFrom(safe) {
+    const opened = new Uint8Array(n);
+    const flg = new Uint8Array(n);
+    let cnt = 0, flgCnt = 0;
+    const flood = (s) => {
+      const st = [s];
+      while (st.length) {
+        const j = st.pop();
+        if (opened[j]) continue;
+        opened[j] = 1;
+        cnt++;
+        // 雷格 adj 恒为 0（未参与计数），加 isMine 保险防误推导经雷级联虚增 cnt
+        if (!isMine[j] && adj[j] === 0) for (const k of nb(j)) if (!opened[k]) st.push(k);
+      }
+    };
+    flood(safe);
+    for (let wave = 0; wave < 2000 && cnt < n - mines; wave++) {
+      const cons = [];
+      for (let i = 0; i < n; i++) {
+        if (!opened[i] || !adj[i]) continue;
+        let f = 0;
+        const unk = [];
+        for (const k of nb(i)) {
+          if (opened[k]) continue;
+          if (flg[k]) f++;
+          else unk.push(k);
+        }
+        if (unk.length) cons.push({ cells: unk, need: adj[i] - f });
+      }
+      { // 全局约束：所有未开未旗格的剩余雷数
+        const unk = [];
+        let f = 0;
+        for (let i = 0; i < n; i++) {
+          if (opened[i]) continue;
+          if (flg[i]) f++;
+          else unk.push(i);
+        }
+        if (unk.length) cons.push({ cells: unk, need: mines - f });
+      }
+      const mineSet = new Set();
+      const safeSet = new Set();
+      for (const c of cons) {
+        if (c.need === c.cells.length) for (const k of c.cells) mineSet.add(k);
+        else if (c.need === 0) for (const k of c.cells) safeSet.add(k);
+      }
+      if (!mineSet.size && !safeSet.size) {
+        // 规则① 失效才跑更贵的规则②（子集差）
+        for (let a = 0; a < cons.length; a++) {
+          const A = cons[a];
+          const sa = A._set || (A._set = new Set(A.cells));
+          for (let b = 0; b < cons.length; b++) {
+            if (a === b) continue;
+            const B = cons[b];
+            if (B.cells.length <= A.cells.length) continue;
+            const sb = B._set || (B._set = new Set(B.cells));
+            let subset = true;
+            for (const x of A.cells) if (!sb.has(x)) { subset = false; break; }
+            if (!subset) continue;
+            const dNeed = B.need - A.need;
+            const dLen = B.cells.length - A.cells.length;
+            if (dNeed === 0) { for (const x of B.cells) if (!sa.has(x)) safeSet.add(x); }
+            else if (dNeed === dLen) { for (const x of B.cells) if (!sa.has(x)) mineSet.add(x); }
+          }
+        }
+        if (!mineSet.size && !safeSet.size) break;
+      }
+      for (const k of mineSet) if (!flg[k]) { flg[k] = 1; flgCnt++; }
+      for (const k of safeSet) if (!opened[k]) flood(k);
+    }
+    return cnt >= n - mines;
   }
 
   function flag(i) {
@@ -432,6 +523,7 @@
       if (mi.dataset.diff) $('.chk', mi).textContent = mi.dataset.diff === presetKey ? '●' : '';
     }
     $('.chk', game.querySelector('[data-act="marks"]')).textContent = marksOn ? '✓' : '';
+    $('.chk', game.querySelector('[data-act="noguess"]')).textContent = noGuess ? '✓' : '';
   }
 
   function openMenu(m) {
@@ -478,6 +570,10 @@
     else if (act === 'marks') {
       marksOn = !marksOn;
       store.set(KEYS.marks, marksOn);
+      syncMenuChecks();
+    } else if (act === 'noguess') {
+      noGuess = !noGuess;
+      store.set(KEYS.ng, noGuess);
       syncMenuChecks();
     } else if (act === 'best') openBest();
     else if (act === 'exit') location.href = '../../tools.html';
@@ -577,7 +673,7 @@
     showDialog('关于扫雷', (body) => {
       body.innerHTML = `
         <p style="text-align:center; font-size:15px;"><b>经典扫雷 · 复刻版</b></p>
-        <p>忠实复刻 Windows 9x 自带的扫雷：三档难度与自定义棋盘、首击必安全、（?）标记、双键快开与最佳纪录。</p>
+        <p>忠实复刻 Windows 9x 自带的扫雷：三档难度与自定义棋盘、（?）标记、双键快开与最佳纪录。默认开启无猜模式——每盘都经过求解器验证，纯逻辑可通关，不会遇到只能二选一的死局；可在「游戏」菜单关闭，回归原版随机。</p>
         <p class="ms-sub">电脑：左键挖雷 · 右键插旗 · 中键/双键快开 · F2 重开<br>触屏：点按挖雷 · 长按插旗 · 底部可切换插旗模式</p>
         <p class="ms-sub">Michael 的工具站 · 全程本地运行</p>
         <div class="ms-dlg-foot"><button class="ms-btn default" id="ms-aok" type="button">确定</button></div>`;

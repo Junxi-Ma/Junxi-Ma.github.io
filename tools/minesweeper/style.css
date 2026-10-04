@@ -7,6 +7,13 @@
 /* 局部样式显式 display 会覆盖 hidden 属性（掼蛋页的教训），统一兜底 */
 body.ms-page [hidden] { display: none !important; }
 
+/* Win98 调色定义在 body 级：模态对话框不在 .ms-window 里，也要取到这几个变量 */
+body.ms-page {
+  --f: #c0c0c0;   /* 窗体灰 */
+  --hi: #ffffff;  /* 高光 */
+  --sh: #808080;  /* 阴影 */
+}
+
 .ms-stage {
   display: flex;
   flex-direction: column;
@@ -17,9 +24,6 @@ body.ms-page [hidden] { display: none !important; }
 
 /* ---------- 窗体 ---------- */
 .ms-window {
-  --f: #c0c0c0;   /* 窗体灰 */
-  --hi: #ffffff;  /* 高光 */
-  --sh: #808080;  /* 阴影 */
   background: var(--f);
   border: 3px solid;
   border-color: var(--hi) var(--sh) var(--sh) var(--hi);
