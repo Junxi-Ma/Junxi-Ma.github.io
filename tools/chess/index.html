@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>国际象棋 — Michael</title>
+  <meta name="description" content="国际象棋：人机对弈四档 AI（α-β 剪枝搜索），也可创建房间与好友联机对弈，实时同步、完整规则判定。">
+  <meta name="theme-color" content="#0a0a0b">
+  <meta name="color-scheme" content="dark light">
+  <link rel="icon" type="image/svg+xml" href="../../assets/img/favicon.svg">
+  <script>
+    (function () {
+      var t = null;
+      try { t = localStorage.getItem('site-theme'); } catch (e) {}
+      if (t !== 'dark' && t !== 'light') t = 'dark';
+      document.documentElement.dataset.theme = t;
+      document.documentElement.classList.add('js');
+      var m = document.querySelector('meta[name="theme-color"]');
+      if (m) m.content = t === 'light' ? '#faf8f5' : '#0a0a0b';
+    })();
+  </script>
+  <link rel="stylesheet" href="../../assets/css/tokens.css">
+  <link rel="stylesheet" href="../../assets/css/main.css">
+  <link rel="stylesheet" href="style.css?v=3">
+  <style>
+    .tool {
+      padding-top: calc(var(--nav-h) + clamp(40px, 7vw, 72px));
+      padding-bottom: 0;
+    }
+    .tool__head { max-width: 720px; margin-bottom: 10px; }
+    .tool__head h1 { font-size: var(--fs-h1); letter-spacing: -0.02em; margin-top: 22px; }
+    .tool__head p { margin-top: 14px; color: var(--text-2); line-height: 1.7; }
+    @media (max-width: 640px) {
+      .tool__head h1 { font-size: clamp(28px, 8vw, 36px); }
+    }
+  </style>
+</head>
+<body class="ch-page">
+  <a class="skip-link" href="#main">跳到主要内容</a>
+
+  <header class="nav" id="nav">
+    <div class="container nav__inner">
+      <a class="nav__logo" href="../../index.html" aria-label="Michael 首页">Michael<i>.</i></a>
+      <nav class="nav__links" id="nav-links" aria-label="主导航">
+        <a href="../../index.html">首页</a>
+        <a href="../../tools.html" aria-current="page">工具</a>
+        <a href="../../notes.html">笔记</a>
+        <a href="../../branches.html">分支</a>
+        <a href="../../index.html#about">关于</a>
+      </nav>
+      <div class="nav__actions">
+        <button class="nav__icon" id="theme-toggle" type="button" aria-label="切换到浅色模式" title="浅色模式">
+          <svg class="ico-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="4"/>
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+          </svg>
+          <svg class="ico-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+        </button>
+        <button class="nav__toggle" id="nav-toggle" aria-label="打开菜单" aria-expanded="false" aria-controls="nav-links">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+            <path d="M4 7h16M4 12h16M4 17h16"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <div class="container tool">
+      <div class="tool__head">
+        <a class="article-back" href="../../tools.html"><span class="arr">←</span>全部工具</a>
+        <p class="mono-label">Tool <span>/</span> 09</p>
+        <h1>国际象棋</h1>
+        <p>选择对局模式进入全屏棋盘：人机对弈内置 α-β 剪枝搜索的四档 AI，双人联机以房间码即邀请函，走子实时同步，完整规则判定（易位、吃过路兵、升变、将杀、逼和与和棋）。</p>
+      </div>
+
+      <!-- 启动器：选择模式 -->
+      <div class="ch-launcher" id="ch-launcher">
+        <div class="ch-cards">
+          <div class="ch-card-big">
+            <div class="ch-big-ico">♞</div>
+            <h3>人机对弈</h3>
+            <p>α-β 剪枝搜索 AI，四档棋力任选。</p>
+            <p class="ch-label">AI 难度</p>
+            <div class="ch-chips" id="ch-aidiff">
+              <button type="button" class="ch-chip" data-v="0">新手</button>
+              <button type="button" class="ch-chip" data-v="1">业余</button>
+              <button type="button" class="ch-chip on" data-v="2">棋手</button>
+              <button type="button" class="ch-chip" data-v="3">大师</button>
+            </div>
+            <p class="ch-label">我执</p>
+            <div class="ch-chips" id="ch-aiside">
+              <button type="button" class="ch-chip on" data-v="w">执白先行</button>
+              <button type="button" class="ch-chip" data-v="b">执黑</button>
+            </div>
+            <button type="button" class="ch-btn primary wide" id="ch-start-ai">开始对弈 →</button>
+          </div>
+
+          <div class="ch-card-big">
+            <div class="ch-big-ico">♛</div>
+            <h3>双人联机</h3>
+            <p>创建房间，把房间码发给好友即可对弈。</p>
+            <button type="button" class="ch-btn primary wide" id="ch-create">✚ 创建房间</button>
+            <p class="ch-label" style="margin-top:14px">已有房间码？</p>
+            <div class="ch-joinrow">
+              <input class="ch-code-input" id="ch-code-input" maxlength="5" placeholder="房间码" autocomplete="off">
+              <button type="button" class="ch-btn" id="ch-join">加入</button>
+            </div>
+          </div>
+        </div>
+        <p class="ch-tip">完整规则：王车易位、吃过路兵、升变、将杀、逼和与和棋判定｜对局内 □ 外的按钮可退出或真全屏</p>
+      </div>
+    </div>
+  </main>
+
+  <!-- 对局视图：铺满整屏的棋盘 -->
+  <div class="ch-game" id="ch-game" hidden>
+    <div class="ch-topbar">
+      <button type="button" class="ch-tbtn" id="ch-exit" title="退出对局">← 退出</button>
+      <span class="ch-modechip" id="ch-modechip">人机</span>
+      <span class="ch-status" id="ch-status"></span>
+      <span class="ch-spacer"></span>
+      <span class="ch-roomchip" id="ch-roomchip" hidden></span>
+      <span class="ch-clock" id="ch-clock"></span>
+      <button type="button" class="ch-tbtn" id="ch-undo" title="悔棋（人机模式）">悔棋</button>
+      <button type="button" class="ch-tbtn" id="ch-resign" title="认输">认输</button>
+      <button type="button" class="ch-tbtn" id="ch-flip" title="翻转棋盘">翻转</button>
+      <button type="button" class="ch-tbtn" id="ch-fs" title="真全屏（隐藏浏览器界面）">⛶</button>
+    </div>
+    <div class="ch-capstrip" id="ch-cap-top" aria-label="黑方被吃子"></div>
+    <div class="ch-board" id="ch-board" role="grid" aria-label="国际象棋棋盘"></div>
+    <div class="ch-capstrip" id="ch-cap-bottom" aria-label="白方被吃子"></div>
+  </div>
+
+  <!-- 升变选择 -->
+  <div class="ch-modal" id="ch-promo" hidden>
+    <div class="ch-promo-card">
+      <p class="ch-label" style="text-align:center">选择升变</p>
+      <div class="ch-promo-row" id="ch-promo-row"></div>
+    </div>
+  </div>
+
+  <!-- 结果对话框 -->
+  <div class="ch-modal" id="ch-modal" hidden>
+    <div class="ch-card" role="dialog" aria-modal="true" aria-labelledby="ch-card-title">
+      <h3 id="ch-card-title"></h3>
+      <p id="ch-card-text"></p>
+      <div class="ch-actions">
+        <button type="button" class="ch-btn primary" id="ch-card-ok">好的</button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="container footer__inner">
+      <span>© <span data-year>2026</span> Michael · <span class="footer__heart">♥</span> 手工打造 · 动静结合</span>
+      <nav class="footer__links" aria-label="页脚导航">
+        <a href="../../tools.html">Tools</a>
+        <a href="../../notes.html">Notes</a>
+        <a href="https://github.com/" target="_blank" rel="noopener noreferrer">GitHub</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script type="module" src="../../assets/js/main.js"></script>
+  <script type="module" src="app.js?v=2"></script>
+</body>
+</html>

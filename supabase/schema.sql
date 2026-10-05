@@ -739,3 +739,40 @@ create policy "admins can update site settings" on public.site_settings
   for update to authenticated using (public.is_admin()) with check (public.is_admin());
 
 notify pgrst, 'reload schema';
+
+-- ############################################################
+-- 十、国际象棋联机房间（/tools/chess/，房间码即凭证）
+-- ############################################################
+
+-- 1) 房间表：fen 为局面真相，moves 为 SAN 走子列表
+create table if not exists public.chess_rooms (
+  code        text primary key,
+  fen         text not null,
+  moves       jsonb not null default '[]',
+  white_name  text not null default '',
+  black_name  text not null default '',
+  status      text not null default 'waiting', -- waiting | playing | finished
+  result      text not null default '',
+  created_at  timestamptz not null default now(),
+  updated_at  timestamptz not null default now()
+);
+
+-- 2) 行级安全：房间码即准入凭证（同外出房间套路）
+alter table public.chess_rooms enable row level security;
+
+drop policy if exists "chess rooms readable" on public.chess_rooms;
+create policy "chess rooms readable" on public.chess_rooms
+  for select to anon, authenticated using (true);
+drop policy if exists "chess rooms creatable" on public.chess_rooms;
+create policy "chess rooms creatable" on public.chess_rooms
+  for insert to anon, authenticated with check (true);
+drop policy if exists "chess rooms editable" on public.chess_rooms;
+create policy "chess rooms editable" on public.chess_rooms
+  for update to anon, authenticated using (true) with check (true);
+
+-- 3) 实时推送
+do $$
+begin
+  alter publication supabase_realtime add table public.chess_rooms;
+exception when duplicate_object then null;
+end $$;
