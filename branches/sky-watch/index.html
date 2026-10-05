@@ -72,7 +72,8 @@ header.top{position:sticky;top:0;z-index:50;background:rgba(12,17,24,.86);backdr
 .img-note{padding:0 14px 12px;font-size:12px;color:var(--txt3)}
 .img-note b{color:var(--txt2)}
 .img-fallback{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:repeating-linear-gradient(45deg,#f4f6f9 0 14px,#eef1f5 14px 28px);color:#5a6b7d;font-size:13px;text-align:center;padding:16px}
-.seg{display:inline-flex;border:1px solid var(--line2);border-radius:9px;overflow:hidden;font-size:12px}
+.seg{display:inline-flex;border:1px solid var(--line2);border-radius:9px;overflow:hidden;font-size:12px;flex-wrap:wrap}
+#chartSeg{border-radius:11px}
 .seg button{border:0;background:transparent;color:var(--txt2);padding:5px 10px}
 .seg button.active{background:var(--cyan-dim);color:var(--cyan);font-weight:700}
 .favrow{display:flex;align-items:center;gap:10px;margin:14px 0 6px;flex-wrap:wrap}
@@ -196,14 +197,17 @@ header.top{position:sticky;top:0;z-index:50;background:rgba(12,17,24,.86);backdr
     <div class="charts">
       <div class="chart-card">
         <div class="chart-head">
-          <h3>地面天气图</h3><span class="chart-kind">等压线 · 锋面</span>
+          <h3>天气图</h3><span class="chart-kind" id="chartKind">等压线 · 锋面</span>
           <span class="chart-meta" id="chartMeta"></span>
         </div>
-        <div class="imgwrap" id="chartWrap">
-          <img id="chartImg" alt="地面天气图" crossorigin="anonymous" referrerpolicy="no-referrer" hidden>
-          <div class="img-fallback" id="chartFall" hidden>该时次天气图尚未发布<br>（通常在观测后 1~2 小时内上线）<br><button class="btn small" data-retry="chart">重试</button></div>
+        <div class="chart-head" style="padding-top:0">
+          <span class="seg" id="chartSeg" title="高空图每日 08/20 时（北京时）两次观测"></span>
         </div>
-        <div class="img-note"><b>读图提示</b>：看高低压中心（H/L）与槽脊走向，锁定锋面位置和云雨带的对应关系。</div>
+        <div class="imgwrap" id="chartWrap">
+          <img id="chartImg" alt="天气图" crossorigin="anonymous" referrerpolicy="no-referrer" hidden>
+          <div class="img-fallback" id="chartFall" hidden></div>
+        </div>
+        <div class="img-note" id="chartNote"><b>读图提示</b>：看高低压中心（H/L）与槽脊走向，锁定锋面位置和云雨带的对应关系。</div>
       </div>
 
       <div class="chart-card">
@@ -338,10 +342,19 @@ function slotTabLabel(bjSlot){
 }
 
 /* ═══════════════════ NMC 图源（URL 时标为 UTC） ═══════════════════ */
-function chartURL(realUTC){
+const CHART_LEVELS = [
+  { code: 'L00', label: '地面',   kind: '等压线 · 锋面' },
+  { code: 'L85', label: '850hPa', kind: '等高线 · 风温' },
+  { code: 'L70', label: '700hPa', kind: '等高线 · 风温湿' },
+  { code: 'L50', label: '500hPa', kind: '等高线 · 槽脊' },
+  { code: 'L92', label: '925hPa', kind: '边界层' },
+  { code: 'L20', label: '200hPa', kind: '高空急流' },
+  { code: 'L10', label: '100hPa', kind: '平流层底' },
+];
+function chartURL(realUTC, code){
   const y = realUTC.getUTCFullYear(), m = pad(realUTC.getUTCMonth()+1), d = pad(realUTC.getUTCDate());
   const t = `${y}${m}${d}${pad(realUTC.getUTCHours())}`;
-  return `https://image.nmc.cn/product/${y}/${m}/${d}/WESA/SEVP_NMC_WESA_SFER_EGH_ACWP_L00_P9_${t}0000000.JPG`;
+  return `https://image.nmc.cn/product/${y}/${m}/${d}/WESA/SEVP_NMC_WESA_SFER_EGH_ACWP_${code}_P9_${t}0000000.JPG`;
 }
 function cloudVisibleURL(realUTC){
   const y = realUTC.getUTCFullYear(), m = pad(realUTC.getUTCMonth()+1), d = pad(realUTC.getUTCDate());
@@ -358,6 +371,7 @@ function cloudIRURL(realUTC){
 const state = {
   slots: [],              // [{bj, key, label}] 最新在前，共 4 个
   activeKey: '',
+  chartLevel: 'L00',      // 天气图层次（地面 / 925~100hPa）
   cloudMode: 'auto',      // auto | visible | ir
   user: null,             // {id, name}
   cloudReady: false,      // 留言/收藏云端表是否可用（schema 第十节运行后自动变 true）
@@ -431,10 +445,61 @@ function setImgChain(img, fall, cands, onPicked){
     probe.src = c.url;
   })(0);
 }
-function loadCharts(){
+function chartCandidates(bjSlot, code){
+  const u = slotToRealUTC(bjSlot);
+  const upper = code !== 'L00';
+  const utcH = u.getUTCHours();
+  // 高空层只有 00/12 UTC（北京 08/20 时）两次观测
+  if(!upper || utcH % 12 === 0){
+    const back = new Date(u.getTime() - (upper ? 12 : 3) * 3600e3);
+    return [
+      { url: chartURL(u, code) },
+      { url: chartURL(back, code), note: `该时次尚未发布，已用最近一次（${bjLabelFromUTC(back)}）替代` },
+    ];
+  }
+  const prev = new Date(Date.UTC(u.getUTCFullYear(), u.getUTCMonth(), u.getUTCDate(), utcH > 12 ? 12 : 0));
+  return [{ url: chartURL(prev, code), note: `本时次无高空图，已用最近一次（${bjLabelFromUTC(prev)}）替代` }];
+}
+function bjLabelFromUTC(realUTC){
+  const bj = new Date(realUTC.getTime() + 8 * 3600e3);
+  return `${bj.getUTCMonth()+1}月${bj.getUTCDate()}日 ${bj.getUTCHours()}时`;
+}
+function applyChart(){
   const s = activeSlot(); if(!s) return;
-  setImgChain($('#chartImg'), $('#chartFall'),
-    [{ url: chartURL(slotToRealUTC(s.bj)) }]);
+  const lv = CHART_LEVELS.find(l => l.code === state.chartLevel) || CHART_LEVELS[0];
+  $('#chartKind').textContent = lv.kind;
+  setImgChain($('#chartImg'), $('#chartFall'), chartCandidates(s.bj, lv.code), picked => {
+    const b = document.createElement('b'); b.textContent = '读图提示：';
+    $('#chartNote').textContent = '';
+    $('#chartNote').append(b, lv.code === 'L00'
+      ? ' 看高低压中心（H/L）与槽脊走向，锁定锋面位置和云雨带的对应关系。'
+      : ' 看槽脊配置与温压场结构，配合地面图判断系统发展。（高空图每日 08/20 时两次观测）',
+      picked && picked.note ? '（' + picked.note + '）' : '');
+    const fall = $('#chartFall');
+    if(!picked){
+      fall.textContent = '';
+      const t1 = document.createElement('div');
+      t1.textContent = lv.code === 'L00'
+        ? '该时次天气图尚未发布（通常在观测后 1~2 小时内上线）'
+        : '该层高空图尚未发布（每日 08/20 时两次观测）';
+      const rt = document.createElement('button'); rt.className = 'btn small'; rt.textContent = '重试';
+      rt.onclick = applyChart;
+      fall.append(t1, rt);
+    }
+  });
+}
+function renderChartSeg(){
+  const seg = $('#chartSeg'); seg.textContent = '';
+  for(const lv of CHART_LEVELS){
+    const b = document.createElement('button');
+    b.textContent = lv.label;
+    b.classList.toggle('active', lv.code === state.chartLevel);
+    b.onclick = () => { state.chartLevel = lv.code; renderChartSeg(); applyChart(); };
+    seg.appendChild(b);
+  }
+}
+function loadCharts(){
+  applyChart();
   applyCloud();
 }
 function cloudCandidates(bjSlot, mode){
@@ -856,7 +921,7 @@ $('#favBtn').onclick = async () => {
       const mine = await myLatestMessageIn(key);
       await favStore.add({
         user_id: state.user.id, slot_key: key,
-        slot_label: `${s.label}（${pad(slotToRealUTC(s.bj).getUTCHours())}:00 UTC）`,
+        slot_label: `${s.label}（${pad(slotToRealUTC(s.bj).getUTCHours())}:00 UTC${state.chartLevel !== 'L00' ? ' · ' + (CHART_LEVELS.find(l => l.code === state.chartLevel) || {}).label + '图' : ''}）`,
         chart_snap: chartSnap, cloud_snap: cloudSnap,
         message_id: mine?.id ?? null, my_guess: mine?.guess ?? null, my_reason: mine?.reason ?? null,
       });
@@ -977,7 +1042,7 @@ document.addEventListener('keydown', e => { if(e.key === 'Escape'){ $('#lightbox
 
 /* ═══════════════════ 启动 ═══════════════════ */
 (async function init(){
-  renderChips(); buildSlots(); renderSlotMeta();
+  renderChips(); buildSlots(); renderSlotMeta(); renderChartSeg();
   loadCharts(); renderSig();
   await initAuth();
   await probeCloud();
