@@ -88,7 +88,7 @@ header.top{position:sticky;top:0;z-index:50;background:var(--top-bg);backdrop-fi
 .chart-kind{font-size:11px;color:var(--cyan);background:var(--cyan-dim);padding:2px 8px;border-radius:999px}
 .chart-meta{font-size:12px;color:var(--txt3);margin-left:auto;font-variant-numeric:tabular-nums}
 .imgwrap{position:relative;margin:0 12px 12px;background:#fff;border-radius:10px;overflow:hidden;min-height:120px}
-.imgwrap img{display:block;width:100%;height:auto}
+.imgwrap img{display:block;width:100%;height:auto;cursor:zoom-in;touch-action:manipulation}
 .img-note{padding:0 14px 12px;font-size:12px;color:var(--txt3)}
 .img-note b{color:var(--txt2)}
 .img-fallback{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:repeating-linear-gradient(45deg,#f4f6f9 0 14px,#eef1f5 14px 28px);color:#5a6b7d;font-size:13px;text-align:center;padding:16px}
@@ -180,7 +180,8 @@ header.top{position:sticky;top:0;z-index:50;background:var(--top-bg);backdrop-fi
 .auth-sw a{color:var(--cyan);cursor:pointer}
 #lightbox{z-index:300}
 #lightbox .lb-body{max-width:96vw;max-height:88vh;background:#fff;border-radius:10px;overflow:auto}
-#lightbox img{display:block;max-width:96vw;max-height:88vh}
+#lightbox img{display:block;max-width:96vw;max-height:88vh;cursor:zoom-in}
+#lightbox img.actual{max-width:none;max-height:none;cursor:zoom-out}
 #toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%) translateY(16px);z-index:400;background:var(--card);border:1px solid var(--line2);color:var(--txt);font-size:13px;padding:9px 16px;border-radius:999px;opacity:0;pointer-events:none;transition:.25s;box-shadow:var(--shadow);max-width:88vw;text-align:center}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 #toast.ok{border-color:rgba(102,187,138,.5)}
@@ -507,7 +508,8 @@ function applyChart(){
     $('#chartNote').append(b, lv.code === 'L00'
       ? ' 看高低压中心（H/L）与槽脊走向，锁定锋面位置和云雨带的对应关系。'
       : ' 看槽脊配置与温压场结构，配合地面图判断系统发展。（高空图每日 08/20 时两次观测）',
-      picked && picked.note ? '（' + picked.note + '）' : '');
+      picked && picked.note ? '（' + picked.note + '）' : '',
+      '（双击图片可看全图）');
     const fall = $('#chartFall');
     if(!picked){
       fall.textContent = '';
@@ -569,7 +571,8 @@ function applyCloud(){
       picked.eff === 'visible'
         ? ' FY-4B 真彩可见光，白亮厚实处多为发展旺盛的云团（仅白天有效）。'
         : ' 红外通道昼夜可用，越白越冷 = 云顶越高，深对流一目了然。',
-      picked.note ? '（' + picked.note + '）' : '');
+      picked.note ? '（' + picked.note + '）' : '',
+      '（双击图片可看全图）');
   });
 }
 $('#cloudSeg').addEventListener('click', e => {
@@ -1049,7 +1052,7 @@ async function renderMine(){
     for(const [snapUrl, kind] of [[f.chart_snap, '天气图'], [f.cloud_snap, '云图']]){
       if(snapUrl){
         const im = document.createElement('img'); im.src = snapUrl; im.alt = kind; im.loading = 'lazy';
-        im.onclick = () => { $('#lightboxImg').src = snapUrl; $('#lightbox').hidden = false; };
+        im.onclick = () => openLightbox(snapUrl);
         thumbs.appendChild(im);
       }else{
         const ph = document.createElement('div'); ph.style.cssText = 'display:flex;align-items:center;justify-content:center;height:110px;color:#5a6b7d;font-size:12px;background:#f2f4f7';
@@ -1106,9 +1109,26 @@ function slotKeyLabel(key){
   return `${+key.slice(4,6)}月${+key.slice(6,8)}日 ${+key.slice(8,10)}时`;
 }
 
-/* ═══════════════════ 大图 & 杂项 ═══════════════════ */
+/* ═══════════════════ 大图查看 & 杂项 ═══════════════════ */
+function openLightbox(src){
+  const im = $('#lightboxImg');
+  im.classList.remove('actual');   // 每次打开先回到适应窗口
+  im.src = src;
+  $('#lightbox').hidden = false;
+}
+$('#lightboxImg').addEventListener('click', e => {
+  e.stopPropagation();             // 图片上单击 = 切换原始尺寸；点背景才关闭
+  $('#lightboxImg').classList.toggle('actual');
+});
 $('#lightbox').addEventListener('click', () => $('#lightbox').hidden = true);
 document.addEventListener('keydown', e => { if(e.key === 'Escape'){ $('#lightbox').hidden = true; $('#authModal').hidden = true; } });
+// 实时图双击 → 全图查看
+for(const id of ['#chartImg', '#cloudImg']){
+  $(id).addEventListener('dblclick', () => {
+    const el = $(id);
+    if(!el.hidden && el.src) openLightbox(el.src);
+  });
+}
 
 /* ═══════════════════ 日夜切换（与主站 site-theme 键互通，裸字符串） ═══════════════════ */
 function applyTheme(t){
