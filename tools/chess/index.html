@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>国际象棋 — Michael</title>
+  <title>棋乐馆 — Michael</title>
   <meta name="description" content="国际象棋：人机对弈四档 AI（α-β 剪枝搜索），也可创建房间与好友联机对弈，实时同步、完整规则判定。">
   <meta name="theme-color" content="#0a0a0b">
   <meta name="color-scheme" content="dark light">
@@ -21,7 +21,7 @@
   </script>
   <link rel="stylesheet" href="../../assets/css/tokens.css">
   <link rel="stylesheet" href="../../assets/css/main.css">
-  <link rel="stylesheet" href="style.css?v=7">
+  <link rel="stylesheet" href="style.css?v=8">
   <style>
     .tool {
       padding-top: calc(var(--nav-h) + clamp(40px, 7vw, 72px));
@@ -72,7 +72,7 @@
       <div class="tool__head">
         <a class="article-back" href="../../tools.html"><span class="arr">←</span>全部工具</a>
         <p class="mono-label">Tool <span>/</span> 09</p>
-        <h1>国际象棋</h1>
+        <h1>棋乐馆</h1>
         <p>选择对局模式进入全屏棋盘：人机对弈内置 α-β 剪枝搜索的四档 AI，双人联机以房间码即邀请函，走子实时同步，完整规则判定（易位、吃过路兵、升变、将杀、逼和与和棋）。</p>
       </div>
 
@@ -109,6 +109,41 @@
               <button type="button" class="ch-btn" id="ch-join">加入</button>
             </div>
           </div>
+
+          <div class="ch-card-big">
+            <div class="ch-big-ico">⚫</div>
+            <h3>五子棋</h3>
+            <p>黑先白后，五连即胜；AI 有攻有守。</p>
+            <p class="ch-label">对手</p>
+            <div class="ch-chips" id="gk-vs">
+              <button type="button" class="ch-chip on" data-v="ai">人机对弈</button>
+              <button type="button" class="ch-chip" data-v="local">双人同屏</button>
+            </div>
+            <p class="ch-label" id="gk-hard-label">AI 难度</p>
+            <div class="ch-chips" id="gk-hard">
+              <button type="button" class="ch-chip" data-v="easy">简单</button>
+              <button type="button" class="ch-chip on" data-v="hard">困难</button>
+            </div>
+            <button type="button" class="ch-btn primary wide" id="ch-start-gomoku">开始对弈 →</button>
+          </div>
+
+          <div class="ch-card-big">
+            <div class="ch-big-ico">帥</div>
+            <h3>中国象棋</h3>
+            <p>楚河汉界，红先黑后；AI 攻守兼备。</p>
+            <p class="ch-label">对手</p>
+            <div class="ch-chips" id="xq-vs">
+              <button type="button" class="ch-chip on" data-v="ai">人机对弈</button>
+              <button type="button" class="ch-chip" data-v="local">双人同屏</button>
+            </div>
+            <p class="ch-label" id="xq-hard-label">AI 难度</p>
+            <div class="ch-chips" id="xq-hard">
+              <button type="button" class="ch-chip" data-v="easy">简单</button>
+              <button type="button" class="ch-chip on" data-v="medium">普通</button>
+              <button type="button" class="ch-chip" data-v="hard">困难</button>
+            </div>
+            <button type="button" class="ch-btn primary wide" id="ch-start-xiangqi">开始对弈 →</button>
+          </div>
         </div>
         <p class="ch-tip">完整规则：王车易位、吃过路兵、升变、将杀、逼和与和棋判定｜对局内可悔棋、认输、翻转、真全屏</p>
       </div>
@@ -124,6 +159,7 @@
       <span class="ch-spacer"></span>
       <span class="ch-roomchip" id="ch-roomchip" hidden></span>
       <span class="ch-clock" id="ch-clock"></span>
+      <button type="button" class="ch-tbtn" id="ch-restart" title="重开本局">⟳ 重开</button>
       <button type="button" class="ch-tbtn" id="ch-undo" title="悔棋（人机模式）">悔棋</button>
       <button type="button" class="ch-tbtn" id="ch-resign" title="认输">认输</button>
       <button type="button" class="ch-tbtn" id="ch-flip" title="翻转棋盘">翻转</button>
@@ -168,6 +204,6 @@
   </footer>
 
   <script type="module" src="../../assets/js/main.js"></script>
-  <script type="module" src="app.js?v=4"></script>
+  <script type="module" src="app.js?v=10"></script>
 </body>
 </html>
