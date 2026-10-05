@@ -148,6 +148,22 @@ header.top{position:sticky;top:0;z-index:50;background:var(--top-bg);backdrop-fi
 .fav-card .fc-head .del{margin-left:auto}
 .fav-thumbs{display:grid;grid-template-columns:1fr 1fr;gap:2px;background:var(--line)}
 .fav-thumbs img{display:block;width:100%;height:110px;object-fit:cover;object-position:top;cursor:zoom-in;background:#fff}
+
+/* ── 天气图使用说明 ── */
+.guide{margin-top:22px;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
+.guide h2{font-size:16px}
+.guide .sub-inline{font-size:12px;color:var(--txt3);font-weight:400;margin-left:8px}
+.guide-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+@media(max-width:820px){.guide-grid{grid-template-columns:1fr}}
+.g-card{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.g-card h3{font-size:14px;margin-bottom:8px}
+.g-card ul,.g-card ol{padding-left:18px;font-size:12.5px;color:var(--txt2);display:grid;gap:5px}
+.g-card b{color:var(--txt)}
+.legend-row{display:flex;align-items:center;gap:9px;font-size:12px;color:var(--txt2);margin-top:7px}
+.legend-row svg{flex:none;width:74px;height:14px}
+.legend-row b{color:var(--txt)}
+.g-foot{margin-top:12px;font-size:11.5px;color:var(--txt3);line-height:1.8}
+.g-foot b{color:var(--txt2)}
 .fav-card .fc-body{padding:10px 12px;font-size:13px}
 .fav-card .fc-body .guess-tag{display:inline-block;margin-bottom:4px}
 .fav-card .fc-body .why{color:var(--txt2);font-size:12.5px;white-space:pre-wrap;word-break:break-word}
@@ -278,6 +294,70 @@ header.top{position:sticky;top:0;z-index:50;background:var(--top-bg);backdrop-fi
       <ol class="msglist" id="msgList"></ol>
       <div class="empty" id="msgEmpty">这张图下还没有人留言，来做第一个研判的人吧。</div>
     </div>
+
+    <!-- ════ 天气图使用说明（新手向） ════ -->
+    <section class="guide">
+      <h2>天气图使用说明<span class="sub-inline">写给第一次看图的你 · 两分钟入门</span></h2>
+      <div class="guide-grid">
+        <div class="g-card">
+          <h3>① 地面天气图：天气的「战场沙盘」</h3>
+          <ul>
+            <li><b>等压线</b>：气压相等的点连成的线。<b>线越密，风越大</b>。</li>
+            <li><b>H / L</b>：高压中心（下沉气流，多半晴天）、低压中心（气流辐合上升，多阴雨）。</li>
+            <li><b>站点圆圈</b>：填充比例=云量多少；红色数字=气温；风羽=风向风速（长杠 4 m/s、短杠 2 m/s、三角旗 20 m/s）。</li>
+            <li><b>锋面</b>：冷暖气团的交界面，是云雨最集中的地方——</li>
+          </ul>
+          <div class="legend-row">
+            <svg viewBox="0 0 74 14"><path d="M0 7H74" stroke="#4a7dd6" stroke-width="2" fill="none"/><path d="M8 3l7 4-7 4zM30 3l7 4-7 4zM52 3l7 4-7 4z" fill="#4a7dd6"/></svg>
+            <span><b>冷锋</b>：冷空气主动推进，过境时降温、大风、短时阵雨。</span>
+          </div>
+          <div class="legend-row">
+            <svg viewBox="0 0 74 14"><path d="M0 7H74" stroke="#e57368" stroke-width="2" fill="none"/><path d="M8 7a4 4 0 0 1 8 0M30 7a4 4 0 0 1 8 0M52 7a4 4 0 0 1 8 0" fill="#e57368"/></svg>
+            <span><b>暖锋</b>：暖空气主动爬升，过境后回暖，多连续性降水。</span>
+          </div>
+          <div class="legend-row">
+            <svg viewBox="0 0 74 14"><path d="M0 7H74" stroke="#8a94a6" stroke-width="2" fill="none"/><path d="M6 3l7 4-7 4z" fill="#4a7dd6"/><path d="M22 7a4 4 0 0 1 8 0" fill="#e57368"/><path d="M38 3l7 4-7 4z" fill="#4a7dd6"/><path d="M54 7a4 4 0 0 1 8 0" fill="#e57368"/></svg>
+            <span><b>准静止锋</b>：冷暖气团僵持，同一片地区连阴雨好几天。</span>
+          </div>
+          <div class="legend-row">
+            <svg viewBox="0 0 74 14"><path d="M0 7H74" stroke="#9c6bd4" stroke-width="2" fill="none"/><path d="M8 3l7 4-7 4zM8 11a4 4 0 0 0 8 0M32 3l7 4-7 4zM32 11a4 4 0 0 0 8 0" fill="#9c6bd4"/></svg>
+            <span><b>锢囚锋</b>：冷暖锋合并，天气最复杂剧烈。</span>
+          </div>
+        </div>
+
+        <div class="g-card">
+          <h3>② 高空图（850/700/500/200hPa）：系统的「大后台」</h3>
+          <ul>
+            <li><b>等高线</b>：可理解为「高空的地形图」，风基本沿着线吹；<b>向南弯的波谷叫槽（多坏天气），向北弯的波峰叫脊（多好天气）</b>，槽脊自西向东跑，牵着地面系统走。</li>
+            <li><b>850hPa</b>：贴地一层，看水汽和冷暖平流，0°C 线附近看雨转雪。</li>
+            <li><b>700hPa</b>：看水汽通道和切变线——暴雨的信号灯。</li>
+            <li><b>500hPa</b>：中层「总指挥」，槽的深浅定天气大势，也是台风的引导层。</li>
+            <li><b>200hPa</b>：高空急流层，急流南侧容易激发强对流。</li>
+            <li>一句话：<b>地面图看「现在」，高空图看「接下来」</b>。高空图每天 08/20 时（北京时）各更新一次。</li>
+          </ul>
+        </div>
+
+        <div class="g-card">
+          <h3>③ 卫星云图：云的实况照片</h3>
+          <ul>
+            <li><b>可见光通道（白天）</b>：越白越亮=云越厚，多半正在下雨。</li>
+            <li><b>红外通道（全天候）</b>：越白=云顶越高越冷=对流越猛；一大片均匀的灰=层云或雾。</li>
+            <li><b>螺旋涡旋</b>=台风；长长的拖尾云带=锋面云系，和地面图的锋线对照着看最直观。</li>
+          </ul>
+        </div>
+
+        <div class="g-card">
+          <h3>④ 四步做一次自己的研判</h3>
+          <ol>
+            <li><b>看地面图</b>：找到离你最近的锋面和 H/L，判断它正往哪个方向移（一般随高空西风自西向东）。</li>
+            <li><b>看高空图</b>：500hPa 槽脊位置 + 850hPa 水汽冷暖，判断系统是加强还是减弱。</li>
+            <li><b>看云图验证</b>：云雨带的位置和锋面对得上吗？</li>
+            <li><b>去上面留言板</b>：点个快捷语或自己写结论，记得写上原因——等天气来了回来对答案！</li>
+          </ol>
+        </div>
+      </div>
+      <p class="g-foot">小词典：<b>槽/脊</b>=高空等高线的波谷/波峰；<b>切变线</b>=风向发生突变的分界线，附近常有暴雨；<b>平流</b>=暖空气或冷空气的水平输送（暖平流升温、冷平流降温）；<b>位势高度</b>=高空某气压面的「海拔」，越低说明该层越冷、系统越深。本页图源为中央气象台（nmc.cn）公开发布的分析图，仅供学习交流，正式天气预报请以中央气象台发布为准。</p>
+    </section>
   </section>
 
   <!-- ════ 我的战绩视图 ════ -->
