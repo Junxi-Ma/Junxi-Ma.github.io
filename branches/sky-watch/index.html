@@ -23,7 +23,7 @@
   --amber:#f2a93b; --amber-dim:rgba(242,169,59,.14);
   --cyan:#4fc3f7; --cyan-dim:rgba(79,195,247,.12);
   --red:#e57368; --green:#66bb8a;
-  --top-bg:rgba(12,17,24,.86); --card-shadow:0 10px 30px rgba(0,0,0,.35);
+  --top-bg:rgba(12,17,24,.86); --card-shadow:0 10px 30px rgba(0,0,0,.35); --pill-bg:rgba(19,26,36,.88);
   --radius:14px; --shadow:var(--card-shadow);
 }
 html[data-theme="light"]{
@@ -32,7 +32,7 @@ html[data-theme="light"]{
   --amber:#b37714; --amber-dim:rgba(179,119,20,.12);
   --cyan:#0f6f9e; --cyan-dim:rgba(15,111,158,.10);
   --red:#bf4a3e; --green:#2e7d4f;
-  --top-bg:rgba(250,248,245,.9); --card-shadow:0 8px 24px rgba(120,100,60,.12);
+  --top-bg:rgba(250,248,245,.9); --card-shadow:0 8px 24px rgba(120,100,60,.12); --pill-bg:rgba(255,253,248,.92);
 }
 *{box-sizing:border-box;margin:0;padding:0}
 [hidden]{display:none!important}
@@ -132,7 +132,7 @@ header.top{position:sticky;top:0;z-index:50;background:var(--top-bg);backdrop-fi
 .op.like.liked{color:var(--red)}
 .op.like .n{font-variant-numeric:tabular-nums}
 .empty{padding:26px 0;text-align:center;color:var(--txt3);font-size:13px}
-.banner{margin:10px 0 0;font-size:12.5px;color:#d9b06c;background:rgba(217,176,108,.09);border:1px solid rgba(217,176,108,.3);border-radius:10px;padding:8px 12px}
+.banner{margin:10px 0 0;font-size:12.5px;color:var(--amber);background:var(--amber-dim);border:1px solid var(--amber);border-radius:10px;padding:8px 12px}
 
 /* ── 战绩视图 ─────────────────────── */
 .records{margin-top:18px}
@@ -187,7 +187,7 @@ header.top{position:sticky;top:0;z-index:50;background:var(--top-bg);backdrop-fi
 #toast.err{border-color:rgba(229,115,104,.55)}
 
 /* ── 返回站点（与军训/云量页同一惯例：左下角悬浮胶囊） ── */
-.site-back{position:fixed;z-index:60;left:14px;bottom:calc(14px + env(safe-area-inset-bottom));display:inline-flex;align-items:center;gap:6px;padding:7px 13px 7px 10px;border-radius:999px;font-size:12.5px;line-height:1;letter-spacing:.02em;color:var(--txt2);text-decoration:none;white-space:nowrap;background:rgba(19,26,36,.88);border:1px solid var(--line2);box-shadow:var(--shadow);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.site-back{position:fixed;z-index:60;left:14px;bottom:calc(14px + env(safe-area-inset-bottom));display:inline-flex;align-items:center;gap:6px;padding:7px 13px 7px 10px;border-radius:999px;font-size:12.5px;line-height:1;letter-spacing:.02em;color:var(--txt2);text-decoration:none;white-space:nowrap;background:var(--pill-bg);border:1px solid var(--line2);box-shadow:var(--shadow);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
 .site-back:hover{color:var(--amber);border-color:var(--amber)}
 .site-back svg{width:14px;height:14px}
 @media(max-width:560px){
