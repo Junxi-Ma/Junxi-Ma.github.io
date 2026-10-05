@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>看图识天 · Michael</title>
+<meta name="description" content="气象人的看图研判台：每天 02 / 08 / 14 / 20 时自动获取中央气象台地面天气图（等压线·锋面）与风云卫星云图，回看最近 24 小时四张图，在每张图下的留言板里快捷语或自由撰写你的天气预报与判断原因，点赞互动，一键收藏图与研判到账户，随时翻阅自己的看云战绩。数据来源：中央气象台 nmc.cn。">
+<link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
+<meta name="theme-color" content="#0c1118">
+<style>
+:root{
+  --bg:#0c1118; --card:#131a24; --card2:#0f1620; --line:#223041; --line2:#2c3d52;
+  --txt:#e8eef5; --txt2:#9fb0c3; --txt3:#64778d;
+  --amber:#f2a93b; --amber-dim:rgba(242,169,59,.14);
+  --cyan:#4fc3f7; --cyan-dim:rgba(79,195,247,.12);
+  --red:#e57368; --green:#66bb8a;
+  --radius:14px; --shadow:0 10px 30px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{
+  font-family:"Segoe UI",system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+  background:
+    radial-gradient(1100px 500px at 85% -10%, rgba(79,195,247,.07), transparent 60%),
+    radial-gradient(900px 420px at 0% 0%, rgba(242,169,59,.05), transparent 55%),
+    var(--bg);
+  color:var(--txt); line-height:1.6; padding-bottom:90px;
+}
+.wrap{max-width:1120px;margin:0 auto;padding:0 16px}
+button{font-family:inherit;cursor:pointer}
+input,textarea{font-family:inherit}
+
+/* ── 顶栏 ─────────────────────────── */
+header.top{position:sticky;top:0;z-index:50;background:rgba(12,17,24,.86);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.top-in{max-width:1120px;margin:0 auto;padding:12px 16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.brand{display:flex;align-items:baseline;gap:10px;min-width:0}
+.brand b{font-size:20px;letter-spacing:.02em}
+.brand span{font-size:12px;color:var(--txt3);white-space:nowrap}
+.top-actions{margin-left:auto;display:flex;align-items:center;gap:8px}
+.viewtab{border:1px solid var(--line);background:transparent;color:var(--txt2);padding:7px 14px;border-radius:999px;font-size:13px}
+.viewtab.active{background:var(--amber-dim);border-color:var(--amber);color:var(--amber);font-weight:700}
+.btn{border:1px solid var(--line2);background:var(--card2);color:var(--txt);padding:7px 14px;border-radius:10px;font-size:13px;transition:.15s}
+.btn:hover{border-color:var(--amber);color:var(--amber)}
+.btn.primary{background:var(--amber);border-color:var(--amber);color:#151004;font-weight:700}
+.btn.primary:hover{filter:brightness(1.08);color:#151004}
+.btn.small{padding:4px 10px;font-size:12px;border-radius:8px}
+.btn.danger{color:var(--red);border-color:rgba(229,115,104,.4)}
+.btn.danger:hover{border-color:var(--red)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+#authBtn{max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ── 时次选择 ─────────────────────── */
+.slotbar{display:flex;align-items:center;gap:8px;margin:18px 0 4px;flex-wrap:wrap}
+.slot-tab{border:1px solid var(--line);background:var(--card);color:var(--txt2);padding:8px 14px;border-radius:11px;font-size:13px;font-variant-numeric:tabular-nums}
+.slot-tab small{display:block;font-size:11px;color:var(--txt3);font-weight:400;line-height:1.3}
+.slot-tab.active{border-color:var(--amber);color:var(--txt);background:var(--amber-dim);font-weight:700}
+.slot-tab.active small{color:var(--amber)}
+.slot-refresh{margin-left:auto}
+.board-date{font-size:12px;color:var(--txt3);margin:2px 0 14px}
+
+/* ── 图区 ─────────────────────────── */
+.charts{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:880px){.charts{grid-template-columns:1fr}}
+.chart-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+.chart-head{display:flex;align-items:center;gap:8px;padding:12px 14px 8px;flex-wrap:wrap}
+.chart-head h3{font-size:15px}
+.chart-kind{font-size:11px;color:var(--cyan);background:var(--cyan-dim);padding:2px 8px;border-radius:999px}
+.chart-meta{font-size:12px;color:var(--txt3);margin-left:auto;font-variant-numeric:tabular-nums}
+.imgwrap{position:relative;margin:0 12px 12px;background:#fff;border-radius:10px;overflow:hidden;min-height:120px}
+.imgwrap img{display:block;width:100%;height:auto}
+.img-note{padding:0 14px 12px;font-size:12px;color:var(--txt3)}
+.img-note b{color:var(--txt2)}
+.img-fallback{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:repeating-linear-gradient(45deg,#f4f6f9 0 14px,#eef1f5 14px 28px);color:#5a6b7d;font-size:13px;text-align:center;padding:16px}
+.seg{display:inline-flex;border:1px solid var(--line2);border-radius:9px;overflow:hidden;font-size:12px}
+.seg button{border:0;background:transparent;color:var(--txt2);padding:5px 10px}
+.seg button.active{background:var(--cyan-dim);color:var(--cyan);font-weight:700}
+.favrow{display:flex;align-items:center;gap:10px;margin:14px 0 6px;flex-wrap:wrap}
+.favrow .hint{font-size:12px;color:var(--txt3)}
+#favBtn.starred{border-color:var(--amber);color:var(--amber);background:var(--amber-dim)}
+
+/* ── 留言板 ─────────────────────────── */
+.board{margin-top:22px;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
+.board h2{font-size:16px;margin-bottom:2px}
+.board .sub{font-size:12px;color:var(--txt3);margin-bottom:12px}
+.composer{border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--card2)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.chip{border:1px solid var(--line2);background:transparent;color:var(--txt2);font-size:12px;padding:4px 11px;border-radius:999px;transition:.12s}
+.chip:hover,.chip.picked{border-color:var(--amber);color:var(--amber);background:var(--amber-dim)}
+.composer input[type=text],.composer textarea{width:100%;background:var(--bg);border:1px solid var(--line2);border-radius:10px;color:var(--txt);padding:9px 12px;font-size:14px;outline:none}
+.composer input:focus,.composer textarea:focus{border-color:var(--amber)}
+.composer textarea{min-height:64px;resize:vertical;margin-top:8px}
+.composer-foot{display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap}
+.sig{font-size:12px;color:var(--txt3)}
+.sig b{color:var(--cyan);font-weight:600}
+#guestName{width:130px!important;padding:5px 10px!important;font-size:12px!important;margin:0!important}
+.msglist{list-style:none;margin-top:14px}
+.msglist li{display:flex;gap:10px;padding:11px 4px;border-top:1px solid var(--line)}
+.msglist li:first-child{border-top:0}
+.avatar{flex:none;width:34px;height:34px;border-radius:50%;background:var(--cyan-dim);color:var(--cyan);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px}
+.msg-main{flex:1;min-width:0}
+.msg-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.msg-head .name{font-weight:700;font-size:14px}
+.msg-head .time{font-size:11px;color:var(--txt3);font-variant-numeric:tabular-nums}
+.guess-tag{font-size:12px;color:var(--amber);background:var(--amber-dim);border:1px solid rgba(242,169,59,.35);padding:1px 9px;border-radius:999px;max-width:100%}
+.msg-reason{font-size:13px;color:var(--txt2);margin-top:5px;white-space:pre-wrap;word-break:break-word}
+.msg-ops{display:flex;gap:4px;margin-left:auto;flex:none}
+.op{border:0;background:transparent;color:var(--txt3);font-size:12px;padding:3px 7px;border-radius:8px}
+.op:hover{background:var(--card2);color:var(--txt2)}
+.op.like.liked{color:var(--red)}
+.op.like .n{font-variant-numeric:tabular-nums}
+.empty{padding:26px 0;text-align:center;color:var(--txt3);font-size:13px}
+.banner{margin:10px 0 0;font-size:12.5px;color:#d9b06c;background:rgba(217,176,108,.09);border:1px solid rgba(217,176,108,.3);border-radius:10px;padding:8px 12px}
+
+/* ── 战绩视图 ─────────────────────── */
+.records{margin-top:18px}
+.rec-tabs{display:flex;gap:8px;margin-bottom:14px}
+.rec-stats{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.stat{flex:1;min-width:120px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.stat b{display:block;font-size:22px;font-variant-numeric:tabular-nums}
+.stat span{font-size:12px;color:var(--txt3)}
+.fav-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+.fav-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)}
+.fav-card .fc-head{display:flex;align-items:center;gap:8px;padding:10px 12px;font-size:13px}
+.fav-card .fc-head .t{font-weight:700}
+.fav-card .fc-head .del{margin-left:auto}
+.fav-thumbs{display:grid;grid-template-columns:1fr 1fr;gap:2px;background:var(--line)}
+.fav-thumbs img{display:block;width:100%;height:110px;object-fit:cover;object-position:top;cursor:zoom-in;background:#fff}
+.fav-card .fc-body{padding:10px 12px;font-size:13px}
+.fav-card .fc-body .guess-tag{display:inline-block;margin-bottom:4px}
+.fav-card .fc-body .why{color:var(--txt2);font-size:12.5px;white-space:pre-wrap;word-break:break-word}
+.fav-card .fc-foot{padding:0 12px 10px;font-size:11px;color:var(--txt3);display:flex;gap:10px}
+.mine-item{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px}
+.mine-item .mh{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;font-size:12px;color:var(--txt3)}
+.mine-item .mh .slot{color:var(--cyan);font-weight:600}
+.mine-item .mg{margin-top:4px;font-size:14px}
+.mine-item .mr{font-size:12.5px;color:var(--txt2);white-space:pre-wrap;word-break:break-word}
+
+/* ── 弹层 ─────────────────────────── */
+.modal{position:fixed;inset:0;z-index:200;background:rgba(4,8,14,.72);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:18px}
+.modal-card{width:min(400px,100%);background:var(--card);border:1px solid var(--line2);border-radius:16px;padding:20px;box-shadow:var(--shadow)}
+.modal-card h3{font-size:17px;margin-bottom:12px}
+.modal-card label{display:block;font-size:12px;color:var(--txt2);margin:10px 0 4px}
+.modal-card input{width:100%;background:var(--bg);border:1px solid var(--line2);border-radius:10px;color:var(--txt);padding:9px 12px;font-size:14px;outline:none}
+.modal-card input:focus{border-color:var(--amber)}
+.modal-err{font-size:12.5px;color:var(--red);min-height:18px;margin-top:8px}
+.modal-foot{display:flex;gap:8px;margin-top:6px}
+.modal-foot .btn{flex:1;padding:10px}
+.auth-sw{font-size:12px;color:var(--txt3);margin-top:10px;text-align:center}
+.auth-sw a{color:var(--cyan);cursor:pointer}
+#lightbox{z-index:300}
+#lightbox .lb-body{max-width:96vw;max-height:88vh;background:#fff;border-radius:10px;overflow:auto}
+#lightbox img{display:block;max-width:96vw;max-height:88vh}
+#toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%) translateY(16px);z-index:400;background:#1d2634;border:1px solid var(--line2);color:var(--txt);font-size:13px;padding:9px 16px;border-radius:999px;opacity:0;pointer-events:none;transition:.25s;box-shadow:var(--shadow);max-width:88vw;text-align:center}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#toast.ok{border-color:rgba(102,187,138,.5)}
+#toast.err{border-color:rgba(229,115,104,.55)}
+
+/* ── 返回站点（与军训/云量页同一惯例：左下角悬浮胶囊） ── */
+.site-back{position:fixed;z-index:60;left:14px;bottom:calc(14px + env(safe-area-inset-bottom));display:inline-flex;align-items:center;gap:6px;padding:7px 13px 7px 10px;border-radius:999px;font-size:12.5px;line-height:1;letter-spacing:.02em;color:var(--txt2);text-decoration:none;white-space:nowrap;background:rgba(19,26,36,.88);border:1px solid var(--line2);box-shadow:var(--shadow);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.site-back:hover{color:var(--amber);border-color:var(--amber)}
+.site-back svg{width:14px;height:14px}
+@media(max-width:560px){
+  .brand span{display:none}
+  .slot-tab{padding:7px 10px;font-size:12px}
+  .fav-thumbs img{height:88px}
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-in">
+    <div class="brand"><b>看图识天</b><span>天气图 · 云图 · 研判留言板</span></div>
+    <div class="top-actions">
+      <button class="viewtab active" id="tabWatch">看图研判</button>
+      <button class="viewtab" id="tabMine">我的战绩</button>
+      <button class="btn" id="authBtn">登录 / 注册</button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- ════ 看图研判视图 ════ -->
+  <section id="watchView">
+
+    <div class="slotbar" id="slotBar"></div>
+    <div class="board-date" id="slotHint"></div>
+
+    <div class="favrow">
+      <button class="btn" id="favBtn">☆ 收藏本时次</button>
+      <span class="hint" id="favHint">把两张图连同你的研判一起存进账户，随时翻阅</span>
+    </div>
+
+    <div class="charts">
+      <div class="chart-card">
+        <div class="chart-head">
+          <h3>地面天气图</h3><span class="chart-kind">等压线 · 锋面</span>
+          <span class="chart-meta" id="chartMeta"></span>
+        </div>
+        <div class="imgwrap" id="chartWrap">
+          <img id="chartImg" alt="地面天气图" crossorigin="anonymous" referrerpolicy="no-referrer" hidden>
+          <div class="img-fallback" id="chartFall" hidden>该时次天气图尚未发布<br>（通常在观测后 1~2 小时内上线）<br><button class="btn small" data-retry="chart">重试</button></div>
+        </div>
+        <div class="img-note"><b>读图提示</b>：看高低压中心（H/L）与槽脊走向，锁定锋面位置和云雨带的对应关系。</div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-head">
+          <h3>卫星云图</h3><span class="chart-kind">风云卫星</span>
+          <span class="seg" id="cloudSeg" title="夜间可见光通道为黑屏，自动模式会改用红外">
+            <button data-mode="auto" class="active">自动</button>
+            <button data-mode="visible">可见光</button>
+            <button data-mode="ir">红外</button>
+          </span>
+        </div>
+        <div class="imgwrap" id="cloudWrap">
+          <img id="cloudImg" alt="卫星云图" crossorigin="anonymous" referrerpolicy="no-referrer" hidden>
+          <div class="img-fallback" id="cloudFall" hidden>该时次云图尚未发布或已过期<br><button class="btn small" data-retry="cloud">重试</button></div>
+        </div>
+        <div class="img-note" id="cloudNote"><b>云图提示</b>：注意云系与天气图锋面的位置对应，白亮厚实处多为降雨云团。</div>
+      </div>
+    </div>
+
+    <div class="board">
+      <h2 id="boardTitle">研判留言板</h2>
+      <div class="sub">看完这张图，猜猜接下来的天气——用快捷语，或写下你自己的结论与判断依据。</div>
+      <div id="cloudBanner"></div>
+      <div class="composer">
+        <div class="chips" id="quickChips"></div>
+        <input type="text" id="guessInput" maxlength="120" placeholder="你的猜测：点上面快捷语或直接输入（必填）">
+        <textarea id="reasonInput" maxlength="2000" placeholder="判断原因（可选）：例如——500hPa 低槽东移，地面冷锋明天午后过境，锋前增温锋后降温……"></textarea>
+        <div class="composer-foot">
+          <span class="sig" id="sigHint"></span>
+          <input type="text" id="guestName" maxlength="16" placeholder="你的名字" hidden>
+          <button class="btn primary" id="postBtn" style="margin-left:auto">发布研判</button>
+        </div>
+      </div>
+      <ol class="msglist" id="msgList"></ol>
+      <div class="empty" id="msgEmpty">这张图下还没有人留言，来做第一个研判的人吧。</div>
+    </div>
+  </section>
+
+  <!-- ════ 我的战绩视图 ════ -->
+  <section id="mineView" class="records" hidden>
+    <div class="rec-tabs">
+      <button class="viewtab active" id="recTabFav">⭐ 我的收藏</button>
+      <button class="viewtab" id="recTabMsg">✍️ 我的研判</button>
+    </div>
+    <div class="rec-stats" id="recStats"></div>
+    <div id="loginGate" class="board" hidden>
+      <h2>登录后查看战绩</h2>
+      <div class="sub">收藏与研判记录保存在你的账户里，换设备登录也能翻阅。</div>
+      <button class="btn primary" id="gateLoginBtn">登录 / 注册</button>
+    </div>
+    <div id="favPane"><div class="fav-grid" id="favGrid"></div></div>
+    <div id="msgPane" hidden><div id="mineMsgs"></div></div>
+  </section>
+
+</div>
+
+<!-- ════ 登录弹窗 ════ -->
+<div class="modal" id="authModal" hidden>
+  <div class="modal-card">
+    <h3 id="authTitle">登录 Michael. 账号</h3>
+    <div id="authHint" style="font-size:12px;color:var(--txt2);margin-top:-8px;margin-bottom:4px"></div>
+    <label>邮箱</label><input type="email" id="authEmail" autocomplete="email" placeholder="you@example.com">
+    <label>密码</label><input type="password" id="authPass" autocomplete="current-password" placeholder="至少 6 位">
+    <div id="nickRow" hidden><label>昵称（战绩与留言署名）</label><input type="text" id="authNick" maxlength="20" placeholder="例如：观云者"></div>
+    <div class="modal-err" id="authErr"></div>
+    <div class="modal-foot">
+      <button class="btn" id="authCancel">取消</button>
+      <button class="btn primary" id="authSubmit">登录</button>
+    </div>
+    <div class="auth-sw" id="authSwitch"></div>
+  </div>
+</div>
+
+<!-- ════ 大图查看 ════ -->
+<div class="modal" id="lightbox" hidden>
+  <div class="lb-body"><img id="lightboxImg" alt="大图"></div>
+</div>
+
+<div id="toast"></div>
+
+<a class="site-back" href="../../branches.html" title="返回 Michael. 分支列表">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H6"></path><path d="M11 7l-5 5 5 5"></path></svg>
+  Michael. 分支
+</a>
+
+<script type="module">
+import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
+
+/* ═══════════════════ 基础 ═══════════════════ */
+const $ = s => document.querySelector(s);
+const LS = {
+  get(k, d){ try{ const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); }catch(_){ return d; } },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(_){} }
+};
+let toastTimer;
+function toast(msg, kind){
+  const t = $('#toast'); t.textContent = msg;
+  t.className = 'show' + (kind ? ' ' + kind : '');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.className = '', 2600);
+}
+const pad = n => String(n).padStart(2, '0');
+
+/* ═══════════════════ 时次计算（全部换算到北京时间） ═══════════════════ */
+const SLOT_HOURS = [2, 8, 14, 20];            // 北京时间
+const PUBLISH_DELAY_MIN = 100;                // NMC 出图约滞后观测 1~2 小时
+
+function latestSlot(ref = new Date()){
+  const bj = new Date(ref.getTime() + 8 * 3600e3);   // 平移后按 UTC 读数即北京钟面
+  const h = bj.getUTCHours();
+  let best = -1;
+  for(const s of SLOT_HOURS) if(s <= h) best = s;
+  if(best === -1){ bj.setUTCDate(bj.getUTCDate() - 1); best = 20; }
+  bj.setUTCHours(best, 0, 0, 0);
+  return bj;                                          // 返回「北京钟面」Date（内部仍用其 UTC 字段读数）
+}
+function slotMinus(bjSlot, hours){ const d = new Date(bjSlot.getTime()); d.setUTCHours(d.getUTCHours() - hours); return d; }
+function slotKey(bjSlot){ return `${bjSlot.getUTCFullYear()}${pad(bjSlot.getUTCMonth()+1)}${pad(bjSlot.getUTCDate())}${pad(bjSlot.getUTCHours())}`; }
+function slotToRealUTC(bjSlot){ return new Date(bjSlot.getTime() - 8 * 3600e3); }  // 图片时标用真正 UTC
+function slotLabel(bjSlot){
+  return `${bjSlot.getUTCMonth()+1}月${bjSlot.getUTCDate()}日 ${bjSlot.getUTCHours()}时`;
+}
+function slotTabLabel(bjSlot){
+  const now = new Date();
+  const bjNow = new Date(now.getTime() + 8 * 3600e3);
+  const dayDiff = Date.UTC(bjNow.getUTCFullYear(), bjNow.getUTCMonth(), bjNow.getUTCDate())
+                - Date.UTC(bjSlot.getUTCFullYear(), bjSlot.getUTCMonth(), bjSlot.getUTCDate());
+  const days = Math.round(dayDiff / 86400e3);
+  const hm = `${pad(bjSlot.getUTCHours())}时`;
+  if(days === 0) return { main: '今天 ' + hm, sub: slotLabel(bjSlot) };
+  if(days === 1) return { main: '昨天 ' + hm, sub: slotLabel(bjSlot) };
+  return { main: `${bjSlot.getUTCMonth()+1}/${bjSlot.getUTCDate()} ${hm}`, sub: slotLabel(bjSlot) };
+}
+
+/* ═══════════════════ NMC 图源（URL 时标为 UTC） ═══════════════════ */
+function chartURL(realUTC){
+  const y = realUTC.getUTCFullYear(), m = pad(realUTC.getUTCMonth()+1), d = pad(realUTC.getUTCDate());
+  const t = `${y}${m}${d}${pad(realUTC.getUTCHours())}`;
+  return `https://image.nmc.cn/product/${y}/${m}/${d}/WESA/SEVP_NMC_WESA_SFER_EGH_ACWP_L00_P9_${t}0000000.JPG`;
+}
+function cloudVisibleURL(realUTC){
+  const y = realUTC.getUTCFullYear(), m = pad(realUTC.getUTCMonth()+1), d = pad(realUTC.getUTCDate());
+  const t = `${y}${m}${d}${pad(realUTC.getUTCHours())}${pad(realUTC.getUTCMinutes())}`;
+  return `https://image.nmc.cn/product/${y}/${m}/${d}/WXBL/medium/SEVP_NSMC_WXBL_FY4B_ETCC_ACHN_LNO_PY_${t}00000.JPG`;
+}
+function cloudIRURL(realUTC){
+  const y = realUTC.getUTCFullYear(), m = pad(realUTC.getUTCMonth()+1), d = pad(realUTC.getUTCDate());
+  const t = `${y}${m}${d}${pad(realUTC.getUTCHours())}${pad(realUTC.getUTCMinutes())}`;
+  return `https://image.nmc.cn/product/${y}/${m}/${d}/WXSP/medium/SEVP_NSMC_WXSP_ASC_EIR_ACWP_LNO_PY_${t}00000.png`;
+}
+
+/* ═══════════════════ 全局状态 ═══════════════════ */
+const state = {
+  slots: [],              // [{bj, key, label}] 最新在前，共 4 个
+  activeKey: '',
+  cloudMode: 'auto',      // auto | visible | ir
+  user: null,             // {id, name}
+  cloudReady: false,      // 留言/收藏云端表是否可用（schema 第十节运行后自动变 true）
+  localModeMsgs: false,
+  messages: [],           // 当前时次留言
+  likedIds: LS.get('skywatch-liked-v1', {}),
+  favKeys: new Set(),     // 已收藏 slot_key
+  view: 'watch',
+  authMode: 'login',
+};
+
+/* ═══════════════════ 时次条 ═══════════════════ */
+function buildSlots(){
+  const newest = latestSlot();
+  state.slots = [0, 6, 12, 18].map(h => {
+    const bj = slotMinus(newest, h);
+    return { bj, key: slotKey(bj), label: slotLabel(bj) };
+  });
+  // 默认选最新一张「应已发布」的图（观测时间 + 出图滞后）
+  // s.bj 是「北京钟面」位移 Date：真实观测 UTC = s.bj.getTime() - 8h
+  const cutoff = Date.now() - PUBLISH_DELAY_MIN * 60e3;
+  let def = state.slots[state.slots.length - 1];
+  for(const s of state.slots){ if(s.bj.getTime() - 8*3600e3 <= cutoff){ def = s; break; } }
+  state.activeKey = def.key;
+  renderSlotBar();
+}
+function renderSlotBar(){
+  const bar = $('#slotBar'); bar.textContent = '';
+  for(const s of state.slots){
+    const b = document.createElement('button');
+    b.className = 'slot-tab' + (s.key === state.activeKey ? ' active' : '');
+    const t = slotTabLabel(s.bj);
+    const m = document.createElement('div'); m.textContent = t.main;
+    const sm = document.createElement('small'); sm.textContent = t.sub;
+    b.append(m, sm);
+    b.onclick = () => { state.activeKey = s.key; renderSlotBar(); renderSlotMeta(); loadCharts(); loadBoard(); refreshFavState(); };
+    bar.appendChild(b);
+  }
+  const rf = document.createElement('button');
+  rf.className = 'btn slot-refresh'; rf.textContent = '↻ 刷新';
+  rf.onclick = () => { loadCharts(); loadBoard(); refreshFavState(); toast('已刷新'); };
+  bar.appendChild(rf);
+}
+function activeSlot(){ return state.slots.find(s => s.key === state.activeKey); }
+
+function renderSlotMeta(){
+  const s = activeSlot(); if(!s) return;
+  $('#slotHint').textContent = `当前时次：${s.label}（北京时间），最近 24 小时内共 4 个时次可回看`;
+  const u = slotToRealUTC(s.bj);
+  $('#chartMeta').textContent = `${pad(u.getUTCHours())}:00 UTC`;
+  $('#boardTitle').textContent = `${s.label} · 研判留言板`;
+}
+
+/* ═══════════════════ 图片加载（候选链：首选缺失时自动回退并在图下注明） ═══════════════════ */
+function setImgChain(img, fall, cands, onPicked){
+  const token = (img._want = (img._want || 0) + 1);
+  img.hidden = true; fall.hidden = true;
+  (function tryOne(i){
+    if(img._want !== token) return;                 // 已切到别的时次/模式，丢弃
+    if(i >= cands.length){ fall.hidden = false; if(onPicked) onPicked(null); return; }
+    const c = cands[i];
+    const probe = new Image();
+    probe.crossOrigin = 'anonymous';
+    probe.referrerPolicy = 'no-referrer';
+    probe.onload = () => {
+      if(img._want !== token) return;
+      img.src = c.url; img.hidden = false; fall.hidden = true;
+      if(onPicked) onPicked(c);
+    };
+    probe.onerror = () => tryOne(i + 1);
+    probe.src = c.url;
+  })(0);
+}
+function loadCharts(){
+  const s = activeSlot(); if(!s) return;
+  setImgChain($('#chartImg'), $('#chartFall'),
+    [{ url: chartURL(slotToRealUTC(s.bj)) }]);
+  applyCloud();
+}
+function cloudCandidates(bjSlot, mode){
+  const u = slotToRealUTC(bjSlot);
+  const bjHour = bjSlot.getUTCHours();
+  const preferVisible = mode === 'visible' || (mode === 'auto' && (bjHour === 8 || bjHour === 14));
+  const mins = x => new Date(u.getTime() + x * 60e3);
+  if(preferVisible){
+    return [
+      { url: cloudVisibleURL(u),          eff: 'visible' },
+      { url: cloudVisibleURL(mins(30)),   eff: 'visible' },
+      { url: cloudVisibleURL(mins(-30)),  eff: 'visible' },
+      { url: cloudIRURL(u),               eff: 'ir', note: '该时次可见光图缺失，已自动改用红外' },
+    ];
+  }
+  return [
+    { url: cloudIRURL(u),               eff: 'ir' },
+    { url: cloudIRURL(mins(30)),        eff: 'ir' },
+    { url: cloudIRURL(mins(-30)),       eff: 'ir' },
+    { url: cloudIRURL(mins(-60)),       eff: 'ir', note: '该时次红外图未发布，已用前一小时的图替代' },
+    { url: cloudIRURL(mins(60)),        eff: 'ir', note: '该时次红外图未发布，已用后一小时的图替代' },
+    { url: cloudVisibleURL(u),          eff: 'visible', note: '该时次红外图缺失，已改用可见光（夜间可能偏暗）' },
+  ];
+}
+function applyCloud(){
+  const s = activeSlot(); if(!s) return;
+  const cands = cloudCandidates(s.bj, state.cloudMode);
+  setImgChain($('#cloudImg'), $('#cloudFall'), cands, picked => {
+    const b = document.createElement('b'); b.textContent = '云图提示：';
+    $('#cloudNote').textContent = '';
+    if(!picked){ $('#cloudNote').append(b, ' 该时次各通道云图都还没出，稍后点「重试」。'); return; }
+    $('#cloudNote').append(b,
+      picked.eff === 'visible'
+        ? ' FY-4B 真彩可见光，白亮厚实处多为发展旺盛的云团（仅白天有效）。'
+        : ' 红外通道昼夜可用，越白越冷 = 云顶越高，深对流一目了然。',
+      picked.note ? '（' + picked.note + '）' : '');
+  });
+}
+$('#cloudSeg').addEventListener('click', e => {
+  const b = e.target.closest('button'); if(!b) return;
+  state.cloudMode = b.dataset.mode;
+  [...$('#cloudSeg').children].forEach(x => x.classList.toggle('active', x === b));
+  applyCloud();
+});
+document.addEventListener('click', e => {
+  const r = e.target.closest('[data-retry]'); if(!r) return;
+  if(r.dataset.retry === 'chart') loadCharts(); else applyCloud();
+});
+
+/* ═══════════════════ Supabase / 登录 ═══════════════════ */
+let sb = null;
+async function initAuth(){
+  if(!isConfigured()){ $('#authBtn').hidden = true; return; }
+  sb = await getSupabase();
+  if(!sb){ $('#authBtn').hidden = true; return; }
+  const { data } = await sb.auth.getSession();
+  setUser(data?.session?.user ?? null);
+  sb.auth.onAuthStateChange(() => sb.auth.getSession().then(({ data }) => setUser(data?.session?.user ?? null)));
+}
+function setUser(u){
+  state.user = u ? {
+    id: u.id,
+    name: u.user_metadata?.display_name || (u.email ? u.email.split('@')[0] : '用户'),
+  } : null;
+  renderAuthArea(); renderSig(); refreshFavState();
+  if(state.view === 'mine') renderMine();
+}
+function renderAuthArea(){
+  const b = $('#authBtn');
+  if(state.user){ b.textContent = '👤 ' + state.user.name; b.title = '点击退出登录'; }
+  else { b.textContent = '登录 / 注册'; b.title = ''; }
+}
+function renderSig(){
+  const name = LS.get('skywatch-name-v1', '');
+  if(state.user){
+    $('#sigHint').innerHTML = ''; $('#guestName').hidden = true;
+    const s = document.createElement('span');
+    s.append('将以账号昵称 '); const b = document.createElement('b'); b.textContent = state.user.name;
+    s.append(b, ' 署名'); $('#sigHint').append(s);
+  }else{
+    $('#sigHint').textContent = '游客留言，起个名字：'; $('#guestName').hidden = false;
+    if(name) $('#guestName').value = name;
+  }
+}
+
+/* 登录弹窗 */
+function openAuth(hint){
+  state.authMode = 'login';
+  $('#authHint').textContent = hint || '';
+  $('#authErr').textContent = ''; $('#authEmail').value = ''; $('#authPass').value = '';
+  syncAuthModal();
+  $('#authModal').hidden = false;
+  setTimeout(() => $('#authEmail').focus(), 50);
+}
+function syncAuthModal(){
+  const reg = state.authMode === 'register';
+  $('#authTitle').textContent = reg ? '注册 Michael. 账号' : '登录 Michael. 账号';
+  $('#authSubmit').textContent = reg ? '注册' : '登录';
+  $('#nickRow').hidden = !reg;
+  $('#authSwitch').innerHTML = '';
+  const s = document.createElement('span');
+  s.append(reg ? '已有账号？' : '还没有账号？');
+  const a = document.createElement('a'); a.textContent = reg ? '去登录' : '注册一个';
+  a.onclick = () => { state.authMode = reg ? 'login' : 'register'; $('#authErr').textContent = ''; syncAuthModal(); };
+  s.append(a); $('#authSwitch').append(s);
+}
+function translateAuthError(msg){
+  if(/Invalid login credentials/i.test(msg)) return '邮箱或密码不对';
+  if(/already registered/i.test(msg)) return '该邮箱已注册，请直接登录';
+  if(/at least 6/i.test(msg)) return '密码至少 6 位';
+  if(/valid email/i.test(msg)) return '邮箱格式不对';
+  if(/rate limit/i.test(msg)) return '操作太频繁，稍后再试';
+  return msg || '出错了，稍后再试';
+}
+$('#authBtn').onclick = () => state.user ? signOut() : openAuth();
+$('#gateLoginBtn').onclick = () => openAuth('登录后你的收藏与研判会保存在账户里');
+$('#authCancel').onclick = () => $('#authModal').hidden = true;
+$('#authModal').addEventListener('click', e => { if(e.target === $('#authModal')) $('#authModal').hidden = true; });
+$('#authSubmit').onclick = async () => {
+  if(!sb) return;
+  const email = $('#authEmail').value.trim(), pass = $('#authPass').value;
+  const err = $('#authErr'); err.textContent = '';
+  $('#authSubmit').disabled = true;
+  try{
+    if(state.authMode === 'register'){
+      const nick = $('#authNick').value.trim() || email.split('@')[0];
+      const { data, error } = await sb.auth.signUp({ email, password: pass, options: { data: { display_name: nick } } });
+      if(error) throw error;
+      if(data?.user && !data.session){ err.textContent = '注册成功！这封确认邮件发出后即可登录（若收件箱没有请看垃圾邮件）'; return; }
+      toast('注册成功，已登录', 'ok');
+    }else{
+      const { error } = await sb.auth.signInWithPassword({ email, password: pass });
+      if(error) throw error;
+      toast('登录成功', 'ok');
+    }
+    $('#authModal').hidden = true;
+  }catch(e){ err.textContent = translateAuthError(e?.message || ''); }
+  finally{ $('#authSubmit').disabled = false; }
+};
+async function signOut(){
+  if(sb) await sb.auth.signOut();
+  state.user = null; renderAuthArea(); renderSig(); refreshFavState();
+  if(state.view === 'mine') renderMine();
+  toast('已退出登录');
+}
+
+/* ═══════════════════ 云端可用性探测 + 双模式 Store ═══════════════════ */
+async function probeCloud(){
+  if(!sb){ state.cloudReady = false; return; }
+  try{
+    const { error } = await sb.from('sky_watch_messages').select('id').limit(1);
+    if(error) throw error;
+    state.cloudReady = true;
+  }catch(_){ state.cloudReady = false; }
+  renderCloudBanner();
+}
+function renderCloudBanner(){
+  const el = $('#cloudBanner'); el.innerHTML = '';
+  if(state.cloudReady) return;
+  const b = document.createElement('div'); b.className = 'banner';
+  b.textContent = '云端留言板尚未开通（需要运行 schema 第十节）：留言与收藏暂时只保存在这台设备上，开通后自动恢复云端同步。';
+  el.appendChild(b);
+}
+/* 留言 */
+const msgStore = {
+  async list(slotKey){
+    if(state.cloudReady){
+      const { data, error } = await sb.from('sky_watch_messages')
+        .select('*').eq('slot_key', slotKey).order('created_at', { ascending: false }).limit(200);
+      if(error) throw error;
+      return data;
+    }
+    return LS.get('skywatch-local-msgs-v1', {})[slotKey] || [];
+  },
+  async add(slotKey, { name, guess, reason }){
+    if(state.cloudReady){
+      const { data, error } = await sb.from('sky_watch_messages')
+        .insert({ slot_key: slotKey, user_id: state.user?.id ?? null, name, guess, reason: reason || null })
+        .select();
+      if(error) throw error;
+      return data[0];
+    }
+    const all = LS.get('skywatch-local-msgs-v1', {});
+    const m = { id: 'l_' + Math.random().toString(36).slice(2, 10), slot_key: slotKey,
+      user_id: state.user?.id ?? null, name, guess, reason: reason || null, likes: 0, created_at: new Date().toISOString(), _local: true };
+    (all[slotKey] = all[slotKey] || []).unshift(m);
+    LS.set('skywatch-local-msgs-v1', all);
+    return m;
+  },
+  async remove(m){
+    if(m._local || !state.cloudReady){
+      const all = LS.get('skywatch-local-msgs-v1', {});
+      if(all[m.slot_key]) { all[m.slot_key] = all[m.slot_key].filter(x => x.id !== m.id); LS.set('skywatch-local-msgs-v1', all); }
+      return;
+    }
+    const { error } = await sb.from('sky_watch_messages').delete().eq('id', m.id);
+    if(error) throw error;
+  },
+  async like(id, delta){
+    if(state.cloudReady){
+      const { data, error } = await sb.rpc('sky_watch_bump_likes', { p_id: id, p_delta: delta });
+      if(error) throw error;
+      return data;
+    }
+    // 本地模式：把点赞数写回 localStorage
+    const all = LS.get('skywatch-local-msgs-v1', {});
+    let v = null;
+    for(const arr of Object.values(all)){
+      const m = arr.find(x => x.id === id);
+      if(m){ m.likes = Math.max(0, (m.likes || 0) + delta); v = m.likes; }
+    }
+    LS.set('skywatch-local-msgs-v1', all);
+    return v;
+  },
+};
+/* 收藏 */
+const favStore = {
+  async list(){
+    if(state.user && state.cloudReady){
+      const { data, error } = await sb.from('sky_watch_favorites')
+        .select('*').order('created_at', { ascending: false }).limit(200);
+      if(error) throw error;
+      return data;
+    }
+    if(state.user) return LS.get('skywatch-local-favs-v1', []).filter(f => f.user_id === state.user.id);
+    return [];
+  },
+  async add(payload){
+    if(state.cloudReady){
+      const { data, error } = await sb.from('sky_watch_favorites').insert(payload).select();
+      if(error) throw error;
+      return data[0];
+    }
+    const all = LS.get('skywatch-local-favs-v1', []);
+    const f = { ...payload, id: 'l_' + Math.random().toString(36).slice(2, 10), created_at: new Date().toISOString(), _local: true };
+    all.unshift(f); LS.set('skywatch-local-favs-v1', all);
+    return f;
+  },
+  async remove(f){
+    if(f._local || !state.cloudReady){
+      const all = LS.get('skywatch-local-favs-v1', []);
+      LS.set('skywatch-local-favs-v1', all.filter(x => x.id !== f.id));
+      return;
+    }
+    const { error } = await sb.from('sky_watch_favorites').delete().eq('id', f.id);
+    if(error) throw error;
+  },
+};
+
+/* ═══════════════════ 留言板 ═══════════════════ */
+const QUICK_GUESSES = [
+  '维持现状，变化不大', '明天转晴', '明天有雨', '午后有雷阵雨',
+  '冷空气南下，降温大风', '气温回升', '早晨有雾或轻雾', '台风外围影响',
+];
+function renderChips(){
+  const box = $('#quickChips'); box.innerHTML = '';
+  for(const g of QUICK_GUESSES){
+    const c = document.createElement('button');
+    c.type = 'button'; c.className = 'chip'; c.textContent = g;
+    c.onclick = () => {
+      $('#guessInput').value = g;
+      [...box.children].forEach(x => x.classList.toggle('picked', x === c));
+      $('#guessInput').focus();
+    };
+    box.appendChild(c);
+  }
+}
+$('#guessInput').addEventListener('input', () => {
+  [...$('#quickChips').children].forEach(c => c.classList.toggle('picked', c.textContent === $('#guessInput').value));
+});
+
+async function loadBoard(){
+  const key = state.activeKey;
+  const list = $('#msgList'); list.innerHTML = '';
+  $('#msgEmpty').hidden = false;
+  let msgs = [];
+  try{ msgs = await msgStore.list(key); }
+  catch(e){ toast('留言加载失败：' + (e?.message || ''), 'err'); }
+  if(key !== state.activeKey) return;   // 期间已切时次
+  state.messages = msgs || [];
+  for(const m of state.messages) list.appendChild(renderMsg(m));
+  $('#msgEmpty').hidden = state.messages.length > 0;
+}
+function fmtTime(iso){
+  const d = new Date(iso), bj = new Date(d.getTime() + 8 * 3600e3);
+  return `${bj.getUTCMonth()+1}月${bj.getUTCDate()}日 ${pad(bj.getUTCHours())}:${pad(bj.getUTCMinutes())}`;
+}
+function renderMsg(m){
+  const li = document.createElement('li');
+  const av = document.createElement('div'); av.className = 'avatar';
+  av.textContent = (m.name || '匿').trim().slice(0, 1).toUpperCase();
+  const main = document.createElement('div'); main.className = 'msg-main';
+  const head = document.createElement('div'); head.className = 'msg-head';
+  const nm = document.createElement('span'); nm.className = 'name'; nm.textContent = m.name || '匿名';
+  const tag = document.createElement('span'); tag.className = 'guess-tag'; tag.textContent = m.guess;
+  const tm = document.createElement('span'); tm.className = 'time'; tm.textContent = fmtTime(m.created_at);
+  head.append(nm, tag, tm);
+  main.appendChild(head);
+  if(m.reason){ const r = document.createElement('div'); r.className = 'msg-reason'; r.textContent = m.reason; main.appendChild(r); }
+  const ops = document.createElement('div'); ops.className = 'msg-ops';
+  const liked = !!state.likedIds[m.id];
+  const like = document.createElement('button');
+  like.className = 'op like' + (liked ? ' liked' : '');
+  const heart = document.createElement('span'); heart.textContent = liked ? '♥' : '♡';
+  const n = document.createElement('span'); n.className = 'n'; n.textContent = m.likes || 0;
+  like.append(heart, ' ', n);
+  like.title = '点赞';
+  like.onclick = async () => {
+    if(state.likedIds[m.id]) return;                  // 防重复点赞
+    state.likedIds[m.id] = true; LS.set('skywatch-liked-v1', state.likedIds);
+    heart.textContent = '♥'; like.classList.add('liked');
+    const before = m.likes || 0; n.textContent = before + 1; m.likes = before + 1;
+    try{ const v = await msgStore.like(m.id, 1); if(state.cloudReady && typeof v === 'number'){ n.textContent = v; m.likes = v; } }
+    catch(_){
+      delete state.likedIds[m.id]; LS.set('skywatch-liked-v1', state.likedIds);
+      heart.textContent = '♡'; like.classList.remove('liked'); n.textContent = before; m.likes = before;
+      toast('点赞失败', 'err');
+    }
+  };
+  ops.appendChild(like);
+  const own = m._local ? (state.user && m.user_id === state.user.id) || (!m.user_id && m.name === guestName())
+                       : (state.user && m.user_id === state.user.id);
+  if(own){
+    const del = document.createElement('button'); del.className = 'op'; del.textContent = '删除'; del.title = '删除这条研判';
+    del.onclick = async () => {
+      try{ await msgStore.remove(m); li.remove(); toast('已删除');
+        if(!$('#msgList').children.length) $('#msgEmpty').hidden = false;
+      }catch(e){ toast('删除失败：' + (e?.message || ''), 'err'); }
+    };
+    ops.appendChild(del);
+  }
+  li.append(av, main, ops);
+  return li;
+}
+function guestName(){ return ($('#guestName').value || '').trim(); }
+
+$('#postBtn').onclick = async () => {
+  const guess = $('#guessInput').value.trim();
+  const reason = $('#reasonInput').value.trim();
+  if(!guess){ toast('先写下你的猜测（点快捷语或自己说）', 'err'); $('#guessInput').focus(); return; }
+  let name = state.user?.name;
+  if(!name){
+    name = guestName() || '匿名同学';
+    LS.set('skywatch-name-v1', name);
+  }
+  $('#postBtn').disabled = true;
+  try{
+    const m = await msgStore.add(state.activeKey, { name, guess, reason });
+    state.messages.unshift(m);
+    $('#msgList').prepend(renderMsg(m));
+    $('#msgEmpty').hidden = true;
+    $('#guessInput').value = ''; $('#reasonInput').value = '';
+    [...$('#quickChips').children].forEach(c => c.classList.remove('picked'));
+    toast('研判已发布，坐等天气验证', 'ok');
+  }catch(e){ toast('发布失败：' + (e?.message || ''), 'err'); }
+  finally{ $('#postBtn').disabled = false; }
+};
+
+/* ═══════════════════ 收藏（图快照 + 我的研判 → 账户） ═══════════════════ */
+async function snap(img, maxW = 680, q = 0.62){
+  try{
+    if(!img.complete || !img.naturalWidth || img.hidden) return null;
+    const scale = Math.min(1, maxW / img.naturalWidth);
+    const c = document.createElement('canvas');
+    c.width = Math.round(img.naturalWidth * scale);
+    c.height = Math.round(img.naturalHeight * scale);
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    const url = c.toDataURL('image/jpeg', q);
+    return url.length <= 1100000 ? url : null;
+  }catch(_){ return null; }
+}
+async function myLatestMessageIn(slotKey){
+  try{
+    if(state.cloudReady && state.user){
+      const { data } = await sb.from('sky_watch_messages')
+        .select('id, guess, reason').eq('slot_key', slotKey).eq('user_id', state.user.id)
+        .order('created_at', { ascending: false }).limit(1);
+      return data?.[0] || null;
+    }
+    const local = LS.get('skywatch-local-msgs-v1', {})[slotKey] || [];
+    const mine = local.filter(m => state.user && m.user_id === state.user.id);
+    return mine[0] || null;
+  }catch(_){ return null; }
+}
+async function refreshFavState(){
+  const btn = $('#favBtn');
+  if(!state.user){ btn.disabled = true; btn.classList.remove('starred'); btn.textContent = '☆ 收藏本时次';
+    $('#favHint').textContent = '登录后可把图与你的研判收藏进账户'; return; }
+  btn.disabled = false;   // 云端未就绪时也允许：收藏降级为「仅本机」
+  $('#favHint').textContent = state.cloudReady ? '把两张图连同你的研判一起存进账户，随时翻阅' : '云端未就绪，收藏暂存本机（开通后可迁移）';
+  try{
+    const favs = await favStore.list();
+    state.favKeys = new Set(favs.map(f => f.slot_key));
+    if(state.view === 'mine') renderMine();
+  }catch(_){}
+  paintFavBtn();
+}
+function paintFavBtn(){
+  const on = state.favKeys.has(state.activeKey);
+  const b = $('#favBtn');
+  b.classList.toggle('starred', on);
+  b.textContent = on ? '★ 已收藏（点击取消）' : '☆ 收藏本时次';
+}
+$('#favBtn').onclick = async () => {
+  if(!state.user){ openAuth('登录后才能把看图记录收藏进账户'); return; }
+  const key = state.activeKey, s = activeSlot();
+  $('#favBtn').disabled = true;
+  try{
+    if(state.favKeys.has(key)){
+      const favs = await favStore.list();
+      const f = favs.find(x => x.slot_key === key);
+      if(f) await favStore.remove(f);
+      state.favKeys.delete(key);
+      toast('已取消收藏'); paintFavBtn();
+    }else{
+      const [chartSnap, cloudSnap] = await Promise.all([
+        snap($('#chartImg')), snap($('#cloudImg')),
+      ]);
+      const mine = await myLatestMessageIn(key);
+      await favStore.add({
+        user_id: state.user.id, slot_key: key,
+        slot_label: `${s.label}（${pad(slotToRealUTC(s.bj).getUTCHours())}:00 UTC）`,
+        chart_snap: chartSnap, cloud_snap: cloudSnap,
+        message_id: mine?.id ?? null, my_guess: mine?.guess ?? null, my_reason: mine?.reason ?? null,
+      });
+      state.favKeys.add(key);
+      toast(chartSnap ? '已收藏到账户' : '已收藏（图片快照未能生成，仅记录研判）', 'ok');
+      paintFavBtn();
+    }
+  }catch(e){ toast('收藏失败：' + (e?.message || ''), 'err'); }
+  finally{ $('#favBtn').disabled = false; }
+};
+
+/* ═══════════════════ 我的战绩 ═══════════════════ */
+$('#tabWatch').onclick = () => switchView('watch');
+$('#tabMine').onclick = () => switchView('mine');
+$('#recTabFav').onclick = () => switchRec('fav');
+$('#recTabMsg').onclick = () => switchRec('msg');
+function switchView(v){
+  state.view = v;
+  $('#watchView').hidden = v !== 'watch';
+  $('#mineView').hidden = v !== 'mine';
+  $('#tabWatch').classList.toggle('active', v === 'watch');
+  $('#tabMine').classList.toggle('active', v === 'mine');
+  if(v === 'mine') renderMine();
+}
+function switchRec(which){
+  $('#recTabFav').classList.toggle('active', which === 'fav');
+  $('#recTabMsg').classList.toggle('active', which === 'msg');
+  $('#favPane').hidden = which !== 'fav';
+  $('#msgPane').hidden = which !== 'msg';
+}
+async function renderMine(){
+  const stats = $('#recStats'), grid = $('#favGrid'), mineMsgs = $('#mineMsgs');
+  stats.innerHTML = ''; grid.innerHTML = ''; mineMsgs.innerHTML = '';
+  if(!state.user){
+    $('#loginGate').hidden = false; $('#favPane').hidden = true; $('#msgPane').hidden = true;
+    return;
+  }
+  $('#loginGate').hidden = true;
+  switchRec('fav');
+  let favs = [], mine = [];
+  try{ favs = await favStore.list(); }catch(e){ toast('收藏加载失败：' + (e?.message || ''), 'err'); }
+  try{
+    if(state.cloudReady){
+      const { data, error } = await sb.from('sky_watch_messages')
+        .select('*').eq('user_id', state.user.id).order('created_at', { ascending: false }).limit(200);
+      if(error) throw error; mine = data || [];
+    }else{
+      const all = LS.get('skywatch-local-msgs-v1', {});
+      mine = Object.values(all).flat().filter(m => m.user_id === state.user.id)
+        .sort((a, b) => b.created_at.localeCompare(a.created_at));
+    }
+  }catch(e){ toast('研判记录加载失败：' + (e?.message || ''), 'err'); }
+
+  const totalLikes = mine.reduce((s, m) => s + (m.likes || 0), 0);
+  for(const [v, t] of [[favs.length, '收藏图次'], [mine.length, '研判条数'], [totalLikes, '累计获赞']]){
+    const d = document.createElement('div'); d.className = 'stat';
+    const b = document.createElement('b'); b.textContent = v;
+    const sp = document.createElement('span'); sp.textContent = t;
+    d.append(b, sp); stats.appendChild(d);
+  }
+
+  if(!favs.length){ const e = document.createElement('div'); e.className = 'empty'; e.textContent = '还没有收藏。看图页点「☆ 收藏本时次」，图和你的研判就会存到这里。'; grid.appendChild(e); }
+  for(const f of favs){
+    const card = document.createElement('div'); card.className = 'fav-card';
+    const head = document.createElement('div'); head.className = 'fc-head';
+    const t = document.createElement('span'); t.className = 't'; t.textContent = f.slot_label;
+    const del = document.createElement('button'); del.className = 'btn small danger del'; del.textContent = '取消收藏';
+    del.onclick = async () => {
+      try{ await favStore.remove(f); card.remove(); state.favKeys.delete(f.slot_key); paintFavBtn(); toast('已取消收藏'); if(!$('#favGrid').children.length){ const e = document.createElement('div'); e.className = 'empty'; e.textContent = '还没有收藏了。'; $('#favGrid').appendChild(e); } }
+      catch(e){ toast('操作失败：' + (e?.message || ''), 'err'); }
+    };
+    head.append(t, del);
+    const thumbs = document.createElement('div'); thumbs.className = 'fav-thumbs';
+    for(const [snapUrl, kind] of [[f.chart_snap, '天气图'], [f.cloud_snap, '云图']]){
+      if(snapUrl){
+        const im = document.createElement('img'); im.src = snapUrl; im.alt = kind; im.loading = 'lazy';
+        im.onclick = () => { $('#lightboxImg').src = snapUrl; $('#lightbox').hidden = false; };
+        thumbs.appendChild(im);
+      }else{
+        const ph = document.createElement('div'); ph.style.cssText = 'display:flex;align-items:center;justify-content:center;height:110px;color:#5a6b7d;font-size:12px;background:#f2f4f7';
+        ph.textContent = kind + '快照缺失'; thumbs.appendChild(ph);
+      }
+    }
+    const body = document.createElement('div'); body.className = 'fc-body';
+    if(f.my_guess){ const g = document.createElement('span'); g.className = 'guess-tag'; g.textContent = f.my_guess; body.appendChild(g); }
+    if(f.my_reason){ const r = document.createElement('div'); r.className = 'why'; r.textContent = f.my_reason; body.appendChild(r); }
+    if(!f.my_guess && !f.my_reason){ const s2 = document.createElement('div'); s2.className = 'why'; s2.textContent = '（当时没有留下研判）'; body.appendChild(s2); }
+    const foot = document.createElement('div'); foot.className = 'fc-foot';
+    const c1 = document.createElement('span'); c1.textContent = '收藏于 ' + fmtTime(f.created_at);
+    foot.append(c1);
+    card.append(head, thumbs, body, foot);
+    grid.appendChild(card);
+  }
+
+  if(!mine.length){ const e = document.createElement('div'); e.className = 'empty'; e.textContent = '还没有发布过研判。去看图页留下你的第一条预报吧。'; mineMsgs.appendChild(e); }
+  for(const m of mine){
+    const it = document.createElement('div'); it.className = 'mine-item';
+    const mh = document.createElement('div'); mh.className = 'mh';
+    const sl = document.createElement('span'); sl.className = 'slot';
+    sl.textContent = slotKeyLabel(m.slot_key);
+    const tm = document.createElement('span'); tm.textContent = '发布于 ' + fmtTime(m.created_at);
+    const lk = document.createElement('span'); lk.textContent = `♥ ${m.likes || 0}`;
+    mh.append(sl, tm, lk);
+    const mg = document.createElement('div'); mg.className = 'mg'; mg.textContent = m.guess;
+    it.append(mh, mg);
+    if(m.reason){ const mr = document.createElement('div'); mr.className = 'mr'; mr.textContent = m.reason; it.appendChild(mr); }
+    mineMsgs.appendChild(it);
+  }
+}
+function slotKeyLabel(key){
+  if(!/^\d{10}$/.test(key)) return key;
+  return `${+key.slice(4,6)}月${+key.slice(6,8)}日 ${+key.slice(8,10)}时`;
+}
+
+/* ═══════════════════ 大图 & 杂项 ═══════════════════ */
+$('#lightbox').addEventListener('click', () => $('#lightbox').hidden = true);
+document.addEventListener('keydown', e => { if(e.key === 'Escape'){ $('#lightbox').hidden = true; $('#authModal').hidden = true; } });
+
+/* ═══════════════════ 启动 ═══════════════════ */
+(async function init(){
+  renderChips(); buildSlots(); renderSlotMeta();
+  loadCharts(); renderSig();
+  await initAuth();
+  await probeCloud();
+  renderCloudBanner();
+  renderSig();
+  loadBoard();
+  refreshFavState();
+})();
+</script>
+</body>
+</html>

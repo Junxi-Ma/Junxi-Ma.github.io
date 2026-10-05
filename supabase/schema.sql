@@ -573,3 +573,129 @@ create policy "not banned can insert sudoku records"
   );
 
 notify pgrst, 'reload schema';
+
+-- ############################################################
+-- 十、看图识天（branches/sky-watch/）：天气图/云图研判留言板
+-- ############################################################
+
+-- 1) 研判留言表：每个时次一块板。slot_key = 图片时次（北京时间 YYYYMMDDHH，如 2026100520）
+create table if not exists public.sky_watch_messages (
+  id         uuid primary key default gen_random_uuid(),
+  slot_key   text not null check (slot_key ~ '^[0-9]{10}$'),
+  user_id    uuid references auth.users(id) on delete cascade, -- 游客为 NULL
+  name       text not null default '匿名',
+  guess      text not null check (char_length(guess) between 1 and 120),  -- 猜测结论（快捷语或自定义）
+  reason     text check (char_length(reason) <= 2000),                    -- 判断原因，可空
+  likes      int not null default 0,
+  created_at timestamptz not null default now()
+);
+create index if not exists sky_watch_msg_slot_idx on public.sky_watch_messages (slot_key, created_at desc);
+create index if not exists sky_watch_msg_user_idx on public.sky_watch_messages (user_id, created_at desc);
+
+-- 2) 登录用户署名以账号资料为准（防冒名），与扫雷/数独同一套路
+create or replace function public.sky_watch_resolve_name()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare pname text;
+begin
+  if new.user_id is not null then
+    select coalesce(p.display_name, split_part(p.email, '@', 1))
+      into pname
+      from public.profiles p
+      where p.id = new.user_id;
+    if pname is not null then
+      new.name := pname;
+    end if;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists sky_watch_resolve_name_trg on public.sky_watch_messages;
+create trigger sky_watch_resolve_name_trg
+  before insert on public.sky_watch_messages
+  for each row execute function public.sky_watch_resolve_name();
+
+-- 3) 原子点赞：likes 永不为负（同留言墙 bump_likes 套路），防重复靠前端本地记录
+create or replace function public.sky_watch_bump_likes(p_id uuid, p_delta int)
+returns int
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare n int;
+begin
+  update public.sky_watch_messages
+    set likes = greatest(0, likes + coalesce(p_delta, 0))
+    where id = p_id
+    returning likes into n;
+  return coalesce(n, 0);
+end;
+$$;
+
+revoke all on function public.sky_watch_bump_likes(uuid, int) from public;
+grant execute on function public.sky_watch_bump_likes(uuid, int) to anon, authenticated;
+
+-- 4) 留言 RLS：全员可读；未封禁者可留言（登录只能挂自己的 user_id）；作者可删自己的留言
+alter table public.sky_watch_messages enable row level security;
+
+drop policy if exists "sky watch messages readable" on public.sky_watch_messages;
+create policy "sky watch messages readable" on public.sky_watch_messages
+  for select to anon, authenticated using (true);
+
+drop policy if exists "not banned can post sky watch messages" on public.sky_watch_messages;
+create policy "not banned can post sky watch messages"
+  on public.sky_watch_messages
+  for insert
+  to anon, authenticated
+  with check (
+    char_length(guess) between 1 and 120
+    and (reason is null or char_length(reason) <= 2000)
+    and (user_id is null or user_id = auth.uid())
+    and not coalesce(public.is_banned(), false)
+  );
+
+drop policy if exists "author can delete own sky watch message" on public.sky_watch_messages;
+create policy "author can delete own sky watch message"
+  on public.sky_watch_messages
+  for delete
+  to authenticated
+  using (user_id = auth.uid());
+
+-- 5) 收藏表：仅登录用户，把自己的看图记录（图快照 + 自己的研判）存进账户，随时翻阅。
+--    NMC 老图约 5~6 天后失效，快照在收藏时由前端压缩转 dataURL 存入。
+create table if not exists public.sky_watch_favorites (
+  id         uuid primary key default gen_random_uuid(),
+  user_id    uuid not null references auth.users(id) on delete cascade,
+  slot_key   text not null check (slot_key ~ '^[0-9]{10}$'),
+  slot_label text not null,
+  chart_snap text check (chart_snap is null or char_length(chart_snap) <= 1200000),
+  cloud_snap text check (cloud_snap is null or char_length(cloud_snap) <= 1200000),
+  message_id uuid references public.sky_watch_messages(id) on delete set null, -- 当时自己的研判
+  my_guess   text,
+  my_reason  text,
+  created_at timestamptz not null default now(),
+  unique (user_id, slot_key)
+);
+create index if not exists sky_watch_fav_user_idx on public.sky_watch_favorites (user_id, created_at desc);
+
+-- 6) 收藏 RLS：完全私有，只有本人可读写
+alter table public.sky_watch_favorites enable row level security;
+
+drop policy if exists "sky watch favorites are private" on public.sky_watch_favorites;
+create policy "sky watch favorites are private" on public.sky_watch_favorites
+  for select to authenticated using (user_id = auth.uid());
+
+drop policy if exists "own sky watch favorites insert" on public.sky_watch_favorites;
+create policy "own sky watch favorites insert" on public.sky_watch_favorites
+  for insert to authenticated
+  with check (user_id = auth.uid() and not coalesce(public.is_banned(), false));
+
+drop policy if exists "own sky watch favorites delete" on public.sky_watch_favorites;
+create policy "own sky watch favorites delete" on public.sky_watch_favorites
+  for delete to authenticated using (user_id = auth.uid());
+
+notify pgrst, 'reload schema';
