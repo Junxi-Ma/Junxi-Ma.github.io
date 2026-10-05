@@ -97,15 +97,27 @@ body.ch-page [hidden] { display: none !important; }
 .ch-btn.wide { width: 100%; }
 .ch-btn.danger:hover { border-color: #d9553f; color: #d9553f; }
 
-/* ---------- 对局视图：深色漆木桌面 + 胡桃木棋盘 ---------- */
+/* ---------- 对局视图：雨夜窗外（夜）/ 夏日树下（日） ---------- */
 .ch-game {
   --skw: min(calc(100vw - 24px), calc(100vh - 170px));
+  /* 夜：雨夜窗外（默认） */
+  --scene:
+    radial-gradient(circle at 78% 26%, rgba(255, 196, 110, 0.16) 0 5%, transparent 6%),
+    radial-gradient(circle at 86% 40%, rgba(140, 190, 255, 0.12) 0 3.5%, transparent 4.5%),
+    radial-gradient(circle at 68% 52%, rgba(255, 170, 90, 0.10) 0 4.5%, transparent 5.5%),
+    radial-gradient(circle at 16% 22%, rgba(120, 170, 220, 0.10) 0 4%, transparent 5%),
+    radial-gradient(circle at 30% 45%, rgba(90, 140, 200, 0.08) 0 3%, transparent 4%),
+    radial-gradient(120% 55% at 50% 108%, rgba(255, 170, 90, 0.10), transparent 60%),
+    linear-gradient(180deg, #0b1220 0%, #0f1930 38%, #0c1424 68%, #090e18 100%);
+  --glass-bg: rgba(16, 22, 36, 0.55);
+  --glass-border: rgba(150, 180, 230, 0.22);
+  --ink: #dbe6f5;
+  --ink-soft: #93a5c4;
+  --gold: #9fb8dd;
   position: fixed;
   inset: 0;
   z-index: 200; /* 压过站点导航（--z-nav:100），低于本页模态 300 */
-  background:
-    radial-gradient(120% 70% at 50% -8%, rgba(158, 110, 50, 0.22), transparent 60%),
-    linear-gradient(180deg, #241a10, #170f08 55%, #0f0a05);
+  background: var(--scene);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -113,12 +125,46 @@ body.ch-page [hidden] { display: none !important; }
   padding: 12px;
   overflow: hidden;
 }
+/* 日：夏日树下 */
+:root[data-theme='light'] .ch-game {
+  --scene:
+    radial-gradient(circle at 74% 14%, rgba(255, 246, 190, 0.65) 0 6%, transparent 7%),
+    radial-gradient(circle at 58% 26%, rgba(255, 252, 205, 0.5) 0 4.5%, transparent 5.5%),
+    radial-gradient(circle at 30% 10%, rgba(235, 250, 180, 0.5) 0 5%, transparent 6%),
+    radial-gradient(circle at 14% 34%, rgba(140, 190, 90, 0.4) 0 7%, transparent 8%),
+    radial-gradient(circle at 88% 55%, rgba(110, 165, 80, 0.35) 0 9%, transparent 10%),
+    linear-gradient(180deg, #a8c877 0%, #83ad5e 42%, #618c46 75%, #4f7a3a 100%);
+  --glass-bg: rgba(255, 252, 240, 0.55);
+  --glass-border: rgba(90, 110, 60, 0.3);
+  --ink: #31401f;
+  --ink-soft: #5d7040;
+  --gold: #8a6d1f;
+}
 .ch-game::before {
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(140% 110% at 50% 115%, rgba(0, 0, 0, 0.55), transparent 55%);
+  background: radial-gradient(140% 110% at 50% 115%, rgba(0, 0, 0, 0.5), transparent 55%);
   pointer-events: none;
+}
+/* 夜：细雨（斜向细线缓落）；日：树影摇曳（斑驳叶影） */
+.ch-game::after {
+  content: '';
+  position: absolute;
+  inset: -60px;
+  pointer-events: none;
+  background: repeating-linear-gradient(112deg, transparent 0 9px, rgba(170, 200, 255, 0.05) 9px 10.5px, transparent 10.5px 18px);
+  animation: ch-rain 0.9s linear infinite;
+}
+:root[data-theme='light'] .ch-game::after {
+  background: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='420'%20height='420'%3E%3Cfilter%20id='f'%3E%3CfeTurbulence%20type='fractalNoise'%20baseFrequency='0.02%200.035'%20numOctaves='3'%20seed='9'/%3E%3CfeColorMatrix%20values='0%200%200%200%200.10%200%200%200%200%200.22%200%200%200%200%200.05%200.4%200%200%200%200'/%3E%3C/filter%3E%3Crect%20width='420'%20height='420'%20filter='url(%23f)'/%3E%3C/svg%3E");
+  animation: ch-leaf 9s ease-in-out infinite alternate;
+  opacity: 0.85;
+}
+@keyframes ch-rain { to { transform: translate3d(-18px, 60px, 0); } }
+@keyframes ch-leaf { from { transform: translate3d(-8px, -4px, 0); } to { transform: translate3d(10px, 6px, 0); } }
+@media (prefers-reduced-motion: reduce) {
+  .ch-game::after { animation: none; }
 }
 .ch-game > * { position: relative; z-index: 1; }
 
@@ -133,15 +179,18 @@ body.ch-page [hidden] { display: none !important; }
   gap: 9px;
   flex-wrap: wrap;
   padding: 8px 12px;
-  border: 1px solid rgba(214, 175, 110, 0.22);
-  border-radius: 12px;
-  background: rgba(255, 236, 200, 0.04);
+  border: 1px solid var(--glass-border);
+  border-radius: 14px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 8px 24px -10px rgba(0, 0, 0, 0.35);
 }
 .ch-tbtn {
-  border: 1px solid rgba(214, 175, 110, 0.28);
+  border: 1px solid var(--glass-border);
   border-radius: 9px;
-  background: rgba(255, 236, 200, 0.05);
-  color: #d9c7a1;
+  background: transparent;
+  color: var(--ink-soft);
   font: 600 12.5px/1 Georgia, "Times New Roman", "Microsoft YaHei", serif;
   letter-spacing: 0.05em;
   padding: 7px 12px;
@@ -149,17 +198,12 @@ body.ch-page [hidden] { display: none !important; }
   white-space: nowrap;
   transition: border-color var(--dur-fast) ease, color var(--dur-fast) ease, background var(--dur-fast) ease;
 }
-.ch-tbtn:hover {
-  border-color: rgba(235, 195, 125, 0.6);
-  color: #f6e9c9;
-  background: rgba(255, 236, 200, 0.09);
-}
 .ch-tbtn[disabled] { opacity: 0.35; cursor: default; }
 .ch-modechip {
   font: 700 12px/1 Georgia, "Microsoft YaHei", serif;
   letter-spacing: 0.16em;
-  color: #d9b36a;
-  border: 1px solid rgba(217, 179, 106, 0.35);
+  color: var(--gold);
+  border: 1px solid var(--glass-border);
   border-radius: 999px;
   padding: 6px 13px;
   white-space: nowrap;
@@ -167,7 +211,7 @@ body.ch-page [hidden] { display: none !important; }
 .ch-status {
   font: 600 14px/1.5 Georgia, "Times New Roman", "Microsoft YaHei", serif;
   letter-spacing: 0.04em;
-  color: #ecdfc0;
+  color: var(--ink);
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -176,7 +220,7 @@ body.ch-page [hidden] { display: none !important; }
 .ch-spacer { flex: 1; }
 .ch-clock {
   font: 600 12.5px/1 ui-monospace, monospace;
-  color: #b5a582;
+  color: var(--ink-soft);
   font-variant-numeric: tabular-nums;
 }
 
@@ -194,8 +238,8 @@ body.ch-page [hidden] { display: none !important; }
   padding: 0 6px;
   opacity: 0.92;
 }
-#ch-cap-top { color: #a89575; }
-#ch-cap-bottom { color: #ecdfc0; }
+#ch-cap-top { color: var(--ink-soft); }
+#ch-cap-bottom { color: var(--ink); }
 
 /* ---------- 木框棋盘 ---------- */
 .ch-boardframe {
@@ -262,21 +306,25 @@ body.ch-page [hidden] { display: none !important; }
   font-size: var(--ch-piece, 40px);
   line-height: 1;
   pointer-events: none;
-  filter: drop-shadow(0 2px 1.5px rgba(0, 0, 0, 0.55)) drop-shadow(0 5px 7px rgba(0, 0, 0, 0.3));
+  filter: drop-shadow(3px 6px 3px rgba(0, 0, 0, 0.42)) drop-shadow(0 1px 1px rgba(0, 0, 0, 0.5));
 }
 .ch-piece.w {
-  background: linear-gradient(168deg, #fffdf4 18%, #f8ecd2 52%, #ecd7a8);
+  background:
+    radial-gradient(circle at 32% 20%, rgba(255, 255, 250, 0.95), rgba(255, 255, 250, 0) 52%),
+    linear-gradient(168deg, #fffdf4 20%, #f4e6c6 55%, #e3c993);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
   -webkit-text-stroke: 1.3px #3f2c10;
 }
 .ch-piece.b {
-  background: linear-gradient(168deg, #77552c 15%, #53371a 50%, #3a250e);
+  background:
+    radial-gradient(circle at 32% 20%, rgba(215, 190, 140, 0.5), rgba(215, 190, 140, 0) 55%),
+    linear-gradient(168deg, #7c582c 15%, #553a1b 52%, #33200d);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  -webkit-text-stroke: 0.6px #150d04;
+  -webkit-text-stroke: 0.6px #140c04;
 }
 @supports not ((-webkit-background-clip: text) or (background-clip: text)) {
   .ch-piece.w { color: #fdf6e3; -webkit-text-stroke: 1.3px #3f2c10; }

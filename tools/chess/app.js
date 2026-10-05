@@ -544,6 +544,25 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
   function renderFs() { fitBoard(); }
   document.addEventListener('fullscreenchange', () => { renderFs(); });
 
+  /* ---------- 日 / 夜切换（跟随并同步站点主题） ---------- */
+  const themeBtn = $('#ch-theme');
+  function renderTheme() {
+    if (themeBtn) {
+      const light = document.documentElement.dataset.theme === 'light';
+      themeBtn.textContent = light ? '🌙' : '☀';
+      themeBtn.title = light ? '切换到雨夜' : '切换到夏日';
+    }
+  }
+  themeBtn.addEventListener('click', () => {
+    const next = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
+    document.documentElement.dataset.theme = next;
+    store.set('site-theme', next);
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.content = next === 'light' ? '#faf8f5' : '#0a0a0b';
+    renderTheme();
+  });
+  renderTheme();
+
   $('#ch-create').addEventListener('click', createRoom);
   $('#ch-join').addEventListener('click', joinRoom);
   $('#ch-code-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') joinRoom(); });
