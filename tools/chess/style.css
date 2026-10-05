@@ -97,63 +97,92 @@ body.ch-page [hidden] { display: none !important; }
 .ch-btn.wide { width: 100%; }
 .ch-btn.danger:hover { border-color: #d9553f; color: #d9553f; }
 
-/* ---------- 对局视图：铺满整屏 ---------- */
+/* ---------- 对局视图：深色漆木桌面 + 胡桃木棋盘 ---------- */
 .ch-game {
+  --skw: min(calc(100vw - 24px), calc(100vh - 170px));
   position: fixed;
   inset: 0;
   z-index: 200; /* 压过站点导航（--z-nav:100），低于本页模态 300 */
-  background: var(--bg);
+  background:
+    radial-gradient(120% 70% at 50% -8%, rgba(158, 110, 50, 0.22), transparent 60%),
+    linear-gradient(180deg, #241a10, #170f08 55%, #0f0a05);
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  padding: 10px 12px 12px;
+  padding: 12px;
   overflow: hidden;
 }
+.ch-game::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(140% 110% at 50% 115%, rgba(0, 0, 0, 0.55), transparent 55%);
+  pointer-events: none;
+}
+.ch-game > * { position: relative; z-index: 1; }
+
+.ch-topbar,
+.ch-capstrip,
+.ch-boardframe {
+  width: var(--skw);
+}
 .ch-topbar {
-  width: min(100%, calc(100vh - 90px));
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 9px;
   flex-wrap: wrap;
+  padding: 8px 12px;
+  border: 1px solid rgba(214, 175, 110, 0.22);
+  border-radius: 12px;
+  background: rgba(255, 236, 200, 0.04);
 }
 .ch-tbtn {
-  border: 1px solid var(--border);
+  border: 1px solid rgba(214, 175, 110, 0.28);
   border-radius: 9px;
-  background: var(--surface-1);
-  color: var(--text-2);
-  font: 600 12.5px/1 "Microsoft YaHei", sans-serif;
+  background: rgba(255, 236, 200, 0.05);
+  color: #d9c7a1;
+  font: 600 12.5px/1 Georgia, "Times New Roman", "Microsoft YaHei", serif;
+  letter-spacing: 0.05em;
   padding: 7px 12px;
   cursor: pointer;
   white-space: nowrap;
-  transition: border-color var(--dur-fast) ease, color var(--dur-fast) ease;
+  transition: border-color var(--dur-fast) ease, color var(--dur-fast) ease, background var(--dur-fast) ease;
 }
-.ch-tbtn:hover { border-color: var(--border-hover); color: var(--text-1); }
-.ch-tbtn[disabled] { opacity: 0.4; cursor: default; }
+.ch-tbtn:hover {
+  border-color: rgba(235, 195, 125, 0.6);
+  color: #f6e9c9;
+  background: rgba(255, 236, 200, 0.09);
+}
+.ch-tbtn[disabled] { opacity: 0.35; cursor: default; }
 .ch-modechip {
-  font: 700 12px/1 "Microsoft YaHei", sans-serif;
-  letter-spacing: 0.1em;
-  color: var(--text-2);
-  border: 1px solid var(--border);
+  font: 700 12px/1 Georgia, "Microsoft YaHei", serif;
+  letter-spacing: 0.16em;
+  color: #d9b36a;
+  border: 1px solid rgba(217, 179, 106, 0.35);
   border-radius: 999px;
-  padding: 6px 12px;
+  padding: 6px 13px;
   white-space: nowrap;
 }
 .ch-status {
-  font: 600 13.5px/1.4 "Microsoft YaHei", sans-serif;
-  color: var(--text-1);
+  font: 600 14px/1.5 Georgia, "Times New Roman", "Microsoft YaHei", serif;
+  letter-spacing: 0.04em;
+  color: #ecdfc0;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .ch-spacer { flex: 1; }
-.ch-clock { font: 600 12.5px/1 ui-monospace, monospace; color: var(--text-3); font-variant-numeric: tabular-nums; }
+.ch-clock {
+  font: 600 12.5px/1 ui-monospace, monospace;
+  color: #b5a582;
+  font-variant-numeric: tabular-nums;
+}
 
 /* 被吃子条 */
 .ch-capstrip {
-  width: min(100%, calc(100vh - 90px));
-  min-height: 22px;
+  min-height: 24px;
   display: flex;
   align-items: center;
   gap: 2px;
@@ -162,24 +191,44 @@ body.ch-page [hidden] { display: none !important; }
   letter-spacing: 1px;
   overflow: hidden;
   white-space: nowrap;
+  padding: 0 6px;
+  opacity: 0.92;
 }
-#ch-cap-top { color: var(--text-3); }
-#ch-cap-bottom { color: var(--text-1); }
+#ch-cap-top { color: #a89575; }
+#ch-cap-bottom { color: #ecdfc0; }
 
-/* ---------- 棋盘 ---------- */
+/* ---------- 木框棋盘 ---------- */
+.ch-boardframe {
+  padding: 10px;
+  border-radius: 16px;
+  background:
+    url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='300'%20height='300'%3E%3Cfilter%20id='w'%3E%3CfeTurbulence%20type='fractalNoise'%20baseFrequency='0.009%200.16'%20numOctaves='4'%20seed='11'/%3E%3CfeColorMatrix%20values='0%200%200%200%200.16%200%200%200%200%200.09%200%200%200%200%200.03%200.55%200%200%200%200'/%3E%3C/filter%3E%3Crect%20width='300'%20height='300'%20filter='url(%23w)'/%3E%3C/svg%3E"),
+    linear-gradient(180deg, #5a3d20, #38240f);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 226, 170, 0.28),
+    inset 0 -2px 3px rgba(0, 0, 0, 0.45),
+    0 30px 60px -18px rgba(0, 0, 0, 0.65);
+}
 .ch-board {
+  position: relative;
   display: grid;
   grid-template-columns: repeat(8, 1fr);
   grid-template-rows: repeat(8, 1fr);
-  width: min(calc(100vw - 24px), calc(100vh - 150px));
-  flex: none;
+  width: 100%;
   aspect-ratio: 1;
-  border-radius: 8px;
+  border-radius: 4px;
   overflow: hidden;
-  border: 2px solid rgba(0, 0, 0, 0.35);
   touch-action: manipulation;
   user-select: none;
   -webkit-user-select: none;
+}
+/* 连续木纹（拉长噪声），盖在格与子上如一层薄漆 */
+.ch-board::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='300'%20height='300'%3E%3Cfilter%20id='v'%3E%3CfeTurbulence%20type='fractalNoise'%20baseFrequency='0.007%200.14'%20numOctaves='4'%20seed='5'/%3E%3CfeColorMatrix%20values='0%200%200%200%200.18%200%200%200%200%200.10%200%200%200%200%200.04%200.4%200%200%200%200'/%3E%3C/filter%3E%3Crect%20width='300'%20height='300'%20filter='url(%23v)'/%3E%3C/svg%3E");
+  pointer-events: none;
 }
 .ch-sq {
   position: relative;
@@ -188,8 +237,8 @@ body.ch-page [hidden] { display: none !important; }
   justify-content: center;
   cursor: pointer;
 }
-.ch-sq.light { background: #ecdcbc; }
-.ch-sq.dark { background: #b58863; }
+.ch-sq.light { background: linear-gradient(175deg, #eed7ab, #e0bf8c); }
+.ch-sq.dark { background: linear-gradient(175deg, #b9885c, #a06a41); }
 .ch-sq.last { box-shadow: inset 0 0 0 100vmax rgba(255, 213, 80, 0.34); }
 .ch-sq.sel { box-shadow: inset 0 0 0 100vmax rgba(255, 233, 120, 0.5); }
 .ch-sq.check { box-shadow: inset 0 0 0 100vmax rgba(226, 68, 55, 0.55); }
@@ -208,18 +257,30 @@ body.ch-page [hidden] { display: none !important; }
   border: 4px solid rgba(20, 20, 20, 0.25);
   pointer-events: none;
 }
+/* 棋子：木纹填充 + 描边 + 投影（雕刻质感） */
 .ch-piece {
   font-size: var(--ch-piece, 40px);
   line-height: 1;
   pointer-events: none;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.4)) drop-shadow(0 4px 6px rgba(0, 0, 0, 0.25));
 }
 .ch-piece.w {
-  color: #faf7ef;
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.6), 1px 0 0 rgba(0, 0, 0, 0.7), -1px 0 0 rgba(0, 0, 0, 0.7), 0 -1px 0 rgba(0, 0, 0, 0.7), 0 1px 0 rgba(0, 0, 0, 0.7);
+  background: linear-gradient(168deg, #fbf0d5 20%, #eed9ac 55%, #dcbf8a);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-stroke: 1px #4c3315;
 }
 .ch-piece.b {
-  color: #232019;
-  text-shadow: 0 0 1px rgba(255, 255, 255, 0.28), 0 1px 2px rgba(0, 0, 0, 0.35);
+  background: linear-gradient(168deg, #6d4b26 15%, #4a2f14 55%, #2f1d0a);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-stroke: 0.5px #120a03;
+}
+@supports not ((-webkit-background-clip: text) or (background-clip: text)) {
+  .ch-piece.w { color: #eed9ae; -webkit-text-stroke: 1px #4c3315; }
+  .ch-piece.b { color: #452d13; -webkit-text-stroke: 0.5px #1c1108; }
 }
 .ch-coord {
   position: absolute;
@@ -271,5 +332,7 @@ body.ch-page [hidden] { display: none !important; }
 .ch-promo-row button:hover { background: var(--accent-glow); }
 
 /* ---------- 真全屏（Fullscreen API）微调 ---------- */
-.ch-game:fullscreen { padding: 12px 16px; }
-.ch-game:fullscreen .ch-board { width: min(calc(100vw - 32px), calc(100vh - 150px)); }
+.ch-game:fullscreen {
+  --skw: min(calc(100vw - 32px), calc(100vh - 150px));
+  padding: 12px 16px;
+}

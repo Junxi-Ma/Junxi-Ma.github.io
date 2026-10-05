@@ -21,7 +21,7 @@
   </script>
   <link rel="stylesheet" href="../../assets/css/tokens.css">
   <link rel="stylesheet" href="../../assets/css/main.css">
-  <link rel="stylesheet" href="style.css?v=3">
+  <link rel="stylesheet" href="style.css?v=5">
   <style>
     .tool {
       padding-top: calc(var(--nav-h) + clamp(40px, 7vw, 72px));
@@ -110,7 +110,7 @@
             </div>
           </div>
         </div>
-        <p class="ch-tip">完整规则：王车易位、吃过路兵、升变、将杀、逼和与和棋判定｜对局内 □ 外的按钮可退出或真全屏</p>
+        <p class="ch-tip">完整规则：王车易位、吃过路兵、升变、将杀、逼和与和棋判定｜对局内可悔棋、认输、翻转、真全屏</p>
       </div>
     </div>
   </main>
@@ -130,7 +130,9 @@
       <button type="button" class="ch-tbtn" id="ch-fs" title="真全屏（隐藏浏览器界面）">⛶</button>
     </div>
     <div class="ch-capstrip" id="ch-cap-top" aria-label="黑方被吃子"></div>
-    <div class="ch-board" id="ch-board" role="grid" aria-label="国际象棋棋盘"></div>
+    <div class="ch-boardframe">
+      <div class="ch-board" id="ch-board" role="grid" aria-label="国际象棋棋盘"></div>
+    </div>
     <div class="ch-capstrip" id="ch-cap-bottom" aria-label="白方被吃子"></div>
   </div>
 
@@ -165,6 +167,6 @@
   </footer>
 
   <script type="module" src="../../assets/js/main.js"></script>
-  <script type="module" src="app.js?v=2"></script>
+  <script type="module" src="app.js?v=3"></script>
 </body>
 </html>
