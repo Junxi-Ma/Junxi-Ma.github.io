@@ -381,9 +381,7 @@ const CHART_LEVELS = [
   { code: 'L85', label: '850hPa', kind: '等高线 · 风温' },
   { code: 'L70', label: '700hPa', kind: '等高线 · 风温湿' },
   { code: 'L50', label: '500hPa', kind: '等高线 · 槽脊' },
-  { code: 'L92', label: '925hPa', kind: '边界层' },
   { code: 'L20', label: '200hPa', kind: '高空急流' },
-  { code: 'L10', label: '100hPa', kind: '平流层底' },
 ];
 function chartURL(realUTC, code){
   const y = realUTC.getUTCFullYear(), m = pad(realUTC.getUTCMonth()+1), d = pad(realUTC.getUTCDate());
