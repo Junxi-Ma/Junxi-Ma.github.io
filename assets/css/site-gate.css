@@ -1,0 +1,135 @@
+/* ============================================================
+   site-gate.css — 全站登录门禁
+   · 各页面 <head> 的内联脚本先行写 <html data-gate-check>（首帧前
+     隐藏页面本体，防止未登录内容闪现）
+   · site-gate.js 裁决后：写 data-gate-open 放行，或挂出 #site-gate 遮罩
+   · 遮罩自带配色，不依赖任何页面的主题变量，任何设计体系的页面通用
+   ============================================================ */
+
+/* 校验期间（含门禁开启时）隐藏页面本体；#site-gate 自身除外 */
+html[data-gate-check]:not([data-gate-open]) body > :not(#site-gate) {
+  visibility: hidden !important;
+}
+
+#site-gate {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(8, 9, 11, 0.78);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  font-family: system-ui, -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+#site-gate .sg-card {
+  width: min(400px, 100%);
+  max-height: 92vh;
+  overflow: auto;
+  background: #15171c;
+  color: #e8ecf3;
+  border: 1px solid #2a2f3a;
+  border-radius: 16px;
+  padding: 28px 26px 24px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+}
+
+#site-gate .sg-brand {
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  color: #9aa3b2;
+  margin-bottom: 14px;
+}
+#site-gate .sg-brand b { color: #f2a93b; font-weight: 700; }
+
+#site-gate h2 {
+  margin: 0 0 8px;
+  font-size: 20px;
+  line-height: 1.35;
+  color: #f5f7fb;
+}
+#site-gate .sg-sub {
+  margin: 0 0 18px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: #9aa3b2;
+}
+
+#site-gate .sg-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+#site-gate .sg-tab {
+  flex: 1;
+  padding: 8px 0;
+  border-radius: 9px;
+  border: 1px solid #2a2f3a;
+  background: transparent;
+  color: #9aa3b2;
+  font: inherit;
+  font-size: 13.5px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+#site-gate .sg-tab.is-active {
+  background: rgba(242, 169, 59, 0.14);
+  border-color: rgba(242, 169, 59, 0.55);
+  color: #f2a93b;
+  font-weight: 600;
+}
+
+#site-gate .sg-field { display: block; margin-bottom: 12px; }
+#site-gate .sg-field span {
+  display: block;
+  font-size: 12px;
+  color: #9aa3b2;
+  margin-bottom: 5px;
+}
+#site-gate .sg-field input {
+  width: 100%;
+  box-sizing: border-box;
+  background: #0e1014;
+  border: 1px solid #2a2f3a;
+  border-radius: 10px;
+  color: #e8ecf3;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 14px;
+  outline: none;
+}
+#site-gate .sg-field input:focus { border-color: #f2a93b; }
+
+#site-gate .sg-msg {
+  min-height: 18px;
+  margin: 0 0 8px;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: #8fd0a5;
+  word-break: break-all;
+}
+#site-gate .sg-msg.is-err { color: #ef8b80; }
+
+#site-gate .sg-submit {
+  width: 100%;
+  padding: 11px 0;
+  border: none;
+  border-radius: 10px;
+  background: #f2a93b;
+  color: #17110a;
+  font: inherit;
+  font-size: 14.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+#site-gate .sg-submit:disabled { opacity: 0.55; cursor: wait; }
+
+#site-gate .sg-foot {
+  margin: 14px 0 0;
+  font-size: 11.5px;
+  line-height: 1.7;
+  color: #6d7686;
+}

@@ -712,3 +712,30 @@ create policy "own sky watch favorites delete" on public.sky_watch_favorites
   for delete to authenticated using (user_id = auth.uid());
 
 notify pgrst, 'reload schema';
+
+-- ############################################################
+-- 十一、站点设置（管理后台一键开关，如「游客免登录浏览」）
+-- ############################################################
+
+-- 1) 键值设置表：前台门禁启动时匿名也要能读到开关状态；写入仅限管理员
+create table if not exists public.site_settings (
+  key        text primary key,
+  value      text not null,
+  updated_at timestamptz not null default now()
+);
+
+alter table public.site_settings enable row level security;
+
+drop policy if exists "site settings readable" on public.site_settings;
+create policy "site settings readable" on public.site_settings
+  for select to anon, authenticated using (true);
+
+drop policy if exists "admins can insert site settings" on public.site_settings;
+create policy "admins can insert site settings" on public.site_settings
+  for insert to authenticated with check (public.is_admin());
+
+drop policy if exists "admins can update site settings" on public.site_settings;
+create policy "admins can update site settings" on public.site_settings
+  for update to authenticated using (public.is_admin()) with check (public.is_admin());
+
+notify pgrst, 'reload schema';

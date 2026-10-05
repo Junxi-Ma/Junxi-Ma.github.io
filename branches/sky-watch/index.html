@@ -213,6 +213,8 @@ header.top{position:sticky;top:0;z-index:50;background:var(--top-bg);backdrop-fi
   .fav-thumbs img{height:88px}
 }
 </style>
+  <link rel="stylesheet" href="../../assets/css/site-gate.css">
+  <script>document.documentElement.dataset.gateCheck = "1";</script>
 </head>
 <body>
 
@@ -1236,5 +1238,6 @@ applyTheme(document.documentElement.dataset.theme === 'light' ? 'light' : 'dark'
   refreshFavState();
 })();
 </script>
+  <script type="module" src="../../assets/js/site-gate.js"></script>
 </body>
 </html>

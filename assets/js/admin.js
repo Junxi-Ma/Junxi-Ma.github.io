@@ -42,6 +42,13 @@ async function init() {
     setGuard('后端不可达', 'Supabase 客户端加载失败，请检查网络或项目地址。');
     return;
   }
+  // 门禁放行（登录成功）后自动重试本页守卫，无需手动刷新
+  if (!sb.__admReinitHooked) {
+    sb.__admReinitHooked = true;
+    sb.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_IN' && !isAdmin) init();
+    });
+  }
   const { data } = await sb.auth.getSession();
   user = data.session?.user ?? null;
   if (!user) {
@@ -85,7 +92,7 @@ async function init() {
 async function reloadAll() {
   note('加载中…');
   try {
-    await Promise.all([loadAccounts(), loadBannedVisitors(), loadOverview(), loadRecent(), loadAdmins()]);
+    await Promise.all([loadAccounts(), loadBannedVisitors(), loadOverview(), loadRecent(), loadAdmins(), loadSiteSettings()]);
     note(`已刷新 · ${new Date().toLocaleTimeString('zh-CN', { hour12: false })}`);
   } catch (e) {
     note('加载失败：' + (e.message || e));
@@ -359,12 +366,50 @@ function escapeHtml(s) {
   }[c]));
 }
 
+/* ---------- 站点设置（游客访问开关） ---------- */
+async function loadSiteSettings() {
+  try {
+    const { data, error } = await sb
+      .from('site_settings')
+      .select('value')
+      .eq('key', 'guest_access')
+      .maybeSingle();
+    if (error) throw error;
+    $('adm-guest-access').checked = data?.value !== 'login'; // 无记录 = 默认允许
+    settingsMsg(data?.value === 'login' ? '当前：访客必须登录后浏览' : '当前：允许游客免登录浏览（默认）');
+  } catch (e) {
+    $('adm-guest-access').checked = true;
+    settingsMsg('站点设置表尚未建立：请在 Supabase SQL Editor 运行最新 schema.sql；当前按默认「允许游客」处理。', true);
+  }
+}
+
+function settingsMsg(text, isErr = false) {
+  const el = $('adm-settings-msg');
+  el.hidden = !text;
+  el.textContent = text || '';
+  el.classList.toggle('is-err', isErr);
+}
+
+async function saveGuestAccess() {
+  const allow = $('adm-guest-access').checked;
+  settingsMsg('保存中…');
+  const { error } = await sb
+    .from('site_settings')
+    .upsert({ key: 'guest_access', value: allow ? 'open' : 'login' }, { onConflict: 'key' });
+  if (error) {
+    settingsMsg('保存失败：' + (error.message || error) + '（需先运行最新 schema.sql 建立站点设置表）', true);
+    await loadSiteSettings();
+    return;
+  }
+  settingsMsg(allow ? '已保存：游客可免登录浏览。' : '已保存：未登录访客将看到全站登录门禁。');
+}
+
 /* ---------- 页签与启动 ---------- */
 function switchTab(tab) {
   document.querySelectorAll('.adm-tab').forEach((b) =>
     b.classList.toggle('is-active', b.dataset.tab === tab)
   );
-  for (const t of ['accounts', 'banned', 'behavior', 'admins']) {
+  for (const t of ['accounts', 'banned', 'behavior', 'admins', 'settings']) {
     $('adm-tab-' + t).hidden = t !== tab;
   }
 }
@@ -376,5 +421,6 @@ document.addEventListener('DOMContentLoaded', () => {
   $('adm-bv-add').addEventListener('click', addBannedVisitor);
   $('adm-admin-add').addEventListener('click', promoteAdmin);
   $('adm-refresh').addEventListener('click', () => isAdmin && reloadAll());
+  $('adm-guest-access').addEventListener('change', saveGuestAccess);
   init();
 });

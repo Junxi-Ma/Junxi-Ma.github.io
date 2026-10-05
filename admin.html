@@ -208,6 +208,8 @@
       .adm-table th, .adm-table td { padding: 7px 6px; }
     }
   </style>
+  <link rel="stylesheet" href="assets/css/site-gate.css">
+  <script>document.documentElement.dataset.gateCheck = "1";</script>
 </head>
 <body>
   <a class="skip-link" href="#main">跳到主要内容</a>
@@ -265,6 +267,7 @@
             <button class="adm-tab" data-tab="banned" type="button">访客黑名单</button>
             <button class="adm-tab" data-tab="behavior" type="button">访客行为</button>
             <button class="adm-tab" data-tab="admins" type="button">管理员名单</button>
+            <button class="adm-tab" data-tab="settings" type="button">站点设置</button>
           </div>
           <button class="btn btn--ghost btn--sm" id="adm-refresh" type="button">刷新数据</button>
           <span class="adm-note" id="adm-note"></span>
@@ -336,6 +339,18 @@
             <tbody id="adm-admins"></tbody>
           </table>
         </section>
+
+        <!-- 站点设置 -->
+        <section class="adm-panel" id="adm-tab-settings" hidden>
+          <h2>站点设置 <small>一键生效于全站所有页面；更改后访客下次刷新/跳页即按新规则执行</small></h2>
+          <label style="display:flex;align-items:flex-start;gap:12px;cursor:pointer;max-width:560px;">
+            <input type="checkbox" id="adm-guest-access" style="width:18px;height:18px;margin-top:3px;accent-color:#f2a93b;">
+            <span style="font-size:14px;">允许游客免登录浏览站点
+              <small style="display:block;color:var(--text-3);font-size:12.5px;line-height:1.7;">关闭后，未登录访客在所有页面只会看到登录门禁（本站默认允许游客浏览）。</small>
+            </span>
+          </label>
+          <p class="adm-msg" id="adm-settings-msg" hidden></p>
+        </section>
       </div>
     </div>
   </main>
@@ -353,5 +368,6 @@
 
   <script type="module" src="assets/js/main.js"></script>
   <script type="module" src="assets/js/admin.js"></script>
+  <script type="module" src="assets/js/site-gate.js"></script>
 </body>
 </html>
