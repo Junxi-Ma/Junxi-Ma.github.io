@@ -7,6 +7,15 @@
 <meta name="description" content="气象人的看图研判台：每天 02 / 08 / 14 / 20 时自动获取中央气象台地面天气图（等压线·锋面）与风云卫星云图，回看最近 24 小时四张图，在每张图下的留言板里快捷语或自由撰写你的天气预报与判断原因，点赞互动，一键收藏图与研判到账户，随时翻阅自己的看云战绩。数据来源：中央气象台 nmc.cn。">
 <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
 <meta name="theme-color" content="#0c1118">
+<script>
+/* 防闪烁：与主站共用 site-theme 键（裸字符串，主站默认深色） */
+(function(){
+  var v = null;
+  try{ v = localStorage.getItem('site-theme'); }catch(_){}
+  if(v !== 'light' && v !== 'dark') v = 'dark';
+  document.documentElement.dataset.theme = v;
+})();
+</script>
 <style>
 :root{
   --bg:#0c1118; --card:#131a24; --card2:#0f1620; --line:#223041; --line2:#2c3d52;
@@ -14,7 +23,16 @@
   --amber:#f2a93b; --amber-dim:rgba(242,169,59,.14);
   --cyan:#4fc3f7; --cyan-dim:rgba(79,195,247,.12);
   --red:#e57368; --green:#66bb8a;
-  --radius:14px; --shadow:0 10px 30px rgba(0,0,0,.35);
+  --top-bg:rgba(12,17,24,.86); --card-shadow:0 10px 30px rgba(0,0,0,.35);
+  --radius:14px; --shadow:var(--card-shadow);
+}
+html[data-theme="light"]{
+  --bg:#f6f2ea; --card:#fffdf8; --card2:#faf6ee; --line:#e4dcc9; --line2:#d2c7ae;
+  --txt:#2b2620; --txt2:#6b6152; --txt3:#9a8f7d;
+  --amber:#b37714; --amber-dim:rgba(179,119,20,.12);
+  --cyan:#0f6f9e; --cyan-dim:rgba(15,111,158,.10);
+  --red:#bf4a3e; --green:#2e7d4f;
+  --top-bg:rgba(250,248,245,.9); --card-shadow:0 8px 24px rgba(120,100,60,.12);
 }
 *{box-sizing:border-box;margin:0;padding:0}
 [hidden]{display:none!important}
@@ -32,7 +50,7 @@ button{font-family:inherit;cursor:pointer}
 input,textarea{font-family:inherit}
 
 /* ── 顶栏 ─────────────────────────── */
-header.top{position:sticky;top:0;z-index:50;background:rgba(12,17,24,.86);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+header.top{position:sticky;top:0;z-index:50;background:var(--top-bg);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
 .top-in{max-width:1120px;margin:0 auto;padding:12px 16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
 .brand{display:flex;align-items:baseline;gap:10px;min-width:0}
 .brand b{font-size:20px;letter-spacing:.02em}
@@ -49,6 +67,8 @@ header.top{position:sticky;top:0;z-index:50;background:rgba(12,17,24,.86);backdr
 .btn.danger:hover{border-color:var(--red)}
 .btn:disabled{opacity:.45;cursor:not-allowed}
 #authBtn{max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.theme-btn{border:1px solid var(--line);background:transparent;color:var(--txt2);width:34px;height:34px;border-radius:999px;font-size:15px;line-height:1;flex:none}
+.theme-btn:hover{color:var(--amber);border-color:var(--amber)}
 
 /* ── 时次选择 ─────────────────────── */
 .slotbar{display:flex;align-items:center;gap:8px;margin:18px 0 4px;flex-wrap:wrap}
@@ -73,7 +93,8 @@ header.top{position:sticky;top:0;z-index:50;background:rgba(12,17,24,.86);backdr
 .img-note b{color:var(--txt2)}
 .img-fallback{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:repeating-linear-gradient(45deg,#f4f6f9 0 14px,#eef1f5 14px 28px);color:#5a6b7d;font-size:13px;text-align:center;padding:16px}
 .seg{display:inline-flex;border:1px solid var(--line2);border-radius:9px;overflow:hidden;font-size:12px;flex-wrap:wrap}
-#chartSeg{border-radius:11px}
+#chartSeg{flex-wrap:nowrap;overflow-x:auto;max-width:100%;border-radius:11px;scrollbar-width:none}
+#chartSeg::-webkit-scrollbar{display:none}
 .seg button{border:0;background:transparent;color:var(--txt2);padding:5px 10px}
 .seg button.active{background:var(--cyan-dim);color:var(--cyan);font-weight:700}
 .favrow{display:flex;align-items:center;gap:10px;margin:14px 0 6px;flex-wrap:wrap}
@@ -131,6 +152,14 @@ header.top{position:sticky;top:0;z-index:50;background:rgba(12,17,24,.86);backdr
 .fav-card .fc-body .guess-tag{display:inline-block;margin-bottom:4px}
 .fav-card .fc-body .why{color:var(--txt2);font-size:12.5px;white-space:pre-wrap;word-break:break-word}
 .fav-card .fc-foot{padding:0 12px 10px;font-size:11px;color:var(--txt3);display:flex;gap:10px}
+.board-snap{margin:8px 0 0;border-top:1px dashed var(--line);padding-top:6px}
+.board-snap summary{font-size:12px;color:var(--cyan);cursor:pointer;list-style-position:inside}
+.board-snap .bs-row{font-size:12px;color:var(--txt2);padding:5px 0;border-top:1px solid var(--line);display:flex;gap:6px;flex-wrap:wrap;align-items:baseline}
+.board-snap .bs-row:first-of-type{border-top:0}
+.board-snap .bs-row .n{font-weight:600;color:var(--txt);flex:none}
+.board-snap .bs-row .g{color:var(--amber)}
+.board-snap .bs-row .r{width:100%;color:var(--txt3);white-space:pre-wrap;word-break:break-word}
+.board-snap .bs-row .l{color:var(--txt3);margin-left:auto;flex:none}
 .mine-item{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px}
 .mine-item .mh{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;font-size:12px;color:var(--txt3)}
 .mine-item .mh .slot{color:var(--cyan);font-weight:600}
@@ -152,7 +181,7 @@ header.top{position:sticky;top:0;z-index:50;background:rgba(12,17,24,.86);backdr
 #lightbox{z-index:300}
 #lightbox .lb-body{max-width:96vw;max-height:88vh;background:#fff;border-radius:10px;overflow:auto}
 #lightbox img{display:block;max-width:96vw;max-height:88vh}
-#toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%) translateY(16px);z-index:400;background:#1d2634;border:1px solid var(--line2);color:var(--txt);font-size:13px;padding:9px 16px;border-radius:999px;opacity:0;pointer-events:none;transition:.25s;box-shadow:var(--shadow);max-width:88vw;text-align:center}
+#toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%) translateY(16px);z-index:400;background:var(--card);border:1px solid var(--line2);color:var(--txt);font-size:13px;padding:9px 16px;border-radius:999px;opacity:0;pointer-events:none;transition:.25s;box-shadow:var(--shadow);max-width:88vw;text-align:center}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 #toast.ok{border-color:rgba(102,187,138,.5)}
 #toast.err{border-color:rgba(229,115,104,.55)}
@@ -177,6 +206,7 @@ header.top{position:sticky;top:0;z-index:50;background:rgba(12,17,24,.86);backdr
       <button class="viewtab active" id="tabWatch">看图研判</button>
       <button class="viewtab" id="tabMine">我的战绩</button>
       <button class="btn" id="authBtn">登录 / 注册</button>
+      <button class="theme-btn" id="themeBtn" title="深色模式" aria-label="切换深浅主题">☀</button>
     </div>
   </div>
 </header>
@@ -213,6 +243,9 @@ header.top{position:sticky;top:0;z-index:50;background:rgba(12,17,24,.86);backdr
       <div class="chart-card">
         <div class="chart-head">
           <h3>卫星云图</h3><span class="chart-kind">风云卫星</span>
+          <span class="chart-meta" id="cloudMeta"></span>
+        </div>
+        <div class="chart-head" style="padding-top:0">
           <span class="seg" id="cloudSeg" title="夜间可见光通道为黑屏，自动模式会改用红外">
             <button data-mode="auto" class="active">自动</button>
             <button data-mode="visible">可见光</button>
@@ -530,6 +563,7 @@ function applyCloud(){
   setImgChain($('#cloudImg'), $('#cloudFall'), cands, picked => {
     const b = document.createElement('b'); b.textContent = '云图提示：';
     $('#cloudNote').textContent = '';
+    $('#cloudMeta').textContent = picked ? (picked.eff === 'visible' ? 'FY-4B 真彩' : 'FY-2G 红外') : '';
     if(!picked){ $('#cloudNote').append(b, ' 该时次各通道云图都还没出，稍后点「重试」。'); return; }
     $('#cloudNote').append(b,
       picked.eff === 'visible'
@@ -729,9 +763,14 @@ const favStore = {
   },
   async add(payload){
     if(state.cloudReady){
-      const { data, error } = await sb.from('sky_watch_favorites').insert(payload).select();
-      if(error) throw error;
-      return data[0];
+      let res = await sb.from('sky_watch_favorites').insert(payload).select();
+      // 旧版收藏表还没有 board_snap 列时：去掉该字段重试（升级 schema 后自动恢复整板快照）
+      if(res.error && /board_snap/i.test(res.error.message || '')){
+        const { board_snap, ...rest } = payload;
+        res = await sb.from('sky_watch_favorites').insert(rest).select();
+      }
+      if(res.error) throw res.error;
+      return res.data[0];
     }
     const all = LS.get('skywatch-local-favs-v1', []);
     const f = { ...payload, id: 'l_' + Math.random().toString(36).slice(2, 10), created_at: new Date().toISOString(), _local: true };
@@ -858,7 +897,18 @@ $('#postBtn').onclick = async () => {
   finally{ $('#postBtn').disabled = false; }
 };
 
-/* ═══════════════════ 收藏（图快照 + 我的研判 → 账户） ═══════════════════ */
+/* ═══════════════════ 收藏（图快照 + 整时次研判快照 → 账户） ═══════════════════ */
+function boardSnapshot(){
+  // 收藏时把这块板当时全部留言一并快照（上限 100 条；超长时逐级精简）
+  const all = state.messages || [];
+  if(!all.length) return null;
+  const trim = arr => arr.map(m => ({ n: m.name || '匿名', g: m.guess, r: m.reason || '', l: m.likes || 0, t: m.created_at }));
+  let payload = { count: all.length, saved: Math.min(all.length, 100), msgs: trim(all.slice(0, 100)) };
+  let s = JSON.stringify(payload);
+  if(s.length > 1100000){ payload.msgs = trim(all.slice(0, 50)); payload.saved = payload.msgs.length; s = JSON.stringify(payload); }
+  if(s.length > 1100000){ payload.msgs = trim(all.slice(0, 20)).map(m => ({ ...m, r: m.r.slice(0, 200) })); s = JSON.stringify(payload); }
+  return s.length <= 1100000 ? s : null;
+}
 async function snap(img, maxW = 680, q = 0.62){
   try{
     if(!img.complete || !img.naturalWidth || img.hidden) return null;
@@ -924,6 +974,7 @@ $('#favBtn').onclick = async () => {
         slot_label: `${s.label}（${pad(slotToRealUTC(s.bj).getUTCHours())}:00 UTC${state.chartLevel !== 'L00' ? ' · ' + (CHART_LEVELS.find(l => l.code === state.chartLevel) || {}).label + '图' : ''}）`,
         chart_snap: chartSnap, cloud_snap: cloudSnap,
         message_id: mine?.id ?? null, my_guess: mine?.guess ?? null, my_reason: mine?.reason ?? null,
+        board_snap: boardSnapshot(),
       });
       state.favKeys.add(key);
       toast(chartSnap ? '已收藏到账户' : '已收藏（图片快照未能生成，仅记录研判）', 'ok');
@@ -1009,6 +1060,25 @@ async function renderMine(){
     if(f.my_guess){ const g = document.createElement('span'); g.className = 'guess-tag'; g.textContent = f.my_guess; body.appendChild(g); }
     if(f.my_reason){ const r = document.createElement('div'); r.className = 'why'; r.textContent = f.my_reason; body.appendChild(r); }
     if(!f.my_guess && !f.my_reason){ const s2 = document.createElement('div'); s2.className = 'why'; s2.textContent = '（当时没有留下研判）'; body.appendChild(s2); }
+    if(f.board_snap){
+      let bs = null; try{ bs = JSON.parse(f.board_snap); }catch(_){}
+      if(bs && Array.isArray(bs.msgs) && bs.msgs.length){
+        const det = document.createElement('details'); det.className = 'board-snap';
+        const sum = document.createElement('summary');
+        sum.textContent = `当时全部研判（${bs.saved ?? bs.msgs.length}/${bs.count ?? bs.msgs.length} 条）`;
+        det.appendChild(sum);
+        for(const m of bs.msgs){
+          const row = document.createElement('div'); row.className = 'bs-row';
+          const n = document.createElement('span'); n.className = 'n'; n.textContent = m.n;
+          const g = document.createElement('span'); g.className = 'g'; g.textContent = m.g;
+          const l = document.createElement('span'); l.className = 'l'; l.textContent = '♥ ' + (m.l || 0);
+          row.append(n, g, l);
+          if(m.r){ const r = document.createElement('span'); r.className = 'r'; r.textContent = m.r; row.appendChild(r); }
+          det.appendChild(row);
+        }
+        body.appendChild(det);
+      }
+    }
     const foot = document.createElement('div'); foot.className = 'fc-foot';
     const c1 = document.createElement('span'); c1.textContent = '收藏于 ' + fmtTime(f.created_at);
     foot.append(c1);
@@ -1039,6 +1109,22 @@ function slotKeyLabel(key){
 /* ═══════════════════ 大图 & 杂项 ═══════════════════ */
 $('#lightbox').addEventListener('click', () => $('#lightbox').hidden = true);
 document.addEventListener('keydown', e => { if(e.key === 'Escape'){ $('#lightbox').hidden = true; $('#authModal').hidden = true; } });
+
+/* ═══════════════════ 日夜切换（与主站 site-theme 键互通，裸字符串） ═══════════════════ */
+function applyTheme(t){
+  document.documentElement.dataset.theme = t;
+  const m = document.querySelector('meta[name="theme-color"]');
+  if(m) m.content = t === 'light' ? '#f6f2ea' : '#0c1118';
+  const b = $('#themeBtn');
+  b.textContent = t === 'dark' ? '☀' : '🌙';
+  b.title = t === 'dark' ? '切换到浅色模式' : '切换到深色模式';
+}
+$('#themeBtn').onclick = () => {
+  const next = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
+  try{ localStorage.setItem('site-theme', next); }catch(_){}
+  applyTheme(next);
+};
+applyTheme(document.documentElement.dataset.theme === 'light' ? 'light' : 'dark');
 
 /* ═══════════════════ 启动 ═══════════════════ */
 (async function init(){

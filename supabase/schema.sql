@@ -665,8 +665,9 @@ create policy "author can delete own sky watch message"
   to authenticated
   using (user_id = auth.uid());
 
--- 5) 收藏表：仅登录用户，把自己的看图记录（图快照 + 自己的研判）存进账户，随时翻阅。
---    NMC 老图约 5~6 天后失效，快照在收藏时由前端压缩转 dataURL 存入。
+-- 5) 收藏表：仅登录用户，把看图记录存进账户，随时翻阅。
+--    NMC 老图约 5~6 天后失效，快照在收藏时由前端压缩转 dataURL 存入；
+--    board_snap 为收藏时刻整块留言板的留言快照（JSON 文本）。
 create table if not exists public.sky_watch_favorites (
   id         uuid primary key default gen_random_uuid(),
   user_id    uuid not null references auth.users(id) on delete cascade,
@@ -677,10 +678,22 @@ create table if not exists public.sky_watch_favorites (
   message_id uuid references public.sky_watch_messages(id) on delete set null, -- 当时自己的研判
   my_guess   text,
   my_reason  text,
+  board_snap text,                                                             -- 整板留言快照（JSON）
   created_at timestamptz not null default now(),
   unique (user_id, slot_key)
 );
 create index if not exists sky_watch_fav_user_idx on public.sky_watch_favorites (user_id, created_at desc);
+
+-- 已建过旧版表的补列与约束（幂等）
+alter table public.sky_watch_favorites add column if not exists board_snap text;
+do $$ begin
+  if not exists (select 1 from pg_constraint where conname = 'sky_watch_favorites_board_snap_check') then
+    alter table public.sky_watch_favorites
+      add constraint sky_watch_favorites_board_snap_check
+      check (board_snap is null or char_length(board_snap) <= 1200000);
+  end if;
+exception when others then null;
+end $$;
 
 -- 6) 收藏 RLS：完全私有，只有本人可读写
 alter table public.sky_watch_favorites enable row level security;
