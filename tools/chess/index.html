@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>棋乐馆 — Michael</title>
-  <meta name="description" content="国际象棋：人机对弈四档 AI（α-β 剪枝搜索），也可创建房间与好友联机对弈，实时同步、完整规则判定。">
+  <meta name="description" content="四棋合一：国际象棋（人机四档 AI + 联机房间）、中国象棋、五子棋、围棋。全屏棋盘、完整规则判定（易位、吃过路兵、升变、将杀、逼和、五十回合、三次重复、提子、禁自杀、劫争）。">
   <meta name="theme-color" content="#0a0a0b">
   <meta name="color-scheme" content="dark light">
   <link rel="icon" type="image/svg+xml" href="../../assets/img/favicon.svg">
@@ -21,7 +21,9 @@
   </script>
   <link rel="stylesheet" href="../../assets/css/tokens.css">
   <link rel="stylesheet" href="../../assets/css/main.css">
-  <link rel="stylesheet" href="style.css?v=11">
+  <link rel="stylesheet" href="style.css?v=12">
+  <!-- 棋牌桌背景（用户提供照片）：进对局视图时预加载，避免首帧空白 -->
+  <link rel="preload" as="image" href="../../assets/img/chess-table.webp" type="image/webp">
   <style>
     .tool {
       padding-top: calc(var(--nav-h) + clamp(40px, 7vw, 72px));
@@ -73,7 +75,7 @@
         <a class="article-back" href="../../tools.html"><span class="arr">←</span>全部工具</a>
         <p class="mono-label">Tool <span>/</span> 09</p>
         <h1>棋乐馆</h1>
-        <p>选择对局模式进入全屏棋盘：人机对弈内置 α-β 剪枝搜索的四档 AI，双人联机以房间码即邀请函，走子实时同步，完整规则判定（易位、吃过路兵、升变、将杀、逼和与和棋）。</p>
+        <p>选择对局模式进入全屏棋盘：国际象棋、中国象棋、五子棋、围棋四种棋类，人机对弈内置 α-β 剪枝搜索的 AI，双人联机以房间码即邀请函，走子实时同步，完整规则判定（易位、吃过路兵、升变、将杀、逼和与和棋）。</p>
       </div>
 
       <!-- 启动器：选择模式 -->
@@ -114,7 +116,7 @@
           <button type="button" class="ch-btn primary wide" id="ch-start">开始对弈 →</button>
         </div>
       </div>
-        <p class="ch-tip">完整规则：王车易位、吃过路兵、升变、将杀、逼和与和棋判定｜对局内可悔棋、认输、翻转、真全屏</p>
+        <p class="ch-tip">国际象棋完整规则：王车易位、吃过路兵、升变、将杀、逼和、五十回合与三次重复和棋｜围棋：提子、禁自杀、劫争、中国规则数子（贴 7.5）｜对局内可悔棋、认输、翻转、真全屏</p>
       </div>
     </div>
   </main>
@@ -138,7 +140,7 @@
     </div>
     <div class="ch-capstrip" id="ch-cap-top" aria-label="黑方被吃子"></div>
     <div class="ch-boardframe">
-      <div class="ch-board" id="ch-board" role="grid" aria-label="国际象棋棋盘"></div>
+      <div class="ch-board" id="ch-board" role="grid" aria-label="棋局棋盘"></div>
     </div>
     <div class="ch-capstrip" id="ch-cap-bottom" aria-label="白方被吃子"></div>
   </div>
@@ -174,6 +176,6 @@
   </footer>
 
   <script type="module" src="../../assets/js/main.js"></script>
-  <script type="module" src="app.js?v=19"></script>
+  <script type="module" src="app.js?v=20"></script>
 </body>
 </html>

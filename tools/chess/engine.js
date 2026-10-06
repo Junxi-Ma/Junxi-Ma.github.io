@@ -312,19 +312,35 @@ function withSuffix(st, m, s) {
 }
 
 /* ---------- 终局判定 ---------- */
-export function gameStatus(st) {
+export function gameStatus(st, opts) {
   const legal = genLegal(st);
   if (!legal.length) {
     if (inCheck(st, st.turn)) return { over: true, result: st.turn === 'w' ? '0-1' : '1-0', reason: 'checkmate' };
     return { over: true, result: '1/2-1/2', reason: 'stalemate' };
   }
   if (st.half >= 100) return { over: true, result: '1/2-1/2', reason: 'fifty' };
-  // 子力不足：王 vs 王、王+单轻子 vs 王
+  // 子力不足：王 vs 王、王+单轻子 vs 王，以及王+双马 vs 王等必然和棋
   const pieces = st.board.filter(Boolean).filter((p) => p.t !== 'k');
-  if (!pieces.some((p) => p.t === 'p' || p.t === 'r' || p.t === 'q')) {
-    if (pieces.length <= 1) return { over: true, result: '1/2-1/2', reason: 'material' };
+  const hasPawnRookQueen = pieces.some((p) => p.t === 'p' || p.t === 'r' || p.t === 'q');
+  if (!hasPawnRookQueen) {
+    const majors = pieces.filter((p) => p.t === 'b' || p.t === 'n');
+    // 无兵/车/后时：没有子，或只剩一个轻子 => 和棋（马或象单兵难胜）
+    if (majors.length <= 1) return { over: true, result: '1/2-1/2', reason: 'material' };
+  }
+  // 三次重复局面（含当前局面在内，出现 3 次即可判和）
+  if (opts && opts.repetition && opts.repetition >= 3) {
+    return { over: true, result: '1/2-1/2', reason: 'repetition' };
   }
   return { over: false, result: '', reason: '' };
+}
+
+/* 局面的「易位 + 吃过路兵」无关指纹，用于重复局面统计。
+   按 FIDE 规则，重复判定只看棋子位置与轮走方，不看 half/full。 */
+export function repetitionKey(st) {
+  const bd = st.board.map((p) => (p ? (p.c === 'w' ? p.t.toUpperCase() : p.t) : '.')).join('');
+  return bd + ' ' + st.turn + ' ' +
+    (st.castling.K ? 'K' : '') + (st.castling.Q ? 'Q' : '') +
+    (st.castling.k ? 'k' : '') + (st.castling.q ? 'q' : '') + ' ' + st.ep;
 }
 
 /* ---------- AI ----------

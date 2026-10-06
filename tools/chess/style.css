@@ -97,18 +97,14 @@ body.ch-page [hidden] { display: none !important; }
 .ch-btn.wide { width: 100%; }
 .ch-btn.danger:hover { border-color: #d9553f; color: #d9553f; }
 
-/* ---------- 对局视图：雨夜窗外（夜）/ 夏日树下（日） ---------- */
+/* ---------- 对局视图：棋牌桌背景（用户提供照片）+ 日夜两级压暗 ---------- */
 .ch-game {
   --skw: min(calc(100vw - 24px), calc(100vh - 170px));
-  /* 夜：雨夜窗外（默认） */
+  /* 夜：雨夜（照片压暗 + 冷调） */
   --scene:
-    radial-gradient(circle at 78% 26%, rgba(255, 196, 110, 0.16) 0 5%, transparent 6%),
-    radial-gradient(circle at 86% 40%, rgba(140, 190, 255, 0.12) 0 3.5%, transparent 4.5%),
-    radial-gradient(circle at 68% 52%, rgba(255, 170, 90, 0.10) 0 4.5%, transparent 5.5%),
-    radial-gradient(circle at 16% 22%, rgba(120, 170, 220, 0.10) 0 4%, transparent 5%),
-    radial-gradient(circle at 30% 45%, rgba(90, 140, 200, 0.08) 0 3%, transparent 4%),
-    radial-gradient(120% 55% at 50% 108%, rgba(255, 170, 90, 0.10), transparent 60%),
-    linear-gradient(180deg, #0b1220 0%, #0f1930 38%, #0c1424 68%, #090e18 100%);
+    radial-gradient(circle at 78% 26%, rgba(255, 196, 110, 0.10) 0 5%, transparent 6%),
+    radial-gradient(circle at 16% 22%, rgba(120, 170, 220, 0.08) 0 4%, transparent 5%),
+    linear-gradient(180deg, rgba(6, 10, 20, 0.80) 0%, rgba(8, 13, 26, 0.72) 45%, rgba(4, 7, 14, 0.86) 100%);
   --glass-bg: rgba(16, 22, 36, 0.55);
   --glass-border: rgba(150, 180, 230, 0.22);
   --ink: #dbe6f5;
@@ -117,7 +113,12 @@ body.ch-page [hidden] { display: none !important; }
   position: fixed;
   inset: 0;
   z-index: 200; /* 压过站点导航（--z-nav:100），低于本页模态 300 */
-  background: var(--scene);
+  /* 棋桌照片作底，--scene 叠加为暗调渐晕；照片始终 cover 且居中 */
+  background-color: #0a0d12;
+  background-image: var(--scene), var(--table-photo);
+  background-size: auto, cover;
+  background-position: center, center;
+  background-repeat: no-repeat, no-repeat;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -125,41 +126,56 @@ body.ch-page [hidden] { display: none !important; }
   padding: 12px;
   overflow: hidden;
 }
-/* 日：夏日树下 */
+/* 照片路径：优先 WebP（136KB），不支持时回落 JPEG（234KB）。
+   image-set 在旧浏览器中整条声明作废，故先给 JPEG 兜底再给 image-set 覆盖。 */
+.ch-game {
+  --table-photo: url("../../assets/img/chess-table.jpg");
+}
+@supports (background: image-set(url("a.webp") type("image/webp"))) {
+  .ch-game {
+    --table-photo: image-set(
+      url("../../assets/img/chess-table.webp") type("image/webp"),
+      url("../../assets/img/chess-table.jpg") type("image/jpeg")
+    );
+  }
+}
+/* 日：明亮但保证文字对比度（照片本身偏暗，白纱要够厚，
+   否则浅色模式下的文字会压在灰绿照片上、对比度不足）。 */
 :root[data-theme='light'] .ch-game {
   --scene:
-    radial-gradient(circle at 74% 14%, rgba(255, 246, 190, 0.65) 0 6%, transparent 7%),
-    radial-gradient(circle at 58% 26%, rgba(255, 252, 205, 0.5) 0 4.5%, transparent 5.5%),
-    radial-gradient(circle at 30% 10%, rgba(235, 250, 180, 0.5) 0 5%, transparent 6%),
-    radial-gradient(circle at 14% 34%, rgba(140, 190, 90, 0.4) 0 7%, transparent 8%),
-    radial-gradient(circle at 88% 55%, rgba(110, 165, 80, 0.35) 0 9%, transparent 10%),
-    linear-gradient(180deg, #a8c877 0%, #83ad5e 42%, #618c46 75%, #4f7a3a 100%);
-  --glass-bg: rgba(255, 252, 240, 0.55);
-  --glass-border: rgba(90, 110, 60, 0.3);
-  --ink: #31401f;
-  --ink-soft: #5d7040;
-  --gold: #8a6d1f;
+    radial-gradient(circle at 74% 14%, rgba(255, 246, 190, 0.26) 0 6%, transparent 7%),
+    radial-gradient(circle at 14% 34%, rgba(200, 230, 150, 0.20) 0 7%, transparent 8%),
+    linear-gradient(180deg, rgba(250, 252, 240, 0.72) 0%, rgba(244, 249, 230, 0.64) 45%, rgba(233, 242, 210, 0.78) 100%);
+  --glass-bg: rgba(255, 253, 246, 0.80);
+  --glass-border: rgba(70, 90, 60, 0.34);
+  --ink: #16220f;
+  --ink-soft: #3c4d2a;
+  --gold: #6b5216;
 }
+/* 桌面上方的聚光/暗角，让照片中央像被台灯照亮 */
 .ch-game::before {
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(140% 110% at 50% 115%, rgba(0, 0, 0, 0.5), transparent 55%);
+  background:
+    radial-gradient(75% 62% at 50% 42%, rgba(255, 236, 200, 0.10), transparent 70%),
+    radial-gradient(140% 110% at 50% 115%, rgba(0, 0, 0, 0.42), transparent 55%);
   pointer-events: none;
 }
-/* 夜：细雨（斜向细线缓落）；日：树影摇曳（斑驳叶影） */
+/* 夜：极细的浮尘/水汽感；日：暖调叶影。
+   都是极低对比度的叠加层，只为让静态照片有呼吸感，不干扰看棋盘。 */
 .ch-game::after {
   content: '';
   position: absolute;
   inset: -60px;
   pointer-events: none;
-  background: repeating-linear-gradient(112deg, transparent 0 9px, rgba(170, 200, 255, 0.05) 9px 10.5px, transparent 10.5px 18px);
-  animation: ch-rain 0.9s linear infinite;
+  background: repeating-linear-gradient(112deg, transparent 0 14px, rgba(190, 215, 255, 0.035) 14px 15.5px, transparent 15.5px 26px);
+  animation: ch-rain 2.4s linear infinite;
 }
 :root[data-theme='light'] .ch-game::after {
-  background: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='420'%20height='420'%3E%3Cfilter%20id='f'%3E%3CfeTurbulence%20type='fractalNoise'%20baseFrequency='0.02%200.035'%20numOctaves='3'%20seed='9'/%3E%3CfeColorMatrix%20values='0%200%200%200%200.10%200%200%200%200%200.22%200%200%200%200%200.05%200.4%200%200%200%200'/%3E%3C/filter%3E%3Crect%20width='420'%20height='420'%20filter='url(%23f)'/%3E%3C/svg%3E");
+  background: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='420'%20height='420'%3E%3Cfilter%20id='f'%3E%3CfeTurbulence%20type='fractalNoise'%20baseFrequency='0.02%200.035'%20numOctaves='3'%20seed='9'/%3E%3CfeColorMatrix%20values='0%200%200%200%200.30%200%200%200%200%200.50%200%200%200%200%200.12%200.3%200%200%200%200'/%3E%3C/filter%3E%3Crect%20width='420'%20height='420'%20filter='url(%23f)'/%3E%3C/svg%3E");
   animation: ch-leaf 9s ease-in-out infinite alternate;
-  opacity: 0.85;
+  opacity: 0.5;
 }
 @keyframes ch-rain { to { transform: translate3d(-18px, 60px, 0); } }
 @keyframes ch-leaf { from { transform: translate3d(-8px, -4px, 0); } to { transform: translate3d(10px, 6px, 0); } }
@@ -173,6 +189,21 @@ body.ch-page [hidden] { display: none !important; }
 .ch-boardframe {
   width: var(--skw);
 }
+/* 棋盘框同时受宽、高约束：内部棋盘按 100% 填充，
+   竖长方盘（中国象棋 9:10）据此自动缩小，不会顶破视口。
+   减去顶栏 + 两条吃子条 + 边距的实测高度。 */
+.ch-boardframe {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  max-height: calc(100vh - 190px);
+}
+.ch-game:fullscreen .ch-boardframe { max-height: calc(100vh - 170px); }
+/* 棋盘在框内按「宽或高的较小者」定尺寸；用 aspect-ratio 保证不变形 */
+.ch-board { max-height: 100%; }
+.ch-board.gomoku,
+.ch-board.go { max-width: 100%; max-height: 100%; }
+.ch-board.xiangqi { max-width: 100%; max-height: 100%; }
 .ch-topbar {
   display: flex;
   align-items: center;
@@ -256,6 +287,8 @@ body.ch-page [hidden] { display: none !important; }
 .ch-board {
   position: relative;
   display: grid;
+  /* 默认 8×8（国际象棋）。各棋种在下方以 .gomoku/.xiangqi/.go 覆盖，
+     并且**必须**保持互斥 —— app.js 切换棋种时用 resetBoardClass() 清干净。 */
   grid-template-columns: repeat(8, 1fr);
   grid-template-rows: repeat(8, 1fr);
   width: 100%;
@@ -266,14 +299,22 @@ body.ch-page [hidden] { display: none !important; }
   user-select: none;
   -webkit-user-select: none;
 }
-/* 连续木纹（拉长噪声），盖在格与子上如一层薄漆 */
+/* 连续木纹（拉长噪声），盖在格与子上如一层薄漆。
+   注意：SVG 是 300×300 的噪声，若不指定 background-size 会按 300px 平铺，
+   格子边长非 300 的整数分之一时会出现明显接缝。改为 100% 拉伸、不重复。 */
 .ch-board::after {
   content: '';
   position: absolute;
   inset: 0;
   background: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='300'%20height='300'%3E%3Cfilter%20id='v'%3E%3CfeTurbulence%20type='fractalNoise'%20baseFrequency='0.007%200.14'%20numOctaves='4'%20seed='5'/%3E%3CfeColorMatrix%20values='0%200%200%200%200.18%200%200%200%200%200.10%200%200%200%200%200.04%200.4%200%200%200%200'/%3E%3C/filter%3E%3Crect%20width='300'%20height='300'%20filter='url(%23v)'/%3E%3C/svg%3E");
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
   pointer-events: none;
 }
+/* 五子棋 / 围棋 / 中国象棋不使用木格纹，关掉该覆盖层 */
+.ch-board.gomoku::after,
+.ch-board.go::after,
+.ch-board.xiangqi::after { display: none; }
 .ch-sq {
   position: relative;
   display: flex;
@@ -283,9 +324,23 @@ body.ch-page [hidden] { display: none !important; }
 }
 .ch-sq.light { background: linear-gradient(175deg, #e7cb95, #d5b175); }
 .ch-sq.dark { background: linear-gradient(175deg, #b07c4d, #97613a); }
-.ch-sq.last { box-shadow: inset 0 0 0 100vmax rgba(255, 213, 80, 0.34); }
-.ch-sq.sel { box-shadow: inset 0 0 0 100vmax rgba(255, 233, 120, 0.5); }
-.ch-sq.check { box-shadow: inset 0 0 0 100vmax rgba(226, 68, 55, 0.55); }
+/* 高亮用「铺满本格」的伪元素，而不是 box-shadow: inset 0 0 0 100vmax
+   （100vmax 每格都会申请上千像素的阴影，整盘 64 格足以拖慢重绘）。 */
+.ch-sq.last::before,
+.ch-sq.sel::before,
+.ch-sq.check::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.ch-sq.last::before { background: rgba(255, 213, 80, 0.34); }
+.ch-sq.sel::before { background: rgba(255, 233, 120, 0.52); }
+.ch-sq.check::before {
+  background: radial-gradient(circle at 50% 50%, rgba(226, 68, 55, 0.72), rgba(226, 68, 55, 0.30) 72%);
+}
+/* 棋子/坐标/落点提示要压在动效层之上 */
+.ch-sq > * { position: relative; z-index: 1; }
 .ch-sq .dot {
   position: absolute;
   width: 30%;
@@ -364,6 +419,8 @@ body.ch-page [hidden] { display: none !important; }
 }
 .ch-card h3 { margin: 0 0 10px; font-size: 19px; text-align: center; }
 .ch-card p { margin: 0 0 6px; color: var(--text-2); text-align: center; line-height: 1.6; }
+.ch-dialog-body { margin-top: 4px; }
+.ch-dialog-body .ch-actions { margin-top: 14px; }
 .ch-actions { display: flex; justify-content: center; gap: 10px; margin-top: 16px; }
 .ch-promo-row { display: flex; gap: 8px; margin-top: 10px; }
 .ch-promo-row button {
@@ -386,10 +443,12 @@ body.ch-page [hidden] { display: none !important; }
 }
 
 /* ---------- 五子棋棋盘 ---------- */
+/* 尺寸统一由 .ch-boardframe 的 --skw 约束（width:100%），
+   各棋种只改列数/行数与长宽比，绝不再用 100vw/100vh 自行算宽度，
+   否则会比木框内宽多出 20px（框 padding）而溢出、错位。 */
 .ch-board.gomoku {
   grid-template-columns: repeat(15, 1fr);
   grid-template-rows: repeat(15, 1fr);
-  width: min(calc(100vw - 24px), calc(100vh - 170px));
   aspect-ratio: 1;
   border-radius: 4px;
   background: linear-gradient(180deg, #e3bd7e, #d3a55e);
@@ -434,8 +493,8 @@ body.ch-page [hidden] { display: none !important; }
 .ch-board.xiangqi {
   grid-template-columns: repeat(9, 1fr);
   grid-template-rows: repeat(10, 1fr);
-  width: min(calc(100vw - 24px), calc((100vh - 180px) * 0.9));
   aspect-ratio: 9 / 10;
+  width: 100%;
   border-radius: 4px;
   background:
     url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%209%2010'%20preserveAspectRatio='none'%3E%3Cg%20stroke='%236b4a26'%20stroke-width='0.035'%20fill='none'%3E%3Cpath%20d='M0,0.5H9M0,1.5H9M0,2.5H9M0,3.5H9M0,4.5H9M0,5.5H9M0,6.5H9M0,7.5H9M0,8.5H9M0,9.5H9'/%3E%3Cpath%20d='M0.5,0.5V9.5M8.5,0.5V9.5M1.5,0.5V4.5M1.5,5.5V9.5M2.5,0.5V4.5M2.5,5.5V9.5M3.5,0.5V4.5M3.5,5.5V9.5M4.5,0.5V4.5M4.5,5.5V9.5M5.5,0.5V4.5M5.5,5.5V9.5M6.5,0.5V4.5M6.5,5.5V9.5M7.5,0.5V4.5M7.5,5.5V9.5'/%3E%3Cpath%20d='M3.5,0.5L5.5,2.5M5.5,0.5L3.5,2.5M3.5,7.5L5.5,9.5M5.5,7.5L3.5,9.5'/%3E%3Cpath%20d='M1.20,7.32h-0.13v-0.13M1.20,7.68h-0.13v0.13M1.80,7.32h0.13v-0.13M1.80,7.68h0.13v0.13M7.20,7.32h-0.13v-0.13M7.20,7.68h-0.13v0.13M7.80,7.32h0.13v-0.13M7.80,7.68h0.13v0.13M1.20,2.32h-0.13v-0.13M1.20,2.68h-0.13v0.13M1.80,2.32h0.13v-0.13M1.80,2.68h0.13v0.13M7.20,2.32h-0.13v-0.13M7.20,2.68h-0.13v0.13M7.80,2.32h0.13v-0.13M7.80,2.68h0.13v0.13M0.80,7.32h0.13v-0.13M0.80,7.68h0.13v0.13M2.20,7.32h-0.13v-0.13M2.20,7.68h-0.13v0.13M2.80,7.32h0.13v-0.13M2.80,7.68h0.13v0.13M4.20,7.32h-0.13v-0.13M4.20,7.68h-0.13v0.13M4.80,7.32h0.13v-0.13M4.80,7.68h0.13v0.13M6.20,7.32h-0.13v-0.13M6.20,7.68h-0.13v0.13M6.80,7.32h0.13v-0.13M6.80,7.68h0.13v0.13M8.20,7.32h-0.13v-0.13M8.20,7.68h-0.13v0.13M0.80,3.32h0.13v-0.13M0.80,3.68h0.13v0.13M2.20,3.32h-0.13v-0.13M2.20,3.68h-0.13v0.13M2.80,3.32h0.13v-0.13M2.80,3.68h0.13v0.13M4.20,3.32h-0.13v-0.13M4.20,3.68h-0.13v0.13M4.80,3.32h0.13v-0.13M4.80,3.68h0.13v0.13M6.20,3.32h-0.13v-0.13M6.20,3.68h-0.13v0.13M6.80,3.32h0.13v-0.13M6.80,3.68h0.13v0.13M8.20,3.32h-0.13v-0.13M8.20,3.68h-0.13v0.13'/%3E%3C/g%3E%3C/svg%3E"),
@@ -480,7 +539,6 @@ body.ch-page [hidden] { display: none !important; }
 .ch-board.go {
   grid-template-columns: repeat(19, 1fr);
   grid-template-rows: repeat(19, 1fr);
-  width: min(calc(100vw - 24px), calc(100vh - 170px));
   aspect-ratio: 1;
   border-radius: 4px;
   background: linear-gradient(180deg, #e3bd7e, #d3a55e);

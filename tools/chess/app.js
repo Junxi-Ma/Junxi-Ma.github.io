@@ -7,7 +7,7 @@
    ============================================================ */
 import {
   START_FEN, parseFEN, toFEN, genLegal, makeMove, unmakeMove, moveToSan,
-  gameStatus, inCheck, findBestMove, pieceGlyph,
+  gameStatus, inCheck, findBestMove, pieceGlyph, repetitionKey,
 } from './engine.js';
 import * as Gomoku from './gomoku.js';
 import * as Xiangqi from './xiangqi.js';
@@ -103,7 +103,10 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     launcherEl.hidden = true;
     gameEl.hidden = false;
     startClock();
+    // 棋盘刚从 hidden 变为可见时 clientWidth 才有效；
+    // 用 rAF 再量一次，确保棋子在首帧就是正确大小。
     fitBoard();
+    requestAnimationFrame(fitBoard);
     render();
   }
   function showLauncher() {
@@ -127,12 +130,47 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
   }
   function stopClock() { clearInterval(clockTimer); clockTimer = null; clockEl.textContent = ''; }
 
-  function showDialog(title, text) {
-    $('#ch-card-title').textContent = title;
-    $('#ch-card-text').textContent = text;
-    $('#ch-modal').hidden = false;
+  /* showDialog(title, text)                   —— 普通提示
+     showDialog(title, bodyBuilder, {input})   —— 带自定义内容的交互框，
+     bodyBuilder(body) 里自行 appendChild，并用 opts.onOk 决定确认键行为。 */
+  const modalEl = () => $('#ch-modal');
+  let dialogCleanup = null;
+  function showDialog(title, textOrBuilder, opts) {
+    if (dialogCleanup) { dialogCleanup(); dialogCleanup = null; }
+    const titleEl = $('#ch-card-title');
+    const textEl = $('#ch-card-text');
+    const actionsEl = modalEl().querySelector('.ch-actions');
+    titleEl.textContent = title;
+    if (typeof textOrBuilder === 'function') {
+      textEl.hidden = true;
+      textEl.textContent = '';
+      // 先在 #ch-card-text 之后挂一个容器，供 builder 填充
+      let host = modalEl().querySelector('.ch-dialog-body');
+      if (!host) {
+        host = document.createElement('div');
+        host.className = 'ch-dialog-body';
+        textEl.after(host);
+      }
+      host.hidden = false;
+      host.textContent = '';
+      actionsEl.hidden = true;
+      textOrBuilder(host);
+      dialogCleanup = () => { host.textContent = ''; host.hidden = true; actionsEl.hidden = false; };
+    } else {
+      textEl.hidden = false;
+      textEl.textContent = textOrBuilder == null ? '' : String(textOrBuilder);
+      actionsEl.hidden = false;
+      const host = modalEl().querySelector('.ch-dialog-body');
+      if (host) { host.textContent = ''; host.hidden = true; }
+    }
+    modalEl().hidden = false;
+    if (opts && typeof opts.focus === 'function') setTimeout(opts.focus, 0);
   }
-  $('#ch-card-ok').addEventListener('click', () => { $('#ch-modal').hidden = true; });
+  function closeDialog() {
+    modalEl().hidden = true;
+    if (dialogCleanup) { dialogCleanup(); dialogCleanup = null; }
+  }
+  $('#ch-card-ok').addEventListener('click', () => closeDialog());
 
   function endGame(text) {
     over = true;
@@ -155,9 +193,19 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     thinking: false,
   };
 
+  /* ---------- 棋盘容器的棋种 class：必须互斥 ----------
+     历史 bug：各 *Build() 只 remove 自己关心的两个类，从不摘掉 'go'。
+     于是进过围棋后，之后的国象/五子棋/象棋棋盘都仍挂着 .go，
+     被 .ch-board.go 的 19×19 网格布局接管 → 棋盘显示错乱。 */
+  const BOARD_KIND_CLASS = ['gomoku', 'xiangqi', 'go', 'chess'];
+  function resetBoardClass(keep) {
+    boardEl.classList.remove(...BOARD_KIND_CLASS);
+    if (keep) boardEl.classList.add(keep);
+  }
+
   function chessBuild() {
     boardEl.textContent = '';
-    boardEl.classList.remove('gomoku', 'xiangqi');
+    resetBoardClass(null);
     for (let dp = 0; dp < 64; dp++) {
       const sq = document.createElement('button');
       sq.type = 'button';
@@ -276,13 +324,22 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     GChess.selected = -1;
     GChess.targets = [];
     GChess.lastMove = { from: m.from, to: m.to };
-    GChess.history.push({ san, fen: toFEN(GChess.st) });
+    GChess.history.push({ san, fen: toFEN(GChess.st), repKey: repetitionKey(GChess.st) });
     chessAfterMove(m);
+  }
+
+  /* 三次重复局面统计（FIDE 9.2）。key 只含子力布置 + 轮走方 + 易位权 + 过路兵格。 */
+  function chessRepetitions() {
+    const key = repetitionKey(GChess.st);
+    let n = 0;
+    for (const h of GChess.history) if (h.repKey === key) n++;
+    // 历史里存的是「走完之后的局面」，当前局面本身也算一次
+    return n + 1;
   }
 
   function chessAfterMove(m) {
     render();
-    const status = gameStatus(GChess.st);
+    const status = gameStatus(GChess.st, { repetition: chessRepetitions() });
     if (status.over) { chessFinish(status); return; }
     if (mode === 'ai' && GChess.st.turn !== GChess.aiColorMe) chessAiReply();
     if (mode === 'online' && online) onlinePushMove();
@@ -309,6 +366,7 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
         : `将杀 —— ${winner}方胜`;
     } else if (status.reason === 'stalemate') text = '逼和 —— 和棋 🤝';
     else if (status.reason === 'fifty') text = '五十回合无进展 —— 和棋 🤝';
+    else if (status.reason === 'repetition') text = '三次重复局面 —— 和棋 🤝';
     else text = '双方子力不足 —— 和棋 🤝';
     endGame(text);
     if (mode === 'online' && online && status.reason === 'checkmate') {
@@ -323,6 +381,7 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     GChess.targets = [];
     GChess.lastMove = null;
     GChess.thinking = false;
+    // 仅人机模式才因执黑自动翻转；双人同屏保持白在下
     flipped = GChess.aiColorMe === 'b' && mode === 'ai';
     chessBuild();
     chessRender();
@@ -333,12 +392,12 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
      ================================================================ */
   const GG = {
     bd: null, me: 1, vsAI: true, hard: true, history: [], aiLevel: 0,
+    lastIdx: null, winLine: null,
   };
 
   function gomokuBuild() {
     boardEl.textContent = '';
-    boardEl.classList.add('gomoku');
-    boardEl.classList.remove('xiangqi');
+    resetBoardClass('gomoku');
     for (let i = 0; i < 225; i++) {
       const d = document.createElement('button');
       d.type = 'button';
@@ -350,6 +409,7 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
 
   function gomokuPaint(i) {
     const el = boardEl.children[i];
+    el.className = 'ch-sq gk';
     el.innerHTML = '';
     const v = GG.bd[i];
     if (v) {
@@ -359,9 +419,12 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     }
   }
 
+  // 每帧先清掉所有辅助高亮（旧实现只 add 不 remove，
+  // 导致上一步/胜利线的标记越积越多，重开或移动后残留）。
   function gomokuRender() {
     for (let i = 0; i < 225; i++) gomokuPaint(i);
-    if (GG.lastIdx != null) boardEl.children[GG.lastIdx].classList.add('gk-last');
+    if (GG.lastIdx != null && GG.bd[GG.lastIdx]) boardEl.children[GG.lastIdx].classList.add('gk-last');
+    if (GG.winLine) for (const k of GG.winLine) boardEl.children[k].classList.add('gk-winline');
   }
 
   function gomokuNew(opts) {
@@ -370,6 +433,9 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     GG.me = opts.me;            // 人机模式：1 = 黑（先手）
     GG.vsAI = opts.vsAI;
     GG.hard = opts.hard;
+    GG.lastIdx = null;
+    GG.winLine = null;
+    GG.turnNow = 1;
     over = false; resultText = '';
     gomokuBuild();
     gomokuRender();
@@ -394,16 +460,15 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     GG.history.push({ bd: Int8Array.from(GG.bd), turnNow: GG.turnNow, i });
     GG.bd[i] = GG.turnNow;
     GG.lastIdx = i;
-    gomokuPaint(i);
-    boardEl.children[i].classList.add('gk-last');
     const line = Gomoku.checkWin(GG.bd, i);
     if (line) {
-      line.forEach((k) => boardEl.children[k].classList.add('gk-winline'));
-      const winnerName = GG.turnNow === 1 ? '黑方' : '白方';
-      gomokuEnd(winnerName + '五连获胜 🎉');
+      GG.winLine = line;
+      gomokuRender();
+      gomokuEnd((GG.turnNow === 1 ? '黑方' : '白方') + '五连获胜 🎉');
       return;
     }
     GG.turnNow = GG.turnNow === 1 ? 2 : 1;
+    gomokuRender();
     renderStatus();
     if (GG.vsAI && GG.turnNow !== GG.me && kind === 'gomoku' && !over) gomokuAiMove();
   }
@@ -430,6 +495,7 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
       GG.turnNow = h.turnNow;
     }
     GG.lastIdx = GG.history.length ? GG.history[GG.history.length - 1].i : null;
+    GG.winLine = null;
     over = false;
     gomokuRender();
   }
@@ -445,8 +511,7 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
 
   function goBuild() {
     boardEl.textContent = '';
-    boardEl.classList.add('go');
-    boardEl.classList.remove('gomoku', 'xiangqi');
+    resetBoardClass('go');
     for (let i = 0; i < 361; i++) {
       const d = document.createElement('button');
       d.type = 'button';
@@ -454,18 +519,25 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
       d.dataset.i = i;
       boardEl.appendChild(d);
     }
-    for (const [r, c] of [[3,3],[3,9],[3,15],[9,9],[9,3],[9,15],[15,3],[15,9],[15,15]]) {
+    // 星位用 CSS 定位在交叉点上（(n+0.5)/19 与本盘网格线中心一致）
+    for (const [r, c] of GO_STARS) {
       const star = document.createElement('span');
       star.className = 'go-star';
-      star.style.left = ((c + 0.5) / 19 * 100).toFixed(2) + '%';
-      star.style.top = ((r + 0.5) / 19 * 100).toFixed(2) + '%';
+      star.style.left = ((c + 0.5) / 19 * 100).toFixed(4) + '%';
+      star.style.top = ((r + 0.5) / 19 * 100).toFixed(4) + '%';
       boardEl.appendChild(star);
     }
   }
 
+  const GO_STARS = [[3, 3], [3, 9], [3, 15], [9, 3], [9, 9], [9, 15], [15, 3], [15, 9], [15, 15]];
+
+  // 直接按索引取格子（棋盘子节点前 361 个就是落点按钮，星位在其后）
+  function goCell(i) { return boardEl.children[i]; }
+
   function goPaint(i) {
-    const el = boardEl.querySelector('.ch-sq.gopt[data-i="' + i + '"]');
+    const el = goCell(i);
     if (!el) return;
+    el.className = 'ch-sq gopt';
     el.innerHTML = '';
     const v = GO.bd[i];
     if (v) {
@@ -477,16 +549,12 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
 
   function goRender() {
     for (let i = 0; i < 361; i++) goPaint(i);
-    if (GO.lastIdx != null) {
-      const el = boardEl.querySelector('.ch-sq.gopt[data-i="' + GO.lastIdx + '"]');
-      if (el) {
-        const ring = document.createElement('span');
-        ring.className = 'go-last';
-        el.appendChild(ring);
-      }
+    if (GO.lastIdx != null && GO.bd[GO.lastIdx]) {
+      const ring = document.createElement('span');
+      ring.className = 'go-last';
+      goCell(GO.lastIdx).appendChild(ring);
     }
     renderCapturesGo();
-    updateButtons();
     renderStatus();
   }
 
@@ -514,9 +582,12 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
   }
 
   function goPlayAt(i) {
+    // 先快照再落子：Go.play 会原地改动 GO.bd，
+    // 旧代码在 play() 之后才 push 快照，撤棋时恢复的其实是「已落子」的局面。
+    const snap = { bd: Int8Array.from(GO.bd), turn: GO.turn, ko: GO.ko, passes: GO.passes, caps: { ...GO.caps }, lastIdx: GO.lastIdx };
     const r = Go.play(GO.bd, i, GO.turn, GO.ko);
-    if (!r.ok) return;
-    GO.history.push({ bd: Int8Array.from(GO.bd), turn: GO.turn, ko: GO.ko, passes: GO.passes, caps: { ...GO.caps } });
+    if (!r.ok) return false;
+    GO.history.push(snap);
     GO.caps[GO.turn] += r.captured.length;
     GO.ko = r.ko;
     GO.passes = 0;
@@ -524,6 +595,7 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     GO.turn = GO.turn === 1 ? 2 : 1;
     goRender();
     if (GO.vsAI && GO.turn !== GO.me && kind === 'go' && !over) goAiMove();
+    return true;
   }
 
   function goAiMove() {
@@ -539,17 +611,19 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
   }
 
   function goPass(ai) {
-    GO.history.push({ bd: Int8Array.from(GO.bd), turn: GO.turn, ko: GO.ko, passes: GO.passes, caps: { ...GO.caps } });
+    GO.history.push({ bd: Int8Array.from(GO.bd), turn: GO.turn, ko: GO.ko, passes: GO.passes, caps: { ...GO.caps }, lastIdx: GO.lastIdx });
     GO.passes++;
     GO.ko = -1;
     GO.turn = GO.turn === 1 ? 2 : 1;
     GO.lastIdx = null;
     if (GO.passes >= 2) {
       const t = Go.score(GO.bd);
-      const whiteTotal = t.white + 7.5;
+      const whiteTotal = t.white + Go.KOMI;
       const diff = Math.round(Math.abs(t.black - whiteTotal) * 2) / 2;
-      const text = `黑 ${t.black} 子 · 白 ${whiteTotal} 子（贴 7.5）—— ` +
-        (t.black > whiteTotal ? '黑胜 ' + diff + ' 子' : '白胜 ' + diff + ' 子');
+      const text = `黑 ${t.black} 子 · 白 ${whiteTotal} 子（贴 ${Go.KOMI}）—— ` +
+        (Math.abs(t.black - whiteTotal) < 1e-9 ? '和棋 🤝'
+          : t.black > whiteTotal ? '黑胜 ' + diff + ' 子' : '白胜 ' + diff + ' 子');
+      goRender();
       endGame(text);
       return;
     }
@@ -564,8 +638,8 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
       const h = GO.history.pop();
       GO.bd = Int8Array.from(h.bd);
       GO.turn = h.turn; GO.ko = h.ko; GO.passes = h.passes; GO.caps = { ...h.caps };
+      GO.lastIdx = h.lastIdx ?? null;
     }
-    GO.lastIdx = null;
     over = false;
     goRender();
   }
@@ -595,20 +669,12 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
 
   function xiangqiBuild() {
     boardEl.textContent = '';
-    boardEl.classList.add('xiangqi');
-    boardEl.classList.remove('gomoku');
+    resetBoardClass('xiangqi');
     for (let i = 0; i < 90; i++) {
       const d = document.createElement('button');
       d.type = 'button';
       d.className = 'ch-sq xq';
       d.dataset.i = i;
-      const r = (i / 9) | 0, c = i % 9;
-      if (c < 8) d.classList.add('xvr');
-      if (r < 9) d.classList.add('xhr');
-      if (r === 4 && c < 8) d.classList.add('river-top');
-      if (r === 5 && c < 8) d.classList.add('river-bottom');
-      if (r <= 1 && c >= 3 && c <= 4) d.classList.add('palace-t');
-      if (r >= 8 && c >= 3 && c <= 4) d.classList.add('palace-b');
       boardEl.appendChild(d);
     }
     const river = document.createElement('div');
@@ -619,6 +685,7 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
 
   function xiangqiPaint(i) {
     const el = boardEl.children[i];
+    if (!el) return;
     el.innerHTML = '';
     const p = XQ.st.bd[i];
     if (!p) return;
@@ -629,14 +696,15 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
   }
 
   function xiangqiRender() {
+    // 用 Set 预收 targets，避免每格都做一次 O(n) 的 find
+    const targets = new Set(XQ.targets.map((m) => m.to));
     for (let i = 0; i < 90; i++) {
       const el = boardEl.children[i];
-      const p = XQ.st.bd[i];
+      if (!el) continue;
       el.classList.toggle('sel', i === XQ.selected);
-      el.classList.toggle('target', !!XQ.targets.find((m) => m.to === i));
+      el.classList.toggle('target', targets.has(i));
       el.classList.toggle('lastmove', !!XQ.lastMove && (i === XQ.lastMove.from || i === XQ.lastMove.to));
-      if (p) xiangqiPaint(i);
-      else el.innerHTML = '';
+      xiangqiPaint(i);
     }
   }
 
@@ -674,17 +742,22 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
   });
 
   function xiangqiApply(m) {
-    XQ.history.push({ bd: enc(XQ.st.bd), turn: XQ.st.turn });
+    XQ.history.push({ bd: enc(XQ.st.bd), turn: XQ.st.turn, key: Xiangqi.positionKey(XQ.st) });
     Xiangqi.makeMove(XQ.st, m);
     XQ.lastMove = { from: m.from, to: m.to };
     XQ.selected = -1; XQ.targets = [];
     xiangqiRender();
-    const status = Xiangqi.gameStatus(XQ.st);
+    const status = Xiangqi.gameStatus(XQ.st, { repetition: xiangqiRepetitions() });
     if (status.over) {
-      const winner = status.winner === 'r' ? '红方' : '黑方';
-      const text = XQ.vsAI
-        ? (status.winner === XQ.me ? '将死对方 —— 你赢了 🎉' : '被将死 —— 你输了 😵')
-        : `${winner}胜 🎉`;
+      let text;
+      if (status.reason === 'repetition') {
+        text = '三次重复局面 —— 和棋 🤝';
+      } else {
+        const winner = status.winner === 'r' ? '红方' : '黑方';
+        text = XQ.vsAI
+          ? (status.winner === XQ.me ? '将死对方 —— 你赢了 🎉' : '被将死 —— 你输了 😵')
+          : `${winner}胜 🎉`;
+      }
       over = true;
       resultText = text;
       showDialog('对局结束', text);
@@ -692,6 +765,14 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
       return;
     }
     if (XQ.vsAI && XQ.st.turn !== XQ.me && kind === 'xiangqi' && !over) xiangqiAiMove();
+  }
+
+  /* 三次重复局面统计（走完后的历史局面 + 当前局面本身） */
+  function xiangqiRepetitions() {
+    const key = Xiangqi.positionKey(XQ.st);
+    let n = 0;
+    for (const h of XQ.history) if (h.key === key) n++;
+    return n + 1;
   }
 
   function xiangqiUndo() {
@@ -749,22 +830,26 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
   function startGame(kindKey) {
     onlineCleanup();
     kind = kindKey;
-    mode = (kind === 'gomoku' && !GG.vsAI) || (kind === 'xiangqi' && !XQ.vsAI) ? 'local' : 'ai';
+    // 任一棋种只要在「双人同屏」下就该是 local（旧逻辑漏了围棋）
+    const vsAI = kind === 'chess' ? true
+      : kind === 'gomoku' ? GG.vsAI
+        : kind === 'xiangqi' ? XQ.vsAI : GO.vsAI;
+    mode = vsAI ? 'ai' : 'local';
     over = false; resultText = '';
     startTime = Date.now();
     if (kind === 'chess') {
       chessNew();
-      showGame('人机 · ' + DIFF_LABEL[GChess.aiDiff]);
+      showGame('人机 · ' + DIFF_LABEL[GChess.aiDiff] + ' · ' + (GChess.aiColorMe === 'w' ? '执白' : '执黑'));
       if (GChess.st.turn !== GChess.aiColorMe) chessAiReply();
     } else if (kind === 'gomoku') {
       gomokuNew({ me: 1, vsAI: GG.vsAI, hard: GG.hard });
       showGame('五子棋 · ' + (GG.vsAI ? (GG.hard ? '困难' : '简单') : '双人同屏'));
     } else if (kind === 'xiangqi') {
       xiangqiNew({ vsAI: XQ.vsAI, hard: XQ.hard, me: 'r' });
-      showGame('中国象棋 · ' + ({ easy: '简单', medium: '普通', hard: '困难' }[XQ.hard] || '普通'));
+      showGame('中国象棋 · ' + (XQ.vsAI ? ({ easy: '简单', medium: '普通', hard: '困难' }[XQ.hard] || '普通') : '双人同屏'));
     } else if (kind === 'go') {
       goNew({ vsAI: GO.vsAI, hard: GO.hard, me: 1 });
-      showGame('围棋 · ' + ({ easy: '简单', normal: '普通' }[GO.hard ? 'normal' : 'easy']));
+      showGame('围棋 · ' + (GO.vsAI ? (GO.hard ? '普通' : '简单') : '双人同屏'));
     }
   }
 
@@ -831,22 +916,40 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     showLauncher();
   });
   $('#ch-undo').addEventListener('click', () => {
+    if (thinking || over) return;
     if (kind === 'chess') {
-      if (mode !== 'ai' || GChess.thinking || !GChess.history.length) return;
-      if (GChess.st.turn === GChess.aiColorMe && GChess.history.length) GChess.history.pop();
-      if (GChess.history.length) { GChess.history.pop(); GChess.st = parseFEN(GChess.history[GChess.history.length - 1].fen); }
-      else { GChess.history = []; GChess.st = parseFEN(START_FEN); }
-      GChess.selected = -1; GChess.targets = []; GChess.lastMove = null; over = false;
-      chessRender();
+      // 悔棋仅人机模式开放（联机/双人同屏涉及对手，不应单方撤回）
+      if (mode !== 'ai' || !GChess.history.length) return;
+      chessUndo();
     } else if (kind === 'gomoku') gomokuUndo();
     else if (kind === 'xiangqi') xiangqiUndo();
     else if (kind === 'go') goUndo();
   });
+
+  function chessUndo() {
+    // 人机：轮到 AI 说明刚走完我的一步，先弹掉 AI 的那一步
+    if (GChess.st.turn === GChess.aiColorMe && GChess.history.length) GChess.history.pop();
+    if (GChess.history.length) GChess.history.pop();
+    const back = GChess.history.length ? GChess.history[GChess.history.length - 1].fen : START_FEN;
+    GChess.st = parseFEN(back);
+    GChess.thinking = false;
+    GChess.selected = -1; GChess.targets = []; GChess.lastMove = null;
+    over = false; resultText = '';
+    if (online) { online.finishedShown = false; }
+    chessRender();
+    renderStatus();
+  }
+
   $('#ch-resign').addEventListener('click', () => {
     if (over) return;
     if (kind === 'chess') {
-      if (mode === 'ai') endGame('你认输了 —— AI 获胜');
-      else if (online && online.seat) {
+      if (mode === 'ai') {
+        endGame('你认输了 —— AI 获胜');
+      } else if (mode === 'local') {
+        // 双人同屏：由当前要走的一方认输
+        endGame((GChess.st.turn === 'w' ? '白方' : '黑方') + '认输 —— ' +
+          (GChess.st.turn === 'w' ? '黑方' : '白方') + '胜');
+      } else if (online && online.seat) {
         onlineMarkFinished(online.seat === 'w' ? '0-1' : '1-0');
         endGame('你认输了 —— 对方胜');
       }
@@ -908,15 +1011,18 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
 
   /* ---------- 尺寸 ---------- */
   function fitBoard() {
+    // 棋盘已由 CSS 按 --skw / --board-h 约束，这里只把「格宽」换算成棋子尺寸。
     const w = boardEl.clientWidth;
-    if (w > 0) {
-      if (kind === 'chess') boardEl.style.setProperty('--ch-piece', (w / 8 * 0.74).toFixed(1) + 'px');
-      if (kind === 'gomoku') boardEl.style.setProperty('--gk-stone', (w / 15 * 0.72).toFixed(1) + 'px');
-      if (kind === 'xiangqi') boardEl.style.setProperty('--xq-piece', (w / 9 * 0.82).toFixed(1) + 'px');
-      if (kind === 'go') boardEl.style.setProperty('--go-stone', (w / 19 * 0.92).toFixed(1) + 'px');
-    }
+    const h = boardEl.clientHeight;
+    if (w > 0) boardEl.style.setProperty('--ch-piece', (w / 8 * 0.74).toFixed(1) + 'px');
+    if (w > 0) boardEl.style.setProperty('--gk-stone', (w / 15 * 0.72).toFixed(1) + 'px');
+    // 象棋/围棋按较短边取，避免竖盘时子偏大
+    const wq = Math.min(w, h * 9 / 10);
+    if (wq > 0) boardEl.style.setProperty('--xq-piece', (wq / 9 * 0.82).toFixed(1) + 'px');
+    if (w > 0) boardEl.style.setProperty('--go-stone', (w / 19 * 0.92).toFixed(1) + 'px');
   }
   window.addEventListener('resize', fitBoard);
+  window.addEventListener('orientationchange', fitBoard);
 
   /* ---------- 联机（国际象棋） ---------- */
   async function initCloud() {
@@ -932,37 +1038,6 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
       } : null;
     } catch { /* 静默 */ }
   }
-  async function ensureName() {
-    let name = myName();
-    if (name) return name;
-    name = await new Promise((resolve) => {
-      showDialog('怎么称呼你？', (body) => {
-        const input = document.createElement('input');
-        input.className = 'ch-code-input';
-        input.style.letterSpacing = '0';
-        input.maxLength = 16;
-        input.placeholder = '对局昵称';
-        body.appendChild(input);
-        const foot = document.createElement('div');
-        foot.className = 'ch-actions';
-        const ok = document.createElement('button');
-        ok.className = 'ch-btn primary';
-        ok.type = 'button';
-        ok.textContent = '开始对弈';
-        ok.addEventListener('click', () => {
-          const v = input.value.trim() || '棋手';
-          store.set('ch-name-v1', v);
-          resolve(v);
-        });
-        foot.appendChild(ok);
-        body.appendChild(foot);
-        setTimeout(() => input.focus(), 0);
-      });
-    });
-    closeDialog();
-    return name;
-  }
-
   function genCode() {
     const abc = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';
     let s = '';
@@ -1081,7 +1156,7 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
   const sel = {
     kind: 'chess', mode: 'ai',
     aiDiff: GChess.aiDiff, side: GChess.aiColorMe,
-    xqDiff: XQ.hard, gkHard: 'normal',
+    xqDiff: 'medium', gkHard: 'hard', goDiff: 'normal',
   };
   const DIFF_CHIPS = {
     chess: [['0', '新手'], ['1', '业余'], ['2', '棋手'], ['3', '大师']],
@@ -1095,44 +1170,39 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
   const onlineWrap = $('#sel-online-wrap');
   const onlineChip = $('#sel-mode-online');
 
+  function selDiffValue() {
+    return sel.kind === 'chess' ? String(sel.aiDiff)
+      : sel.kind === 'xiangqi' ? sel.xqDiff
+        : sel.gkHard;
+  }
+
   function renderSel() {
+    // 棋类切走后若仍停在联机模式，强制回落到人机（联机仅国象）
+    if (sel.kind !== 'chess' && sel.mode === 'online') sel.mode = 'ai';
     for (const b of document.querySelectorAll('#sel-kind .ch-chip')) b.classList.toggle('on', b.dataset.v === sel.kind);
     for (const b of document.querySelectorAll('#sel-mode .ch-chip')) b.classList.toggle('on', b.dataset.v === sel.mode);
     onlineChip.hidden = sel.kind !== 'chess';
-    if (sel.kind !== 'chess' && sel.mode === 'online') sel.mode = 'ai';
     sideWrap.hidden = sel.kind !== 'chess';
     onlineWrap.hidden = !(sel.kind === 'chess' && sel.mode === 'online');
     diffLabel.textContent = sel.kind === 'chess' ? 'AI 棋力' : 'AI 难度';
     diffWrap.textContent = '';
+    const cur = selDiffValue();
     for (const [v, label] of DIFF_CHIPS[sel.kind]) {
       const b = document.createElement('button');
       b.type = 'button';
-      b.className = 'ch-chip' + (String(sel.diffValue()) === v ? ' on' : '');
+      b.className = 'ch-chip' + (cur === v ? ' on' : '');
       b.dataset.v = v;
       b.textContent = label;
       b.addEventListener('click', () => {
         if (sel.kind === 'chess') sel.aiDiff = +v;
         else if (sel.kind === 'xiangqi') sel.xqDiff = v;
+        else if (sel.kind === 'go') sel.goDiff = v;
         else sel.gkHard = v;
         renderSel();
-  $('#ch-create').addEventListener('click', createRoom);
-  $('#ch-join').addEventListener('click', joinRoom);
-  $('#ch-code-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') joinRoom(); });
-  roomChip.addEventListener('click', async () => {
-    if (!online) return;
-    try {
-      await navigator.clipboard.writeText(online.code);
-      roomChip.textContent = '已复制 ' + online.code;
-      setTimeout(() => { roomChip.textContent = '房间 ' + online.code; }, 1200);
-    } catch { /* 剪贴板不可用则忽略 */ }
-  });
       });
       diffWrap.appendChild(b);
     }
   }
-  sel.diffValue = function () {
-    return sel.kind === 'chess' ? String(sel.aiDiff) : sel.kind === 'xiangqi' ? sel.xqDiff : sel.gkHard;
-  };
   for (const b of document.querySelectorAll('#sel-kind .ch-chip')) {
     b.addEventListener('click', () => { sel.kind = b.dataset.v; renderSel(); });
   }
@@ -1153,14 +1223,17 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
       startGame('xiangqi');
     } else if (sel.kind === 'go') {
       GO.vsAI = sel.mode === 'ai';
-      GO.hard = sel.gkHard === 'normal';
+      GO.hard = sel.goDiff === 'normal';
       startGame('go');
     } else {
-      GG.hard = sel.gkHard; GG.vsAI = sel.mode === 'ai';
+      GG.hard = sel.gkHard === 'hard'; GG.vsAI = sel.mode === 'ai';
       startGame('gomoku');
     }
   });
   renderSel();
+
+  // 联机房间控件：只绑定一次（旧代码在 renderSel 内部又绑了一遍，
+  // 点一次「创建房间」会插入两个房间）
   $('#ch-create').addEventListener('click', createRoom);
   $('#ch-join').addEventListener('click', joinRoom);
   $('#ch-code-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') joinRoom(); });
@@ -1176,21 +1249,33 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
   /* ---------- 键盘 ---------- */
   document.addEventListener('keydown', (e) => {
     if (e.target.tagName === 'INPUT') return;
-    if (!document.getElementById('ch-modal').hidden) {
-      if (e.key === 'Escape' || e.key === 'Enter') $('#ch-modal').hidden = true;
+    if (!modalEl().hidden) {
+      if (e.key === 'Escape' || e.key === 'Enter') closeDialog();
       return;
     }
     if (gameEl.hidden) return;
-    const arrows = { ArrowUp: -8, ArrowDown: 8, ArrowLeft: -1, ArrowRight: 1 };
-    if (kind === 'chess' && e.key in arrows) {
+    if (kind !== 'chess') {
+      if (e.key === 'Escape') {
+        if (document.fullscreenElement || document.webkitFullscreenElement) return;
+        $('#ch-exit').click();
+      }
+      return;
+    }
+    // 棋盘操作一律走「显示坐标 dp」：chessOnSquare 内部再用 chessDispToSq 换算，
+    // 因此这里绝不能再手动翻转一次（旧代码对 sq 做了两次翻转 → 落点错格）。
+    const step = { ArrowUp: -8, ArrowDown: 8, ArrowLeft: -1, ArrowRight: 1 };
+    if (e.key in step) {
       e.preventDefault();
       if (GChess.selected < 0) { chessOnSquare(flipped ? 63 : 56); return; }
-      const sq = GChess.selected + arrows[e.key];
-      if (sq >= 0 && sq < 64 && Math.abs((sq & 7) - (GChess.selected & 7)) <= 1) chessOnSquare(chessDispToSq(flipped ? 63 - sq : sq));
-      else chessOnSquare(sq);
-    } else if (kind === 'chess' && e.key === 'Enter' && GChess.selected >= 0) {
+      const curDisp = flipped ? 63 - GChess.selected : GChess.selected;
+      const nextDisp = curDisp + step[e.key];
+      if (nextDisp < 0 || nextDisp > 63) return;
+      // 左右移动不得跨行折返
+      if ((step[e.key] === -1 || step[e.key] === 1) && (nextDisp >> 3) !== (curDisp >> 3)) return;
+      chessOnSquare(nextDisp);
+    } else if (e.key === 'Enter' && GChess.selected >= 0) {
       e.preventDefault();
-      chessOnSquare(chessDispToSq(flipped ? 63 - GChess.selected : GChess.selected));
+      chessOnSquare(flipped ? 63 - GChess.selected : GChess.selected);
     } else if (e.key === 'Escape') {
       if (document.fullscreenElement || document.webkitFullscreenElement) return;
       $('#ch-exit').click();

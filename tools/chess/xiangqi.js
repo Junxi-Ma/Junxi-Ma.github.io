@@ -221,15 +221,31 @@ function leavesOwnKingHanging(st, m) {
   return inCheck(copy, mover) || kingsFacing(copy.bd);
 }
 
-export function gameStatus(st) {
+export function gameStatus(st, opts) {
   if (genLegal(st).length === 0) {
-    return { over: true, winner: st.turn === 'r' ? 'b' : 'r' };
+    // 无合法着法即负（被将杀或困毙，两者在中国象棋里都判负）
+    return { over: true, winner: st.turn === 'r' ? 'b' : 'r', reason: 'no-moves' };
+  }
+  // 三次重复局面按和棋处理（避免 AI 之间无限循环缠斗）
+  if (opts && opts.repetition >= 3) {
+    return { over: true, winner: null, reason: 'repetition' };
   }
   return { over: false, winner: null };
 }
 
+/* 局面指纹：只含子力布置与轮走方（中国象棋无易位/过路兵） */
+export function positionKey(st) {
+  let s = '';
+  for (let i = 0; i < 90; i++) {
+    const p = st.bd[i];
+    s += p ? (p.c === 'r' ? p.t.toUpperCase() : p.t) : '.';
+  }
+  return s + '|' + st.turn;
+}
+
 /* ---------- AI ---------- */
 const VAL = { k: 10000, r: 600, c: 300, n: 270, b: 120, a: 120, p: 70 };
+const MATE = 100000;
 
 function evaluate(st) {
   let s = 0;
@@ -239,48 +255,75 @@ function evaluate(st) {
     let v = VAL[p.t];
     if (p.t === 'p') {
       const r = (i / 9) | 0;
-      if ((p.c === 'r' && r <= 4) || (p.c === 'b' && r >= 5)) v += 60;
+      // 过河兵增值：越靠近对方底线越有价值
+      if (p.c === 'r' && r <= 4) v += 60 + (4 - r) * 10;
+      if (p.c === 'b' && r >= 5) v += 60 + (r - 5) * 10;
+    } else if (p.t === 'c' || p.t === 'r') {
+      // 车/炮占中路小幅加分，鼓励争夺中路
+      const c = i % 9;
+      if (c === 4) v += 8;
     }
     s += p.c === 'r' ? v : -v;
   }
   return st.turn === 'r' ? s : -s;
 }
 
+/* 吃子优先排序（MVV-LVA），显著提升 α-β 剪枝效率 */
+function orderMoves(moves) {
+  for (const m of moves) {
+    m.score = m.captured ? VAL[m.captured.t] * 10 - VAL[m.t] : 0;
+  }
+  moves.sort((a, b) => b.score - a.score);
+  return moves;
+}
+
+/* 走完一步后该方是否仍被将军/对脸（含将帅照面）。
+   旧实现只调 inCheck 而漏了 kingsFacing —— 但 inCheck 内部已把对脸视同被将，
+   这里显式再查一次是为了在搜索中走「吃将」这步时也能正确识别。 */
+function stillLosing(st, moverSide) {
+  return inCheck(st, moverSide) || kingsFacing(st.bd);
+}
+
 function negamax(st, depth, alpha, beta) {
   // 伪合法搜索：吃将即大胜；送将（走后被将/对脸）跳过
   const moves = genPseudo(st);
-  if (!moves.length) return -100000 + depth;
+  if (!moves.length) return -MATE + depth;
   for (const m of moves) {
-    if (m.captured && m.captured.t === 'k') return 100000 + depth;
+    if (m.captured && m.captured.t === 'k') return MATE + depth;
   }
   if (depth === 0) return evaluate(st);
+  orderMoves(moves);
   let best = -Infinity;
+  const mover = st.turn;
   for (const m of moves) {
     const cap = makeMove(st, m);
-    const mover = st.turn === 'r' ? 'b' : 'r';
-    if (inCheck(st, mover)) { unmakeMove(st, m, cap); continue; }
+    // mover 走完后，自己是否还处于被将/对脸状态
+    if (stillLosing(st, mover)) { unmakeMove(st, m, cap); continue; }
     const v = -negamax(st, depth - 1, -beta, -alpha);
     unmakeMove(st, m, cap);
     if (v > best) best = v;
     if (v > alpha) alpha = v;
     if (alpha >= beta) break;
   }
-  if (best === -Infinity) return -100000 + depth; // 全部送将 = 必败
+  if (best === -Infinity) return -MATE + depth; // 全部送将 = 必败（被绝杀）
   return best;
 }
 
 export function findBestMove(state, depth = 2) {
   const st = cloneState(state);
-  const legal = genLegal(st);
+  const legal = orderMoves(genLegal(st));
   if (!legal.length) return null;
   let best = legal[0], alpha = -Infinity;
   const scored = [];
   for (const m of legal) {
     const cap = makeMove(st, m);
+    // 根节点同样要过滤掉「送将」的着法（genLegal 已保证，但保留防御性检查）
+    if (stillLosing(st, m.c)) { unmakeMove(st, m, cap); continue; }
     const v = -negamax(st, depth - 1, -Infinity, alpha === -Infinity ? Infinity : -alpha + 1);
     unmakeMove(st, m, cap);
     scored.push({ m, v });
     if (v > alpha) { alpha = v; best = m; }
   }
+  if (!scored.length) return { move: legal[0], score: -MATE, ranked: [] };
   return { move: best, score: alpha, ranked: scored.sort((a, b) => b.v - a.v) };
 }
