@@ -438,7 +438,7 @@ body.ch-page [hidden] { display: none !important; }
   aspect-ratio: 9 / 10;
   border-radius: 4px;
   background:
-    url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%209%2010'%20preserveAspectRatio='none'%3E%3Cg%20stroke='%236b4a26'%20stroke-width='0.035'%20fill='none'%3E%3Cpath%20d='M0,0.5H9M0,1.5H9M0,2.5H9M0,3.5H9M0,4.5H9M0,5.5H9M0,6.5H9M0,7.5H9M0,8.5H9M0,9.5H9'/%3E%3Cpath%20d='M0.5,0.5V9.5M8.5,0.5V9.5M1.5,0.5V4.5M1.5,5.5V9.5M2.5,0.5V4.5M2.5,5.5V9.5M3.5,0.5V4.5M3.5,5.5V9.5M4.5,0.5V4.5M4.5,5.5V9.5M5.5,0.5V4.5M5.5,5.5V9.5M6.5,0.5V4.5M6.5,5.5V9.5M7.5,0.5V4.5M7.5,5.5V9.5'/%3E%3Cpath%20d='M3.5,0.5L5.5,2.5M5.5,0.5L3.5,2.5M3.5,7.5L5.5,9.5M5.5,7.5L3.5,9.5'/%3E%3C/g%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%209%2010'%20preserveAspectRatio='none'%3E%3Cg%20stroke='%236b4a26'%20stroke-width='0.035'%20fill='none'%3E%3Cpath%20d='M0,0.5H9M0,1.5H9M0,2.5H9M0,3.5H9M0,4.5H9M0,5.5H9M0,6.5H9M0,7.5H9M0,8.5H9M0,9.5H9'/%3E%3Cpath%20d='M0.5,0.5V9.5M8.5,0.5V9.5M1.5,0.5V4.5M1.5,5.5V9.5M2.5,0.5V4.5M2.5,5.5V9.5M3.5,0.5V4.5M3.5,5.5V9.5M4.5,0.5V4.5M4.5,5.5V9.5M5.5,0.5V4.5M5.5,5.5V9.5M6.5,0.5V4.5M6.5,5.5V9.5M7.5,0.5V4.5M7.5,5.5V9.5'/%3E%3Cpath%20d='M3.5,0.5L5.5,2.5M5.5,0.5L3.5,2.5M3.5,7.5L5.5,9.5M5.5,7.5L3.5,9.5'/%3E%3Cpath%20d='M1.20,7.32h-0.13v-0.13M1.20,7.68h-0.13v0.13M1.80,7.32h0.13v-0.13M1.80,7.68h0.13v0.13M7.20,7.32h-0.13v-0.13M7.20,7.68h-0.13v0.13M7.80,7.32h0.13v-0.13M7.80,7.68h0.13v0.13M1.20,2.32h-0.13v-0.13M1.20,2.68h-0.13v0.13M1.80,2.32h0.13v-0.13M1.80,2.68h0.13v0.13M7.20,2.32h-0.13v-0.13M7.20,2.68h-0.13v0.13M7.80,2.32h0.13v-0.13M7.80,2.68h0.13v0.13M0.80,7.32h0.13v-0.13M0.80,7.68h0.13v0.13M2.20,7.32h-0.13v-0.13M2.20,7.68h-0.13v0.13M2.80,7.32h0.13v-0.13M2.80,7.68h0.13v0.13M4.20,7.32h-0.13v-0.13M4.20,7.68h-0.13v0.13M4.80,7.32h0.13v-0.13M4.80,7.68h0.13v0.13M6.20,7.32h-0.13v-0.13M6.20,7.68h-0.13v0.13M6.80,7.32h0.13v-0.13M6.80,7.68h0.13v0.13M8.20,7.32h-0.13v-0.13M8.20,7.68h-0.13v0.13M0.80,3.32h0.13v-0.13M0.80,3.68h0.13v0.13M2.20,3.32h-0.13v-0.13M2.20,3.68h-0.13v0.13M2.80,3.32h0.13v-0.13M2.80,3.68h0.13v0.13M4.20,3.32h-0.13v-0.13M4.20,3.68h-0.13v0.13M4.80,3.32h0.13v-0.13M4.80,3.68h0.13v0.13M6.20,3.32h-0.13v-0.13M6.20,3.68h-0.13v0.13M6.80,3.32h0.13v-0.13M6.80,3.68h0.13v0.13M8.20,3.32h-0.13v-0.13M8.20,3.68h-0.13v0.13'/%3E%3C/g%3E%3C/svg%3E"),
     linear-gradient(180deg, #e8c88f, #d9b276);
   box-shadow: inset 0 0 0 1px rgba(90, 60, 20, 0.55);
 }
@@ -475,3 +475,75 @@ body.ch-page [hidden] { display: none !important; }
 }
 .xq-piece.r { color: #b8352a; }
 .xq-piece.b { color: #2b2b2b; }
+
+/* ---------- 围棋棋盘 ---------- */
+.ch-board.go {
+  grid-template-columns: repeat(19, 1fr);
+  grid-template-rows: repeat(19, 1fr);
+  width: min(calc(100vw - 24px), calc(100vh - 170px));
+  aspect-ratio: 1;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #e3bd7e, #d3a55e);
+  box-shadow: inset 0 0 0 1px rgba(90, 60, 20, 0.55);
+}
+.ch-board.go::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 18.42% 18.42%, rgba(80, 52, 18, 0.85) 0 2.5px, transparent 3.5px),
+    radial-gradient(circle at 18.42% 50%, rgba(80, 52, 18, 0.85) 0 2.5px, transparent 3.5px),
+    radial-gradient(circle at 18.42% 81.58%, rgba(80, 52, 18, 0.85) 0 2.5px, transparent 3.5px),
+    radial-gradient(circle at 50% 18.42%, rgba(80, 52, 18, 0.85) 0 2.5px, transparent 3.5px),
+    radial-gradient(circle at 50% 50%, rgba(80, 52, 18, 0.85) 0 3px, transparent 4px),
+    radial-gradient(circle at 50% 81.58%, rgba(80, 52, 18, 0.85) 0 2.5px, transparent 3.5px),
+    radial-gradient(circle at 81.58% 18.42%, rgba(80, 52, 18, 0.85) 0 2.5px, transparent 3.5px),
+    radial-gradient(circle at 81.58% 50%, rgba(80, 52, 18, 0.85) 0 2.5px, transparent 3.5px),
+    radial-gradient(circle at 81.58% 81.58%, rgba(80, 52, 18, 0.85) 0 2.5px, transparent 3.5px),
+    linear-gradient(90deg, rgba(90, 60, 20, 0.72) 0 1px, transparent 1px),
+    linear-gradient(rgba(90, 60, 20, 0.72) 0 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%, calc(100% / 19) calc(100% / 19), calc(100% / 19) calc(100% / 19);
+  background-position: 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, calc(100% / 38) calc(100% / 38), calc(100% / 38) calc(100% / 38);
+  pointer-events: none;
+}
+.ch-board.go .ch-sq {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+}
+.ch-board.go .ch-sq.sel { background: rgba(255, 213, 80, 0.35); }
+.go-stone {
+  width: var(--go-stone, 30px);
+  height: var(--go-stone, 30px);
+  border-radius: 50%;
+  pointer-events: none;
+}
+.go-stone.black {
+  background: radial-gradient(circle at 35% 28%, #5f5f5f, #101010 72%);
+  box-shadow: 1px 2px 3px rgba(0, 0, 0, 0.5);
+}
+.go-stone.white {
+  background: radial-gradient(circle at 35% 28%, #fffef8, #ddd7c5 75%);
+  box-shadow: 1px 2px 3px rgba(0, 0, 0, 0.4);
+}
+.go-last .go-stone { box-shadow: 0 0 0 2px #e2442e, 1px 2px 3px rgba(0, 0, 0, 0.45); }
+.go-caps {
+  display: inline-block;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  margin-right: 2px;
+  vertical-align: middle;
+}
+.go-caps.b { background: radial-gradient(circle at 35% 30%, #5a5a5a, #111 70%); }
+.go-caps.w { background: radial-gradient(circle at 35% 30%, #fff, #d9d4c4 75%); border: 1px solid rgba(0,0,0,.2); }
+.go-star {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(80, 52, 18, 0.85);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}

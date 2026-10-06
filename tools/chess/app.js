@@ -11,6 +11,7 @@ import {
 } from './engine.js';
 import * as Gomoku from './gomoku.js';
 import * as Xiangqi from './xiangqi.js';
+import * as Go from './go.js';
 import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
 
 (() => {
@@ -434,6 +435,153 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
   }
 
   /* ================================================================
+     三、围棋
+     ================================================================ */
+  const GO = {
+    bd: null, turn: 1, ko: -1, passes: 0, history: [],
+    caps: { 1: 0, 2: 0 }, lastIdx: null,
+    vsAI: true, hard: true, me: 1,
+  };
+
+  function goBuild() {
+    boardEl.textContent = '';
+    boardEl.classList.add('go');
+    boardEl.classList.remove('gomoku', 'xiangqi');
+    for (let i = 0; i < 361; i++) {
+      const d = document.createElement('button');
+      d.type = 'button';
+      d.className = 'ch-sq gopt';
+      d.dataset.i = i;
+      boardEl.appendChild(d);
+    }
+    for (const [r, c] of [[3,3],[3,9],[3,15],[9,9],[9,3],[9,15],[15,3],[15,9],[15,15]]) {
+      const star = document.createElement('span');
+      star.className = 'go-star';
+      star.style.left = ((c + 0.5) / 19 * 100).toFixed(2) + '%';
+      star.style.top = ((r + 0.5) / 19 * 100).toFixed(2) + '%';
+      boardEl.appendChild(star);
+    }
+  }
+
+  function goPaint(i) {
+    const el = boardEl.querySelector('.ch-sq.gopt[data-i="' + i + '"]');
+    if (!el) return;
+    el.innerHTML = '';
+    const v = GO.bd[i];
+    if (v) {
+      const sp = document.createElement('span');
+      sp.className = 'go-stone ' + (v === 1 ? 'black' : 'white');
+      el.appendChild(sp);
+    }
+  }
+
+  function goRender() {
+    for (let i = 0; i < 361; i++) goPaint(i);
+    if (GO.lastIdx != null) {
+      const el = boardEl.querySelector('.ch-sq.gopt[data-i="' + GO.lastIdx + '"]');
+      if (el) {
+        const ring = document.createElement('span');
+        ring.className = 'go-last';
+        el.appendChild(ring);
+      }
+    }
+    renderCapturesGo();
+    updateButtons();
+    renderStatus();
+  }
+
+  function renderCapturesGo() {
+    const mk = (n, cls) => {
+      let out = '';
+      for (let k = 0; k < n && k < 30; k++) out += '<span class="go-caps ' + cls + '"></span>';
+      return out + (n > 30 ? '…' : '');
+    };
+    capTopEl.innerHTML = mk(GO.caps[2], 'w');
+    capBottomEl.innerHTML = mk(GO.caps[1], 'b');
+  }
+
+  function goNew(opts) {
+    GO.bd = Go.emptyBoard();
+    GO.turn = 1; GO.ko = -1; GO.passes = 0;
+    GO.history = []; GO.caps = { 1: 0, 2: 0 }; GO.lastIdx = null;
+    GO.vsAI = opts.vsAI; GO.hard = opts.hard; GO.me = opts.me ?? 1;
+    over = false; resultText = '';
+    goBuild();
+    goRender();
+    if (GO.vsAI && GO.me === 2) {
+      setTimeout(() => { if (kind === 'go' && !over) goAiMove(); }, 200);
+    }
+  }
+
+  function goPlayAt(i) {
+    const r = Go.play(GO.bd, i, GO.turn, GO.ko);
+    if (!r.ok) return;
+    GO.history.push({ bd: Int8Array.from(GO.bd), turn: GO.turn, ko: GO.ko, passes: GO.passes, caps: { ...GO.caps } });
+    GO.caps[GO.turn] += r.captured.length;
+    GO.ko = r.ko;
+    GO.passes = 0;
+    GO.lastIdx = i;
+    GO.turn = GO.turn === 1 ? 2 : 1;
+    goRender();
+    if (GO.vsAI && GO.turn !== GO.me && kind === 'go' && !over) goAiMove();
+  }
+
+  function goAiMove() {
+    thinking = true;
+    renderStatus();
+    setTimeout(() => {
+      const r = Go.aiMove(GO.bd, GO.turn, GO.ko, GO.hard);
+      thinking = false;
+      if (kind !== 'go' || over) return;
+      if (r.pass || r.idx == null) { goPass(true); return; }
+      goPlayAt(r.idx);
+    }, 150);
+  }
+
+  function goPass(ai) {
+    GO.history.push({ bd: Int8Array.from(GO.bd), turn: GO.turn, ko: GO.ko, passes: GO.passes, caps: { ...GO.caps } });
+    GO.passes++;
+    GO.ko = -1;
+    GO.turn = GO.turn === 1 ? 2 : 1;
+    GO.lastIdx = null;
+    if (GO.passes >= 2) {
+      const t = Go.score(GO.bd);
+      const whiteTotal = t.white + 7.5;
+      const diff = Math.round(Math.abs(t.black - whiteTotal) * 2) / 2;
+      const text = `黑 ${t.black} 子 · 白 ${whiteTotal} 子（贴 7.5）—— ` +
+        (t.black > whiteTotal ? '黑胜 ' + diff + ' 子' : '白胜 ' + diff + ' 子');
+      endGame(text);
+      return;
+    }
+    goRender();
+    if (!over && GO.vsAI && GO.turn !== GO.me && kind === 'go') goAiMove();
+  }
+
+  function goUndo() {
+    if (!GO.history.length) return;
+    const steps = GO.vsAI && GO.history.length >= 2 ? 2 : 1;
+    for (let k = 0; k < steps && GO.history.length; k++) {
+      const h = GO.history.pop();
+      GO.bd = Int8Array.from(h.bd);
+      GO.turn = h.turn; GO.ko = h.ko; GO.passes = h.passes; GO.caps = { ...h.caps };
+    }
+    GO.lastIdx = null;
+    over = false;
+    goRender();
+  }
+
+  function goResign() {
+    const loser = GO.turn === 1 ? '黑方' : '白方';
+    endGame(loser + '认输 —— ' + (loser === '黑方' ? '白方胜' : '黑方胜'));
+  }
+
+  function goClick(i) {
+    if (over || gameEl.hidden) return;
+    if (GO.vsAI && GO.turn !== GO.me) return;
+    goPlayAt(i);
+  }
+
+  /* ================================================================
      三、中国象棋
      ================================================================ */
   const XQ = {
@@ -568,6 +716,7 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     if (kind === 'chess') chessOnSquare(+cell.dataset.dp);
     else if (kind === 'gomoku') gomokuClick(+cell.dataset.i);
     else if (kind === 'xiangqi') xiangqiClick(+cell.dataset.i);
+    else if (kind === 'go') goClick(+cell.dataset.i);
   });
 
   function gomokuClick(i) {
@@ -613,6 +762,9 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     } else if (kind === 'xiangqi') {
       xiangqiNew({ vsAI: XQ.vsAI, hard: XQ.hard, me: 'r' });
       showGame('中国象棋 · ' + ({ easy: '简单', medium: '普通', hard: '困难' }[XQ.hard] || '普通'));
+    } else if (kind === 'go') {
+      goNew({ vsAI: GO.vsAI, hard: GO.hard, me: 1 });
+      showGame('围棋 · ' + ({ easy: '简单', normal: '普通' }[GO.hard ? 'normal' : 'easy']));
     }
   }
 
@@ -633,8 +785,11 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
       s = thinking ? 'AI 思考中…' : (GG.vsAI ? (GG.turnNow === GG.me ? '你的回合（黑）' : 'AI 回合（白）') : (GG.turnNow === 1 ? '黑方回合' : '白方回合'));
     } else if (kind === 'xiangqi') {
       s = thinking ? 'AI 思考中…' : (XQ.vsAI ? (XQ.st.turn === XQ.me ? '你的回合（红）' : 'AI 回合（黑）') : (XQ.st.turn === 'r' ? '红方回合' : '黑方回合'));
+    } else if (kind === 'go') {
+      s = thinking ? 'AI 思考中…' : (GO.vsAI ? (GO.turn === GO.me ? '你的回合（黑）' : 'AI 回合（白）') : (GO.turn === 1 ? '黑方回合' : '白方回合'));
     }
     if (!over) {
+      if (kind === 'go' && GO.passes > 0) s += ` · 对方已停一手，再停一手即终局`;
       if (kind === 'chess' && GChess.history.length) s += ` · 上一步 ${GChess.history[GChess.history.length - 1].san}`;
       if (kind === 'gomoku' && GG.history.length) s += ` · 上一手 (${(GG.history[GG.history.length - 1].i / 15 | 0) + 1},${GG.history[GG.history.length - 1].i % 15 + 1})`;
       if (kind === 'xiangqi' && XQ.lastMove) s += ` · 上一步 (${Math.floor(XQ.lastMove.from / 9) + 1},${XQ.lastMove.from % 9 + 1})->(${Math.floor(XQ.lastMove.to / 9) + 1},${XQ.lastMove.to % 9 + 1})`;
@@ -663,7 +818,9 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     restartBtn.hidden = mode === 'online';
     undoBtn.hidden = kind === 'chess' && mode !== 'ai';
     resignBtn.hidden = mode === 'local';
-    undoBtn.disabled = thinking || over || !hist;
+    $('#ch-pass').hidden = kind !== 'go';
+    const hist2 = kind === 'go' ? GO.history.length : hist;
+    undoBtn.disabled = thinking || over || !hist2;
     resignBtn.disabled = over;
   }
 
@@ -683,6 +840,7 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
       chessRender();
     } else if (kind === 'gomoku') gomokuUndo();
     else if (kind === 'xiangqi') xiangqiUndo();
+    else if (kind === 'go') goUndo();
   });
   $('#ch-resign').addEventListener('click', () => {
     if (over) return;
@@ -696,8 +854,11 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
       gomokuEnd(GG.turnNow === 1 ? '黑方认输 —— 白方胜' : '白方认输 —— 黑方胜');
     } else if (kind === 'xiangqi') {
       xiangqiEnd(XQ.st.turn === 'r' ? '红方认输 —— 黑方胜' : '黑方认输 —— 红方胜');
+    } else if (kind === 'go') {
+      goResign();
     }
   });
+  $('#ch-pass').addEventListener('click', () => { if (kind === 'go' && !over) goPass(false); });
   function xiangqiEnd(text) {
     over = true;
     resultText = text;
@@ -752,6 +913,7 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
       if (kind === 'chess') boardEl.style.setProperty('--ch-piece', (w / 8 * 0.74).toFixed(1) + 'px');
       if (kind === 'gomoku') boardEl.style.setProperty('--gk-stone', (w / 15 * 0.72).toFixed(1) + 'px');
       if (kind === 'xiangqi') boardEl.style.setProperty('--xq-piece', (w / 9 * 0.82).toFixed(1) + 'px');
+      if (kind === 'go') boardEl.style.setProperty('--go-stone', (w / 19 * 0.92).toFixed(1) + 'px');
     }
   }
   window.addEventListener('resize', fitBoard);
@@ -919,12 +1081,13 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
   const sel = {
     kind: 'chess', mode: 'ai',
     aiDiff: GChess.aiDiff, side: GChess.aiColorMe,
-    xqDiff: XQ.hard, gkHard: GG.hard,
+    xqDiff: XQ.hard, gkHard: 'normal',
   };
   const DIFF_CHIPS = {
     chess: [['0', '新手'], ['1', '业余'], ['2', '棋手'], ['3', '大师']],
     xiangqi: [['easy', '简单'], ['medium', '普通'], ['hard', '困难']],
     gomoku: [['easy', '简单'], ['hard', '困难']],
+    go: [['easy', '简单'], ['normal', '普通']],
   };
   const diffWrap = $('#sel-diff');
   const diffLabel = $('#sel-diff-label');
@@ -988,6 +1151,10 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     } else if (sel.kind === 'xiangqi') {
       XQ.hard = sel.xqDiff; XQ.vsAI = sel.mode === 'ai';
       startGame('xiangqi');
+    } else if (sel.kind === 'go') {
+      GO.vsAI = sel.mode === 'ai';
+      GO.hard = sel.gkHard === 'normal';
+      startGame('go');
     } else {
       GG.hard = sel.gkHard; GG.vsAI = sel.mode === 'ai';
       startGame('gomoku');

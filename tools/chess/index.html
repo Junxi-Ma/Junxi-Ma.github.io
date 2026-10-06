@@ -21,7 +21,7 @@
   </script>
   <link rel="stylesheet" href="../../assets/css/tokens.css">
   <link rel="stylesheet" href="../../assets/css/main.css">
-  <link rel="stylesheet" href="style.css?v=9">
+  <link rel="stylesheet" href="style.css?v=11">
   <style>
     .tool {
       padding-top: calc(var(--nav-h) + clamp(40px, 7vw, 72px));
@@ -85,6 +85,7 @@
             <button type="button" class="ch-chip on" data-v="chess">国际象棋</button>
             <button type="button" class="ch-chip" data-v="xiangqi">中国象棋</button>
             <button type="button" class="ch-chip" data-v="gomoku">五子棋</button>
+            <button type="button" class="ch-chip" data-v="go">围棋</button>
           </div>
           <p class="ch-label">对局模式</p>
           <div class="ch-chips big" id="sel-mode">
@@ -102,7 +103,8 @@
             </div>
           </div>
           <div id="sel-online-wrap" hidden>
-            <p class="ch-label">已有房间码？在此加入</p>
+            <button type="button" class="ch-btn primary wide" id="ch-create">✚ 创建房间</button>
+            <p class="ch-label" style="margin-top:12px">已有房间码？在此加入</p>
             <div class="ch-joinrow">
               <input class="ch-code-input" id="ch-code-input" maxlength="5" placeholder="房间码" autocomplete="off">
               <button type="button" class="ch-btn" id="ch-join">加入</button>
@@ -129,6 +131,7 @@
       <button type="button" class="ch-tbtn" id="ch-restart" title="重开本局">⟳ 重开</button>
       <button type="button" class="ch-tbtn" id="ch-undo" title="悔棋（人机模式）">悔棋</button>
       <button type="button" class="ch-tbtn" id="ch-resign" title="认输">认输</button>
+      <button type="button" class="ch-tbtn" id="ch-pass" title="停一手（围棋）" hidden>停一手</button>
       <button type="button" class="ch-tbtn" id="ch-flip" title="翻转棋盘">翻转</button>
       <button type="button" class="ch-tbtn" id="ch-theme" title="切换日 / 夜">☀</button>
       <button type="button" class="ch-tbtn" id="ch-fs" title="真全屏（隐藏浏览器界面）">⛶</button>
@@ -171,6 +174,6 @@
   </footer>
 
   <script type="module" src="../../assets/js/main.js"></script>
-  <script type="module" src="app.js?v=11"></script>
+  <script type="module" src="app.js?v=19"></script>
 </body>
 </html>
