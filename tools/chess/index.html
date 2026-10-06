@@ -21,7 +21,7 @@
   </script>
   <link rel="stylesheet" href="../../assets/css/tokens.css">
   <link rel="stylesheet" href="../../assets/css/main.css">
-  <link rel="stylesheet" href="style.css?v=8">
+  <link rel="stylesheet" href="style.css?v=9">
   <style>
     .tool {
       padding-top: calc(var(--nav-h) + clamp(40px, 7vw, 72px));
@@ -79,72 +79,39 @@
       <!-- 启动器：选择模式 -->
       <div class="ch-launcher" id="ch-launcher">
         <div class="ch-cards">
-          <div class="ch-card-big">
-            <div class="ch-big-ico">♞</div>
-            <h3>人机对弈</h3>
-            <p>α-β 剪枝搜索 AI，四档棋力任选。</p>
-            <p class="ch-label">AI 难度</p>
-            <div class="ch-chips" id="ch-aidiff">
-              <button type="button" class="ch-chip" data-v="0">新手</button>
-              <button type="button" class="ch-chip" data-v="1">业余</button>
-              <button type="button" class="ch-chip on" data-v="2">棋手</button>
-              <button type="button" class="ch-chip" data-v="3">大师</button>
-            </div>
+        <div class="ch-card-big ch-select">
+          <p class="ch-label">棋类</p>
+          <div class="ch-chips big" id="sel-kind">
+            <button type="button" class="ch-chip on" data-v="chess">国际象棋</button>
+            <button type="button" class="ch-chip" data-v="xiangqi">中国象棋</button>
+            <button type="button" class="ch-chip" data-v="gomoku">五子棋</button>
+          </div>
+          <p class="ch-label">对局模式</p>
+          <div class="ch-chips big" id="sel-mode">
+            <button type="button" class="ch-chip on" data-v="ai">人机对弈</button>
+            <button type="button" class="ch-chip" data-v="local">双人同屏</button>
+            <button type="button" class="ch-chip" data-v="online" id="sel-mode-online">联机房间</button>
+          </div>
+          <p class="ch-label" id="sel-diff-label">AI 难度</p>
+          <div class="ch-chips" id="sel-diff"></div>
+          <div id="sel-side-wrap">
             <p class="ch-label">我执</p>
-            <div class="ch-chips" id="ch-aiside">
+            <div class="ch-chips" id="sel-side">
               <button type="button" class="ch-chip on" data-v="w">执白先行</button>
               <button type="button" class="ch-chip" data-v="b">执黑</button>
             </div>
-            <button type="button" class="ch-btn primary wide" id="ch-start-ai">开始对弈 →</button>
           </div>
-
-          <div class="ch-card-big">
-            <div class="ch-big-ico">♛</div>
-            <h3>双人联机</h3>
-            <p>创建房间，把房间码发给好友即可对弈。</p>
-            <button type="button" class="ch-btn primary wide" id="ch-create">✚ 创建房间</button>
-            <p class="ch-label" style="margin-top:14px">已有房间码？</p>
+          <div id="sel-online-wrap" hidden>
+            <p class="ch-label">已有房间码？在此加入</p>
             <div class="ch-joinrow">
               <input class="ch-code-input" id="ch-code-input" maxlength="5" placeholder="房间码" autocomplete="off">
               <button type="button" class="ch-btn" id="ch-join">加入</button>
             </div>
+            <p class="ch-label" style="margin-top:10px">不输码则创建新房间</p>
           </div>
-
-          <div class="ch-card-big">
-            <div class="ch-big-ico">⚫</div>
-            <h3>五子棋</h3>
-            <p>黑先白后，五连即胜；AI 有攻有守。</p>
-            <p class="ch-label">对手</p>
-            <div class="ch-chips" id="gk-vs">
-              <button type="button" class="ch-chip on" data-v="ai">人机对弈</button>
-              <button type="button" class="ch-chip" data-v="local">双人同屏</button>
-            </div>
-            <p class="ch-label" id="gk-hard-label">AI 难度</p>
-            <div class="ch-chips" id="gk-hard">
-              <button type="button" class="ch-chip" data-v="easy">简单</button>
-              <button type="button" class="ch-chip on" data-v="hard">困难</button>
-            </div>
-            <button type="button" class="ch-btn primary wide" id="ch-start-gomoku">开始对弈 →</button>
-          </div>
-
-          <div class="ch-card-big">
-            <div class="ch-big-ico">帥</div>
-            <h3>中国象棋</h3>
-            <p>楚河汉界，红先黑后；AI 攻守兼备。</p>
-            <p class="ch-label">对手</p>
-            <div class="ch-chips" id="xq-vs">
-              <button type="button" class="ch-chip on" data-v="ai">人机对弈</button>
-              <button type="button" class="ch-chip" data-v="local">双人同屏</button>
-            </div>
-            <p class="ch-label" id="xq-hard-label">AI 难度</p>
-            <div class="ch-chips" id="xq-hard">
-              <button type="button" class="ch-chip" data-v="easy">简单</button>
-              <button type="button" class="ch-chip on" data-v="medium">普通</button>
-              <button type="button" class="ch-chip" data-v="hard">困难</button>
-            </div>
-            <button type="button" class="ch-btn primary wide" id="ch-start-xiangqi">开始对弈 →</button>
-          </div>
+          <button type="button" class="ch-btn primary wide" id="ch-start">开始对弈 →</button>
         </div>
+      </div>
         <p class="ch-tip">完整规则：王车易位、吃过路兵、升变、将杀、逼和与和棋判定｜对局内可悔棋、认输、翻转、真全屏</p>
       </div>
     </div>
@@ -204,6 +171,6 @@
   </footer>
 
   <script type="module" src="../../assets/js/main.js"></script>
-  <script type="module" src="app.js?v=10"></script>
+  <script type="module" src="app.js?v=11"></script>
 </body>
 </html>

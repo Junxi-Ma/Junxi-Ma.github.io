@@ -237,7 +237,7 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
       }
     }
     const p = GChess.st.board[sq];
-    const myColor = mode === 'ai' ? GChess.aiColorMe : (online ? online.seat : GChess.st.turn);
+    const myColor = mode === 'local' ? GChess.st.turn : (mode === 'ai' ? GChess.aiColorMe : (online ? online.seat : GChess.st.turn));
     if (p && p.c === myColor && (mode !== 'online' || GChess.st.turn === myColor)) {
       GChess.selected = sq;
       GChess.targets = genLegal(GChess.st).filter((x) => x.from === sq);
@@ -915,9 +915,43 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
   }
 
   /* ---------- 启动器事件 ---------- */
-  $('#ch-start-ai').addEventListener('click', () => startGame('chess'));
-  $('#ch-start-gomoku').addEventListener('click', () => startGame('gomoku'));
-  $('#ch-start-xiangqi').addEventListener('click', () => startGame('xiangqi'));
+  /* ---------- 启动器：统一选择棋类与模式 ---------- */
+  const sel = {
+    kind: 'chess', mode: 'ai',
+    aiDiff: GChess.aiDiff, side: GChess.aiColorMe,
+    xqDiff: XQ.hard, gkHard: GG.hard,
+  };
+  const DIFF_CHIPS = {
+    chess: [['0', '新手'], ['1', '业余'], ['2', '棋手'], ['3', '大师']],
+    xiangqi: [['easy', '简单'], ['medium', '普通'], ['hard', '困难']],
+    gomoku: [['easy', '简单'], ['hard', '困难']],
+  };
+  const diffWrap = $('#sel-diff');
+  const diffLabel = $('#sel-diff-label');
+  const sideWrap = $('#sel-side-wrap');
+  const onlineWrap = $('#sel-online-wrap');
+  const onlineChip = $('#sel-mode-online');
+
+  function renderSel() {
+    for (const b of document.querySelectorAll('#sel-kind .ch-chip')) b.classList.toggle('on', b.dataset.v === sel.kind);
+    for (const b of document.querySelectorAll('#sel-mode .ch-chip')) b.classList.toggle('on', b.dataset.v === sel.mode);
+    onlineChip.hidden = sel.kind !== 'chess';
+    if (sel.kind !== 'chess' && sel.mode === 'online') sel.mode = 'ai';
+    sideWrap.hidden = sel.kind !== 'chess';
+    onlineWrap.hidden = !(sel.kind === 'chess' && sel.mode === 'online');
+    diffLabel.textContent = sel.kind === 'chess' ? 'AI 棋力' : 'AI 难度';
+    diffWrap.textContent = '';
+    for (const [v, label] of DIFF_CHIPS[sel.kind]) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'ch-chip' + (String(sel.diffValue()) === v ? ' on' : '');
+      b.dataset.v = v;
+      b.textContent = label;
+      b.addEventListener('click', () => {
+        if (sel.kind === 'chess') sel.aiDiff = +v;
+        else if (sel.kind === 'xiangqi') sel.xqDiff = v;
+        else sel.gkHard = v;
+        renderSel();
   $('#ch-create').addEventListener('click', createRoom);
   $('#ch-join').addEventListener('click', joinRoom);
   $('#ch-code-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') joinRoom(); });
@@ -927,55 +961,50 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
       await navigator.clipboard.writeText(online.code);
       roomChip.textContent = '已复制 ' + online.code;
       setTimeout(() => { roomChip.textContent = '房间 ' + online.code; }, 1200);
-    } catch { /* 忽略 */ }
+    } catch { /* 剪贴板不可用则忽略 */ }
   });
-  for (const btn of document.querySelectorAll('#ch-aidiff .ch-chip')) {
-    btn.addEventListener('click', () => {
-      GChess.aiDiff = +btn.dataset.v;
-      store.set('ch-aidiff-v1', GChess.aiDiff);
-      for (const x of document.querySelectorAll('#ch-aidiff .ch-chip')) x.classList.toggle('on', x === btn);
-    });
+      });
+      diffWrap.appendChild(b);
+    }
   }
-  for (const btn of document.querySelectorAll('#ch-aiside .ch-chip')) {
-    btn.addEventListener('click', () => {
-      GChess.aiColorMe = btn.dataset.v;
-      store.set('ch-aiside-v1', GChess.aiColorMe);
-      for (const x of document.querySelectorAll('#ch-aiside .ch-chip')) x.classList.toggle('on', x === btn);
-    });
+  sel.diffValue = function () {
+    return sel.kind === 'chess' ? String(sel.aiDiff) : sel.kind === 'xiangqi' ? sel.xqDiff : sel.gkHard;
+  };
+  for (const b of document.querySelectorAll('#sel-kind .ch-chip')) {
+    b.addEventListener('click', () => { sel.kind = b.dataset.v; renderSel(); });
   }
-  // 五子棋 / 象棋 选项
-  GG.vsAI = true; GG.hard = true;
-  XQ.vsAI = true; XQ.hard = 'medium';
-  for (const btn of document.querySelectorAll('#gk-vs .ch-chip')) {
-    btn.addEventListener('click', () => {
-      GG.vsAI = btn.dataset.v === 'ai';
-      store.set('gk-vs-v1', GG.vsAI);
-      for (const x of document.querySelectorAll('#gk-vs .ch-chip')) x.classList.toggle('on', x === btn);
-      $('#gk-hard').hidden = GG.vsAI === false;
-    });
+  for (const b of document.querySelectorAll('#sel-mode .ch-chip')) {
+    b.addEventListener('click', () => { sel.mode = b.dataset.v; renderSel(); });
   }
-  for (const btn of document.querySelectorAll('#gk-hard .ch-chip')) {
-    btn.addEventListener('click', () => {
-      GG.hard = btn.dataset.v === 'hard';
-      store.set('gk-hard-v1', GG.hard);
-      for (const x of document.querySelectorAll('#gk-hard .ch-chip')) x.classList.toggle('on', x === btn);
-    });
+  for (const b of document.querySelectorAll('#sel-side .ch-chip')) {
+    b.addEventListener('click', () => { sel.side = b.dataset.v; renderSel(); });
   }
-  for (const btn of document.querySelectorAll('#xq-vs .ch-chip')) {
-    btn.addEventListener('click', () => {
-      XQ.vsAI = btn.dataset.v === 'ai';
-      store.set('xq-vs-v1', XQ.vsAI);
-      for (const x of document.querySelectorAll('#xq-vs .ch-chip')) x.classList.toggle('on', x === btn);
-      $('#xq-hard').hidden = XQ.vsAI === false;
-    });
-  }
-  for (const btn of document.querySelectorAll('#xq-hard .ch-chip')) {
-    btn.addEventListener('click', () => {
-      XQ.hard = btn.dataset.v;
-      store.set('xq-hard-v1', XQ.hard);
-      for (const x of document.querySelectorAll('#xq-hard .ch-chip')) x.classList.toggle('on', x === btn);
-    });
-  }
+  $('#ch-start').addEventListener('click', async () => {
+    if (sel.kind === 'chess') {
+      GChess.aiDiff = sel.aiDiff;
+      GChess.aiColorMe = sel.side;
+      if (sel.mode === 'online') { await createRoom(); return; }
+      startGame('chess');
+    } else if (sel.kind === 'xiangqi') {
+      XQ.hard = sel.xqDiff; XQ.vsAI = sel.mode === 'ai';
+      startGame('xiangqi');
+    } else {
+      GG.hard = sel.gkHard; GG.vsAI = sel.mode === 'ai';
+      startGame('gomoku');
+    }
+  });
+  renderSel();
+  $('#ch-create').addEventListener('click', createRoom);
+  $('#ch-join').addEventListener('click', joinRoom);
+  $('#ch-code-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') joinRoom(); });
+  roomChip.addEventListener('click', async () => {
+    if (!online) return;
+    try {
+      await navigator.clipboard.writeText(online.code);
+      roomChip.textContent = '已复制 ' + online.code;
+      setTimeout(() => { roomChip.textContent = '房间 ' + online.code; }, 1200);
+    } catch { /* 剪贴板不可用则忽略 */ }
+  });
 
   /* ---------- 键盘 ---------- */
   document.addEventListener('keydown', (e) => {
