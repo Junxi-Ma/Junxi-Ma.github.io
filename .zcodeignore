@@ -1,0 +1,49 @@
+# 说明：data/index.json 已入库（分支部署需要），
+# 由 .githooks/pre-commit 钩子在每次 commit 时自动刷新，勿手动改。
+
+# Python
+__pycache__/
+*.pyc
+
+# 编辑器 / 系统
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+
+# 军训祝福页的原始副本：内容已完整迁移到 branches/junxun/，此处仅作本地备份。
+# 它自带一个 .git（独立仓库），若不忽略，git add . 会把它记成无法拉取的子模块，
+# 进而导致 GitHub Pages 构建在 Checkout 步骤失败、线上迟迟不更新。
+Message Board/
+
+# ===== ↑ 以上同步自 .gitignore（「从 .gitignore 同步」只重写以上部分）=====
+.git/
+.hg/
+.svn/
+node_modules/
+bower_components/
+jspm_packages/
+site-packages/
+venv/
+coverage/
+htmlcov/
+lcov-report/
+cmakefiles/
+cmake-build-*/
+bazel-*/
+pods/
+deriveddata/
+storybook-static/
+playwright-report/
+test-results/
+allure-results/
+allure-report/
+cdk.out/
+*.egg-info/
+*.dist-info/
+eggs/
+pip-wheel-metadata/
+wheels/
+# ----- ↑ 以上为 ZCode 默认排除规则（自定义规则请写在本行下方，不会被同步/恢复改动）-----
+# 自定义规则写在下方（本行提示可删除）
