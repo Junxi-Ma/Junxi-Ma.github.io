@@ -9,7 +9,11 @@
 const SUPABASE_URL = 'https://pimyumfvricwpigqlacv.supabase.co'; // ← 在这里填你的 Project URL
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_Lz1UOc8oPtTOxv6shuYPYA__5bBUcE9';
 
-const CDN = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+/* 库本地打包：assets/js/vendor/supabase.esm.js（esbuild 自 @supabase/supabase-js@2.117.2，
+   单文件自包含 ESM）。不再走 cdn.jsdelivr.net —— 手机等无代理网络下 jsdelivr 经常不可达，
+   库加载失败会让全站显示"未连接云端"（2026-10 手机端排行榜打不开的根因）。
+   升级库时：npm i @supabase/supabase-js@2 esbuild 后重打，并同步升号 ?v=。 */
+const LIB = './vendor/supabase.esm.js?v=1';
 
 export const isConfigured = () =>
   Boolean(SUPABASE_URL && SUPABASE_PUBLISHABLE_KEY);
@@ -20,7 +24,7 @@ let clientPromise = null;
 export function getSupabase() {
   if (!isConfigured()) return Promise.resolve(null);
   if (!clientPromise) {
-    clientPromise = import(/* @vite-ignore */ CDN)
+    clientPromise = import(/* @vite-ignore */ LIB)
       .then(({ createClient }) =>
         createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
           auth: { persistSession: true, autoRefreshToken: true },
