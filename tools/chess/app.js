@@ -1,17 +1,19 @@
 /* ============================================================
-   棋乐馆 — 国际象棋 / 五子棋 / 中国象棋
-   启动器选模式 → 全屏棋盘对局。
-   引擎：engine.js（国际象棋 + AI）、gomoku.js、xiangqi.js。
-   联机房间仅国际象棋：Supabase 房间码准入，fen 为局面真相，
-   realtime + 4s 轮询兜底。云端不可用时静默回退纯本地。
+   棋乐馆 — 国际象棋 / 中国象棋 / 五子棋 / 围棋
+   启动器选棋类 × 模式 × 难度 / 执子 → 全屏棋盘对局。
+   引擎：
+   · 国际象棋：vendor/chess.js 规则权威 + vendor/stockfish.js（Worker）四档 AI，
+     内置 negamax 兜底；易位支持「王走两格」与「王吃到车」两种手势。
+   · 中国象棋 / 五子棋 / 围棋：各自模块 + ai-worker.js 后台搜索。
+   联机：四棋通用 board_rooms（Supabase，房间码准入），state 为局面真相。
+   排行榜：chess_results 表 + get_chess_leaderboard RPC，终局自动上报。
    ============================================================ */
 import {
-  START_FEN, parseFEN, toFEN, genLegal, makeMove, unmakeMove, moveToSan,
-  gameStatus, inCheck, findBestMove, pieceGlyph, repetitionKey,
-} from './engine.js';
-import * as Gomoku from './gomoku.js';
-import * as Xiangqi from './xiangqi.js';
-import * as Go from './go.js';
+  START_FEN, ChessGame, chessAiMove, pieceGlyph, sqToAlg, algToSq,
+} from './engine.js?v=21';
+import * as Gomoku from './gomoku.js?v=21';
+import * as Xiangqi from './xiangqi.js?v=21';
+import * as Go from './go.js?v=21';
 import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
 
 (() => {
@@ -40,28 +42,45 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
   const roomChip = $('#ch-roomchip');
 
   /* ---------- 全局 ---------- */
-  let kind = null;             // chess | gomoku | xiangqi
-  let mode = 'ai';             // ai | online | local
+  const KINDS = ['chess', 'xiangqi', 'gomoku', 'go'];
+  const KIND_LABEL = { chess: '国际象棋', xiangqi: '中国象棋', gomoku: '五子棋', go: '围棋' };
+  const SIDE_NAME = {
+    chess: { w: '白', b: '黑' },
+    xiangqi: { r: '红', b: '黑' },
+    gomoku: { 1: '黑', 2: '白' },
+    go: { 1: '黑', 2: '白' },
+  };
+  const DIFF_LABELS = {
+    chess: ['新手', '业余', '棋手', '大师'],
+    xiangqi: ['入门', '初级', '中级', '高级'],
+    gomoku: ['简单', '中等', '困难'],
+    go: ['简单', '中等', '困难'],
+  };
+  const SIDE_LABELS = {
+    chess: { w: '执白先行', b: '执黑后行' },
+    xiangqi: { r: '执红先行', b: '执黑后行' },
+    gomoku: { 1: '执黑先行', 2: '执白后行' },
+    go: { 1: '执黑先行', 2: '执白后行' },
+  };
+  const oppSide = (k, s) => ({
+    chess: s === 'w' ? 'b' : 'w',
+    xiangqi: s === 'r' ? 'b' : 'r',
+    gomoku: s === 1 ? 2 : 1,
+    go: s === 1 ? 2 : 1,
+  }[k]);
+
+  let kind = null;
+  let mode = 'ai';             // ai | local | online
   let over = false;
   let resultText = '';
   let flipped = false;
   let startTime = Date.now();
   let clockTimer = null;
   let thinking = false;
+  let recorded = false;        // 本局战绩是否已上报
   let cloudSb = null;
   let cloudUser = null;
-
-
-  let online = null;           // { code, seat, channel, poll, room, finishedShown }
-
-  const DIFF_LABEL = ['新手', '业余', '棋手', '大师'];
-  const DIFF_CFG = [
-    { maxDepth: 1, timeMs: 200 },
-    { maxDepth: 2, timeMs: 400 },
-    { maxDepth: 3, timeMs: 800 },
-    { maxDepth: 5, timeMs: 1400 },
-  ];
-  const XQ_DIFF_DEPTH = { easy: 1, medium: 2, hard: 3 };
+  let online = null;           // { code, kind, seat('first'|'second'|null), channel, poll, room, finishedShown }
 
   function myName() {
     return cloudUser?.name || store.get('ch-name-v1', '') || '';
@@ -97,14 +116,59 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     return name;
   }
 
+  /* ================================================================
+     AI 后台 Worker（象棋 / 五子棋 / 围棋）；失败降级主线程
+     ================================================================ */
+  const AI_LOCAL = {
+    xiangqi: (st, opts) => Xiangqi.findBestMove(st, opts),
+    gomoku: (bd, me, level) => Gomoku.bestMove(bd, me, level),
+    go: (bd, color, ko, level) => Go.aiMove(bd, color, ko, level),
+  };
+  let aiWorker = null;
+  let aiWorkerTried = false;
+  let aiWorkerSeq = 0;
+  const aiPending = new Map();
+  function ensureAiWorker() {
+    if (aiWorkerTried) return aiWorker;
+    aiWorkerTried = true;
+    try {
+      const w = new Worker(new URL('./ai-worker.js?v=21', import.meta.url), { type: 'module' });
+      w.onmessage = (e) => {
+        const { id, ok, result, error } = e.data || {};
+        const p = aiPending.get(id);
+        if (!p) return;
+        aiPending.delete(id);
+        if (ok) p.resolve(result);
+        else { console.warn('[棋] AI Worker 出错，回退主线程：', error); p.resolve(null); }
+      };
+      w.onerror = (e) => {
+        console.warn('[棋] AI Worker 不可用，改用主线程搜索：', e.message || '');
+        for (const [, p] of aiPending) p.resolve(null);
+        aiPending.clear();
+        try { w.terminate(); } catch { /* 忽略 */ }
+        aiWorker = null;
+      };
+      aiWorker = w;
+    } catch { aiWorker = null; }
+    return aiWorker;
+  }
+  /* 返回 null 表示 worker 侧失败，调用方应回退主线程实现 */
+  function callAi(fn, ...args) {
+    const w = ensureAiWorker();
+    if (!w) return Promise.resolve(null);
+    return new Promise((resolve) => {
+      const id = ++aiWorkerSeq;
+      aiPending.set(id, { resolve });
+      w.postMessage({ id, fn, args });
+    });
+  }
+
   /* ---------- 视图 ---------- */
   function showGame(chipText) {
     modeChip.textContent = chipText;
     launcherEl.hidden = true;
     gameEl.hidden = false;
     startClock();
-    // 棋盘刚从 hidden 变为可见时 clientWidth 才有效；
-    // 用 rAF 再量一次，确保棋子在首帧就是正确大小。
     fitBoard();
     requestAnimationFrame(fitBoard);
     render();
@@ -115,11 +179,11 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     stopClock();
   }
 
-  /* ---------- 通用：计时 / 对话框 / 状态 ---------- */
+  /* ---------- 计时 / 对话框 ---------- */
   function fmt(t) {
     const m = String((t / 60) | 0).padStart(2, '0');
-    const s = String(t % 60).padStart(2, '0');
-    return m + ':' + s;
+    const s = String(t % 60) | 0;
+    return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
   }
   function startClock() {
     stopClock();
@@ -130,9 +194,6 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
   }
   function stopClock() { clearInterval(clockTimer); clockTimer = null; clockEl.textContent = ''; }
 
-  /* showDialog(title, text)                   —— 普通提示
-     showDialog(title, bodyBuilder, {input})   —— 带自定义内容的交互框，
-     bodyBuilder(body) 里自行 appendChild，并用 opts.onOk 决定确认键行为。 */
   const modalEl = () => $('#ch-modal');
   let dialogCleanup = null;
   function showDialog(title, textOrBuilder, opts) {
@@ -144,7 +205,6 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     if (typeof textOrBuilder === 'function') {
       textEl.hidden = true;
       textEl.textContent = '';
-      // 先在 #ch-card-text 之后挂一个容器，供 builder 填充
       let host = modalEl().querySelector('.ch-dialog-body');
       if (!host) {
         host = document.createElement('div');
@@ -172,36 +232,28 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
   }
   $('#ch-card-ok').addEventListener('click', () => closeDialog());
 
-  function endGame(text) {
-    over = true;
-    resultText = text;
-    showDialog('对局结束', text);
-    render();
-  }
-
   /* ================================================================
-     一、国际象棋（原实现，逻辑不变）
+     棋盘容器的棋种 class：必须互斥
+     （历史 bug：残留的 .go 类接管 19×19 网格布局 → 棋盘显示错乱）
      ================================================================ */
-  const GChess = {
-    st: parseFEN(START_FEN),
-    history: [],
-    selected: -1,
-    targets: [],
-    lastMove: null,
-    aiDiff: store.get('ch-aidiff-v1', 2) ?? 2,
-    aiColorMe: store.get('ch-aiside-v1', 'w') || 'w',
-    thinking: false,
-  };
-
-  /* ---------- 棋盘容器的棋种 class：必须互斥 ----------
-     历史 bug：各 *Build() 只 remove 自己关心的两个类，从不摘掉 'go'。
-     于是进过围棋后，之后的国象/五子棋/象棋棋盘都仍挂着 .go，
-     被 .ch-board.go 的 19×19 网格布局接管 → 棋盘显示错乱。 */
   const BOARD_KIND_CLASS = ['gomoku', 'xiangqi', 'go', 'chess'];
   function resetBoardClass(keep) {
     boardEl.classList.remove(...BOARD_KIND_CLASS);
     if (keep) boardEl.classList.add(keep);
   }
+
+  /* ================================================================
+     一、国际象棋（chess.js 规则 + Stockfish AI）
+     ================================================================ */
+  const GC = {
+    game: new ChessGame(),
+    level: 2,
+    me: 'w',          // 人机模式下我执的颜色
+    selected: -1,     // sq 索引
+    selMoves: [],     // 选中格的 verbose moves
+    selPiece: null,
+    thinking: false,
+  };
 
   function chessBuild() {
     boardEl.textContent = '';
@@ -215,18 +267,19 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     }
   }
   const chessDispToSq = (dp) => (flipped ? 63 - dp : dp);
+  const chessSqToDisp = (sq) => (flipped ? 63 - sq : sq);
 
   function chessRender() {
-    const st = GChess.st;
-    const checkedKing = (!over && inCheck(st, st.turn))
-      ? st.board.findIndex((p, i) => p && p.t === 'k' && p.c === st.turn)
-      : -1;
+    const st = GC.game;
+    const checkedKing = (!over && st.inCheck()) ? st.kingSq(st.turn()) : -1;
+    const bdArr = st.boardArray();
+    const last = st.lastMove();
     for (let dp = 0; dp < 64; dp++) {
       const sq = chessDispToSq(dp);
       const el = boardEl.children[dp];
       const r = sq >> 3, c = sq & 7;
       el.className = 'ch-sq ' + ((r + c) % 2 === 0 ? 'light' : 'dark');
-      const p = st.board[sq];
+      const p = bdArr[sq];
       el.innerHTML = '';
       const dispR = dp >> 3, dispC = dp & 7;
       if (dispC === (flipped ? 7 : 0)) {
@@ -247,13 +300,13 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
         s.textContent = pieceGlyph(p);
         el.appendChild(s);
       }
-      if (GChess.lastMove && (sq === GChess.lastMove.from || sq === GChess.lastMove.to)) el.classList.add('last');
-      if (sq === GChess.selected) el.classList.add('sel');
+      if (last && (sq === last.from || sq === last.to)) el.classList.add('last');
+      if (sq === GC.selected) el.classList.add('sel');
       if (sq === checkedKing) el.classList.add('check');
-      const t = GChess.targets.find((x) => x.to === sq);
-      if (t) {
+      const target = GC.selMoves.find((x) => algToSq(x.to) === sq);
+      if (target) {
         const mark = document.createElement('span');
-        mark.className = st.board[sq] ? 'ring' : 'dot';
+        mark.className = p ? 'ring' : 'dot';
         el.appendChild(mark);
       }
     }
@@ -261,39 +314,59 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
   }
 
   function chessCaptures() {
-    const st = GChess.st;
-    const start = { p: 8, n: 2, b: 2, r: 2, q: 1 };
-    const cnt = { w: { p: 0, n: 0, b: 0, r: 0, q: 0 }, b: { p: 0, n: 0, b: 0, r: 0, q: 0 } };
-    for (const p of st.board) if (p && p.t !== 'k') cnt[p.c][p.t]++;
-    const order = ['q', 'r', 'b', 'n', 'p'];
-    const lost = (c) => order.flatMap((t) => Array(Math.max(0, start[t] - cnt[c][t])).fill(t))
-      .map((t) => pieceGlyph({ t, c })).join('');
-    capTopEl.textContent = lost('b');
-    capBottomEl.textContent = lost('w');
+    const lost = GC.game.captured();
+    const glyphOf = (t, c) => pieceGlyph({ t, c });
+    const strip = (c) => ['q', 'r', 'b', 'n', 'p'].flatMap((t) => Array(lost[c][t]).fill(glyphOf(t, c))).join('');
+    capTopEl.textContent = strip('b');
+    capBottomEl.textContent = strip('w');
+  }
+
+  function chessMyColor() {
+    if (mode === 'local') return GC.game.turn();
+    if (mode === 'ai') return GC.me;
+    return online && online.seat ? sideOf('chess', online.seat) : null;
   }
 
   function chessOnSquare(dp) {
     if (over || gameEl.hidden) return;
-    if (mode === 'ai' && GChess.thinking) return;
+    if (GC.thinking) return;
+    if (mode === 'ai' && GC.game.turn() === oppSide('chess', GC.me)) return;
     if (mode === 'online' && (!online || online.room?.status !== 'playing')) return;
+    if (mode === 'online' && online.seat && GC.game.turn() !== sideOf('chess', online.seat)) return;
     const sq = chessDispToSq(dp);
-    if (GChess.selected >= 0) {
-      const ms = GChess.targets.filter((x) => x.to === sq);
+    const bdArr = GC.game.boardArray();
+    if (GC.selected >= 0) {
+      const ms = GC.selMoves.filter((x) => algToSq(x.to) === sq);
       if (ms.length) {
-        if (ms.length > 1 && ms[0].promo) { chessPromo(ms); return; }
-        chessPlay(ms[0]);
+        if (ms.some((x) => x.promotion)) { chessPromo(ms); return; }
+        chessApply(ms[0]);
         return;
       }
+      // 易位手势 2：选中王后直接点己方车（chess.js 只认王走两格）
+      const clicked = bdArr[sq];
+      const selSq = chessDispToSq(GC.selected);
+      const selP = bdArr[selSq];
+      if (clicked && clicked.t === 'r' && clicked.c === chessMyColor() && selP && selP.t === 'k' && selP.c === clicked.c) {
+        const homeRow = clicked.c === 'w' ? 7 : 0;
+        if ((sq >> 3) === homeRow) {
+          const castle = GC.selMoves.find((x) =>
+            (x.flags.includes('k') && algToSq(x.to) === homeRow * 8 + 6 && sq === homeRow * 8 + 7) ||
+            (x.flags.includes('q') && algToSq(x.to) === homeRow * 8 + 2 && sq === homeRow * 8 + 0));
+          if (castle) { chessApply(castle); return; }
+        }
+      }
     }
-    const p = GChess.st.board[sq];
-    const myColor = mode === 'local' ? GChess.st.turn : (mode === 'ai' ? GChess.aiColorMe : (online ? online.seat : GChess.st.turn));
-    if (p && p.c === myColor && (mode !== 'online' || GChess.st.turn === myColor)) {
-      GChess.selected = sq;
-      GChess.targets = genLegal(GChess.st).filter((x) => x.from === sq);
+    const p = bdArr[sq];
+    const myColor = chessMyColor();
+    if (p && p.c === myColor && (mode !== 'online' || GC.game.turn() === myColor)) {
+      GC.selected = sq;
+      GC.selMoves = GC.game.movesAt(sqToAlg(sq));
+      GC.selPiece = p.t;
       chessRender();
     } else {
-      GChess.selected = -1;
-      GChess.targets = [];
+      GC.selected = -1;
+      GC.selMoves = [];
+      GC.selPiece = null;
       chessRender();
     }
   }
@@ -303,96 +376,102 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     chessPendingPromo = ms;
     const row = $('#ch-promo-row');
     row.textContent = '';
+    const seen = new Set();
     for (const m of ms) {
+      if (seen.has(m.promotion)) continue;
+      seen.add(m.promotion);
       const b = document.createElement('button');
       b.type = 'button';
-      b.textContent = pieceGlyph({ t: m.promo, c: m.c });
+      b.textContent = pieceGlyph({ t: m.promotion, c: m.color });
       b.addEventListener('click', () => {
         $('#ch-promo').hidden = true;
         const list = chessPendingPromo;
         chessPendingPromo = null;
-        if (list) chessPlay(list.find((x) => x.promo === m.promo) || list[0]);
+        if (list) {
+          const pick = list.find((x) => x.promotion === m.promotion) || list[0];
+          chessApply(pick);
+        }
       });
       row.appendChild(b);
     }
     $('#ch-promo').hidden = false;
   }
 
-  function chessPlay(m) {
-    const san = moveToSan(GChess.st, m);
-    makeMove(GChess.st, m);
-    GChess.selected = -1;
-    GChess.targets = [];
-    GChess.lastMove = { from: m.from, to: m.to };
-    GChess.history.push({ san, fen: toFEN(GChess.st), repKey: repetitionKey(GChess.st) });
-    chessAfterMove(m);
+  /* 应用走法（v 为 chess.js verbose move：from/to 代数坐标） */
+  function chessApply(v) {
+    const rec = GC.game.apply(v.from, v.to, v.promotion);
+    if (!rec) return;
+    GC.selected = -1;
+    GC.selMoves = [];
+    GC.selPiece = null;
+    chessAfterMove();
   }
 
-  /* 三次重复局面统计（FIDE 9.2）。key 只含子力布置 + 轮走方 + 易位权 + 过路兵格。 */
-  function chessRepetitions() {
-    const key = repetitionKey(GChess.st);
-    let n = 0;
-    for (const h of GChess.history) if (h.repKey === key) n++;
-    // 历史里存的是「走完之后的局面」，当前局面本身也算一次
-    return n + 1;
-  }
-
-  function chessAfterMove(m) {
+  function chessAfterMove() {
     render();
-    const status = gameStatus(GChess.st, { repetition: chessRepetitions() });
+    if (mode === 'online' && online) onlinePush(); // 先同步，再判终局（否则对手看不到最后一手）
+    const status = GC.game.status();
     if (status.over) { chessFinish(status); return; }
-    if (mode === 'ai' && GChess.st.turn !== GChess.aiColorMe) chessAiReply();
-    if (mode === 'online' && online) onlinePushMove();
+    if (mode === 'ai' && GC.game.turn() !== GC.me) chessAiReply();
   }
 
-  function chessAiReply() {
-    GChess.thinking = true;
+  async function chessAiReply() {
+    GC.thinking = true;
     renderStatus();
-    setTimeout(() => {
-      const m = findBestMove(GChess.st, { ...DIFF_CFG[GChess.aiDiff], skill: GChess.aiDiff });
-      GChess.thinking = false;
-      if (m && !over && mode === 'ai' && kind === 'chess') chessPlay(m);
-      else render();
-    }, 80);
+    const fen = GC.game.fen();
+    const mv = await chessAiMove(fen, GC.level);
+    GC.thinking = false;
+    if (!mv || over || kind !== 'chess' || mode !== 'ai') { render(); return; }
+    chessApply(mv);
+  }
+
+  function chessStatusText(status) {
+    const loser = GC.game.turn() === 'w' ? '白' : '黑';
+    const winner = loser === '白' ? '黑' : '白';
+    if (status.reason === 'checkmate') {
+      if (mode === 'ai') return winner === SIDE_NAME.chess[GC.me] ? '将杀 —— 你赢了 🎉' : '将杀 —— 你输了 😵';
+      if (mode === 'online') return `将杀 —— ${winner}方胜`;
+      return `将杀 —— ${winner}方胜`;
+    }
+    if (status.reason === 'stalemate') return '逼和 —— 和棋 🤝';
+    if (status.reason === 'fifty') return '五十回合无进展 —— 和棋 🤝';
+    if (status.reason === 'repetition') return '三次重复局面 —— 和棋 🤝';
+    return '双方子力不足 —— 和棋 🤝';
   }
 
   function chessFinish(status) {
-    over = true;
-    const winner = GChess.st.turn === 'w' ? '黑' : '白';
-    let text;
-    if (status.reason === 'checkmate') {
-      text = mode === 'ai'
-        ? (winner === (GChess.aiColorMe === 'w' ? '白' : '黑') ? '将杀 —— 你赢了 🎉' : '将杀 —— 你输了 😵')
-        : `将杀 —— ${winner}方胜`;
-    } else if (status.reason === 'stalemate') text = '逼和 —— 和棋 🤝';
-    else if (status.reason === 'fifty') text = '五十回合无进展 —— 和棋 🤝';
-    else if (status.reason === 'repetition') text = '三次重复局面 —— 和棋 🤝';
-    else text = '双方子力不足 —— 和棋 🤝';
+    const text = chessStatusText(status);
     endGame(text);
-    if (mode === 'online' && online && status.reason === 'checkmate') {
-      onlineMarkFinished(GChess.st.turn === 'w' ? '0-1' : '1-0');
+    if (status.reason === 'checkmate') {
+      const w = status.winner; // 'w' | 'b'
+      const winSide = w === 'w' ? 'first' : 'second'; // 白 = 先手
+      if (mode === 'online' && online) onlineMarkFinished(winSide === 'first' ? 'first' : 'second');
+    } else if (mode === 'online' && online) {
+      onlineMarkFinished('draw');
+    }
+    if (mode === 'ai') {
+      const myWin = status.reason === 'checkmate' && SIDE_NAME.chess[GC.me] === (status.winner === 'w' ? '白' : '黑');
+      recordGame(status.reason === 'checkmate' ? (myWin ? 'win' : 'loss') : 'draw');
     }
   }
 
   function chessNew() {
-    GChess.st = parseFEN(START_FEN);
-    GChess.history = [];
-    GChess.selected = -1;
-    GChess.targets = [];
-    GChess.lastMove = null;
-    GChess.thinking = false;
-    // 仅人机模式才因执黑自动翻转；双人同屏保持白在下
-    flipped = GChess.aiColorMe === 'b' && mode === 'ai';
+    GC.game = new ChessGame();
+    GC.selected = -1;
+    GC.selMoves = [];
+    GC.selPiece = null;
+    GC.thinking = false;
+    flipped = mode === 'ai' ? GC.me === 'b' : false;
     chessBuild();
     chessRender();
   }
 
   /* ================================================================
-     二、五子棋
+     二、五子棋（1 黑先行 / 2 白；level 0-2）
      ================================================================ */
   const GG = {
-    bd: null, me: 1, vsAI: true, hard: true, history: [], aiLevel: 0,
-    lastIdx: null, winLine: null,
+    bd: null, me: 1, vsAI: true, level: 1, history: [],
+    lastIdx: null, winLine: null, moves: [],
   };
 
   function gomokuBuild() {
@@ -419,8 +498,6 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     }
   }
 
-  // 每帧先清掉所有辅助高亮（旧实现只 add 不 remove，
-  // 导致上一步/胜利线的标记越积越多，重开或移动后残留）。
   function gomokuRender() {
     for (let i = 0; i < 225; i++) gomokuPaint(i);
     if (GG.lastIdx != null && GG.bd[GG.lastIdx]) boardEl.children[GG.lastIdx].classList.add('gk-last');
@@ -430,41 +507,40 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
   function gomokuNew(opts) {
     GG.bd = Gomoku.emptyBoard();
     GG.history = [];
-    GG.me = opts.me;            // 人机模式：1 = 黑（先手）
+    GG.moves = [];
+    GG.me = opts.me;
     GG.vsAI = opts.vsAI;
-    GG.hard = opts.hard;
+    GG.level = opts.level;
     GG.lastIdx = null;
     GG.winLine = null;
     GG.turnNow = 1;
-    over = false; resultText = '';
     gomokuBuild();
     gomokuRender();
-    if (GG.vsAI && GG.me === 2) { // 人执白 → AI 黑先
-      setTimeout(() => { if (kind === 'gomoku' && !over) gomokuAiMove(); }, 200);
-    }
   }
 
-  function gomokuAiMove() {
+  async function gomokuAiMove() {
     thinking = true;
     renderStatus();
-    setTimeout(() => {
-      const { idx } = Gomoku.bestMove(GG.bd, GG.me === 1 ? 2 : 1, GG.hard);
-      thinking = false;
-      if (idx == null || kind !== 'gomoku' || over) return;
-      gomokuPlace(idx);
-    }, 120);
+    const aiColor = oppSide('gomoku', GG.me);
+    const r = await callAi('gomoku', GG.bd, aiColor, GG.level);
+    const fallback = r && r.idx != null ? r : await Promise.resolve(AI_LOCAL.gomoku(GG.bd, aiColor, GG.level));
+    thinking = false;
+    if (!fallback || kind !== 'gomoku' || over) { renderStatus(); return; }
+    gomokuPlace(fallback.idx);
   }
 
   function gomokuPlace(i) {
-    if (over || GG.bd[i]) return;
+    if (over || !GG.bd || GG.bd[i]) return;
     GG.history.push({ bd: Int8Array.from(GG.bd), turnNow: GG.turnNow, i });
     GG.bd[i] = GG.turnNow;
+    GG.moves.push(i);
     GG.lastIdx = i;
+    if (mode === 'online' && online) onlinePush(); // 先同步，再判终局
     const line = Gomoku.checkWin(GG.bd, i);
     if (line) {
       GG.winLine = line;
       gomokuRender();
-      gomokuEnd((GG.turnNow === 1 ? '黑方' : '白方') + '五连获胜 🎉');
+      gomokuEnd(GG.turnNow, (GG.turnNow === 1 ? '黑方' : '白方') + '五连获胜 🎉');
       return;
     }
     GG.turnNow = GG.turnNow === 1 ? 2 : 1;
@@ -472,42 +548,38 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     renderStatus();
     if (GG.vsAI && GG.turnNow !== GG.me && kind === 'gomoku' && !over) gomokuAiMove();
   }
-  let GG_turnNow = 1;
-  Object.defineProperty(GG, 'turnNow', {
-    get() { return GG_turnNow; },
-    set(v) { GG_turnNow = v; },
-  });
 
-  function gomokuEnd(text) {
-    over = true;
-    resultText = text;
-    showDialog('对局结束', text);
-    renderStatus();
+  function gomokuEnd(winnerSide, text) {
+    endGame(text);
+    if (mode === 'online' && online) onlineMarkFinished(winnerSide === 1 ? 'first' : 'second');
+    if (GG.vsAI) recordGame(winnerSide === GG.me ? 'win' : 'loss');
   }
 
   function gomokuUndo() {
     if (!GG.history.length) return;
-    // 人机模式撤两步（AI + 己方）；双人撤一步
     const steps = GG.vsAI && GG.history.length >= 2 ? 2 : 1;
     for (let k = 0; k < steps && GG.history.length; k++) {
       const h = GG.history.pop();
+      GG.moves.pop();
       GG.bd = Int8Array.from(h.bd);
       GG.turnNow = h.turnNow;
     }
     GG.lastIdx = GG.history.length ? GG.history[GG.history.length - 1].i : null;
     GG.winLine = null;
-    over = false;
+    over = false; resultText = ''; recorded = false;
     gomokuRender();
   }
 
   /* ================================================================
-     三、围棋
+     三、围棋（1 黑 / 2 白；level 0-2）
      ================================================================ */
   const GO = {
-    bd: null, turn: 1, ko: -1, passes: 0, history: [],
+    bd: null, turn: 1, ko: -1, passes: 0, history: [], moves: [],
     caps: { 1: 0, 2: 0 }, lastIdx: null,
-    vsAI: true, hard: true, me: 1,
+    vsAI: true, level: 1, me: 1,
   };
+
+  const GO_STARS = [[3, 3], [3, 9], [3, 15], [9, 3], [9, 9], [9, 15], [15, 3], [15, 9], [15, 15]];
 
   function goBuild() {
     boardEl.textContent = '';
@@ -519,7 +591,6 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
       d.dataset.i = i;
       boardEl.appendChild(d);
     }
-    // 星位用 CSS 定位在交叉点上（(n+0.5)/19 与本盘网格线中心一致）
     for (const [r, c] of GO_STARS) {
       const star = document.createElement('span');
       star.className = 'go-star';
@@ -528,10 +599,6 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
       boardEl.appendChild(star);
     }
   }
-
-  const GO_STARS = [[3, 3], [3, 9], [3, 15], [9, 3], [9, 9], [9, 15], [15, 3], [15, 9], [15, 15]];
-
-  // 直接按索引取格子（棋盘子节点前 361 个就是落点按钮，星位在其后）
   function goCell(i) { return boardEl.children[i]; }
 
   function goPaint(i) {
@@ -555,7 +622,6 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
       goCell(GO.lastIdx).appendChild(ring);
     }
     renderCapturesGo();
-    renderStatus();
   }
 
   function renderCapturesGo() {
@@ -571,64 +637,71 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
   function goNew(opts) {
     GO.bd = Go.emptyBoard();
     GO.turn = 1; GO.ko = -1; GO.passes = 0;
-    GO.history = []; GO.caps = { 1: 0, 2: 0 }; GO.lastIdx = null;
-    GO.vsAI = opts.vsAI; GO.hard = opts.hard; GO.me = opts.me ?? 1;
-    over = false; resultText = '';
+    GO.history = []; GO.moves = []; GO.caps = { 1: 0, 2: 0 }; GO.lastIdx = null;
+    GO.vsAI = opts.vsAI; GO.level = opts.level; GO.me = opts.me ?? 1;
     goBuild();
     goRender();
-    if (GO.vsAI && GO.me === 2) {
-      setTimeout(() => { if (kind === 'go' && !over) goAiMove(); }, 200);
-    }
   }
 
   function goPlayAt(i) {
-    // 先快照再落子：Go.play 会原地改动 GO.bd，
-    // 旧代码在 play() 之后才 push 快照，撤棋时恢复的其实是「已落子」的局面。
     const snap = { bd: Int8Array.from(GO.bd), turn: GO.turn, ko: GO.ko, passes: GO.passes, caps: { ...GO.caps }, lastIdx: GO.lastIdx };
     const r = Go.play(GO.bd, i, GO.turn, GO.ko);
     if (!r.ok) return false;
     GO.history.push(snap);
+    GO.moves.push(i);
     GO.caps[GO.turn] += r.captured.length;
     GO.ko = r.ko;
     GO.passes = 0;
     GO.lastIdx = i;
     GO.turn = GO.turn === 1 ? 2 : 1;
     goRender();
+    renderStatus();
+    if (mode === 'online' && online) onlinePush(); // 先同步，再触发后续
     if (GO.vsAI && GO.turn !== GO.me && kind === 'go' && !over) goAiMove();
     return true;
   }
 
-  function goAiMove() {
+  async function goAiMove() {
     thinking = true;
     renderStatus();
-    setTimeout(() => {
-      const r = Go.aiMove(GO.bd, GO.turn, GO.ko, GO.hard);
-      thinking = false;
-      if (kind !== 'go' || over) return;
-      if (r.pass || r.idx == null) { goPass(true); return; }
-      goPlayAt(r.idx);
-    }, 150);
+    const aiColor = oppSide('go', GO.me);
+    const r = await callAi('go', GO.bd, aiColor, GO.ko, GO.level);
+    const fallback = r && (r.pass || r.idx != null) ? r : await Promise.resolve(AI_LOCAL.go(GO.bd, aiColor, GO.ko, GO.level));
+    thinking = false;
+    if (!fallback || kind !== 'go' || over) { renderStatus(); return; }
+    if (fallback.pass || fallback.idx == null) { goPass(true); return; }
+    goPlayAt(fallback.idx);
   }
 
   function goPass(ai) {
     GO.history.push({ bd: Int8Array.from(GO.bd), turn: GO.turn, ko: GO.ko, passes: GO.passes, caps: { ...GO.caps }, lastIdx: GO.lastIdx });
+    GO.moves.push(-1);
     GO.passes++;
     GO.ko = -1;
     GO.turn = GO.turn === 1 ? 2 : 1;
     GO.lastIdx = null;
-    if (GO.passes >= 2) {
-      const t = Go.score(GO.bd);
-      const whiteTotal = t.white + Go.KOMI;
-      const diff = Math.round(Math.abs(t.black - whiteTotal) * 2) / 2;
-      const text = `黑 ${t.black} 子 · 白 ${whiteTotal} 子（贴 ${Go.KOMI}）—— ` +
-        (Math.abs(t.black - whiteTotal) < 1e-9 ? '和棋 🤝'
-          : t.black > whiteTotal ? '黑胜 ' + diff + ' 子' : '白胜 ' + diff + ' 子');
-      goRender();
-      endGame(text);
-      return;
-    }
     goRender();
+    if (mode === 'online' && online) onlinePush(); // 先同步，再判双停
+    if (GO.passes >= 2) { goScoreEnd(); return; }
+    renderStatus();
     if (!over && GO.vsAI && GO.turn !== GO.me && kind === 'go') goAiMove();
+  }
+
+  function goScoreEnd() {
+    const t = Go.score(GO.bd);
+    const whiteTotal = t.white + Go.KOMI;
+    const diff = Math.round(Math.abs(t.black - whiteTotal) * 2) / 2;
+    const blackWin = t.black > whiteTotal;
+    const text = `黑 ${t.black} 子 · 白 ${whiteTotal} 子（贴 ${Go.KOMI}）—— ` +
+      (Math.abs(t.black - whiteTotal) < 1e-9 ? '和棋 🤝' : blackWin ? '黑胜 ' + diff + ' 子' : '白胜 ' + diff + ' 子');
+    goRender();
+    endGame(text);
+    if (mode === 'online' && online) onlineMarkFinished(Math.abs(t.black - whiteTotal) < 1e-9 ? 'draw' : blackWin ? 'first' : 'second');
+    if (GO.vsAI) {
+      const myIsBlack = GO.me === 1;
+      const iWin = blackWin === myIsBlack;
+      recordGame(iWin ? 'win' : 'loss');
+    }
   }
 
   function goUndo() {
@@ -636,36 +709,32 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     const steps = GO.vsAI && GO.history.length >= 2 ? 2 : 1;
     for (let k = 0; k < steps && GO.history.length; k++) {
       const h = GO.history.pop();
+      GO.moves.pop();
       GO.bd = Int8Array.from(h.bd);
       GO.turn = h.turn; GO.ko = h.ko; GO.passes = h.passes; GO.caps = { ...h.caps };
       GO.lastIdx = h.lastIdx ?? null;
     }
-    over = false;
+    over = false; resultText = ''; recorded = false;
     goRender();
   }
 
-  function goResign() {
-    const loser = GO.turn === 1 ? '黑方' : '白方';
-    endGame(loser + '认输 —— ' + (loser === '黑方' ? '白方胜' : '黑方胜'));
-  }
-
-  function goClick(i) {
-    if (over || gameEl.hidden) return;
-    if (GO.vsAI && GO.turn !== GO.me) return;
-    goPlayAt(i);
-  }
-
   /* ================================================================
-     三、中国象棋
+     四、中国象棋（'r' 红先行 / 'b' 黑；level 0-3）
      ================================================================ */
   const XQ = {
-    st: null, history: [], selected: -1, targets: [],
-    vsAI: true, hard: 'medium', me: 'r', lastMove: null,
+    st: null, history: [], moves: [], selected: -1, targets: [],
+    vsAI: true, level: 2, me: 'r', lastMove: null,
   };
   const XQ_CHAR = {
     r: { k: '帥', a: '仕', b: '相', n: '傌', r: '俥', c: '炮', p: '兵' },
     b: { k: '將', a: '士', b: '象', n: '馬', r: '車', c: '砲', p: '卒' },
   };
+
+  const enc = (bd) => bd.map((p) => (p ? (p.c === 'r' ? p.t.charCodeAt(0) : -p.t.charCodeAt(0)) : 0));
+  const dec = (arr) => arr.map((v) => {
+    if (v === 0) return null;
+    return v > 0 ? { t: String.fromCharCode(v), c: 'r' } : { t: String.fromCharCode(-v), c: 'b' };
+  });
 
   function xiangqiBuild() {
     boardEl.textContent = '';
@@ -696,7 +765,6 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
   }
 
   function xiangqiRender() {
-    // 用 Set 预收 targets，避免每格都做一次 O(n) 的 find
     const targets = new Set(XQ.targets.map((m) => m.to));
     for (let i = 0; i < 90; i++) {
       const el = boardEl.children[i];
@@ -711,63 +779,54 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
   function xiangqiNew(opts) {
     XQ.st = Xiangqi.initState();
     XQ.history = [];
+    XQ.moves = [];
     XQ.selected = -1; XQ.targets = []; XQ.lastMove = null;
     XQ.vsAI = opts.vsAI;
-    XQ.hard = opts.hard;
+    XQ.level = opts.level;
     XQ.me = opts.me || 'r';
-    over = false; resultText = '';
     xiangqiBuild();
     xiangqiRender();
-    if (XQ.vsAI && XQ.me === 'b') {
-      setTimeout(() => { if (kind === 'xiangqi' && !over) xiangqiAiMove(); }, 200);
-    }
   }
 
-  function xiangqiAiMove() {
+  async function xiangqiAiMove() {
     thinking = true;
     renderStatus();
-    setTimeout(() => {
-      const depth = { easy: 1, medium: 2, hard: 3 }[XQ.hard] ?? 2;
-      const r = Xiangqi.findBestMove(XQ.st, depth);
-      thinking = false;
-      if (!r || kind !== 'xiangqi' || over) return;
-      xiangqiApply(r.move);
-    }, 120);
+    const r = await callAi('xiangqi', XQ.st, { level: XQ.level });
+    const fallback = r && r.move ? r : await Promise.resolve(AI_LOCAL.xiangqi(XQ.st, { level: XQ.level }));
+    thinking = false;
+    if (!fallback || !fallback.move || kind !== 'xiangqi' || over) { renderStatus(); return; }
+    xiangqiApply(fallback.move);
   }
 
-  const enc = (bd) => bd.map((p) => (p ? (p.c === 'r' ? p.t.charCodeAt(0) : -p.t.charCodeAt(0)) : 0));
-  const dec = (arr) => arr.map((v) => {
-    if (v === 0) return null;
-    return v > 0 ? { t: String.fromCharCode(v), c: 'r' } : { t: String.fromCharCode(-v), c: 'b' };
-  });
-
   function xiangqiApply(m) {
-    XQ.history.push({ bd: enc(XQ.st.bd), turn: XQ.st.turn, key: Xiangqi.positionKey(XQ.st) });
+    XQ.history.push({ bd: enc(XQ.st.bd), turn: XQ.st.turn, half: XQ.st.half || 0, key: Xiangqi.positionKey(XQ.st) });
     Xiangqi.makeMove(XQ.st, m);
+    XQ.moves.push({ f: m.from, t: m.to });
     XQ.lastMove = { from: m.from, to: m.to };
     XQ.selected = -1; XQ.targets = [];
-    xiangqiRender();
+    render(); // 含棋盘 + 状态栏 + 按钮态
+    if (mode === 'online' && online) onlinePush(); // 先同步，再判终局
     const status = Xiangqi.gameStatus(XQ.st, { repetition: xiangqiRepetitions() });
     if (status.over) {
       let text;
-      if (status.reason === 'repetition') {
-        text = '三次重复局面 —— 和棋 🤝';
-      } else {
+      if (status.reason === 'repetition') text = '三次重复局面 —— 和棋 🤝';
+      else if (status.reason === 'natural') text = '60 回合无吃子 —— 和棋 🤝';
+      else {
         const winner = status.winner === 'r' ? '红方' : '黑方';
         text = XQ.vsAI
           ? (status.winner === XQ.me ? '将死对方 —— 你赢了 🎉' : '被将死 —— 你输了 😵')
           : `${winner}胜 🎉`;
       }
-      over = true;
-      resultText = text;
-      showDialog('对局结束', text);
+      endGame(text);
+      const winIsFirst = status.winner === 'r';
+      if (mode === 'online' && online) onlineMarkFinished(status.winner ? (winIsFirst ? 'first' : 'second') : 'draw');
+      if (XQ.vsAI) recordGame(status.winner ? (status.winner === XQ.me ? 'win' : 'loss') : 'draw');
       renderStatus();
       return;
     }
     if (XQ.vsAI && XQ.st.turn !== XQ.me && kind === 'xiangqi' && !over) xiangqiAiMove();
   }
 
-  /* 三次重复局面统计（走完后的历史局面 + 当前局面本身） */
   function xiangqiRepetitions() {
     const key = Xiangqi.positionKey(XQ.st);
     let n = 0;
@@ -780,16 +839,18 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     const steps = XQ.vsAI && XQ.history.length >= 2 ? 2 : 1;
     for (let k = 0; k < steps && XQ.history.length; k++) {
       const h = XQ.history.pop();
+      XQ.moves.pop();
       XQ.st.bd = dec(h.bd);
       XQ.st.turn = h.turn;
+      XQ.st.half = h.half || 0;
     }
     XQ.selected = -1; XQ.targets = []; XQ.lastMove = null;
-    over = false;
+    over = false; resultText = ''; recorded = false;
     xiangqiRender();
   }
 
   /* ================================================================
-     棋盘点击分发
+     棋盘点击分发 / 状态栏 / 按钮
      ================================================================ */
   boardEl.addEventListener('click', (e) => {
     const cell = e.target.closest('[data-i],[data-dp]');
@@ -803,12 +864,16 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
   function gomokuClick(i) {
     if (over || gameEl.hidden) return;
     if (GG.vsAI && GG.turnNow !== GG.me) return;
+    if (mode === 'online' && (!online || online.room?.status !== 'playing')) return;
+    if (mode === 'online' && online.seat && GG.turnNow !== sideOf('gomoku', online.seat)) return;
     gomokuPlace(i);
   }
 
   function xiangqiClick(i) {
     if (over || gameEl.hidden) return;
     if (XQ.vsAI && XQ.st.turn !== XQ.me) return;
+    if (mode === 'online' && (!online || online.room?.status !== 'playing')) return;
+    if (mode === 'online' && online.seat && XQ.st.turn !== sideOf('xiangqi', online.seat)) return;
     if (XQ.selected >= 0) {
       const m = XQ.targets.find((x) => x.to === i);
       if (m) { xiangqiApply(m); return; }
@@ -824,59 +889,94 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     xiangqiRender();
   }
 
-  /* ================================================================
-     棋种启动
-     ================================================================ */
+  function goClick(i) {
+    if (over || gameEl.hidden) return;
+    if (GO.vsAI && GO.turn !== GO.me) return;
+    if (mode === 'online' && (!online || online.room?.status !== 'playing')) return;
+    if (mode === 'online' && online.seat && GO.turn !== sideOf('go', online.seat)) return;
+    goPlayAt(i);
+  }
+
   function startGame(kindKey) {
     onlineCleanup();
     kind = kindKey;
-    // 任一棋种只要在「双人同屏」下就该是 local（旧逻辑漏了围棋）
-    const vsAI = kind === 'chess' ? true
-      : kind === 'gomoku' ? GG.vsAI
-        : kind === 'xiangqi' ? XQ.vsAI : GO.vsAI;
-    mode = vsAI ? 'ai' : 'local';
-    over = false; resultText = '';
+    mode = sel.mode === 'online' ? 'online' : sel.mode === 'local' ? 'local' : 'ai';
+    over = false; resultText = ''; recorded = false;
     startTime = Date.now();
+    const lvl = sel.level[kind];
     if (kind === 'chess') {
+      GC.level = lvl;
+      GC.me = sel.side.chess;
       chessNew();
-      showGame('人机 · ' + DIFF_LABEL[GChess.aiDiff] + ' · ' + (GChess.aiColorMe === 'w' ? '执白' : '执黑'));
-      if (GChess.st.turn !== GChess.aiColorMe) chessAiReply();
+      showGame(modeChipText());
+      if (mode === 'ai' && GC.game.turn() !== GC.me) chessAiReply();
     } else if (kind === 'gomoku') {
-      gomokuNew({ me: 1, vsAI: GG.vsAI, hard: GG.hard });
-      showGame('五子棋 · ' + (GG.vsAI ? (GG.hard ? '困难' : '简单') : '双人同屏'));
+      GG.me = +sel.side.gomoku;
+      GG.vsAI = mode === 'ai';
+      GG.level = lvl;
+      gomokuNew({ me: GG.me, vsAI: GG.vsAI, level: GG.level });
+      showGame(modeChipText());
+      if (GG.vsAI && GG.me === 2) gomokuAiMove();
     } else if (kind === 'xiangqi') {
-      xiangqiNew({ vsAI: XQ.vsAI, hard: XQ.hard, me: 'r' });
-      showGame('中国象棋 · ' + (XQ.vsAI ? ({ easy: '简单', medium: '普通', hard: '困难' }[XQ.hard] || '普通') : '双人同屏'));
+      XQ.me = sel.side.xiangqi;
+      XQ.vsAI = mode === 'ai';
+      XQ.level = lvl;
+      xiangqiNew({ vsAI: XQ.vsAI, level: XQ.level, me: XQ.me });
+      showGame(modeChipText());
+      if (XQ.vsAI && XQ.me === 'b') xiangqiAiMove();
     } else if (kind === 'go') {
-      goNew({ vsAI: GO.vsAI, hard: GO.hard, me: 1 });
-      showGame('围棋 · ' + (GO.vsAI ? (GO.hard ? '普通' : '简单') : '双人同屏'));
+      GO.me = +sel.side.go;
+      GO.vsAI = mode === 'ai';
+      GO.level = lvl;
+      goNew({ vsAI: GO.vsAI, level: GO.level, me: GO.me });
+      showGame(modeChipText());
+      if (GO.vsAI && GO.me === 2) goAiMove();
     }
   }
 
-  /* ================================================================
-     状态栏 / 按钮
-     ================================================================ */
+  function modeChipText() {
+    if (mode === 'local') return KIND_LABEL[kind] + ' · 双人同屏';
+    if (mode === 'online') return KIND_LABEL[kind] + ' · 联机';
+    const sideName = SIDE_NAME[kind][currentMySide()];
+    return KIND_LABEL[kind] + ' · 人机' + DIFF_LABELS[kind][sel.level[kind]] + ' · 执' + sideName;
+  }
+  function currentMySide() {
+    if (kind === 'chess') return GC.me;
+    if (kind === 'gomoku') return GG.me;
+    if (kind === 'xiangqi') return XQ.me;
+    return GO.me;
+  }
+
   function renderStatus() {
     let s = '';
     if (over) s = resultText;
     else if (kind === 'chess') {
-      if (mode === 'ai') s = GChess.thinking ? 'AI 思考中…' : (GChess.st.turn === GChess.aiColorMe ? '你的回合' : 'AI 回合');
+      if (mode === 'ai') s = GC.thinking ? 'AI 思考中…' : (GC.game.turn() === GC.me ? '你的回合' : 'AI 回合');
       else if (online) {
         if (online.room?.status === 'waiting') s = `等待对手加入 — 房间码 ${online.code}`;
         else if (online.room?.status === 'finished') s = online.room.result || '对局结束';
-        else s = `${online.room?.white_name || '白'} ⚔ ${online.room?.black_name || '黑'} · ${GChess.st.turn === online.seat ? '你走' : '对方走'}`;
+        else {
+          const my = online.seat ? sideOf('chess', online.seat) : null;
+          s = `${online.room?.host_name || '先手'} ⚔ ${online.room?.guest_name || '后手'} · ${my && GC.game.turn() === my ? '你走' : '对方走'}`;
+        }
       }
     } else if (kind === 'gomoku') {
-      s = thinking ? 'AI 思考中…' : (GG.vsAI ? (GG.turnNow === GG.me ? '你的回合（黑）' : 'AI 回合（白）') : (GG.turnNow === 1 ? '黑方回合' : '白方回合'));
+      s = thinking ? 'AI 思考中…' : (GG.vsAI ? (GG.turnNow === GG.me ? '你的回合（' + SIDE_NAME.gomoku[GG.me] + '）' : 'AI 回合') : (GG.turnNow === 1 ? '黑方回合' : '白方回合'));
     } else if (kind === 'xiangqi') {
-      s = thinking ? 'AI 思考中…' : (XQ.vsAI ? (XQ.st.turn === XQ.me ? '你的回合（红）' : 'AI 回合（黑）') : (XQ.st.turn === 'r' ? '红方回合' : '黑方回合'));
+      s = thinking ? 'AI 思考中…' : (XQ.vsAI ? (XQ.st.turn === XQ.me ? '你的回合（' + SIDE_NAME.xiangqi[XQ.me] + '）' : 'AI 回合') : (XQ.st.turn === 'r' ? '红方回合' : '黑方回合'));
     } else if (kind === 'go') {
-      s = thinking ? 'AI 思考中…' : (GO.vsAI ? (GO.turn === GO.me ? '你的回合（黑）' : 'AI 回合（白）') : (GO.turn === 1 ? '黑方回合' : '白方回合'));
+      s = thinking ? 'AI 思考中…' : (GO.vsAI ? (GO.turn === GO.me ? '你的回合（' + SIDE_NAME.go[GO.me] + '）' : 'AI 回合') : (GO.turn === 1 ? '黑方回合' : '白方回合'));
     }
-    if (!over) {
+    if (!over && s) {
       if (kind === 'go' && GO.passes > 0) s += ` · 对方已停一手，再停一手即终局`;
-      if (kind === 'chess' && GChess.history.length) s += ` · 上一步 ${GChess.history[GChess.history.length - 1].san}`;
-      if (kind === 'gomoku' && GG.history.length) s += ` · 上一手 (${(GG.history[GG.history.length - 1].i / 15 | 0) + 1},${GG.history[GG.history.length - 1].i % 15 + 1})`;
+      if (kind === 'chess') {
+        const san = GC.game.sanHistory();
+        if (san.length) s += ` · 上一步 ${san[san.length - 1]}`;
+      }
+      if (kind === 'gomoku' && GG.moves.length) {
+        const i = GG.moves[GG.moves.length - 1];
+        s += ` · 上一手 (${((i / 15) | 0) + 1},${(i % 15) + 1})`;
+      }
       if (kind === 'xiangqi' && XQ.lastMove) s += ` · 上一步 (${Math.floor(XQ.lastMove.from / 9) + 1},${XQ.lastMove.from % 9 + 1})->(${Math.floor(XQ.lastMove.to / 9) + 1},${XQ.lastMove.to % 9 + 1})`;
     }
     statusEl.textContent = s;
@@ -887,6 +987,7 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     if (kind === 'chess') chessRender();
     else if (kind === 'gomoku') gomokuRender();
     else if (kind === 'xiangqi') xiangqiRender();
+    else if (kind === 'go') goRender();
     updateButtons();
     renderStatus();
   }
@@ -896,17 +997,57 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     const restartBtn = $('#ch-restart');
     const undoBtn = $('#ch-undo');
     const resignBtn = $('#ch-resign');
-    const hist = kind === 'chess' ? GChess.history.length
-      : kind === 'gomoku' ? GG.history.length
-        : kind === 'xiangqi' ? XQ.history.length : 0;
     flipBtn.hidden = kind !== 'chess';
     restartBtn.hidden = mode === 'online';
-    undoBtn.hidden = kind === 'chess' && mode !== 'ai';
+    undoBtn.hidden = mode === 'online'; // 联机禁悔棋；人机撤两步、双人同屏撤一步
     resignBtn.hidden = mode === 'local';
     $('#ch-pass').hidden = kind !== 'go';
-    const hist2 = kind === 'go' ? GO.history.length : hist;
-    undoBtn.disabled = thinking || over || !hist2;
+    const hist = kind === 'chess' ? GC.game.moveCount()
+      : kind === 'gomoku' ? GG.history.length
+        : kind === 'xiangqi' ? XQ.history.length
+          : kind === 'go' ? GO.history.length : 0;
+    undoBtn.disabled = thinking || GC.thinking || over || !hist;
     resignBtn.disabled = over;
+  }
+
+  function endGame(text) {
+    over = true;
+    resultText = text;
+    showDialog('对局结束', text);
+    renderStatus();
+  }
+
+  /* ---------- 战绩上报（人机 / 联机；双人同屏不记） ---------- */
+  function recordGame(result) {
+    if (recorded || mode === 'local' || !result) return;
+    recorded = true;
+    const seconds = Math.floor((Date.now() - startTime) / 1000);
+    let movesN = 0;
+    if (kind === 'chess') movesN = GC.game.moveCount();
+    else if (kind === 'gomoku') movesN = GG.moves.length;
+    else if (kind === 'xiangqi') movesN = XQ.moves.length;
+    else if (kind === 'go') movesN = GO.moves.filter((x) => x >= 0).length;
+    let side = currentMySide();
+    let difficulty = mode === 'online' ? 'online' : String(sel.level[kind]);
+    if (mode === 'online' && online?.seat) side = sideOf(kind, online.seat);
+    recordResult(kind, result, difficulty, String(side), movesN, seconds);
+  }
+  async function recordResult(kindKey, result, difficulty, side, moves, seconds) {
+    if (!cloudSb) return;
+    try {
+      await cloudSb.from('chess_results').insert({
+        kind: kindKey,
+        name: myName() || '游客',
+        result,
+        difficulty,
+        side,
+        moves: Math.min(moves, 9999),
+        seconds: Math.min(seconds, 86399),
+        user_id: cloudUser?.id || null,
+      });
+    } catch (e) {
+      console.warn('[棋] 战绩上报失败：', e?.message || e);
+    }
   }
 
   /* ---------- 按钮动作 ---------- */
@@ -914,61 +1055,42 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     onlineCleanup();
     kind = null;
     showLauncher();
+    refreshLb();
   });
   $('#ch-undo').addEventListener('click', () => {
-    if (thinking || over) return;
+    if (mode === 'online' || thinking || GC.thinking || over) return;
     if (kind === 'chess') {
-      // 悔棋仅人机模式开放（联机/双人同屏涉及对手，不应单方撤回）
-      if (mode !== 'ai' || !GChess.history.length) return;
-      chessUndo();
+      if (!GC.game.moveCount()) return;
+      GC.game.undo();
+      if (mode === 'ai' && GC.game.turn() !== GC.me && GC.game.moveCount()) GC.game.undo();
+      GC.selected = -1; GC.selMoves = []; GC.selPiece = null;
+      GC.thinking = false;
+      over = false; resultText = ''; recorded = false;
+      chessRender();
+      renderStatus();
     } else if (kind === 'gomoku') gomokuUndo();
     else if (kind === 'xiangqi') xiangqiUndo();
     else if (kind === 'go') goUndo();
   });
-
-  function chessUndo() {
-    // 人机：轮到 AI 说明刚走完我的一步，先弹掉 AI 的那一步
-    if (GChess.st.turn === GChess.aiColorMe && GChess.history.length) GChess.history.pop();
-    if (GChess.history.length) GChess.history.pop();
-    const back = GChess.history.length ? GChess.history[GChess.history.length - 1].fen : START_FEN;
-    GChess.st = parseFEN(back);
-    GChess.thinking = false;
-    GChess.selected = -1; GChess.targets = []; GChess.lastMove = null;
-    over = false; resultText = '';
-    if (online) { online.finishedShown = false; }
-    chessRender();
-    renderStatus();
-  }
-
   $('#ch-resign').addEventListener('click', () => {
     if (over) return;
-    if (kind === 'chess') {
-      if (mode === 'ai') {
-        endGame('你认输了 —— AI 获胜');
-      } else if (mode === 'local') {
-        // 双人同屏：由当前要走的一方认输
-        endGame((GChess.st.turn === 'w' ? '白方' : '黑方') + '认输 —— ' +
-          (GChess.st.turn === 'w' ? '黑方' : '白方') + '胜');
-      } else if (online && online.seat) {
-        onlineMarkFinished(online.seat === 'w' ? '0-1' : '1-0');
-        endGame('你认输了 —— 对方胜');
-      }
-    } else if (kind === 'gomoku') {
-      gomokuEnd(GG.turnNow === 1 ? '黑方认输 —— 白方胜' : '白方认输 —— 黑方胜');
-    } else if (kind === 'xiangqi') {
-      xiangqiEnd(XQ.st.turn === 'r' ? '红方认输 —— 黑方胜' : '黑方认输 —— 红方胜');
-    } else if (kind === 'go') {
-      goResign();
+    if (mode === 'ai') {
+      recordGame('loss');
+      endGame('你认输了 —— AI 获胜');
+    } else if (mode === 'online' && online && online.seat) {
+      const winnerSeat = online.seat === 'first' ? 'second' : 'first';
+      onlineMarkFinished(winnerSeat);
+      endGame('你认输了 —— 对方胜');
+    } else if (mode === 'local') {
+      const loserName = kind === 'chess' ? (GC.game.turn() === 'w' ? '白方' : '黑方')
+        : kind === 'gomoku' ? (GG.turnNow === 1 ? '黑方' : '白方')
+          : kind === 'xiangqi' ? (XQ.st.turn === 'r' ? '红方' : '黑方')
+            : (GO.turn === 1 ? '黑方' : '白方');
+      endGame(loserName + '认输 —— ' + (loserName === '白方' ? '黑方' : loserName === '黑方' ? '白方' : loserName === '红方' ? '黑方' : '红方') + '胜');
     }
   });
   $('#ch-pass').addEventListener('click', () => { if (kind === 'go' && !over) goPass(false); });
-  function xiangqiEnd(text) {
-    over = true;
-    resultText = text;
-    showDialog('对局结束', text);
-    renderStatus();
-  }
-  $('#ch-restart')?.addEventListener('click', () => { if (kind) startGame(kind); });
+  $('#ch-restart')?.addEventListener('click', () => { if (kind && mode !== 'online') startGame(kind); });
   $('#ch-flip').addEventListener('click', () => { if (kind === 'chess') { flipped = !flipped; chessRender(); } });
   $('#ch-fs').addEventListener('click', async () => {
     const api = gameEl.requestFullscreen || gameEl.webkitRequestFullscreen;
@@ -1011,12 +1133,10 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
 
   /* ---------- 尺寸 ---------- */
   function fitBoard() {
-    // 棋盘已由 CSS 按 --skw / --board-h 约束，这里只把「格宽」换算成棋子尺寸。
     const w = boardEl.clientWidth;
     const h = boardEl.clientHeight;
     if (w > 0) boardEl.style.setProperty('--ch-piece', (w / 8 * 0.74).toFixed(1) + 'px');
     if (w > 0) boardEl.style.setProperty('--gk-stone', (w / 15 * 0.72).toFixed(1) + 'px');
-    // 象棋/围棋按较短边取，避免竖盘时子偏大
     const wq = Math.min(w, h * 9 / 10);
     if (wq > 0) boardEl.style.setProperty('--xq-piece', (wq / 9 * 0.82).toFixed(1) + 'px');
     if (w > 0) boardEl.style.setProperty('--go-stone', (w / 19 * 0.92).toFixed(1) + 'px');
@@ -1024,7 +1144,435 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
   window.addEventListener('resize', fitBoard);
   window.addEventListener('orientationchange', fitBoard);
 
-  /* ---------- 联机（国际象棋） ---------- */
+  /* ================================================================
+     联机（四棋通用 board_rooms）
+     state 为局面真相：chess={fen}，xiangqi={bd,turn,half}，
+     gomoku={bd}，go={bd,turn,ko,passes,caps}。moves 为着法列表。
+     ================================================================ */
+  const roomInitialState = (k) => ({
+    chess: () => ({ fen: START_FEN }),
+    xiangqi: () => { const st = Xiangqi.initState(); return { bd: enc(st.bd), turn: st.turn, half: 0 }; },
+    gomoku: () => ({ bd: Array.from(Gomoku.emptyBoard()) }),
+    go: () => ({ bd: Array.from(Go.emptyBoard()), turn: 1, ko: -1, passes: 0, caps: { 1: 0, 2: 0 } }),
+  })[k]();
+
+  function localRoomState(k) {
+    if (k === 'chess') return { fen: GC.game.fen() };
+    if (k === 'xiangqi') return { bd: enc(XQ.st.bd), turn: XQ.st.turn, half: XQ.st.half || 0 };
+    if (k === 'gomoku') return { bd: Array.from(GG.bd) };
+    return { bd: Array.from(GO.bd), turn: GO.turn, ko: GO.ko, passes: GO.passes, caps: { ...GO.caps } };
+  }
+  function localRoomMoves(k) {
+    if (k === 'chess') return GC.game.sanHistory();
+    if (k === 'xiangqi') return XQ.moves.slice();
+    if (k === 'gomoku') return GG.moves.slice();
+    return GO.moves.slice();
+  }
+
+  /* 把云端局面接到本地（含 lastMove / 回合推导） */
+  function adoptRoomState(k, state, moves) {
+    if (k === 'chess') {
+      if (state?.fen && GC.game.fen() !== state.fen) {
+        GC.game.load(state.fen);
+        GC.selected = -1; GC.selMoves = []; GC.selPiece = null;
+      }
+    } else if (k === 'xiangqi') {
+      if (state?.bd) {
+        const bd = dec(state.bd);
+        if (JSON.stringify(enc(XQ.st.bd)) !== JSON.stringify(state.bd) || XQ.st.turn !== state.turn) {
+          XQ.st.bd = bd;
+          XQ.st.turn = state.turn || 'r';
+          XQ.st.half = state.half || 0;
+          XQ.selected = -1; XQ.targets = [];
+        }
+      }
+      XQ.lastMove = movesTail(moves);
+    } else if (k === 'gomoku') {
+      if (state?.bd) {
+        const bd = Int8Array.from(state.bd);
+        if (!GG.bd || bd.length !== GG.bd.length || bd.some((v, j) => v !== GG.bd[j])) {
+          GG.bd = bd;
+          GG.turnNow = (moves?.length || 0) % 2 ? 2 : 1;
+        }
+      }
+      const tail = movesTail(moves);
+      GG.lastIdx = tail != null && tail >= 0 ? tail : null;
+    } else if (k === 'go') {
+      if (state?.bd) {
+        const bd = Int8Array.from(state.bd);
+        const bdDiff = !GO.bd || bd.length !== GO.bd.length || bd.some((v, j) => v !== GO.bd[j]);
+        // 停一手不改棋盘：回合或停着数变了也要接住
+        if (bdDiff || GO.turn !== (state.turn || 1) || GO.passes !== (state.passes || 0)) {
+          GO.bd = bd;
+          GO.turn = state.turn || 1;
+          GO.ko = state.ko ?? -1;
+          GO.passes = state.passes || 0;
+          GO.caps = { 1: state.caps?.[1] || 0, 2: state.caps?.[2] || 0 };
+        }
+      }
+      const tail = movesTail(moves);
+      GO.lastIdx = tail != null && tail >= 0 ? tail : null;
+    }
+  }
+  function movesTail(moves) {
+    if (!moves || !moves.length) return null;
+    const t = moves[moves.length - 1];
+    if (typeof t === 'number') return t;
+    if (typeof t === 'object') return { from: t.f, to: t.t };
+    return null;
+  }
+
+  function sideOf(k, seat) {
+    const first = { chess: 'w', xiangqi: 'r', gomoku: 1, go: 1 }[k];
+    return seat === 'first' ? first : oppSide(k, first);
+  }
+
+  async function createRoom() {
+    if (!cloudSb) { showDialog('联机不可用', '云端未连接，稍后再试。'); return; }
+    const k = sel.kind;
+    const name = await ensureName();
+    const code = genCode();
+    const mySeatSide = sel.side[k];
+    const firstSide = { chess: 'w', xiangqi: 'r', gomoku: 1, go: 1 }[k];
+    const iAmFirst = String(mySeatSide) === String(firstSide);
+    const payload = {
+      code,
+      kind: k,
+      state: roomInitialState(k),
+      moves: [],
+      host_name: name,
+      host_side: String(mySeatSide),
+      guest_name: '',
+      status: 'waiting',
+      result: '',
+    };
+    const { error } = await cloudSb.from('board_rooms').insert(payload);
+    if (error) { showDialog('创建失败', error.message); return; }
+    // seat 指的是「先手位 / 后手位」，不是加入顺序
+    startBoardOnline(code, iAmFirst ? 'first' : 'second', payload);
+  }
+
+  async function joinRoom() {
+    if (!cloudSb) { showDialog('联机不可用', '云端未连接，稍后再试。'); return; }
+    const code = ($('#ch-code-input').value || '').trim().toUpperCase();
+    if (!code) return;
+    const { data, error } = await cloudSb.from('board_rooms').select('*').eq('code', code).maybeSingle();
+    if (error || !data) { showDialog('房间不存在', '检查一下房间码？'); return; }
+    const remembered = store.get('ch-seat2-' + code, null);
+    const firstSide = { chess: 'w', xiangqi: 'r', gomoku: 1, go: 1 }[data.kind];
+    const hostIsFirst = String(data.host_side) === String(firstSide);
+    const guestSeat = hostIsFirst ? 'second' : 'first';
+    if (data.status === 'waiting' && !data.guest_name && !remembered) {
+      const name = await ensureName();
+      const { error: uerr } = await cloudSb.from('board_rooms')
+        .update({ guest_name: name, status: 'playing', updated_at: new Date().toISOString() })
+        .eq('code', code);
+      if (uerr) { showDialog('加入失败', uerr.message); return; }
+      data.guest_name = name;
+      data.status = 'playing';
+      startBoardOnline(code, guestSeat, data);
+      return;
+    }
+    if (remembered === 'first' || remembered === 'second') { startBoardOnline(code, remembered, data); return; }
+    startBoardOnline(code, null, data);
+  }
+
+  function startBoardOnline(code, seat, room) {
+    onlineCleanup();
+    kind = room.kind;
+    mode = 'online';
+    over = false; resultText = ''; recorded = false;
+    flipped = seat === 'second';
+    startTime = Date.now();
+    online = { code, kind, seat, channel: null, poll: null, room, finishedShown: false };
+    if (seat) store.set('ch-seat2-' + code, seat);
+    if (kind === 'chess') {
+      GC.game = new ChessGame();
+      GC.selected = -1; GC.selMoves = []; GC.selPiece = null; GC.thinking = false;
+      chessBuild();
+    } else if (kind === 'xiangqi') {
+      XQ.st = Xiangqi.initState(); XQ.history = []; XQ.moves = [];
+      XQ.selected = -1; XQ.targets = []; XQ.lastMove = null;
+      xiangqiBuild();
+    } else if (kind === 'gomoku') {
+      GG.bd = Gomoku.emptyBoard(); GG.history = []; GG.moves = [];
+      GG.lastIdx = null; GG.winLine = null; GG.turnNow = 1;
+      gomokuBuild();
+    } else if (kind === 'go') {
+      GO.bd = Go.emptyBoard(); GO.history = []; GO.moves = [];
+      GO.turn = 1; GO.ko = -1; GO.passes = 0; GO.caps = { 1: 0, 2: 0 }; GO.lastIdx = null;
+      goBuild();
+    }
+    adoptRoomState(kind, room.state, room.moves);
+    showGame(KIND_LABEL[kind] + ' · 联机 · ' + (seat ? (seat === 'first' ? '先手' : '后手') : '观战'));
+    roomChip.hidden = false;
+    roomChip.textContent = '房间 ' + code;
+    if (cloudSb) {
+      online.channel = cloudSb.channel('board-room-' + code)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'board_rooms', filter: 'code=eq.' + code },
+          (payload) => { if (payload.new) onlineOnRoom(payload.new); })
+        .subscribe();
+      online.poll = setInterval(async () => {
+        if (!cloudSb || document.hidden) return;
+        const { data } = await cloudSb.from('board_rooms').select('*').eq('code', code).maybeSingle();
+        if (data) onlineOnRoom(data);
+      }, 4000);
+    }
+    render();
+  }
+
+  function onlineOnRoom(room) {
+    if (!online || gameEl.hidden || kind !== online.kind) return;
+    online.room = room;
+    adoptRoomState(kind, room.state, room.moves);
+    const status = kind === 'chess' ? GC.game.status() : null;
+    if (room.status === 'finished' && !over) {
+      over = true;
+      if (!online.finishedShown) {
+        online.finishedShown = true;
+        endGame(onlineResultText(room.result));
+      }
+      // 对方标记的终局也要上报我自己的战绩
+      if (online.seat && !recorded && room.result) {
+        recorded = true;
+        recordResult(online.kind, room.result === 'draw' ? 'draw' : room.result === online.seat ? 'win' : 'loss',
+          'online', String(sideOf(online.kind, online.seat)), 0, Math.floor((Date.now() - startTime) / 1000));
+      }
+    } else if (status && status.over && !over && !online.finishedShown) {
+      online.finishedShown = true;
+      endGame(room.result ? onlineResultText(room.result) : chessStatusText(status));
+    }
+    render();
+  }
+
+  function onlineResultText(r) {
+    if (!r) return '对局结束';
+    const host = online.room?.host_name || '先手';
+    const guest = online.room?.guest_name || '后手';
+    const firstLabel = { chess: '白', xiangqi: '红', gomoku: '黑', go: '黑' }[kind];
+    if (r === 'draw') return '和棋 🤝';
+    const winnerName = r === 'first' ? `${host}（${firstLabel}）` : `${guest}（${oppSideName(kind, firstLabel)}）`;
+    return `${winnerName} 获胜 🎉`;
+  }
+  function oppSideName(k, s) {
+    return ({ 白: '黑', 黑: '白', 红: '黑' })[s] || s;
+  }
+
+  function onlinePush() {
+    if (!online || !cloudSb || over) return;
+    cloudSb.from('board_rooms').update({
+      state: localRoomState(online.kind),
+      moves: localRoomMoves(online.kind),
+      updated_at: new Date().toISOString(),
+    }).eq('code', online.code).then(({ error }) => {
+      if (error) console.warn('[棋] 走子同步失败：', error.message);
+    });
+  }
+
+  function onlineMarkFinished(result) {
+    if (!online || !cloudSb || !result) return;
+    if (online.room && online.room.status === 'finished') return;
+    online.room = { ...(online.room || {}), status: 'finished', result };
+    cloudSb.from('board_rooms').update({
+      status: 'finished', result, updated_at: new Date().toISOString(),
+    }).eq('code', online.code).then(({ error }) => {
+      if (error) console.warn('[棋] 终局同步失败：', error.message);
+    });
+    // 上报自己的战绩
+    if (online.seat && !recorded) {
+      recorded = true;
+      recordResult(online.kind, result === 'draw' ? 'draw' : result === online.seat ? 'win' : 'loss', 'online', String(sideOf(online.kind, online.seat)), 0, Math.floor((Date.now() - startTime) / 1000));
+    }
+  }
+
+  function onlineCleanup() {
+    if (online) {
+      if (online.channel) cloudSb?.removeChannel(online.channel);
+      if (online.poll) clearInterval(online.poll);
+      online = null;
+    }
+    roomChip.hidden = true;
+  }
+
+  function genCode() {
+    const abc = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';
+    let s = '';
+    for (let i = 0; i < 4; i++) s += abc[(Math.random() * abc.length) | 0];
+    return s;
+  }
+
+  /* ================================================================
+     启动器
+     ================================================================ */
+  const sel = store.get('ch-sel-v2', null) || {
+    kind: 'chess', mode: 'ai',
+    side: { chess: 'w', xiangqi: 'r', gomoku: 1, go: 1 },
+    level: { chess: 2, xiangqi: 2, gomoku: 1, go: 1 },
+  };
+  if (!sel.side || !sel.level) { sel.side = { chess: 'w', xiangqi: 'r', gomoku: 1, go: 1 }; sel.level = { chess: 2, xiangqi: 2, gomoku: 1, go: 1 }; }
+
+  const DIFF_CHIPS = {
+    chess: [['0', '新手'], ['1', '业余'], ['2', '棋手'], ['3', '大师']],
+    xiangqi: [['0', '入门'], ['1', '初级'], ['2', '中级'], ['3', '高级']],
+    gomoku: [['0', '简单'], ['1', '中等'], ['2', '困难']],
+    go: [['0', '简单'], ['1', '中等'], ['2', '困难']],
+  };
+  const diffWrap = $('#sel-diff');
+  const sideWrap = $('#sel-side-wrap');
+  const onlineWrap = $('#sel-online-wrap');
+
+  function renderSel() {
+    for (const b of document.querySelectorAll('#sel-kind .ch-chip')) b.classList.toggle('on', b.dataset.v === sel.kind);
+    for (const b of document.querySelectorAll('#sel-mode .ch-chip')) b.classList.toggle('on', b.dataset.v === sel.mode);
+    onlineWrap.hidden = sel.mode !== 'online';
+    // 执子 chips（四棋都有）
+    const sideDiv = $('#sel-side');
+    sideDiv.textContent = '';
+    for (const [v, label] of Object.entries(SIDE_LABELS[sel.kind])) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'ch-chip' + (String(sel.side[sel.kind]) === v ? ' on' : '');
+      b.dataset.v = v;
+      b.textContent = label;
+      b.addEventListener('click', () => {
+        sel.side[sel.kind] = sel.kind === 'chess' || sel.kind === 'xiangqi' ? v : +v;
+        store.set('ch-sel-v2', sel);
+        renderSel();
+      });
+      sideDiv.appendChild(b);
+    }
+    // 难度 chips
+    diffWrap.textContent = '';
+    for (const [v, label] of DIFF_CHIPS[sel.kind]) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'ch-chip' + (String(sel.level[sel.kind]) === v ? ' on' : '');
+      b.dataset.v = v;
+      b.textContent = label;
+      b.addEventListener('click', () => {
+        sel.level[sel.kind] = +v;
+        store.set('ch-sel-v2', sel);
+        renderSel();
+      });
+      diffWrap.appendChild(b);
+    }
+    store.set('ch-sel-v2', sel);
+  }
+  for (const b of document.querySelectorAll('#sel-kind .ch-chip')) {
+    b.addEventListener('click', () => { sel.kind = b.dataset.v; renderSel(); });
+  }
+  for (const b of document.querySelectorAll('#sel-mode .ch-chip')) {
+    b.addEventListener('click', () => { sel.mode = b.dataset.v; renderSel(); });
+  }
+
+  $('#ch-start').addEventListener('click', async () => {
+    if (sel.mode === 'online') { await createRoom(); return; }
+    startGame(sel.kind);
+  });
+
+  // 联机房间控件
+  $('#ch-create').addEventListener('click', createRoom);
+  $('#ch-join').addEventListener('click', joinRoom);
+  $('#ch-code-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') joinRoom(); });
+  roomChip.addEventListener('click', async () => {
+    if (!online) return;
+    try {
+      await navigator.clipboard.writeText(online.code);
+      roomChip.textContent = '已复制 ' + online.code;
+      setTimeout(() => { roomChip.textContent = '房间 ' + online.code; }, 1200);
+    } catch { /* 剪贴板不可用则忽略 */ }
+  });
+
+  /* ================================================================
+     排行榜（chess_results + get_chess_leaderboard RPC）
+     ================================================================ */
+  const lbModal = $('#ch-lb');
+  let lbTab = 'chess';
+  function lbRenderTabs() {
+    const tabs = $('#lb-tabs');
+    tabs.textContent = '';
+    for (const k of KINDS) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'ch-chip' + (lbTab === k ? ' on' : '');
+      b.textContent = KIND_LABEL[k];
+      b.addEventListener('click', () => { lbTab = k; lbRenderTabs(); refreshLb(); });
+      tabs.appendChild(b);
+    }
+  }
+  async function refreshLb() {
+    const body = $('#lb-body');
+    const note = $('#lb-note');
+    if (!body) return;
+    if (!cloudSb) {
+      body.innerHTML = '<p class="ch-lb-empty">云端未连接，暂时拿不到排行榜。</p>';
+      if (note) note.textContent = '';
+      return;
+    }
+    body.innerHTML = '<p class="ch-lb-empty">加载中…</p>';
+    const { data, error } = await cloudSb.rpc('get_chess_leaderboard', { p_kind: lbTab });
+    if (error) {
+      body.innerHTML = '<p class="ch-lb-empty">排行榜暂不可用（' + (error.message || '数据库未更新') + '）。</p>';
+      if (note) note.textContent = '';
+      return;
+    }
+    if (!data || !data.length) {
+      body.innerHTML = '<p class="ch-lb-empty">还没有人上榜 —— 打完一局人机或联机就能上榜。</p>';
+      if (note) note.textContent = '';
+      return;
+    }
+    const meName = myName();
+    const rows = data.map((r, i) => {
+      const rate = r.games > 0 ? Math.round((r.wins / r.games) * 100) : 0;
+      const me = meName && r.name === meName ? ' class="me"' : '';
+      return `<tr${me}><td>${i + 1}</td><td>${escapeHtml(r.name)}</td><td>${r.wins}</td><td>${r.draws}</td><td>${r.losses}</td><td>${rate}%</td></tr>`;
+    }).join('');
+    body.innerHTML = `<table class="ch-lb-table"><thead><tr><th>#</th><th>昵称</th><th>胜</th><th>平</th><th>负</th><th>胜率</th></tr></thead><tbody>${rows}</tbody></table>`;
+    if (note) note.textContent = `按胜场排序 · ${KIND_LABEL[lbTab]}共 ${data.reduce((a, r) => a + r.games, 0)} 局`;
+  }
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+  const lbBtn = $('#ch-lb-btn');
+  if (lbBtn) lbBtn.addEventListener('click', () => { lbModal.hidden = false; lbRenderTabs(); refreshLb(); });
+  const lbClose = $('#lb-close');
+  if (lbClose) lbClose.addEventListener('click', () => { lbModal.hidden = true; });
+  if (lbModal) lbModal.addEventListener('click', (e) => { if (e.target === lbModal) lbModal.hidden = true; });
+
+  /* ---------- 键盘 ---------- */
+  document.addEventListener('keydown', (e) => {
+    if (e.target.tagName === 'INPUT') return;
+    if (!modalEl().hidden || (lbModal && !lbModal.hidden)) {
+      if (e.key === 'Escape' || e.key === 'Enter') { closeDialog(); if (lbModal) lbModal.hidden = true; }
+      return;
+    }
+    if (gameEl.hidden) return;
+    if (kind !== 'chess') {
+      if (e.key === 'Escape') {
+        if (document.fullscreenElement || document.webkitFullscreenElement) return;
+        $('#ch-exit').click();
+      }
+      return;
+    }
+    const step = { ArrowUp: -8, ArrowDown: 8, ArrowLeft: -1, ArrowRight: 1 };
+    if (e.key in step) {
+      e.preventDefault();
+      if (GC.selected < 0) { chessOnSquare(flipped ? 63 : 56); return; }
+      const curDisp = chessSqToDisp(GC.selected);
+      const nextDisp = curDisp + step[e.key];
+      if (nextDisp < 0 || nextDisp > 63) return;
+      if ((step[e.key] === -1 || step[e.key] === 1) && (nextDisp >> 3) !== (curDisp >> 3)) return;
+      chessOnSquare(nextDisp);
+    } else if (e.key === 'Enter' && GC.selected >= 0) {
+      e.preventDefault();
+      chessOnSquare(chessSqToDisp(GC.selected));
+    } else if (e.key === 'Escape') {
+      if (document.fullscreenElement || document.webkitFullscreenElement) return;
+      $('#ch-exit').click();
+    }
+  });
+
+  /* ---------- 启动 ---------- */
   async function initCloud() {
     if (!isConfigured()) return;
     try {
@@ -1038,253 +1586,6 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
       } : null;
     } catch { /* 静默 */ }
   }
-  function genCode() {
-    const abc = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';
-    let s = '';
-    for (let i = 0; i < 4; i++) s += abc[(Math.random() * abc.length) | 0];
-    return s;
-  }
-  async function createRoom() {
-    if (!cloudSb) { showDialog('联机不可用', '云端未连接，稍后再试。'); return; }
-    const name = await ensureName();
-    const code = genCode();
-    const { error } = await cloudSb.from('chess_rooms').insert({
-      code, fen: START_FEN, moves: [], white_name: name, black_name: '', status: 'waiting',
-    });
-    if (error) { showDialog('创建失败', error.message); return; }
-    startChessOnline(code, 'w');
-  }
-  async function joinRoom() {
-    if (!cloudSb) { showDialog('联机不可用', '云端未连接，稍后再试。'); return; }
-    const code = ($('#ch-code-input').value || '').trim().toUpperCase();
-    if (!code) return;
-    const { data, error } = await cloudSb.from('chess_rooms').select('*').eq('code', code).maybeSingle();
-    if (error || !data) { showDialog('房间不存在', '检查一下房间码？'); return; }
-    const remembered = store.get('ch-seat-' + code, null);
-    if (data.status === 'waiting' && !data.black_name && remembered !== 'w') {
-      const name = await ensureName();
-      await cloudSb.from('chess_rooms').update({ black_name: name, status: 'playing', updated_at: new Date().toISOString() }).eq('code', code);
-      startChessOnline(code, 'b');
-      return;
-    }
-    if (remembered === 'w' || remembered === 'b') { startChessOnline(code, remembered); return; }
-    startChessOnline(code, null);
-  }
-  function startChessOnline(code, seat) {
-    kind = 'chess';
-    mode = 'online';
-    over = false; resultText = '';
-    GChess.st = parseFEN(START_FEN);
-    GChess.history = [];
-    GChess.selected = -1; GChess.targets = []; GChess.lastMove = [];
-    GChess.thinking = false;
-    flipped = seat === 'b';
-    startTime = Date.now();
-    onlineCleanup();
-    online = { code, seat, channel: null, poll: null, room: null, finishedShown: false };
-    if (seat) store.set('ch-seat-' + code, seat);
-    chessBuild();
-    showGame('联机 · ' + (seat === 'w' ? '执白' : seat === 'b' ? '执黑' : '观战'));
-    roomChip.hidden = false;
-    roomChip.textContent = '房间 ' + code;
-    if (cloudSb) {
-      cloudSb.from('chess_rooms').select('*').eq('code', code).maybeSingle()
-        .then(({ data }) => { if (data) onlineOnRoom(data); });
-      online.channel = cloudSb.channel('chess-room-' + code)
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'chess_rooms', filter: 'code=eq.' + code },
-          (payload) => { if (payload.new) onlineOnRoom(payload.new); })
-        .subscribe();
-    }
-    online.poll = setInterval(async () => {
-      if (!cloudSb || document.hidden) return;
-      const { data } = await cloudSb.from('chess_rooms').select('*').eq('code', code).maybeSingle();
-      if (data) onlineOnRoom(data);
-    }, 4000);
-    chessRender();
-  }
-  function onlineOnRoom(room) {
-    if (!online || gameEl.hidden || kind !== 'chess') return;
-    online.room = room;
-    if (room.fen !== toFEN(GChess.st)) {
-      GChess.st = parseFEN(room.fen);
-      GChess.history = (room.moves || []).slice();
-      GChess.selected = -1; GChess.targets = []; GChess.lastMove = null;
-      const status = gameStatus(GChess.st);
-      if (status.over && !online.finishedShown) {
-        online.finishedShown = true;
-        endGame((room.result ? room.result + ' · ' : '') + (status.reason === 'checkmate' ? '将杀' : status.reason === 'stalemate' ? '逼和' : '和棋'));
-      }
-    }
-    if (room.status === 'finished' && !over) {
-      over = true;
-      if (!online.finishedShown) { online.finishedShown = true; endGame(room.result || '对局结束'); }
-    }
-    chessRender();
-  }
-  function onlinePushMove() {
-    if (!online || !cloudSb) return;
-    cloudSb.from('chess_rooms').update({
-      fen: toFEN(GChess.st),
-      moves: GChess.history,
-      updated_at: new Date().toISOString(),
-    }).eq('code', online.code).then(({ error }) => {
-      if (error) console.warn('[棋] 走子同步失败：', error.message);
-    });
-    const status = gameStatus(GChess.st);
-    if (status.over) onlineMarkFinished(GChess.st.turn === 'w' ? '0-1' : '1-0');
-  }
-  function onlineMarkFinished(result) {
-    if (!online || !cloudSb || !result) return;
-    if (online.room && online.room.status === 'finished') return;
-    cloudSb.from('chess_rooms').update({
-      status: 'finished', result, updated_at: new Date().toISOString(),
-    }).eq('code', online.code).then(({ error }) => {
-      if (error) console.warn('[棋] 终局同步失败：', error.message);
-    });
-  }
-  function onlineCleanup() {
-    if (online) {
-      if (online.channel) cloudSb?.removeChannel(online.channel);
-      if (online.poll) clearInterval(online.poll);
-      online = null;
-    }
-    roomChip.hidden = true;
-  }
-
-  /* ---------- 启动器事件 ---------- */
-  /* ---------- 启动器：统一选择棋类与模式 ---------- */
-  const sel = {
-    kind: 'chess', mode: 'ai',
-    aiDiff: GChess.aiDiff, side: GChess.aiColorMe,
-    xqDiff: 'medium', gkHard: 'hard', goDiff: 'normal',
-  };
-  const DIFF_CHIPS = {
-    chess: [['0', '新手'], ['1', '业余'], ['2', '棋手'], ['3', '大师']],
-    xiangqi: [['easy', '简单'], ['medium', '普通'], ['hard', '困难']],
-    gomoku: [['easy', '简单'], ['hard', '困难']],
-    go: [['easy', '简单'], ['normal', '普通']],
-  };
-  const diffWrap = $('#sel-diff');
-  const diffLabel = $('#sel-diff-label');
-  const sideWrap = $('#sel-side-wrap');
-  const onlineWrap = $('#sel-online-wrap');
-  const onlineChip = $('#sel-mode-online');
-
-  function selDiffValue() {
-    return sel.kind === 'chess' ? String(sel.aiDiff)
-      : sel.kind === 'xiangqi' ? sel.xqDiff
-        : sel.gkHard;
-  }
-
-  function renderSel() {
-    // 棋类切走后若仍停在联机模式，强制回落到人机（联机仅国象）
-    if (sel.kind !== 'chess' && sel.mode === 'online') sel.mode = 'ai';
-    for (const b of document.querySelectorAll('#sel-kind .ch-chip')) b.classList.toggle('on', b.dataset.v === sel.kind);
-    for (const b of document.querySelectorAll('#sel-mode .ch-chip')) b.classList.toggle('on', b.dataset.v === sel.mode);
-    onlineChip.hidden = sel.kind !== 'chess';
-    sideWrap.hidden = sel.kind !== 'chess';
-    onlineWrap.hidden = !(sel.kind === 'chess' && sel.mode === 'online');
-    diffLabel.textContent = sel.kind === 'chess' ? 'AI 棋力' : 'AI 难度';
-    diffWrap.textContent = '';
-    const cur = selDiffValue();
-    for (const [v, label] of DIFF_CHIPS[sel.kind]) {
-      const b = document.createElement('button');
-      b.type = 'button';
-      b.className = 'ch-chip' + (cur === v ? ' on' : '');
-      b.dataset.v = v;
-      b.textContent = label;
-      b.addEventListener('click', () => {
-        if (sel.kind === 'chess') sel.aiDiff = +v;
-        else if (sel.kind === 'xiangqi') sel.xqDiff = v;
-        else if (sel.kind === 'go') sel.goDiff = v;
-        else sel.gkHard = v;
-        renderSel();
-      });
-      diffWrap.appendChild(b);
-    }
-  }
-  for (const b of document.querySelectorAll('#sel-kind .ch-chip')) {
-    b.addEventListener('click', () => { sel.kind = b.dataset.v; renderSel(); });
-  }
-  for (const b of document.querySelectorAll('#sel-mode .ch-chip')) {
-    b.addEventListener('click', () => { sel.mode = b.dataset.v; renderSel(); });
-  }
-  for (const b of document.querySelectorAll('#sel-side .ch-chip')) {
-    b.addEventListener('click', () => { sel.side = b.dataset.v; renderSel(); });
-  }
-  $('#ch-start').addEventListener('click', async () => {
-    if (sel.kind === 'chess') {
-      GChess.aiDiff = sel.aiDiff;
-      GChess.aiColorMe = sel.side;
-      if (sel.mode === 'online') { await createRoom(); return; }
-      startGame('chess');
-    } else if (sel.kind === 'xiangqi') {
-      XQ.hard = sel.xqDiff; XQ.vsAI = sel.mode === 'ai';
-      startGame('xiangqi');
-    } else if (sel.kind === 'go') {
-      GO.vsAI = sel.mode === 'ai';
-      GO.hard = sel.goDiff === 'normal';
-      startGame('go');
-    } else {
-      GG.hard = sel.gkHard === 'hard'; GG.vsAI = sel.mode === 'ai';
-      startGame('gomoku');
-    }
-  });
   renderSel();
-
-  // 联机房间控件：只绑定一次（旧代码在 renderSel 内部又绑了一遍，
-  // 点一次「创建房间」会插入两个房间）
-  $('#ch-create').addEventListener('click', createRoom);
-  $('#ch-join').addEventListener('click', joinRoom);
-  $('#ch-code-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') joinRoom(); });
-  roomChip.addEventListener('click', async () => {
-    if (!online) return;
-    try {
-      await navigator.clipboard.writeText(online.code);
-      roomChip.textContent = '已复制 ' + online.code;
-      setTimeout(() => { roomChip.textContent = '房间 ' + online.code; }, 1200);
-    } catch { /* 剪贴板不可用则忽略 */ }
-  });
-
-  /* ---------- 键盘 ---------- */
-  document.addEventListener('keydown', (e) => {
-    if (e.target.tagName === 'INPUT') return;
-    if (!modalEl().hidden) {
-      if (e.key === 'Escape' || e.key === 'Enter') closeDialog();
-      return;
-    }
-    if (gameEl.hidden) return;
-    if (kind !== 'chess') {
-      if (e.key === 'Escape') {
-        if (document.fullscreenElement || document.webkitFullscreenElement) return;
-        $('#ch-exit').click();
-      }
-      return;
-    }
-    // 棋盘操作一律走「显示坐标 dp」：chessOnSquare 内部再用 chessDispToSq 换算，
-    // 因此这里绝不能再手动翻转一次（旧代码对 sq 做了两次翻转 → 落点错格）。
-    const step = { ArrowUp: -8, ArrowDown: 8, ArrowLeft: -1, ArrowRight: 1 };
-    if (e.key in step) {
-      e.preventDefault();
-      if (GChess.selected < 0) { chessOnSquare(flipped ? 63 : 56); return; }
-      const curDisp = flipped ? 63 - GChess.selected : GChess.selected;
-      const nextDisp = curDisp + step[e.key];
-      if (nextDisp < 0 || nextDisp > 63) return;
-      // 左右移动不得跨行折返
-      if ((step[e.key] === -1 || step[e.key] === 1) && (nextDisp >> 3) !== (curDisp >> 3)) return;
-      chessOnSquare(nextDisp);
-    } else if (e.key === 'Enter' && GChess.selected >= 0) {
-      e.preventDefault();
-      chessOnSquare(flipped ? 63 - GChess.selected : GChess.selected);
-    } else if (e.key === 'Escape') {
-      if (document.fullscreenElement || document.webkitFullscreenElement) return;
-      $('#ch-exit').click();
-    }
-  });
-
-  /* ---------- 尺寸 ---------- */
-  window.addEventListener('resize', fitBoard);
-
-  /* ---------- 启动 ---------- */
   initCloud();
 })();

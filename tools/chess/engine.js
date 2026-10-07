@@ -1,12 +1,14 @@
 /* ============================================================
-   engine.js — 国际象棋规则引擎 + AI
-   规则：全兵种走法、王车易位、吃过路兵、升变、将军/将杀/逼和、
-         50 回合与子力不足和棋
-   AI：negamax + α-β 剪枝 + 静态搜索（quiescence）+ 迭代加深，
-       评估 = 子力 + 分兵种位置表（chessprogramming.org
-       "Simplified Evaluation Function"，Tomasz Michniewski）
-   坐标：sq 0 = a8，7 = h8，56 = a1，63 = h1（r = sq>>3 从上数）
+   engine.js — 国际象棋：规则 + AI
+   规则权威：vendor/chess.js（MIT，chessjs.org）——易位、吃过路兵、
+             升变、将杀、逼和、五十回合、三次重复、子力不足全部由它判定，
+             不再自研规则（历史教训：自研易位在 UI 层漏了「王吃到车」手势）。
+   AI 主力：vendor/stockfish.wasm.js（Web Worker，GPLv3，niklasf/stockfish.js
+             10.0.2 多变体构建）——四档难度 = Skill Level + 深度/时限组合。
+   AI 兜底：本文件内置的 negamax + α-β + 静态搜索（Worker 加载失败时降级）。
+   坐标：内部兜底引擎 sq 0 = a8，7 = h8，56 = a1，63 = h1。
    ============================================================ */
+import { Chess } from './vendor/chess.js?v=21';
 
 export const START_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 
@@ -17,6 +19,181 @@ export const GLYPHS = {
 };
 export const pieceGlyph = (p) => GLYPHS[p.c][p.t] + '\uFE0E';
 
+/* ---------- 对局包装：chess.js 的薄壳，供 UI 使用 ---------- */
+export class ChessGame {
+  constructor() { this.g = new Chess(); }
+
+  /* 载入局面（联机同步用），非法 FEN 返回 false 且保持原局面 */
+  load(fen) {
+    try { return this.g.load(fen); } catch { return false; }
+  }
+
+  /* 某格的合法走法（verbose）。sq 为代数坐标如 'e2' */
+  movesAt(sq) { return this.g.moves({ square: sq, verbose: true }); }
+
+  /* 全部合法走法（verbose） */
+  movesAll() { return this.g.moves({ verbose: true }); }
+
+  /* 应用走法，非法返回 null（chess.js 严格模式下抛错，这里转成 null） */
+  apply(from, to, promotion) {
+    try { return this.g.move({ from, to, promotion: promotion || undefined }); }
+    catch { return null; }
+  }
+
+  undo() { return this.g.undo(); }
+
+  fen() { return this.g.fen(); }
+  turn() { return this.g.turn(); }
+  inCheck() { return this.g.inCheck(); }
+  /* 64 数组（0=a8 … 63=h1）：{t, c} 或 null，渲染直接用 */
+  boardArray() {
+    const rows = this.g.board();
+    const out = new Array(64).fill(null);
+    for (let r = 0; r < 8; r++)
+      for (let c = 0; c < 8; c++) {
+        const p = rows[r][c];
+        out[r * 8 + c] = p ? { t: p.type, c: p.color } : null;
+      }
+    return out;
+  }
+  /* 王的位置（sq 索引），找不到返回 -1 */
+  kingSq(color) {
+    const rows = this.g.board();
+    for (let r = 0; r < 8; r++)
+      for (let c = 0; c < 8; c++) {
+        const p = rows[r][c];
+        if (p && p.type === 'k' && p.color === color) return r * 8 + c;
+      }
+    return -1;
+  }
+  /* 上一手（{from, to} 索引）或 null */
+  lastMove() {
+    const h = this.g.history({ verbose: true });
+    if (!h.length) return null;
+    const m = h[h.length - 1];
+    return { from: algToSq(m.from), to: algToSq(m.to) };
+  }
+  sanHistory() { return this.g.history(); }
+  moveCount() { return this.g.history().length; }
+
+  /* 被吃子统计：{ w: {p,n,b,r,q}, b: {...} }（各色损失的子） */
+  captured() {
+    const start = { p: 8, n: 2, b: 2, r: 2, q: 1 };
+    const cnt = { w: { p: 0, n: 0, b: 0, r: 0, q: 0 }, b: { p: 0, n: 0, b: 0, r: 0, q: 0 } };
+    for (const row of this.g.board())
+      for (const p of row) if (p && p.type !== 'k') cnt[p.color][p.type]++;
+    for (const c of ['w', 'b'])
+      for (const t of ['p', 'n', 'b', 'r', 'q']) cnt[c][t] = Math.max(0, start[t] - cnt[c][t]);
+    return cnt;
+  }
+
+  /* 终局判定：{ over, reason, winner }。reason: checkmate|stalemate|fifty|repetition|material */
+  status() {
+    const g = this.g;
+    if (!g.isGameOver()) return { over: false, reason: '', winner: null };
+    if (g.isCheckmate()) return { over: true, reason: 'checkmate', winner: g.turn() === 'w' ? 'b' : 'w' };
+    if (g.isStalemate()) return { over: true, reason: 'stalemate', winner: null };
+    if (g.isThreefoldRepetition()) return { over: true, reason: 'repetition', winner: null };
+    if (g.isInsufficientMaterial()) return { over: true, reason: 'material', winner: null };
+    return { over: true, reason: 'fifty', winner: null };
+  }
+}
+
+export const sqToAlg = (sq) => String.fromCharCode(97 + (sq & 7)) + (8 - (sq >> 3));
+export const algToSq = (alg) => (alg.charCodeAt(0) - 97) + (8 - +alg[1]) * 8;
+
+/* ============================================================
+   Stockfish Worker（懒加载 + 失败自动降级 asm.js，再失败走内置兜底）
+   ============================================================ */
+const SF_SOURCES = ['./vendor/stockfish.wasm.js?v=21', './vendor/stockfish-asm.js?v=21'];
+let sfWorker = null;
+let sfInitPromise = null;
+
+function ensureStockfish() {
+  if (sfInitPromise) return sfInitPromise;
+  sfInitPromise = new Promise((resolve) => {
+    const tryLoad = (i) => {
+      if (i >= SF_SOURCES.length) { resolve(null); return; }
+      let worker = null;
+      try {
+        worker = new Worker(new URL(SF_SOURCES[i], import.meta.url));
+      } catch { tryLoad(i + 1); return; }
+      let settled = false;
+      const timer = setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        try { worker.terminate(); } catch { /* 忽略 */ }
+        tryLoad(i + 1);
+      }, 8000);
+      worker.onerror = () => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        tryLoad(i + 1);
+      };
+      worker.onmessage = (e) => {
+        if (String(e.data) === 'uciok' && !settled) {
+          settled = true;
+          clearTimeout(timer);
+          sfWorker = worker;
+          resolve(worker);
+        }
+      };
+      worker.postMessage('uci');
+    };
+    tryLoad(0);
+  });
+  return sfInitPromise;
+}
+
+/* 一次只发一个 go（对局天然串行），等待 bestmove */
+function sfBestMove(fen, { skill, depth, movetime }) {
+  return new Promise((resolve) => {
+    const w = sfWorker;
+    if (!w) { resolve(null); return; }
+    const onMsg = (e) => {
+      const line = String(e.data);
+      if (line.startsWith('bestmove')) {
+        w.removeEventListener('message', onMsg);
+        const uci = line.split(/\s+/)[1] || '';
+        resolve(uci && uci !== '(none)' ? uci : null);
+      }
+    };
+    w.addEventListener('message', onMsg);
+    w.postMessage('setoption name Skill Level value ' + skill);
+    w.postMessage('position fen ' + fen);
+    w.postMessage('go depth ' + depth + ' movetime ' + movetime);
+  });
+}
+
+const uciToMove = (u) => ({ from: u.slice(0, 2), to: u.slice(2, 4), promotion: u.length > 4 ? u[4] : undefined });
+
+/* ---------- 四档难度（Skill Level 0~20 + 深度/时限；fb = 内置兜底参数） ---------- */
+export const CHESS_LEVELS = [
+  { label: '新手', sf: { skill: 0, depth: 1, movetime: 300 }, fb: { maxDepth: 1, timeMs: 200, skill: 0 } },
+  { label: '业余', sf: { skill: 3, depth: 4, movetime: 600 }, fb: { maxDepth: 2, timeMs: 400, skill: 1 } },
+  { label: '棋手', sf: { skill: 10, depth: 11, movetime: 1200 }, fb: { maxDepth: 4, timeMs: 900, skill: 2 } },
+  { label: '大师', sf: { skill: 20, depth: 24, movetime: 2500 }, fb: { maxDepth: 6, timeMs: 2500, skill: 3 } },
+];
+
+/* AI 走子入口：优先 Stockfish，失败降级内置搜索。返回 {from,to,promotion}（代数坐标） */
+export async function chessAiMove(fen, level) {
+  const cfg = CHESS_LEVELS[level] || CHESS_LEVELS[2];
+  await ensureStockfish();
+  if (sfWorker) {
+    const uci = await sfBestMove(fen, cfg.sf);
+    if (uci) return uciToMove(uci);
+  }
+  const st = parseFEN(fen);
+  const best = findBestMove(st, cfg.fb);
+  if (!best) return null;
+  return { from: sqToAlg(best.from), to: sqToAlg(best.to), promotion: best.promo || undefined };
+}
+
+/* ============================================================
+   内置兜底引擎（negamax + α-β + 静态搜索 + 迭代加深）
+   规则实现曾按 perft(1/2/3) = 20/400/8902 校验，仅用于 Worker 不可用时的降级。
+   ============================================================ */
 export function parseFEN(fen) {
   const [pos, turn, cast, ep, half, full] = fen.trim().split(/\s+/);
   const board = new Array(64).fill(null);
@@ -37,25 +214,6 @@ export function parseFEN(fen) {
   };
 }
 
-export function toFEN(st) {
-  let pos = '';
-  for (let r = 0; r < 8; r++) {
-    let empty = 0;
-    for (let c = 0; c < 8; c++) {
-      const p = st.board[r * 8 + c];
-      if (!p) { empty++; continue; }
-      if (empty) { pos += empty; empty = 0; }
-      pos += p.c === 'w' ? p.t.toUpperCase() : p.t;
-    }
-    if (empty) pos += empty;
-    if (r < 7) pos += '/';
-  }
-  const cst = (st.castling.K ? 'K' : '') + (st.castling.Q ? 'Q' : '') + (st.castling.k ? 'k' : '') + (st.castling.q ? 'q' : '');
-  const ep = st.ep >= 0 ? String.fromCharCode(97 + (st.ep & 7)) + (8 - (st.ep >> 3)) : '-';
-  return `${pos} ${st.turn} ${cst || '-'} ${ep} ${st.half} ${st.full}`;
-}
-
-/* ---------- 攻击检测 ---------- */
 const KN = [[-2, -1], [-2, 1], [-1, -2], [-1, 2], [1, -2], [1, 2], [2, -1], [2, 1]];
 const KG = [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]];
 const DIAG = [[-1, -1], [-1, 1], [1, -1], [1, 1]];
@@ -63,10 +221,8 @@ const ORTH = [[-1, 0], [1, 0], [0, -1], [0, 1]];
 
 function onBoard(r, c) { return r >= 0 && r < 8 && c >= 0 && c < 8; }
 
-/* (r,c) 是否被 by 方攻击 */
-export function isAttacked(st, r, c, by) {
+function isAttacked(st, r, c, by) {
   const bd = st.board;
-  // 兵：白兵在 (r+1, c±1) 攻击 (r,c)
   const pd = by === 'w' ? 1 : -1;
   for (const dc of [-1, 1]) {
     const rr = r + pd, cc = c + dc;
@@ -126,10 +282,6 @@ export function inCheck(st, color) {
   return k >= 0 && isAttacked(st, k >> 3, k & 7, color === 'w' ? 'b' : 'w');
 }
 
-/* ---------- 走子生成 ----------
-   move = { from, to, t(子种), c(方), captured(子或null), promo(null|'q'...),
-            flag: '' | 'ep' | 'castleK' | 'castleQ' | 'double' } */
-
 function pushPawn(st, from, r, c, out) {
   const p = st.board[from];
   const dir = p.c === 'w' ? -1 : 1;
@@ -160,7 +312,7 @@ function pushPawn(st, from, r, c, out) {
   }
 }
 
-export function genPseudo(st) {
+function genPseudo(st) {
   const out = [];
   const bd = st.board;
   const me = st.turn;
@@ -177,8 +329,7 @@ export function genPseudo(st) {
         if (!v || v.c !== me) out.push({ from, to, t: p.t, c: me, captured: v || null, promo: null, flag: '' });
       }
       if (p.t === 'k') {
-        // 王车易位：王在原位、有权利、中间无子、王不经 checkout
-        const home = me === 'w' ? 60 : 4; // e1 / e8
+        const home = me === 'w' ? 60 : 4;
         if (from === home && !isAttacked(st, r, c, me === 'w' ? 'b' : 'w')) {
           const kRight = me === 'w' ? st.castling.K : st.castling.k;
           const qRight = me === 'w' ? st.castling.Q : st.castling.q;
@@ -213,7 +364,7 @@ export function genPseudo(st) {
   return out;
 }
 
-export function makeMove(st, m) {
+function makeMove(st, m) {
   const undo = {
     captured: null, ep: st.ep, half: st.half, full: st.full,
     castling: { ...st.castling },
@@ -229,10 +380,8 @@ export function makeMove(st, m) {
   }
   bd[m.to] = { t: m.promo || m.t, c: m.c };
   if (m.flag === 'castleK') {
-    const r = m.to >> 3;
-    bd[m.to - 1] = bd[m.to + 1]; bd[m.to + 1] = null; // 车入位
+    bd[m.to - 1] = bd[m.to + 1]; bd[m.to + 1] = null;
   } else if (m.flag === 'castleQ') {
-    const r = m.to >> 3;
     bd[m.to + 1] = bd[m.to - 2]; bd[m.to - 2] = null;
   }
   if (m.t === 'k') {
@@ -250,7 +399,7 @@ export function makeMove(st, m) {
   return undo;
 }
 
-export function unmakeMove(st, m, undo) {
+function unmakeMove(st, m, undo) {
   const bd = st.board;
   bd[m.from] = { t: m.t, c: m.c };
   bd[m.to] = null;
@@ -268,7 +417,7 @@ export function unmakeMove(st, m, undo) {
   st.turn = st.turn === 'w' ? 'b' : 'w';
 }
 
-export function genLegal(st) {
+function genLegal(st) {
   const out = [];
   for (const m of genPseudo(st)) {
     const undo = makeMove(st, m);
@@ -278,74 +427,6 @@ export function genLegal(st) {
   return out;
 }
 
-/* ---------- SAN ---------- */
-export function moveToSan(st, m, legal) {
-  if (m.flag === 'castleK') return withSuffix(st, m, 'O-O');
-  if (m.flag === 'castleQ') return withSuffix(st, m, 'O-O-O');
-  let s = '';
-  if (m.t === 'p') {
-    if (m.captured) s += String.fromCharCode(97 + (m.from & 7)) + 'x';
-    s += sqName(m.to);
-    if (m.promo) s += '=' + m.promo.toUpperCase();
-  } else {
-    s += m.t.toUpperCase();
-    const rivals = (legal || genLegal(st)).filter((x) => x.t === m.t && x.to === m.to && x.from !== m.from);
-    if (rivals.length) {
-      const sameFile = rivals.some((x) => (x.from & 7) === (m.from & 7));
-      const sameRank = rivals.some((x) => (x.from >> 3) === (m.from >> 3));
-      if (!sameFile) s += String.fromCharCode(97 + (m.from & 7));
-      else if (!sameRank) s += String(8 - (m.from >> 3));
-      else s += sqName(m.from);
-    }
-    if (m.captured) s += 'x';
-    s += sqName(m.to);
-  }
-  return withSuffix(st, m, s);
-}
-function sqName(sq) { return String.fromCharCode(97 + (sq & 7)) + (8 - (sq >> 3)); }
-function withSuffix(st, m, s) {
-  const undo = makeMove(st, m);
-  const enemy = st.turn;
-  if (inCheck(st, enemy)) s += genLegal(st).length === 0 ? '#' : '+';
-  unmakeMove(st, m, undo);
-  return s;
-}
-
-/* ---------- 终局判定 ---------- */
-export function gameStatus(st, opts) {
-  const legal = genLegal(st);
-  if (!legal.length) {
-    if (inCheck(st, st.turn)) return { over: true, result: st.turn === 'w' ? '0-1' : '1-0', reason: 'checkmate' };
-    return { over: true, result: '1/2-1/2', reason: 'stalemate' };
-  }
-  if (st.half >= 100) return { over: true, result: '1/2-1/2', reason: 'fifty' };
-  // 子力不足：王 vs 王、王+单轻子 vs 王，以及王+双马 vs 王等必然和棋
-  const pieces = st.board.filter(Boolean).filter((p) => p.t !== 'k');
-  const hasPawnRookQueen = pieces.some((p) => p.t === 'p' || p.t === 'r' || p.t === 'q');
-  if (!hasPawnRookQueen) {
-    const majors = pieces.filter((p) => p.t === 'b' || p.t === 'n');
-    // 无兵/车/后时：没有子，或只剩一个轻子 => 和棋（马或象单兵难胜）
-    if (majors.length <= 1) return { over: true, result: '1/2-1/2', reason: 'material' };
-  }
-  // 三次重复局面（含当前局面在内，出现 3 次即可判和）
-  if (opts && opts.repetition && opts.repetition >= 3) {
-    return { over: true, result: '1/2-1/2', reason: 'repetition' };
-  }
-  return { over: false, result: '', reason: '' };
-}
-
-/* 局面的「易位 + 吃过路兵」无关指纹，用于重复局面统计。
-   按 FIDE 规则，重复判定只看棋子位置与轮走方，不看 half/full。 */
-export function repetitionKey(st) {
-  const bd = st.board.map((p) => (p ? (p.c === 'w' ? p.t.toUpperCase() : p.t) : '.')).join('');
-  return bd + ' ' + st.turn + ' ' +
-    (st.castling.K ? 'K' : '') + (st.castling.Q ? 'Q' : '') +
-    (st.castling.k ? 'k' : '') + (st.castling.q ? 'q' : '') + ' ' + st.ep;
-}
-
-/* ---------- AI ----------
-   评估 = 子力 + 分兵种位置表；黑方按行镜像。
-   negamax + α-β + 走子排序（MVV-LVA）+ 吃子静态搜索。 */
 const VAL = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 0 };
 const PST = {
   p: [0, 0, 0, 0, 0, 0, 0, 0, 50, 50, 50, 50, 50, 50, 50, 50, 10, 10, 20, 30, 30, 20, 10, 10, 5, 5, 10, 25, 25, 10, 5, 5, 0, 0, 0, 20, 20, 0, 0, 0, 5, -5, -10, 0, 0, -10, -5, 5, 5, 10, 10, -20, -20, 10, 10, 5, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -370,7 +451,6 @@ function evaluate(st) {
     const v = VAL[p.t] + pst;
     score += p.c === 'w' ? v : -v;
   }
-  // 残局（重子少）换王的位置表
   if (heavy <= 6) {
     for (const color of ['w', 'b']) {
       const k = kingSq(st, color);
@@ -433,7 +513,7 @@ function negamax(st, depth, alpha, beta, ctx) {
   return best;
 }
 
-/* 迭代加深找最佳走法。skill: 0 新手（带随机性）~3 大师 */export function findBestMove(state, { maxDepth = 3, timeMs = 800, skill = 3 } = {}) {
+function findBestMove(state, { maxDepth = 3, timeMs = 800, skill = 3 } = {}) {
   const st = cloneState(state);
   const ctx = { nodes: 0, deadline: Date.now() + timeMs, stop: false, rootDepth: maxDepth };
   const rootMoves = orderMoves(st, genLegal(st));
@@ -458,9 +538,8 @@ function negamax(st, depth, alpha, beta, ctx) {
       const sb = scored.find((x) => x.m === b)?.v ?? -Infinity;
       return sb - sa;
     });
-    if (Math.abs(alpha) > 90000) break; // 已见杀棋
+    if (Math.abs(alpha) > 90000) break;
   }
-  // 低难度：一定比例走随机好棋（不至于每步最优）
   if (skill === 0 && Math.random() < 0.5) {
     const pool = rootMoves.slice(0, Math.min(rootMoves.length, 6));
     return pool[(Math.random() * pool.length) | 0];
@@ -472,7 +551,7 @@ function negamax(st, depth, alpha, beta, ctx) {
   return bestMove;
 }
 
-export function cloneState(st) {
+function cloneState(st) {
   return {
     board: st.board.map((p) => (p ? { ...p } : null)),
     turn: st.turn,

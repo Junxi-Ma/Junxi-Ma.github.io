@@ -605,3 +605,16 @@ body.ch-page [hidden] { display: none !important; }
   transform: translate(-50%, -50%);
   pointer-events: none;
 }
+
+/* ---------- 棋力排行榜 ---------- */
+.ch-lb-card { width: min(430px, 100%); }
+#lb-tabs { margin: 4px 0 14px; }
+.ch-lb-body { min-height: 120px; max-height: 46vh; overflow: auto; }
+.ch-lb-empty { color: var(--text-2); text-align: center; padding: 26px 6px; font-size: 14px; line-height: 1.7; }
+.ch-lb-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.ch-lb-table th, .ch-lb-table td { padding: 8px 6px; text-align: center; border-bottom: 1px solid var(--border); }
+.ch-lb-table th { color: var(--text-3); font-weight: 600; font-size: 12.5px; }
+.ch-lb-table td:nth-child(2) { text-align: left; color: var(--text-1); }
+.ch-lb-table tr.me td { background: color-mix(in srgb, var(--accent, #c8a24b) 14%, transparent); }
+.ch-lb-table tr:first-child td:nth-child(1) { color: #d9a441; font-weight: 700; }
+.ch-lb-note { margin-top: 10px; color: var(--text-3); text-align: center; font-size: 12.5px; }

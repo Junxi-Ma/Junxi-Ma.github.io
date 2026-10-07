@@ -776,3 +776,151 @@ begin
   alter publication supabase_realtime add table public.chess_rooms;
 exception when duplicate_object then null;
 end $$;
+
+-- ############################################################
+-- 十二、棋乐馆战绩与排行榜（/tools/chess/，四棋通用）
+--   人机对弈与联机对局结束后由前端写入一行；排行榜按棋类聚合胜/平/负。
+--   双人同屏不记录（无对局者身份）。
+-- ############################################################
+
+-- 1) 战绩表：result 以对局者视角记录 win | loss | draw
+create table if not exists public.chess_results (
+  id         uuid primary key default gen_random_uuid(),
+  user_id    uuid references auth.users(id) on delete set null,
+  name       text not null default '游客',
+  kind       text not null check (kind in ('chess','xiangqi','gomoku','go')),
+  result     text not null check (result in ('win','loss','draw')),
+  difficulty text not null default '',          -- 人机档位 '0'..'3'；联机为 'online'
+  side       text not null default '',          -- 执子：w/b、r/b、1/2
+  moves      int  not null default 0,
+  seconds    int  not null default 0,
+  created_at timestamptz not null default now()
+);
+create index if not exists chess_results_kind_idx  on public.chess_results (kind, created_at desc);
+create index if not exists chess_results_user_idx  on public.chess_results (user_id);
+
+-- 2) 登录用户的署名以账号资料为准（防冒名），与扫雷/数独同一套路
+create or replace function public.chess_resolve_name()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare pname text;
+begin
+  if new.user_id is not null then
+    select coalesce(p.display_name, split_part(p.email, '@', 1))
+      into pname
+      from public.profiles p
+      where p.id = new.user_id;
+    if pname is not null then
+      new.name := pname;
+    end if;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists chess_resolve_name_trg on public.chess_results;
+create trigger chess_resolve_name_trg
+  before insert on public.chess_results
+  for each row execute function public.chess_resolve_name();
+
+-- 3) 排行榜聚合（匿名可读）：按棋类返回胜/平/负与胜率，按胜场降序
+create or replace function public.get_chess_leaderboard(p_kind text, p_limit int default 50)
+returns table (
+  name   text,
+  wins   bigint,
+  draws  bigint,
+  losses bigint,
+  games  bigint
+)
+language sql
+security definer
+stable
+set search_path = public
+as $$
+  select
+    r.name,
+    count(*) filter (where r.result = 'win')::bigint  as wins,
+    count(*) filter (where r.result = 'draw')::bigint as draws,
+    count(*) filter (where r.result = 'loss')::bigint as losses,
+    count(*)::bigint                                   as games
+  from public.chess_results r
+  where r.kind = p_kind
+  group by r.name
+  order by wins desc, games asc, max(r.created_at) asc
+  limit least(greatest(coalesce(p_limit, 50), 1), 200);
+$$;
+
+revoke all on function public.get_chess_leaderboard(text, int) from public;
+grant execute on function public.get_chess_leaderboard(text, int) to anon, authenticated;
+
+-- 4) 行级安全：榜单全员可读；写入仅限未被封禁者，登录用户只能挂自己的 user_id
+alter table public.chess_results enable row level security;
+
+drop policy if exists "chess results readable" on public.chess_results;
+create policy "chess results readable" on public.chess_results
+  for select to anon, authenticated using (true);
+
+drop policy if exists "not banned can insert chess results" on public.chess_results;
+create policy "not banned can insert chess results"
+  on public.chess_results
+  for insert
+  to anon, authenticated
+  with check (
+    kind in ('chess','xiangqi','gomoku','go')
+    and result in ('win','loss','draw')
+    and moves between 0 and 9999
+    and seconds between 0 and 86399
+    and (user_id is null or user_id = auth.uid())
+    and not coalesce(public.is_banned(), false)
+  );
+
+-- ############################################################
+-- 十三、棋乐馆四棋通用联机房间（/tools/chess/，房间码即凭证）
+--   取代 chess_rooms（旧表保留不动，老房间自然废弃）。
+--   state 为局面真相（jsonb）：chess={fen}；xiangqi={bd,turn,half}；
+--   gomoku={bd}；go={bd,turn,ko,passes,caps}。moves 为着法列表。
+--   host_side 记录房主执子（'w'/'b'/'r'/'1'/'2'），客人执另一边。
+-- ############################################################
+
+create table if not exists public.board_rooms (
+  code        text primary key,
+  kind        text not null check (kind in ('chess','xiangqi','gomoku','go')),
+  state       jsonb not null default '{}',
+  moves       jsonb not null default '[]',
+  host_name   text not null default '',
+  host_side   text not null default '',
+  guest_name  text not null default '',
+  status      text not null default 'waiting', -- waiting | playing | finished
+  result      text not null default '',        -- first | second | draw
+  created_at  timestamptz not null default now(),
+  updated_at  timestamptz not null default now()
+);
+create index if not exists board_rooms_updated_idx on public.board_rooms (updated_at desc);
+
+alter table public.board_rooms enable row level security;
+
+drop policy if exists "board rooms readable" on public.board_rooms;
+create policy "board rooms readable" on public.board_rooms
+  for select to anon, authenticated using (true);
+drop policy if exists "board rooms creatable" on public.board_rooms;
+create policy "board rooms creatable" on public.board_rooms
+  for insert to anon, authenticated with check (true);
+drop policy if exists "board rooms editable" on public.board_rooms;
+create policy "board rooms editable" on public.board_rooms
+  for update to anon, authenticated using (true) with check (true);
+
+do $$
+begin
+  alter publication supabase_realtime add table public.board_rooms;
+exception when duplicate_object then null;
+end $$;
+do $$
+begin
+  alter publication supabase_realtime add table public.chess_results;
+exception when duplicate_object then null;
+end $$;
+
+notify pgrst, 'reload schema';

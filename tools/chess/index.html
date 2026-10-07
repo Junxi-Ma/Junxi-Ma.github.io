@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>棋乐馆 — Michael</title>
-  <meta name="description" content="四棋合一：国际象棋（人机四档 AI + 联机房间）、中国象棋、五子棋、围棋。全屏棋盘、完整规则判定（易位、吃过路兵、升变、将杀、逼和、五十回合、三次重复、提子、禁自杀、劫争）。">
+  <meta name="description" content="四棋合一：国际象棋（chess.js 规则 + Stockfish 引擎四档 AI）、中国象棋、五子棋、围棋。全部支持人机 / 双人同屏 / 联机房间与棋力排行榜。全屏棋盘、完整规则判定（易位、吃过路兵、升变、将杀、逼和、五十回合、三次重复、提子、禁自杀、劫争）。">
   <meta name="theme-color" content="#0a0a0b">
   <meta name="color-scheme" content="dark light">
   <link rel="icon" type="image/svg+xml" href="../../assets/img/favicon.svg">
@@ -21,7 +21,7 @@
   </script>
   <link rel="stylesheet" href="../../assets/css/tokens.css">
   <link rel="stylesheet" href="../../assets/css/main.css">
-  <link rel="stylesheet" href="style.css?v=12">
+  <link rel="stylesheet" href="style.css?v=13">
   <!-- 棋牌桌背景（用户提供照片）：进对局视图时预加载，避免首帧空白 -->
   <link rel="preload" as="image" href="../../assets/img/chess-table.webp" type="image/webp">
   <style>
@@ -75,7 +75,7 @@
         <a class="article-back" href="../../tools.html"><span class="arr">←</span>全部工具</a>
         <p class="mono-label">Tool <span>/</span> 09</p>
         <h1>棋乐馆</h1>
-        <p>选择对局模式进入全屏棋盘：国际象棋、中国象棋、五子棋、围棋四种棋类，人机对弈内置 α-β 剪枝搜索的 AI，双人联机以房间码即邀请函，走子实时同步，完整规则判定（易位、吃过路兵、升变、将杀、逼和与和棋）。</p>
+        <p>选择棋类 × 模式 × 难度 / 执子进入全屏棋盘：国际象棋（chess.js + Stockfish 引擎）、中国象棋、五子棋、围棋。四棋均支持人机 / 双人同屏 / 联机房间，房间码即邀请函，走子实时同步，并有跨设备的棋力排行榜。</p>
       </div>
 
       <!-- 启动器：选择模式 -->
@@ -99,10 +99,7 @@
           <div class="ch-chips" id="sel-diff"></div>
           <div id="sel-side-wrap">
             <p class="ch-label">我执</p>
-            <div class="ch-chips" id="sel-side">
-              <button type="button" class="ch-chip on" data-v="w">执白先行</button>
-              <button type="button" class="ch-chip" data-v="b">执黑</button>
-            </div>
+            <div class="ch-chips" id="sel-side"></div>
           </div>
           <div id="sel-online-wrap" hidden>
             <button type="button" class="ch-btn primary wide" id="ch-create">✚ 创建房间</button>
@@ -114,9 +111,10 @@
             <p class="ch-label" style="margin-top:10px">不输码则创建新房间</p>
           </div>
           <button type="button" class="ch-btn primary wide" id="ch-start">开始对弈 →</button>
+          <button type="button" class="ch-btn wide" id="ch-lb-btn" style="margin-top:10px">🏆 棋力排行榜</button>
         </div>
       </div>
-        <p class="ch-tip">国际象棋完整规则：王车易位、吃过路兵、升变、将杀、逼和、五十回合与三次重复和棋｜围棋：提子、禁自杀、劫争、中国规则数子（贴 7.5）｜对局内可悔棋、认输、翻转、真全屏</p>
+        <p class="ch-tip">国际象棋由 chess.js 判定全部规则、Stockfish 引擎执子（王车易位可直接「王吃到车」）｜中国象棋、五子棋、围棋同样四棋可选执子、三至四档 AI、全部支持联机房间｜对局内可悔棋、认输、停一手、翻转、真全屏</p>
       </div>
     </div>
   </main>
@@ -164,6 +162,19 @@
     </div>
   </div>
 
+  <!-- 排行榜 -->
+  <div class="ch-modal" id="ch-lb" hidden>
+    <div class="ch-card ch-lb-card" role="dialog" aria-modal="true" aria-label="棋力排行榜">
+      <h3>棋力排行榜</h3>
+      <div class="ch-chips" id="lb-tabs" style="justify-content:center"></div>
+      <div class="ch-lb-body" id="lb-body"></div>
+      <p class="ch-lb-note" id="lb-note"></p>
+      <div class="ch-actions">
+        <button type="button" class="ch-btn" id="lb-close">关闭</button>
+      </div>
+    </div>
+  </div>
+
   <footer class="footer">
     <div class="container footer__inner">
       <span>© <span data-year>2026</span> Michael · <span class="footer__heart">♥</span> 手工打造 · 动静结合</span>
@@ -176,6 +187,6 @@
   </footer>
 
   <script type="module" src="../../assets/js/main.js"></script>
-  <script type="module" src="app.js?v=20"></script>
+  <script type="module" src="app.js?v=21"></script>
 </body>
 </html>
