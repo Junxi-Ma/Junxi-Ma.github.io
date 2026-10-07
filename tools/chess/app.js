@@ -10,10 +10,10 @@
    ============================================================ */
 import {
   START_FEN, ChessGame, chessAiMove, pieceGlyph, sqToAlg, algToSq,
-} from './engine.js?v=21';
-import * as Gomoku from './gomoku.js?v=21';
-import * as Xiangqi from './xiangqi.js?v=21';
-import * as Go from './go.js?v=21';
+} from './engine.js?v=22';
+import * as Gomoku from './gomoku.js?v=22';
+import * as Xiangqi from './xiangqi.js?v=22';
+import * as Go from './go.js?v=22';
 import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
 
 (() => {
@@ -132,7 +132,7 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     if (aiWorkerTried) return aiWorker;
     aiWorkerTried = true;
     try {
-      const w = new Worker(new URL('./ai-worker.js?v=21', import.meta.url), { type: 'module' });
+      const w = new Worker(new URL('./ai-worker.js?v=22', import.meta.url), { type: 'module' });
       w.onmessage = (e) => {
         const { id, ok, result, error } = e.data || {};
         const p = aiPending.get(id);
@@ -543,6 +543,12 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
       gomokuEnd(GG.turnNow, (GG.turnNow === 1 ? '黑方' : '白方') + '五连获胜 🎉');
       return;
     }
+    // 棋盘下满仍无五连 → 和棋（无禁手休闲规则下唯一的和棋情形）
+    if (GG.moves.length >= 225) {
+      gomokuRender();
+      gomokuEnd(null, '棋盘已下满，双方未成五连 —— 和棋 🤝');
+      return;
+    }
     GG.turnNow = GG.turnNow === 1 ? 2 : 1;
     gomokuRender();
     renderStatus();
@@ -551,6 +557,11 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
 
   function gomokuEnd(winnerSide, text) {
     endGame(text);
+    if (winnerSide == null) { // 和棋
+      if (mode === 'online' && online) onlineMarkFinished('draw');
+      if (GG.vsAI) recordGame('draw');
+      return;
+    }
     if (mode === 'online' && online) onlineMarkFinished(winnerSide === 1 ? 'first' : 'second');
     if (GG.vsAI) recordGame(winnerSide === GG.me ? 'win' : 'loss');
   }

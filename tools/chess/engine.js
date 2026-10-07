@@ -8,7 +8,7 @@
    AI 兜底：本文件内置的 negamax + α-β + 静态搜索（Worker 加载失败时降级）。
    坐标：内部兜底引擎 sq 0 = a8，7 = h8，56 = a1，63 = h1。
    ============================================================ */
-import { Chess } from './vendor/chess.js?v=21';
+import { Chess } from './vendor/chess.js?v=22';
 
 export const START_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 
@@ -105,7 +105,7 @@ export const algToSq = (alg) => (alg.charCodeAt(0) - 97) + (8 - +alg[1]) * 8;
 /* ============================================================
    Stockfish Worker（懒加载 + 失败自动降级 asm.js，再失败走内置兜底）
    ============================================================ */
-const SF_SOURCES = ['./vendor/stockfish.wasm.js?v=21', './vendor/stockfish-asm.js?v=21'];
+const SF_SOURCES = ['./vendor/stockfish.wasm.js?v=22', './vendor/stockfish-asm.js?v=22'];
 let sfWorker = null;
 let sfInitPromise = null;
 
