@@ -1,0 +1,66 @@
+# 自动构建内容索引并部署到 GitHub Pages
+#
+# 为什么用这个方案而不是 pre-commit 钩子：
+#   钩子只在你本机 git commit 时运行。一旦用 GUI 客户端、或直接在 GitHub 网页上
+#   编辑 notes/，钩子就不会执行，data/index.json 就会落后于内容（列表页/首页摘要
+#   显示旧信息）。把 build_index.py 放到服务端构建阶段，索引永远由当时的仓库内容
+#   现场生成，任何提交方式都不会漏。
+#
+# 前置设置（一次性）：仓库 Settings → Pages → Source 选 "GitHub Actions"。
+
+name: 构建索引并部署站点
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# GITHUB_TOKEN 的最小权限：读代码、写 Pages、签发 OIDC
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 同一时刻只跑一个部署；不取消进行中的部署，避免线上出现半个版本
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: 构建站点
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出仓库
+        uses: actions/checkout@v4
+
+      - name: 准备 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: 生成 data/index.json
+        run: python scripts/build_index.py
+
+      - name: 配置 Pages
+        uses: actions/configure-pages@v5
+
+      - name: 剔除不该发布的目录
+        run: rm -rf .git .github
+
+      - name: 打包站点
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+  deploy:
+    name: 部署
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: 部署到 GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

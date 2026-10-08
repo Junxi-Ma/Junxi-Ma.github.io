@@ -1,7 +1,8 @@
 # Michael — 个人网站
 
 暗色高级感的个人网站：纯静态前端 + Supabase 动态后端（登录、统计、在线房间），小工具、子网页与学习笔记。
-**零框架、零构建步骤** —— 只有 HTML / CSS / JavaScript，部署在 GitHub Pages。
+**零框架、零打包步骤** —— 只有 HTML / CSS / JavaScript，部署在 GitHub Pages
+（唯一的 CI 环节是用 Python 标准库生成内容索引，见「内容索引机制」）。
 
 ![风格] 近黑底色 `#0A0A0B` + 琥珀金强调色 `#F2A93B`，所有视觉变量集中在 `assets/css/tokens.css`。
 
@@ -17,7 +18,8 @@
 ├── branches.html           分支列表（子网页索引，数据来自 data/index.json）
 ├── 404.html                自定义 404（GitHub Pages 自动生效）
 ├── .nojekyll               ★ 必须保留：禁用 Jekyll，否则 .md 文件会被它转换吃掉
-├── .githooks/pre-commit    提交钩子：commit 时自动刷新索引（见下文）
+├── .github/workflows/      GitHub Actions：现场生成索引并部署 Pages（见下文）
+├── .githooks/pre-commit    本地提交钩子：commit 时刷新索引，仅为本地预览方便
 ├── assets/
 │   ├── css/                tokens.css 设计变量+深浅主题 · main.css 全站 ·
 │   │                       markdown.css 笔记排版 · tool-ui.css 工具页组件
@@ -29,7 +31,7 @@
 ├── branches/               ★ 分支子网页放这里（每个子网页一个文件夹）
 │   ├── index.json          分支定制清单（标题/简介/标签/排序，可选）
 │   └── junxun/             军训专属祝福（留言板）
-├── data/index.json         内容索引（生成物，已入库，提交钩子自动维护）
+├── data/index.json         内容索引（生成物，已入库，部署时由工作流重新生成）
 ├── scripts/build_index.py  索引生成脚本（纯标准库）
 └── README.md
 ```
@@ -42,7 +44,7 @@
 > `fetch`，列表和笔记会渲染不出来）。
 
 ```bash
-# 1. 生成内容索引（通常不用手动跑：git commit 时钩子会自动执行）
+# 1. 生成内容索引（本地预览需要；线上由 GitHub Actions 自动生成，无需手动跑）
 python scripts/build_index.py
 
 # 2. 启动本地服务器
@@ -82,7 +84,8 @@ description: 一句话摘要，显示在列表里。
 正文……
 ```
 
-3. `git add . && git commit -m "新增笔记"` —— **提交钩子会自动刷新索引**，推送后约 1 分钟上线。
+3. `git add . && git commit -m "新增笔记"` —— **不用管索引**，推送后 GitHub Actions 会自动生成，
+   约 1 分钟上线。
 
 **回退规则**：缺 `title` 取正文第一个 `#` 标题；缺 `description` 取首段文字；
 缺 `date` 归入「未标注」分组；缺 `tags` 不显示标签。
@@ -146,12 +149,15 @@ description: 一句话摘要，显示在列表里。
 
 ## 部署说明（GitHub Pages）
 
-**当前方案：Deploy from a branch（分支部署）**。
+**当前方案：GitHub Actions 构建并部署**，工作流在 `.github/workflows/pages.yml`。
 
-仓库 Settings → Pages → Source 应为 **Deploy from a branch**，分支 `main`，目录 `/(root)`。
-（本仓库初次配置即为此模式，无需额外操作。）
+仓库 Settings → Pages → Source 必须设为 **GitHub Actions**
+（若该选项灰色，检查 Settings → General → Actions 是否被禁用、或账号邮箱是否已验证）。
 
-推送流程就是普通三连，**没有任何额外步骤**：
+服务端每次推送会：检出仓库 → **现场运行 `scripts/build_index.py` 生成 `data/index.json`**
+→ 打包整个站点 → 部署。
+
+推送流程就是普通三连，**不需要跑任何脚本**：
 
 ```cmd
 git add .
@@ -159,39 +165,39 @@ git commit -m "更新说明"
 git push
 ```
 
-- `git commit` 时，`.githooks/pre-commit` 自动运行 `scripts/build_index.py`
-  并把最新的 `data/index.json` 加进本次提交 —— 所以索引永远和内容同步
+- 索引由**服务端现场生成**，永远和内容同步；本地不需要跑任何脚本
+- 用 GUI 客户端提交、甚至直接在 GitHub 网页上改 `notes/`，一样会自动生效
 - 推送后 GitHub 约 1 分钟完成部署
 - 约 10 分钟内 CDN 可能短暂显示旧列表，强刷（Ctrl+F5）即可
 
-### 提交钩子
+### 本地钩子（可选，只为本地预览）
 
-钩子配置在仓库本地（`.git/config` 的 `core.hooksPath=.githooks`），不会影响别人。
-**新 clone / 换电脑后执行一次**：
+`.githooks/pre-commit` 会在 `git commit` 时刷新 `data/index.json`，好处是本地预览
+立刻就是最新列表。它**不再是线上正确性的依赖** —— 线上由工作流兜底。
+
+**新 clone / 换电脑后想启用，执行一次**：
 
 ```cmd
 git config core.hooksPath .githooks
 ```
 
-移除钩子（改为手动跑脚本）：`git config --unset core.hooksPath`
+移除钩子：`git config --unset core.hooksPath`
 
-> ⚠️ 在 GitHub 网页上直接编辑 `notes/` 里的文件不会触发钩子 —— 网页改完后，
-> 本地 `git pull`，再随便 `git commit --amend --no-edit` 或下次提交时索引会自动追平。
+> 之前「网页上改笔记不会更新索引」的坑已经不存在了：索引改由服务端生成，
+> 任何提交方式都能追平。
 
 ### 部署须知
 
-- **提交信息里不要写 `[skip ci]`** —— 会跳过 Pages 的部署流水线
-- 本地忘跑索引脚本没关系（钩子兜底）；但若钩子被移除，推送前必须手动跑一次，
-  否则新笔记/新工具不会出现在列表里
+- **提交信息里不要写 `[skip ci]`** —— 会跳过整个部署工作流，站点不会更新
+- 别忘了 `Settings → Pages → Source` 得是 **GitHub Actions**；若仍是
+  "Deploy from a branch"，工作流会在部署步骤报错（此时站点靠分支部署仍能上线，
+  但索引不会自动生成）
 
-### 可选升级：恢复 GitHub Actions 自动部署
+### 回退到分支部署
 
-如果以后想改回「CI 自动生成索引、本地零维护」的模式：
-
-1. 恢复工作流文件：`git show faa76a9:.github/workflows/deploy-site.yml > .github/workflows/deploy-site.yml`
-2. Settings → Pages → Source 改为 **GitHub Actions**（若该选项灰色，检查
-   Settings → General → Actions 是否被禁用、或账号邮箱是否已验证）
-3. 推送后到 Actions 手动 Run workflow 一次
+把 `Settings → Pages → Source` 改回 **Deploy from a branch**（分支 `main`、
+目录 `/(root)`），并删除 `.github/workflows/pages.yml`。此时索引要自己保证最新：
+本地钩子会兜底，或在推送前手动跑 `python scripts/build_index.py`。
 
 两种方案共用同一份 `data/index.json` 前端契约，站点代码零改动。
 
@@ -201,26 +207,33 @@ git config core.hooksPath .githooks
 
 | 现象 | 原因 / 解决 |
 | --- | --- |
-| 列表一直转圈或显示 Error | `data/index.json` 缺失或过期 → 跑 `python scripts/build_index.py` 后重新提交 |
-| 钩子没生效（commit 时没有 `[pre-commit]` 输出） | 执行 `git config core.hooksPath .githooks` 重新挂上 |
+| 列表一直转圈或显示 Error | `data/index.json` 缺失或过期 → 本地 `python scripts/build_index.py`；线上看 Actions 是否部署成功 |
+| 钩子没生效（commit 时没有 `[pre-commit]` 输出） | 执行 `git config core.hooksPath .githooks` 重新挂上（仅影响本地预览，线上由工作流兜底） |
 | 双击打开全部空白 | 必须用 HTTP 服务器（见「本地预览」） |
 | `.nojekyll` 删了之后笔记 404 | Jekyll 会把 .md 转成 .html，**别删这个文件** |
 | 导航菜单改了没生效 | 导航/页脚在 5 个主页面 + 6 个工具页里各有一份，需同步修改（无构建的代价） |
-| 新增分支页面后列表里没有 | `data/index.json` 缺失或过期 → 跑 `python scripts/build_index.py` 后重新提交 |
+| 新增分支页面后列表里没有 | `data/index.json` 缺失或过期 → 本地 `python scripts/build_index.py`；线上看 Actions 是否部署成功 |
 | 分支页面从子目录跳不回站点 | 用相对路径 `../../branches.html`，别写绝对路径 `/branches.html`（站内需兼容子路径部署） |
 | 页面一闪而过变色（深→浅） | 正常：主题在 `<head>` 内联脚本里就已确定，闪的是浏览器首次绘制 |
 | 新笔记文件名是中文 | 能用，但 URL 会带编码，建议英文 slug |
-| 网页版 GitHub 改了笔记但列表没更新 | 网页编辑不走钩子，本地 pull 后下次提交自动追平 |
+| 网页版 GitHub 改了笔记但列表没更新 | 索引由服务端工作流生成，等部署完成即可；若一直没变，检查 Pages Source 是否为 GitHub Actions |
+| **推送后网页没变化** | ① `git status -sb` 看是否还领先 `origin/main`（没推送成功最常被忽略）；② 查 Actions 是否有红灯；③ 提交信息里别带 `[skip ci]` |
+| 改了 Markdown 但线上还是旧索引 | 看 Actions 的 `构建索引并部署站点` 是否成功；失败时站点会停在上一版 |
 
 ## 内容索引机制
 
 纯静态站点没有服务端目录列表，所以：
 
 ```
-你写笔记 → git commit（钩子自动运行 build_index.py 扫描 notes/ 和 tools/ 和 branches/）
-         → data/index.json 随提交入库（幂等：内容没变则字节级一致）
-         → git push → GitHub 分支部署 → 前端读同源的 index.json
+你写笔记（任意方式：编辑器 / GUI / GitHub 网页）
+   → git push
+   → GitHub Actions 检出仓库并现场运行 build_index.py（扫描 notes/ 和 tools/ 和 branches/）
+   → 生成 data/index.json 打进发布产物（幂等：内容没变则字节级一致）
+   → 部署到 Pages → 前端读同源的 index.json
 ```
+
+索引由**服务端生成**，所以本地不需要跑任何脚本，也不会再出现「改了笔记但列表是旧的」。
+仓库里入库的 `data/index.json` 只服务本地预览。
 
 零第三方运行时 API（不依赖 api.github.com 等，国内访问稳定）。
 脚本纯 Python 标准库，本地即可运行。
