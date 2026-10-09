@@ -15,7 +15,7 @@
       "url": "branches/junxun/index.html",
       "title": "军训专属祝福",
       "description": "二〇二六夏军训纪念页：输入姓名查到教官写给你的专属祝福，拆开两位教官写给全体同学的信，并在共享留言墙上留言、点赞与回复。",
-      "tags": ["纪念", "留言板"],
+      "tags": ["生活"],
       "icon": "🎖️",
       "order": 1
     },
@@ -24,7 +24,7 @@
       "url": "branches/cloud-cover/index.html",
       "title": "可见光云量识别",
       "description": "大气探测学课程项目：色比法与轻量 U-Net（WSISEG 全天空数据集训练）双引擎本地识别云量成数，全部计算在浏览器端完成，图片零上传。",
-      "tags": ["课程项目", "大气探测", "AI"],
+      "tags": ["大气探测学"],
       "icon": "🌤️",
       "order": 2
     },
@@ -33,7 +33,7 @@
       "url": "branches/shiroha-quiz/index.html",
       "title": "Shiroha 刷题",
       "description": "嫁接自开源项目 Shiroha Quiz 的刷题工具：导入 Word / Excel / TXT / JSON / PDF 题库，支持练习、考试、错题本与收藏，数据保存在浏览器本地，下次打开自动恢复。",
-      "tags": ["刷题", "题库", "考试"],
+      "tags": ["学习"],
       "icon": "📝",
       "order": 3
     },
@@ -42,7 +42,7 @@
       "url": "branches/sky-watch/index.html",
       "title": "看图识天",
       "description": "气象人的看图研判台：每天 02/08/14/20 时自动获取中央气象台地面天气图（等压线·锋面）与风云卫星云图，回看最近 24 小时四张图，在每张图下的留言板用快捷语或自由撰写天气研判，点赞互动，一键收藏图与研判进账户，随时翻阅看云战绩。",
-      "tags": ["天气图", "云图", "研判留言板"],
+      "tags": ["天气学原理"],
       "icon": "🛰️",
       "order": 4
     }

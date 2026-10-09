@@ -1,7 +1,7 @@
 ---
 title: 无构建步骤下的自动索引与渲染管线
 date: 2026-09-10
-tags: [架构, GitHub Actions, 前端]
+tags: [技术]
 description: 不用任何框架和打包器，怎么让纯静态网站自动发现新笔记并安全地渲染 Markdown。
 ---
 
