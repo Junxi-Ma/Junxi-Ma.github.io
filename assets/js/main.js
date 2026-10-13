@@ -101,6 +101,74 @@ document.querySelectorAll('[data-year]').forEach((el) => {
   el.textContent = String(new Date().getFullYear());
 });
 
+/* ---------- 滚动进度条（全站注入；阅读页已有 #progress 则跳过） ---------- */
+const existingProgress = document.getElementById('progress');
+const progressBar = existingProgress || document.createElement('div');
+if (!existingProgress) {
+  progressBar.className = 'scroll-progress';
+  progressBar.setAttribute('aria-hidden', 'true');
+  document.body.appendChild(progressBar);
+}
+
+/* ---------- 返回顶部（滚动一段后出现） ---------- */
+const toTop = document.createElement('button');
+toTop.className = 'to-top';
+toTop.type = 'button';
+toTop.setAttribute('aria-label', '返回顶部');
+toTop.innerHTML =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" ' +
+  'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+  '<path d="M12 19V5M5 12l7-7 7 7"/></svg>';
+document.body.appendChild(toTop);
+
+toTop.addEventListener('click', () => {
+  window.scrollTo({
+    top: 0,
+    behavior: reducedMotion.matches ? 'auto' : 'smooth',
+  });
+});
+
+let scrollRaf = 0;
+function syncScrollUI() {
+  const doc = document.documentElement;
+  const max = doc.scrollHeight - window.innerHeight;
+  const y = window.scrollY || doc.scrollTop || 0;
+  const ratio = max > 0 ? Math.min(1, Math.max(0, y / max)) : 0;
+
+  if (!existingProgress) {
+    progressBar.style.setProperty('--sp', ratio.toFixed(4));
+  }
+  toTop.classList.toggle('is-visible', y > 480);
+}
+
+function onScroll() {
+  if (scrollRaf) return;
+  scrollRaf = requestAnimationFrame(() => {
+    syncScrollUI();
+    scrollRaf = 0;
+  });
+}
+
+syncScrollUI();
+window.addEventListener('scroll', onScroll, { passive: true });
+window.addEventListener('resize', onScroll, { passive: true });
+
+/* ---------- 锚点平滑滚动（尊重减少动效偏好） ---------- */
+document.addEventListener('click', (e) => {
+  const link = e.target.closest('a[href^="#"]');
+  if (!link) return;
+  const id = link.getAttribute('href');
+  if (!id || id === '#') return;
+  const target = document.querySelector(id);
+  if (!target) return;
+  e.preventDefault();
+  target.scrollIntoView({
+    behavior: reducedMotion.matches ? 'auto' : 'smooth',
+    block: 'start',
+  });
+  history.replaceState(null, '', id);
+});
+
 /* ---------- 深 / 浅主题切换 ----------
    data-theme 由 <head> 内联脚本先行写入（防闪烁）；
    这里只负责按钮交互、持久化与 meta 同步。 */

@@ -34,9 +34,15 @@ html[data-theme="dark"] {
   --accent-fill: #f2a93b;         /* 实心按钮/选中块填充 */
   --accent-fill-hover: #ffc061;
   --accent-fg: #1a1206;           /* 填充块上的文字 */
-  --accent-glow: rgba(242, 169, 59, 0.12);
-  --accent-soft: rgba(242, 169, 59, 0.08);
+  --accent-glow: rgba(242, 169, 59, 0.15);
+  --accent-glow-strong: rgba(242, 169, 59, 0.28);
+  --accent-soft: rgba(242, 169, 59, 0.1);
   --link-underline: rgba(242, 169, 59, 0.35);
+  
+  /* --- 渐变色 --------------------------------------------- */
+  --gradient-warm: linear-gradient(135deg, #f2a93b 0%, #ff7b4d 100%);
+  --gradient-gold: linear-gradient(135deg, #ffc061 0%, #f2a93b 50%, #e09a2c 100%);
+  --gradient-accent: linear-gradient(105deg, var(--text-1) 15%, var(--accent) 85%);
 
   /* --- 状态色 --------------------------------------------- */
   --ok: #3fb950;
@@ -74,16 +80,28 @@ html[data-theme="dark"] {
     "Noto Sans CJK SC", sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", "Cascadia Code",
     "JetBrains Mono", Menlo, Consolas, "Courier New", monospace;
+  /* 衬线：用于阅读页标题与引文，营造文艺质感 */
+  --font-serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia,
+    "Times New Roman", "Songti SC", "Source Han Serif SC",
+    "Noto Serif CJK SC", "STSong", "SimSun", serif;
 
   /* --- 字号阶 --------------------------------------------- */
-  --fs-display: clamp(40px, 6vw, 72px);
-  --fs-h1: clamp(32px, 4vw, 48px);
-  --fs-h2: clamp(24px, 3vw, 28px);
-  --fs-h3: 19px;
+  --fs-display: clamp(44px, 6.5vw, 80px);
+  --fs-h1: clamp(34px, 4.5vw, 52px);
+  --fs-h2: clamp(26px, 3.2vw, 32px);
+  --fs-h3: 20px;
   --fs-body: 16px;
   --fs-note: 17px;
   --fs-sm: 14px;
   --fs-xs: 12px;
+  
+  /* --- 行高与字重 ----------------------------------------- */
+  --lh-tight: 1.15;
+  --lh-base: 1.6;
+  --lh-relaxed: 1.75;
+  --fw-medium: 550;
+  --fw-semibold: 620;
+  --fw-bold: 680;
 
   /* --- 版式 ----------------------------------------------- */
   --container: 1120px;
@@ -96,10 +114,13 @@ html[data-theme="dark"] {
 
   /* --- 动效 ----------------------------------------------- */
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
-  --dur-reveal: 600ms;
-  --dur-hover: 200ms;
-  --dur-fast: 120ms;
-  --stagger: 60ms;
+  --ease-elastic: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --dur-reveal: 700ms;
+  --dur-hover: 250ms;
+  --dur-fast: 150ms;
+  --stagger: 80ms;
 
   /* --- 层级 ----------------------------------------------- */
   --z-nav: 100;
