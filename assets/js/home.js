@@ -66,6 +66,13 @@ function noteRow(note, i) {
 try {
   const { notes, tools, branches } = await fetchIndex();
 
+  // 资料卡统计
+  const counts = { tools: tools.length, notes: notes.length, branches: branches.length };
+  document.querySelectorAll('[data-stat]').forEach((el) => {
+    const n = counts[el.dataset.stat];
+    if (typeof n === 'number') el.textContent = String(n);
+  });
+
   // Hero 状态行：最近一篇笔记
   const latest = notes[0];
   if (latest) {

@@ -338,7 +338,7 @@
   background: var(--gradient-gold);
   color: var(--accent-fg);
   font-weight: 600;
-  box-shadow: 0 3px 10px rgba(242, 169, 59, 0.24);
+  box-shadow: 0 3px 10px rgba(var(--accent-rgb), 0.24);
 }
 
 /* ---------- 徽章 / 药丸 ---------- */
@@ -359,7 +359,7 @@
 }
 .badge--accent {
   color: var(--accent);
-  border-color: rgba(242, 169, 59, 0.4);
+  border-color: rgba(var(--accent-rgb), 0.4);
   background: var(--accent-soft);
 }
 .badge--ok {
@@ -448,7 +448,7 @@
   line-height: 1.65;
   color: var(--text-2);
   background: var(--accent-soft);
-  border: 1px solid rgba(242, 169, 59, 0.28);
+  border: 1px solid rgba(var(--accent-rgb), 0.28);
   border-radius: var(--radius-btn);
 }
 .callout--info {
@@ -685,9 +685,9 @@
   color: var(--text-3);
 }
 .date-cell:has(input:checked) {
-  border-color: rgba(242, 169, 59, 0.6);
+  border-color: rgba(var(--accent-rgb), 0.6);
   background: var(--accent-soft);
-  box-shadow: 0 4px 16px rgba(242, 169, 59, 0.14);
+  box-shadow: 0 4px 16px rgba(var(--accent-rgb), 0.14);
 }
 .date-cell:has(input:checked) .date-cell__day {
   color: var(--accent);
