@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AES 加解密 — Michael</title>
+  <meta name="description" content="输入原文选择 AES 加密，设置密钥生成密文；对方用相同密钥即可解密。全程本地运行，数据与密钥不上传。">
+  <meta name="theme-color" content="#0a0a0b">
+  <meta name="color-scheme" content="dark light">
+  <link rel="icon" type="image/svg+xml" href="../../assets/img/favicon.svg">
+  <script>
+    /* 首帧前定下主题，避免闪烁；无记录时默认暗色（站点基调） */
+    (function () {
+      var t = null;
+      try { t = localStorage.getItem('site-theme'); } catch (e) {}
+      if (t !== 'dark' && t !== 'light') t = 'dark';
+      document.documentElement.dataset.theme = t;
+      document.documentElement.classList.add('js');
+      var m = document.querySelector('meta[name="theme-color"]');
+      if (m) m.content = t === 'light' ? '#faf8f5' : '#0a0a0b';
+    })();
+  </script>
+  <link rel="stylesheet" href="../../assets/css/tokens.css">
+  <link rel="stylesheet" href="../../assets/css/main.css">
+  <link rel="stylesheet" href="style.css?v=1">
+  <link rel="stylesheet" href="../../assets/css/site-gate.css">
+  <script>document.documentElement.dataset.gateCheck = "1";</script>
+</head>
+<body>
+  <a class="skip-link" href="#main">跳到主要内容</a>
+
+  <header class="nav" id="nav">
+    <div class="container nav__inner">
+      <a class="nav__logo" href="../../index.html" aria-label="Michael 首页">Michael<i>.</i></a>
+      <nav class="nav__links" id="nav-links" aria-label="主导航">
+        <a href="../../index.html">首页</a>
+        <a href="../../tools.html" aria-current="page">工具</a>
+        <a href="../../notes.html">笔记</a>
+        <a href="../../branches.html">分支</a>
+        <a href="../../index.html#about">关于</a>
+      </nav>
+      <div class="nav__actions">
+        <button class="nav__icon" id="theme-toggle" type="button" aria-label="切换到浅色模式" title="浅色模式">
+          <svg class="ico-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="4"/>
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+          </svg>
+          <svg class="ico-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+        </button>
+        <button class="nav__toggle" id="nav-toggle" aria-label="打开菜单" aria-expanded="false" aria-controls="nav-links">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+            <path d="M4 7h16M4 12h16M4 17h16"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <div class="container tool">
+      <div class="tool__head">
+        <a class="article-back" href="../../tools.html"><span class="arr">←</span>全部工具</a>
+        <p class="mono-label">Tool <span>/</span> 10</p>
+        <h1>AES 加解密</h1>
+        <p>把原文和密钥交给 AES 加出密文，对方用同一把密钥解回原文。加解密全部在你的浏览器里用 Web Crypto 完成 —— 原文、密钥和密文都不会离开这台设备。</p>
+      </div>
+
+      <!-- 模式切换 -->
+      <div class="ac-modes" role="tablist" aria-label="加解密模式">
+        <button class="ac-mode is-active" id="mode-encrypt" type="button" role="tab" aria-selected="true" aria-controls="panel-cipher" data-mode="encrypt">加密</button>
+        <button class="ac-mode" id="mode-decrypt" type="button" role="tab" aria-selected="false" aria-controls="panel-cipher" data-mode="decrypt">解密</button>
+      </div>
+
+      <div class="ac-grid">
+        <!-- 左：输入 -->
+        <div class="ac-col">
+          <div class="ac-label">
+            <label for="input">原文</label>
+            <span class="ac-hint" id="input-hint">要加密的内容</span>
+          </div>
+          <textarea
+            class="tool__ta"
+            id="input"
+            rows="12"
+            spellcheck="false"
+            placeholder="在此输入要加密的原文，例如：&#10;明天下午三点，老地方见。"
+            aria-label="原文"
+          ></textarea>
+          <p class="ac-meta" id="input-meta">0 字 · 0 bytes</p>
+
+          <div class="ac-label ac-label--key">
+            <label for="key">密钥</label>
+            <button class="ac-inline-btn" id="btn-toggle-key" type="button" aria-pressed="false">显示</button>
+          </div>
+          <div class="ac-keywrap">
+            <input
+              class="ac-input"
+              id="key"
+              type="password"
+              autocomplete="new-password"
+              autocapitalize="off"
+              autocorrect="off"
+              spellcheck="false"
+              placeholder="设置一个密钥（建议 8 位以上）"
+              aria-label="密钥"
+            >
+          </div>
+
+          <!-- 密钥强度：条 + 文字，随输入实时更新 -->
+          <div class="ac-strength" id="strength" data-level="0">
+            <span class="ac-strength__bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+            <span class="ac-strength__text" id="strength-text" role="status" aria-live="polite">等待输入密钥</span>
+          </div>
+
+          <div class="ac-actions">
+            <button class="btn btn--primary btn--sm" id="btn-run" type="button">加密</button>
+            <button class="btn btn--ghost btn--sm" id="btn-copy" type="button">复制结果</button>
+            <button class="btn btn--ghost btn--sm" id="btn-swap" type="button">结果设为原文</button>
+            <button class="btn btn--ghost btn--sm" id="btn-clear" type="button">清空</button>
+          </div>
+
+          <details class="ac-details">
+            <summary>高级：AES 模式与密文格式</summary>
+            <div class="ac-details__body">
+              <div class="ac-field">
+                <label class="ac-field__label" for="cipher">AES 算法</label>
+                <select class="tool__select" id="cipher" aria-label="AES 算法">
+                  <option value="AES-GCM" selected>AES-GCM（推荐：认证加密，防篡改）</option>
+                  <option value="AES-CBC">AES-CBC（兼容老系统）</option>
+                </select>
+              </div>
+              <div class="ac-field">
+                <label class="ac-field__label" for="kdf">密钥派生</label>
+                <select class="tool__select" id="kdf" aria-label="密钥派生算法">
+                  <option value="PBKDF2" selected>PBKDF2-HMAC-SHA256（推荐）</option>
+                  <option value="SHA-256">SHA-256 直接取位（兼容）</option>
+                  <option value="raw">原始字节补齐（同算法互通性最好）</option>
+                </select>
+              </div>
+              <div class="ac-field">
+                <label class="ac-field__label" for="outfmt">密文输出</label>
+                <select class="tool__select" id="outfmt" aria-label="密文输出格式">
+                  <option value="base64" selected>Base64（默认）</option>
+                  <option value="hex">十六进制 Hex</option>
+                  <option value="url">URL 安全 Base64</option>
+                </select>
+              </div>
+              <p class="ac-details__tip">
+                密文<b>始终自带解密所需的一切</b>（算法、派生方式、随机盐与 IV，写在开头的前缀里），所以对方只要拿到<b>相同密钥</b>就能解开，无需再对任何选项 —— 上面的选择只影响正文部分的编码。只有在对接别的系统时，才需要动这里的算法与派生方式。
+              </p>
+            </div>
+          </details>
+        </div>
+
+        <!-- 右：输出 -->
+        <div class="ac-col">
+          <div class="ac-label">
+            <label for="output" id="output-label">密文</label>
+            <span class="ac-hint" id="output-hint">复制给对方</span>
+          </div>
+          <textarea
+            class="tool__ta tool__ta--out"
+            id="output"
+            rows="12"
+            spellcheck="false"
+            readonly
+            placeholder="点击「加密」后，密文会出现在这里"
+            aria-label="密文"
+          ></textarea>
+          <p class="ac-meta" id="output-meta">等待生成</p>
+
+          <div class="ac-status" id="status" role="status" aria-live="polite">
+            <span id="status-msg"><span class="dot"></span>准备就绪 — 填入原文与密钥后点击「加密」</span>
+          </div>
+
+          <!-- 加解密流程：点亮当前所处阶段 -->
+          <div class="ac-flow" id="flow" aria-label="加解密流程">
+            <div class="ac-flow__row" id="flow-rows" role="group" aria-label="输入行"></div>
+            <div class="ac-flow__track" id="flow-track" aria-hidden="true"></div>
+            <div class="ac-flow__foot">
+              <span class="ac-flow__hint" id="flow-hint">填好原文与密钥后点击「加密」</span>
+              <button class="ac-chip" id="btn-strengthen" type="button">生成强密钥</button>
+            </div>
+          </div>
+
+          <details class="ac-details ac-details--plain">
+            <summary>怎么用？给对方什么？</summary>
+            <ol class="ac-steps">
+              <li>左边填好<b>原文</b>，设一个至少 8 位的<b>密钥</b>，点「加密」。</li>
+              <li>把右边的<b>密文</b>复制发给对方（走微信、邮件都行，密文本身就是乱码）。</li>
+              <li>密钥<b>另走一条路</b>告诉对方：当面说、打电话、或者用另一个渠道。密文和密钥不要从同一个通道发。</li>
+              <li>对方打开这个页面，切到「解密」，粘贴密文、填同一个密钥，点「解密」即可看到原文。</li>
+            </ol>
+            <p class="ac-details__tip">
+              注意：密钥一旦丢失，密文<b>无法找回</b> —— 这是加密的正常特性，不是 bug。忘了密钥只能重来。
+            </p>
+          </details>
+        </div>
+      </div>
+
+      <p class="ac-note">
+        <span aria-hidden="true">🔒</span>
+        本页没有任何后端请求：算法由浏览器原生 Web Crypto 提供，密钥只存在于当前页面的内存中，刷新即消失，也不会写进本地存储。
+      </p>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer__inner">
+      <span>© <span data-year>2026</span> Michael · <span class="footer__heart">♥</span> 手工打造 · 动静结合</span>
+      <nav class="footer__links" aria-label="页脚导航">
+        <a href="../../tools.html">Tools</a>
+        <a href="../../notes.html">Notes</a>
+        <a href="https://github.com/" target="_blank" rel="noopener noreferrer">GitHub</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script type="module" src="../../assets/js/main.js"></script>
+  <script type="module" src="app.js?v=1"></script>
+  <script type="module" src="../../assets/js/site-gate.js"></script>
+</body>
+</html>
