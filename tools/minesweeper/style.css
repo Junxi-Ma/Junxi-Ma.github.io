@@ -362,7 +362,7 @@ body.ms-win-fake .ms-board { margin: 0 auto; }
 .ms-flagmode:hover { border-color: var(--border-hover); color: var(--text-1); }
 .ms-flagmode[aria-pressed="true"] {
   color: var(--text-1);
-  border-color: rgba(var(--accent-rgb), 0.55);
+  border-color: rgba(242, 169, 59, 0.55);
   background: var(--accent-glow);
 }
 .ms-tip {

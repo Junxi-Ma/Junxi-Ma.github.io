@@ -53,8 +53,8 @@ body.gd-playing { overflow: hidden !important; }
   --gd-felt-edge: #051c10;
   --gd-table-rail: #15171a;
   --gd-table-rim: #1f2227;
-  --gd-gold: var(--accent);
-  --gd-gold-glow: rgba(var(--accent-rgb), 0.35);
+  --gd-gold: #f2a93b;
+  --gd-gold-glow: rgba(242, 169, 59, 0.35);
   --gd-card-w: 80px;
   --gd-card-h: 116px;
   --gd-band: 30px;
@@ -111,12 +111,12 @@ body.gd-playing { overflow: hidden !important; }
   color: #1a1003;
   border-color: rgba(245, 176, 65, 0.5);
   font-weight: 600;
-  box-shadow: 0 4px 14px rgba(var(--accent-rgb), 0.25);
+  box-shadow: 0 4px 14px rgba(242, 169, 59, 0.25);
 }
 .gd-btn-primary:hover {
   background: linear-gradient(135deg, #ffbe54 0%, #eb9721 100%);
   border-color: #ffbe54;
-  box-shadow: 0 6px 20px rgba(var(--accent-rgb), 0.4);
+  box-shadow: 0 6px 20px rgba(242, 169, 59, 0.4);
 }
 .gd-btn-ghost {
   background: transparent;
@@ -242,7 +242,7 @@ body.gd-playing { overflow: hidden !important; }
   border-radius: 4px;
   background: var(--accent-soft);
   color: var(--accent);
-  border: 1px solid rgba(var(--accent-rgb), 0.25);
+  border: 1px solid rgba(242, 169, 59, 0.25);
 }
 .gd-mode-box p {
   margin: 0;
@@ -411,7 +411,7 @@ body.gd-playing { overflow: hidden !important; }
   height: 60px;
   border-radius: 12px;
   background: radial-gradient(ellipse at 50% 50%, #0d4a2b 0%, #062313 100%);
-  border: 2px solid rgba(var(--accent-rgb), 0.35);
+  border: 2px solid rgba(242, 169, 59, 0.35);
   display: grid;
   place-items: center;
   box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.5);
@@ -439,7 +439,7 @@ body.gd-playing { overflow: hidden !important; }
 .gd-seat-role-badge.self {
   background: var(--accent-soft);
   color: var(--accent);
-  border: 1px solid rgba(var(--accent-rgb), 0.3);
+  border: 1px solid rgba(242, 169, 59, 0.3);
 }
 .gd-seat-role-badge.ally {
   background: rgba(59, 130, 246, 0.12);
@@ -620,7 +620,7 @@ body.gd-playing { overflow: hidden !important; }
   border-radius: 4px;
   background: var(--accent-soft);
   color: var(--accent);
-  border: 1px solid rgba(var(--accent-rgb), 0.25);
+  border: 1px solid rgba(242, 169, 59, 0.25);
 }
 .gd-pill-level {
   font-size: 13px;
@@ -671,7 +671,7 @@ body.gd-playing { overflow: hidden !important; }
   position: absolute;
   inset: 4.5% 3%;
   border-radius: inherit;
-  border: 1px solid rgba(var(--accent-rgb), 0.2);
+  border: 1px solid rgba(242, 169, 59, 0.2);
   pointer-events: none;
   z-index: 1;
 }
@@ -711,7 +711,7 @@ body.gd-playing { overflow: hidden !important; }
   place-items: center;
   box-shadow:
     0 8px 24px rgba(0, 0, 0, 0.6),
-    0 0 0 5px rgba(var(--accent-rgb), 0.1),
+    0 0 0 5px rgba(242, 169, 59, 0.1),
     0 0 24px var(--accent-glow),
     inset 0 2px 6px rgba(255, 255, 255, 0.2);
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
@@ -802,14 +802,14 @@ body.gd-playing { overflow: hidden !important; }
 .gd-seat.active .gd-seat-avatar {
   border-color: var(--accent);
   box-shadow:
-    0 0 0 3px rgba(var(--accent-rgb), 0.4),
-    0 0 24px rgba(var(--accent-rgb), 0.5),
+    0 0 0 3px rgba(242, 169, 59, 0.4),
+    0 0 24px rgba(242, 169, 59, 0.5),
     0 6px 16px rgba(0, 0, 0, 0.6);
   animation: gdSeatPulse 1.4s infinite ease-in-out;
 }
 @keyframes gdSeatPulse {
-  0%, 100% { box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.4), 0 0 20px rgba(var(--accent-rgb), 0.4); }
-  50% { box-shadow: 0 0 0 5px rgba(var(--accent-rgb), 0.7), 0 0 32px rgba(var(--accent-rgb), 0.7); }
+  0%, 100% { box-shadow: 0 0 0 3px rgba(242, 169, 59, 0.4), 0 0 20px rgba(242, 169, 59, 0.4); }
+  50% { box-shadow: 0 0 0 5px rgba(242, 169, 59, 0.7), 0 0 32px rgba(242, 169, 59, 0.7); }
 }
 
 /* 剩余牌数徽章 */
@@ -1026,7 +1026,7 @@ body.gd-playing { overflow: hidden !important; }
 }
 @keyframes gdPlayGlow {
   0%, 100% { box-shadow: 0 0 0 2px var(--accent-glow), 0 4px 14px var(--accent-glow); }
-  50% { box-shadow: 0 0 0 4px rgba(var(--accent-rgb), 0.6), 0 6px 22px rgba(var(--accent-rgb), 0.5); }
+  50% { box-shadow: 0 0 0 4px rgba(242, 169, 59, 0.6), 0 6px 22px rgba(242, 169, 59, 0.5); }
 }
 
 .gd-hand-scroll {
@@ -1351,7 +1351,7 @@ body.gd-playing { overflow: hidden !important; }
 }
 .gd-msg.self .gd-m-text {
   background: var(--accent-soft);
-  border-color: rgba(var(--accent-rgb), 0.25);
+  border-color: rgba(242, 169, 59, 0.25);
   border-top-left-radius: 10px;
   border-top-right-radius: 2px;
 }

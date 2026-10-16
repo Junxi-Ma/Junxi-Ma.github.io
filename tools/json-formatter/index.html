@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>JSON 格式化 — Michael</title>
   <meta name="description" content="格式化、压缩与校验 JSON，错误定位到行列。全程本地运行。">
-  <meta name="theme-color" content="#080f1f">
+  <meta name="theme-color" content="#0a0a0b">
   <meta name="color-scheme" content="dark">
   <link rel="icon" type="image/svg+xml" href="../../assets/img/favicon.svg">
   <link rel="stylesheet" href="../../assets/css/tokens.css">
@@ -19,7 +19,7 @@
       document.documentElement.dataset.theme = t;
       document.documentElement.classList.add('js');
       var m = document.querySelector('meta[name="theme-color"]');
-      if (m) m.content = t === 'light' ? '#eef2ff' : '#080f1f';
+      if (m) m.content = t === 'light' ? '#faf8f5' : '#0a0a0b';
     })();
   </script>
   <style>
@@ -88,7 +88,7 @@
     }
     .tool__ta:focus {
       outline: none;
-      border-color: rgba(var(--accent-rgb), 0.55);
+      border-color: rgba(242, 169, 59, 0.55);
       box-shadow: 0 0 0 3px var(--accent-glow);
     }
     .tool__ta.is-err {

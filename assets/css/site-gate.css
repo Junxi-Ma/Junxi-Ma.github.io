@@ -21,10 +21,10 @@ html[data-gate-check]:not([data-gate-open]) body > :not(#site-gate) {
   padding: 20px;
   background: radial-gradient(
       1200px circle at 50% 0%,
-      rgba(var(--accent-rgb), 0.1),
+      rgba(242, 169, 59, 0.1),
       transparent 60%
     ),
-    rgba(8, 15, 31, 0.82);
+    rgba(8, 9, 11, 0.8);
   -webkit-backdrop-filter: blur(10px) saturate(140%);
   backdrop-filter: blur(10px) saturate(140%);
   font-family: system-ui, -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
@@ -76,10 +76,10 @@ html[data-gate-check]:not([data-gate-open]) body > :not(#site-gate) {
   content: '';
   width: 18px;
   height: 1px;
-  background: var(--accent);
+  background: #f2a93b;
   opacity: 0.8;
 }
-#site-gate .sg-brand b { color: var(--accent); font-weight: 700; }
+#site-gate .sg-brand b { color: #f2a93b; font-weight: 700; }
 
 #site-gate h2 {
   margin: 0 0 10px;
@@ -119,9 +119,9 @@ html[data-gate-check]:not([data-gate-open]) body > :not(#site-gate) {
   transform: translateY(-1px);
 }
 #site-gate .sg-tab.is-active {
-  background: rgba(var(--accent-rgb), 0.16);
-  border-color: rgba(var(--accent-rgb), 0.6);
-  color: var(--accent);
+  background: rgba(242, 169, 59, 0.16);
+  border-color: rgba(242, 169, 59, 0.6);
+  color: #f2a93b;
   font-weight: 600;
 }
 
@@ -147,9 +147,9 @@ html[data-gate-check]:not([data-gate-open]) body > :not(#site-gate) {
 }
 #site-gate .sg-field input:hover { border-color: #3a4150; }
 #site-gate .sg-field input:focus {
-  border-color: var(--accent);
+  border-color: #f2a93b;
   background: #101318;
-  box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.16);
+  box-shadow: 0 0 0 3px rgba(242, 169, 59, 0.16);
 }
 
 #site-gate .sg-msg {
@@ -168,8 +168,8 @@ html[data-gate-check]:not([data-gate-open]) body > :not(#site-gate) {
   padding: 12px 0;
   border: none;
   border-radius: 10px;
-  background: var(--gradient-gold);
-  color: var(--accent-fg);
+  background: linear-gradient(135deg, #ffc061 0%, #f2a93b 55%, #e09a2c 100%);
+  color: #17110a;
   font: inherit;
   font-size: 14.5px;
   font-weight: 700;
@@ -180,7 +180,7 @@ html[data-gate-check]:not([data-gate-open]) body > :not(#site-gate) {
 }
 #site-gate .sg-submit:hover {
   transform: translateY(-1px);
-  box-shadow: 0 10px 28px rgba(var(--accent-rgb), 0.32);
+  box-shadow: 0 10px 28px rgba(242, 169, 59, 0.32);
   filter: brightness(1.04);
 }
 #site-gate .sg-submit:active { transform: translateY(0) scale(0.99); }

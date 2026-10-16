@@ -3,8 +3,6 @@
    导航滚动态 / 移动端菜单 / 滚动显现 / Hero spotlight / 年份
    ============================================================ */
 
-import { siteConfig } from './site-config.js';
-
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
 /* ---------- 导航：滚动后加毛玻璃底 ---------- */
@@ -51,14 +49,12 @@ export function observeReveals(scope = document) {
   const els = scope.querySelectorAll('.reveal:not(.is-in)');
   if (!els.length) return;
 
-  const show = (el) => el.classList.add('is-in');
-
   if ('IntersectionObserver' in window && !reducedMotion.matches) {
     const io = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
           if (entry.isIntersecting) {
-            show(entry.target);
+            entry.target.classList.add('is-in');
             io.unobserve(entry.target);
           }
         }
@@ -66,19 +62,9 @@ export function observeReveals(scope = document) {
       { rootMargin: '0px 0px -8% 0px', threshold: 0.05 }
     );
     els.forEach((el) => io.observe(el));
-
-    // 兜底：个别环境下 IntersectionObserver 可能迟迟不回调，
-    // 下一帧先把已在视口内的元素放出来，避免内容一直不可见。
-    requestAnimationFrame(() => {
-      els.forEach((el) => {
-        if (el.classList.contains('is-in')) return;
-        const r = el.getBoundingClientRect();
-        if (r.top < window.innerHeight && r.bottom > 0) show(el);
-      });
-    });
   } else {
     // 不支持 IO 或用户偏好减少动效：直接显示
-    els.forEach(show);
+    els.forEach((el) => el.classList.add('is-in'));
   }
 }
 
@@ -187,7 +173,7 @@ document.addEventListener('click', (e) => {
    data-theme 由 <head> 内联脚本先行写入（防闪烁）；
    这里只负责按钮交互、持久化与 meta 同步。 */
 const THEME_KEY = 'site-theme';
-const THEME_COLOR = { dark: '#080f1f', light: '#eef2ff' };
+const THEME_COLOR = { dark: '#0a0a0b', light: '#faf8f5' };
 const themeBtn = document.getElementById('theme-toggle');
 const metaTheme = document.querySelector('meta[name="theme-color"]');
 
@@ -203,6 +189,7 @@ function applyTheme(theme, persist) {
       /* 隐私模式等场景下忽略 */
     }
   }
+  if (metaTheme) metaTheme.content = THEME_COLOR[theme];
   themeBtn?.setAttribute(
     'aria-label',
     theme === 'dark' ? '切换到浅色模式' : '切换到深色模式'
@@ -211,10 +198,9 @@ function applyTheme(theme, persist) {
     'title',
     theme === 'dark' ? '浅色模式' : '深色模式'
   );
-  if (metaTheme) metaTheme.content = THEME_COLOR[theme];
 }
 
-// 与 <head> 内联脚本的结果对齐（补 meta / aria）
+// 与内联脚本的结果对齐（补 meta / aria）
 applyTheme(readTheme(), false);
 
 themeBtn?.addEventListener('click', () => {
@@ -228,35 +214,7 @@ window.addEventListener('storage', (e) => {
   }
 });
 
-/* ---------- 预留栏目入口 ----------
-   site-config.js 里 reserved.* 置 true 时，导航才出现对应入口。
-   这样加栏目不用去改十几个页面里各自一份的导航标记。 */
-const RESERVED_LINKS = [
-  ['photos', '照片墙', 'photos.html'],
-  ['timeline', '时间线', 'timeline.html'],
-  ['moments', '朋友圈', 'moments.html'],
-];
-
-function mountReservedLinks() {
-  const navLinks = document.getElementById('nav-links');
-  const logo = document.querySelector('.nav__logo');
-  if (!navLinks || !logo) return;
-
-  const base = (logo.getAttribute('href') || '').replace(/index\.html$/, '');
-  const anchor = navLinks.querySelector('a[href$="#about"]');
-
-  for (const [key, label, href] of RESERVED_LINKS) {
-    if (!siteConfig.reserved?.[key]) continue;
-    const a = document.createElement('a');
-    a.href = base + href;
-    a.textContent = label;
-    navLinks.insertBefore(a, anchor);
-  }
-}
-mountReservedLinks();
-
 /* ---------- Supabase 动态能力（访客统计 / 登录注册） ----------
    未配置后端时两个模块都会静默跳过，站点保持纯静态行为。 */
 import './analytics.js';
 import './auth.js';
-import './effects.js';

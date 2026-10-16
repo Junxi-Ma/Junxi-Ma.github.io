@@ -481,7 +481,7 @@
 }
 .md-code__copy.is-done {
   color: var(--accent);
-  border-color: rgba(var(--accent-rgb), 0.45);
+  border-color: rgba(242, 169, 59, 0.45);
   background: var(--accent-soft);
 }
 .markdown pre {

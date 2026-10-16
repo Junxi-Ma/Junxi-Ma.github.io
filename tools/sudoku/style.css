@@ -229,8 +229,8 @@ body.sk-page [hidden] { display: none !important; }
 }
 .sk-diffbtn:hover { border-color: var(--border-hover); color: var(--text-1); }
 .sk-diffbtn.on {
-  background: var(--accent, #818cf8);
-  border-color: var(--accent, #818cf8);
+  background: var(--accent, #f2a93b);
+  border-color: var(--accent, #f2a93b);
   color: #241a05;
 }
 .sk-tip {

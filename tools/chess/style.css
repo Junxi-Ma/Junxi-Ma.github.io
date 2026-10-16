@@ -30,7 +30,7 @@ body.ch-page [hidden] { display: none !important; }
   height: 56px;
   border-radius: 14px;
   background: var(--accent-glow);
-  color: var(--accent, #818cf8);
+  color: var(--accent, #f2a93b);
   font-size: 34px;
   line-height: 1;
   display: flex;
@@ -58,8 +58,8 @@ body.ch-page [hidden] { display: none !important; }
 }
 .ch-chip:hover { color: var(--text-1); border-color: var(--border-hover); }
 .ch-chip.on {
-  background: var(--accent, #818cf8);
-  border-color: var(--accent, #818cf8);
+  background: var(--accent, #f2a93b);
+  border-color: var(--accent, #f2a93b);
   color: #241a05;
 }
 .ch-joinrow { display: flex; gap: 8px; }
@@ -75,7 +75,7 @@ body.ch-page [hidden] { display: none !important; }
   padding: 9px 12px;
   text-align: center;
 }
-.ch-code-input:focus { outline: 2px solid rgba(var(--accent-rgb), 0.5); }
+.ch-code-input:focus { outline: 2px solid rgba(242, 169, 59, 0.5); }
 
 /* ---------- 通用按钮 ---------- */
 .ch-btn {

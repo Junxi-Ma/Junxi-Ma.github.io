@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>外出名额分配 — Michael</title>
   <meta name="description" content="班长设日期与每日名额，成员填表生成提交码回传，按已外出次数与理由加权分配，兼顾公平与名额不浪费。">
-  <meta name="theme-color" content="#080f1f">
+  <meta name="theme-color" content="#0a0a0b">
   <meta name="color-scheme" content="dark light">
   <link rel="icon" type="image/svg+xml" href="../../assets/img/favicon.svg">
   <script>
@@ -16,7 +16,7 @@
       document.documentElement.dataset.theme = t;
       document.documentElement.classList.add('js');
       var m = document.querySelector('meta[name="theme-color"]');
-      if (m) m.content = t === 'light' ? '#eef2ff' : '#080f1f';
+      if (m) m.content = t === 'light' ? '#faf8f5' : '#0a0a0b';
     })();
   </script>
   <link rel="stylesheet" href="../../assets/css/tokens.css">
@@ -79,7 +79,7 @@
       gap: 8px;
       padding: 13px 16px;
       background: var(--accent-soft);
-      border: 1px solid rgba(var(--accent-rgb), 0.28);
+      border: 1px solid rgba(242, 169, 59, 0.28);
       border-radius: var(--radius-btn);
       font-family: var(--font-mono);
       font-size: 12.5px;
@@ -106,7 +106,7 @@
       background: var(--surface-1);
     }
     .day-card + .day-card { margin-top: 12px; }
-    .day-card.is-short { border-color: rgba(var(--accent-rgb), 0.4); }
+    .day-card.is-short { border-color: rgba(242, 169, 59, 0.4); }
     .day-card__head {
       display: flex;
       align-items: center;
@@ -294,7 +294,7 @@
     }
     .on-cap-cell input:focus {
       outline: none;
-      border-color: rgba(var(--accent-rgb), 0.55);
+      border-color: rgba(242, 169, 59, 0.55);
     }
 
     @media (max-width: 560px) {

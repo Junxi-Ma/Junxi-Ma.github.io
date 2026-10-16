@@ -4,128 +4,37 @@
 **零框架、零打包步骤** —— 只有 HTML / CSS / JavaScript，部署在 GitHub Pages
 （唯一的 CI 环节是用 Python 标准库生成内容索引，见「内容索引机制」）。
 
-![风格] 深空底 `#080F1F` + 靛蓝强调色 `#818CF8` + 玻璃拟态卡片，所有视觉变量集中在 `assets/css/tokens.css`。
-站点身份、氛围特效、天气、预留栏目集中在 `assets/js/site-config.js`。
+![风格] 近黑底色 `#0A0A0B` + 琥珀金强调色 `#F2A93B`，所有视觉变量集中在 `assets/css/tokens.css`。
 
 ---
 
 ## 目录结构
 
 ```
-├── index.html              首页（hero / 精选工具 / 最新笔记 / 分支 / 资料卡+天气）
+├── index.html              首页（hero / 精选工具 / 分支页面 / 最新笔记 / 关于）
 ├── tools.html              工具列表
 ├── notes.html              笔记列表（搜索 + 标签筛选）
 ├── note.html               笔记详情（?path=notes/xxx.md）
 ├── branches.html           分支列表（子网页索引，数据来自 data/index.json）
-├── photos.html             照片墙（预留，默认空）
-├── timeline.html           时间线（预留，默认空）
-├── moments.html            朋友圈（预留，默认空）
-├── admin.html              管理后台（Supabase 管理员可访问）
-├── 404.html                自定义 404（GitHub Pages 自动生效，完全自包含）
+├── 404.html                自定义 404（GitHub Pages 自动生效）
 ├── .nojekyll               ★ 必须保留：禁用 Jekyll，否则 .md 文件会被它转换吃掉
 ├── .github/workflows/      GitHub Actions：现场生成索引并部署 Pages（见下文）
 ├── .githooks/pre-commit    本地提交钩子：commit 时刷新索引，仅为本地预览方便
 ├── assets/
-│   ├── css/                tokens.css 设计变量+深浅主题 · main.css 全站（两层结构）·
-│   │                       markdown.css 笔记排版 · tool-ui.css 部分工具页组件
-│   ├── js/                 site-config.js 全站控制中心 ★
-│   │                       main/nav+主题切换 · effects/氛围特效 · weather/天气
-│   │                       api/数据 · markdown/渲染 · collection/预留栏目 · 页面控制器
+│   ├── css/                tokens.css 设计变量+深浅主题 · main.css 全站 ·
+│   │                       markdown.css 笔记排版 · tool-ui.css 工具页组件
+│   ├── js/                 main/nav+主题切换 · api/数据 · markdown/渲染 · 页面控制器
 │   ├── vendor/             本地托管的 marked / DOMPurify / highlight.js（不依赖 CDN）
-│   └── img/                favicon、og.png 分享图、avatar.svg 头像
+│   └── img/                favicon、og.png 分享图
 ├── notes/                  ★ 笔记放这里（.md 文件）
 ├── tools/<名字>/           ★ 工具放这里（每个工具一个文件夹 + index.html）
 ├── branches/               ★ 分支子网页放这里（每个子网页一个文件夹）
 │   ├── index.json          分支定制清单（标题/简介/标签/排序，可选）
 │   └── junxun/             军训专属祝福（留言板）
-├── data/                   index.json 内容索引（生成物）·
-│                           photos/timeline/moments.json 预留栏目数据
+├── data/index.json         内容索引（生成物，已入库，部署时由工作流重新生成）
 ├── scripts/build_index.py  索引生成脚本（纯标准库）
 └── README.md
 ```
-
-### main.css 的两层结构
-
-`assets/css/main.css` 按层叠顺序分成四段，**顺序不能调换**：
-
-1. **基础层** —— 组件结构、排版、布局
-2. **补充层** —— 认证弹窗、工具类等零散规则
-3. **动效层** —— 入场动画、滚动进度、返回顶部
-4. **皮肤层** —— 靛蓝玻璃质感，最终视觉出口
-
-改样式时优先改皮肤层或 `tokens.css`，不要在基础层里继续打补丁 —— 之前
-「两段互相重复的覆盖层叠在文件末尾」就是这么来的。
-**所有颜色走 `tokens.css` 的变量**，不要写死色值；需要带透明度时用
-`rgba(var(--accent-rgb), α)`。
-
----
-
-## 全站控制中心：`assets/js/site-config.js`
-
-身份信息、氛围特效、天气、预留栏目都在这一个文件里，改这里不用碰任何页面代码。
-
-```js
-export const siteConfig = {
-  name: 'Michael',
-  avatar: 'assets/img/avatar.svg',   // 换头像：丢进 assets/img/ 再改这个路径
-  bio: '……',
-  social: { email: '…', github: '…' },
-
-  effects: {
-    click: true,        // 点击涟漪
-    dark: 'fireflies',  // 暗色氛围：fireflies | sakura | snow | none
-    light: 'sakura',    // 亮色氛围：同上
-    danmaku: false,     // 弹幕
-    grass: false,       // 页面底部风动草丛
-  },
-  danmakuList: ['…'],
-
-  weather: { enabled: true, city: '北京', latitude: 39.9042, longitude: 116.4074 },
-
-  reserved: { photos: false, timeline: false, moments: false },
-};
-```
-
-### 氛围特效
-
-特效由 `assets/js/effects.js` 实现（原生 DOM + CSS 动画），开关在上面
-`effects` 段。**全部关掉时页面零额外开销**；`prefers-reduced-motion` 下自动全部停用。
-
-- 暗色默认萤火虫、亮色默认樱花，跟随主题自动切换
-- 点击涟漪走 canvas 绘制，颜色取自 `--accent-rgb`
-- 弹幕文案池是 `danmakuList`，默认关（打开后文字会横穿屏幕）
-
-调好后在浏览器控制台可以 `window.siteEffects.rerender()` 立即看到效果。
-
-### 天气组件
-
-用 [Open-Meteo](https://open-meteo.com/) 免密钥接口，**浏览器直连，不需要任何后端**，
-所以纯静态的 GitHub Pages 也能跑。改 `weather.latitude/longitude` 换城市；
-请求超时（5 秒）或被墙时自动降级为「暂不可用」占位，不会报错也不会留空。
-
-### 预留栏目（照片墙 / 时间线 / 朋友圈）
-
-三个页面已经建好、样式和主站一致，数据为空时显示引导文案。
-**默认不在导航里** —— 因为空的页面挂在菜单上不好看。
-
-启用步骤：
-
-1. 往 `data/photos.json`（或 `timeline.json` / `moments.json`）里填数据：
-
-```json
-{
-  "items": [
-    { "src": "photos/2026-春.jpg", "title": "春天的操场", "date": "2026-04-01" }
-  ]
-}
-```
-
-  时间线条目字段：`date` / `title` / `text` / `tag`（可选）；
-  朋友圈条目字段：`date` / `text` / `images`（图片路径数组）。
-
-2. 把 `site-config.js` 里对应的 `reserved.photos` 改成 `true` —— 导航会自动出现入口，
-   **不用去改十几个页面里各自一份的导航标记**。
-
 
 ---
 
@@ -152,10 +61,8 @@ python -m http.server 8080
 导航栏右侧的 **☀ / 🌙** 按钮切换深色与浅色，选择存在浏览器 `localStorage`（键 `site-theme`），
 下次访问保持；首次访问默认深色（站点基调）。多标签页会自动同步。
 
-全站只有一套配色身份：**靛蓝玻璃**。暗色是深空底 + 靛蓝 + 玻璃卡片，亮色是薰衣草白玻璃。
-所有颜色都是变量，集中在 `assets/css/tokens.css`，想换色只改这个文件。
-
-笔记页的代码高亮也随主题切换了两套色板。氛围特效（萤火虫 / 樱花）同样跟着主题走。
+所有颜色都是变量，集中在 `assets/css/tokens.css`：暗色为近黑 + 琥珀金，亮色为**暖纸配色**
+（刻意避开蓝白）。想换配色只改这个文件。笔记页的代码高亮也随主题切换了两套色板。
 
 ---
 
@@ -322,7 +229,7 @@ git config core.hooksPath .githooks
 | 钩子没生效（commit 时没有 `[pre-commit]` 输出） | 执行 `git config core.hooksPath .githooks` 重新挂上（仅影响本地预览，线上由工作流兜底） |
 | 双击打开全部空白 | 必须用 HTTP 服务器（见「本地预览」） |
 | `.nojekyll` 删了之后笔记 404 | Jekyll 会把 .md 转成 .html，**别删这个文件** |
-| 导航菜单改了没生效 | 导航/页脚在每个页面里各有一份（8 个主页面 + 9 个工具页），需同步修改（无构建的代价）。预留栏目走 `site-config.js` 自动注入，不受此影响 |
+| 导航菜单改了没生效 | 导航/页脚在 5 个主页面 + 6 个工具页里各有一份，需同步修改（无构建的代价） |
 | 新增分支页面后列表里没有 | `data/index.json` 缺失或过期 → 本地 `python scripts/build_index.py`；线上看 Actions 是否部署成功 |
 | 分支页面从子目录跳不回站点 | 用相对路径 `../../branches.html`，别写绝对路径 `/branches.html`（站内需兼容子路径部署） |
 | 页面一闪而过变色（深→浅） | 正常：主题在 `<head>` 内联脚本里就已确定，闪的是浏览器首次绘制 |
@@ -398,8 +305,3 @@ git config core.hooksPath .githooks
 | [highlight.js](https://github.com/highlightjs/highlight.js) | 11.11.2 | BSD-3-Clause |
 
 均为本地托管（`assets/vendor/`），不依赖任何运行时 CDN。
-
-天气数据来自 [Open-Meteo](https://open-meteo.com/)（CC BY 4.0），免密钥、浏览器直连，
-不引入任何前端依赖。氛围特效移植自
-[XinghuisamaBlogs](https://github.com/XingHuiSama/XinghuisamaBlogs) 的视觉组件，
-用原生 DOM + CSS 动画重写，无 React / 无构建依赖。
