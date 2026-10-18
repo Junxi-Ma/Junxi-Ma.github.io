@@ -39,6 +39,12 @@ jobs:
         with:
           python-version: '3.12'
 
+      - name: 检查笔记排版
+        # 只提示、不拦截：网页端直接改 Markdown 时也能在日志里看到问题，
+        # 但不让排版小问题挡住部署。
+        continue-on-error: true
+        run: python scripts/lint_notes.py
+
       - name: 生成 data/index.json
         run: python scripts/build_index.py
 

@@ -1,8 +1,12 @@
 #!/bin/sh
-# 方案 B 提交钩子（用户已确认安装）：commit 前自动刷新内容索引并暂存
-# GitHub Pages 使用「Deploy from a branch」模式，data/index.json 必须在仓库里。
+# 提交钩子：commit 前先检查笔记排版，再刷新内容索引并暂存。
+# 索引之所以要进仓库，是因为分支部署模式直接发布仓库里的文件。
 # 移除方式：git config --unset core.hooksPath
 set -e
+
+echo "[pre-commit] 检查笔记排版 ..."
+python scripts/lint_notes.py
+
 echo "[pre-commit] 刷新 data/index.json ..."
 python scripts/build_index.py
 git add data/index.json
