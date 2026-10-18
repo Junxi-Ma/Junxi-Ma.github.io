@@ -1,6 +1,9 @@
 # 统一 LF，防止 Windows CRLF 污染 frontmatter 解析与 JSON diff
 * text=auto
 
+# 本文件自己也必须是 LF，否则 CRLF 会让下面的匹配规则解析出错
+.gitattributes  text eol=lf
+
 *.md    text eol=lf
 *.py    text eol=lf
 *.js    text eol=lf
