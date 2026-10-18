@@ -10,6 +10,10 @@
 *.yml   text eol=lf
 *.svg   text eol=lf
 
+# 钩子脚本必须是 LF：CRLF 会让 sh 报 "bad interpreter" / $'\r' 之类的错，
+# 而 core.autocrlf=true 时 text=auto 会把它转成 CRLF，所以这里显式锁死。
+.githooks/**  text eol=lf
+
 *.png   binary
 *.jpg   binary
 *.jpeg  binary
