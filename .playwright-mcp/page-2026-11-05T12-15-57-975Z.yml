@@ -1,0 +1,9 @@
+- generic [ref=f3e6]:
+  - generic [ref=f3e7]:
+    - generic:
+      - generic [ref=f3e8]:
+        - button "展开侧边栏" [ref=f3e9] [cursor=pointer]
+        - button "新建对话" [ref=f3e13] [cursor=pointer]
+      - button [ref=f3e21] [cursor=pointer]
+  - generic: 内容由AI生成，请仔细甄别
+  - button [ref=f3e29] [cursor=pointer]

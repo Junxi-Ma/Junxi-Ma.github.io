@@ -1,0 +1,47 @@
+- generic [ref=f7e3]:
+  - generic [ref=f7e4]: Stardy
+  - generic [ref=f7e6]:
+    - banner [ref=f7e7]:
+      - generic [ref=f7e8]:
+        - generic [ref=f7e9]: Stardy
+        - paragraph [ref=f7e10]: 把零散的资料，整理成一条走得通的知识链。
+      - button "设置" [ref=f7e11] [cursor=pointer]
+    - generic [ref=f7e15]:
+      - generic [ref=f7e16]: 3个科目
+      - generic [ref=f7e18]: 4个知识点
+      - generic [ref=f7e20]: 0张卡待复习
+    - generic [ref=f7e21] [cursor=pointer]:
+      - generic [ref=f7e22]:
+        - text: 继续学习
+        - heading "断点续跑测试" [level=2] [ref=f7e23]
+        - paragraph [ref=f7e24]: 4 个知识点 · 0 张卡 · 1 份资料
+        - generic [ref=f7e25]: 进入知识树
+      - generic [ref=f7e26]:
+        - generic [ref=f7e31]:
+          - text: "0"
+          - generic [ref=f7e32]: "%"
+        - generic [ref=f7e33]: 闪卡掌握度
+    - generic [ref=f7e34]: 我的科目
+    - generic [ref=f7e35]:
+      - button "断点续跑测试 4 个知识点 · 1 份资料 今天 更多" [ref=f7e36] [cursor=pointer]:
+        - generic [ref=f7e38]:
+          - heading "断点续跑测试" [level=3] [ref=f7e39]
+          - paragraph [ref=f7e40]: 4 个知识点 · 1 份资料
+        - generic [ref=f7e41]:
+          - generic [ref=f7e42]: 今天
+          - button "更多" [ref=f7e43]
+      - button "真实文件测试 0 个知识点 · 5 份资料 今天 更多" [ref=f7e48] [cursor=pointer]:
+        - generic [ref=f7e50]:
+          - heading "真实文件测试" [level=3] [ref=f7e51]
+          - paragraph [ref=f7e52]: 0 个知识点 · 5 份资料
+        - generic [ref=f7e53]:
+          - generic [ref=f7e54]: 今天
+          - button "更多" [ref=f7e55]
+      - button "PDF 测试 0 个知识点 · 2 份资料 今天 更多" [ref=f7e60] [cursor=pointer]:
+        - generic [ref=f7e62]:
+          - heading "PDF 测试" [level=3] [ref=f7e63]
+          - paragraph [ref=f7e64]: 0 个知识点 · 2 份资料
+        - generic [ref=f7e65]:
+          - generic [ref=f7e66]: 今天
+          - button "更多" [ref=f7e67]
+      - button "新建科目" [ref=f7e72] [cursor=pointer]

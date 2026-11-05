@@ -1,0 +1,11 @@
+- generic [ref=f9e6]:
+  - banner [ref=f9e7]:
+    - generic [ref=f9e8]:
+      - generic [ref=f9e9]: Stardy
+      - paragraph [ref=f9e10]: 把零散的资料，整理成一条走得通的知识链。
+    - button "设置" [ref=f9e11] [cursor=pointer]
+  - generic [ref=f9e15]:
+    - generic [ref=f9e16]: 0个科目
+    - generic [ref=f9e18]: 0个知识点
+    - generic [ref=f9e20]: 0张卡待复习
+  - button "新建科目" [ref=f9e22] [cursor=pointer]

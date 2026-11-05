@@ -1,0 +1,20 @@
+- generic [ref=f8e6]:
+  - banner [ref=f8e7]:
+    - generic [ref=f8e8]:
+      - generic [ref=f8e9]: Stardy
+      - paragraph [ref=f8e10]: 把零散的资料，整理成一条走得通的知识链。
+    - button "设置" [ref=f8e11] [cursor=pointer]
+  - generic [ref=f8e15]:
+    - generic [ref=f8e16]: 1个科目
+    - generic [ref=f8e18]: 8个知识点
+    - generic [ref=f8e20]: 1张卡待复习
+  - generic [ref=f8e21]:
+    - button "大气物理学 8 个知识点 · 2 份资料 · 2 张卡 期末重点整理，含热力学与辐射两章 昨天 更多" [ref=f8e22] [cursor=pointer]:
+      - generic [ref=f8e24]:
+        - heading "大气物理学" [level=3] [ref=f8e25]
+        - paragraph [ref=f8e26]: 8 个知识点 · 2 份资料 · 2 张卡
+        - paragraph [ref=f8e27]: 期末重点整理，含热力学与辐射两章
+      - generic [ref=f8e28]:
+        - generic [ref=f8e29]: 昨天
+        - button "更多" [ref=f8e30]
+    - button "新建科目" [ref=f8e35] [cursor=pointer]

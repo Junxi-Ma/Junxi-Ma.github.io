@@ -1,0 +1,785 @@
+[    1124ms] [LOG] chat-next-web-store rehydrate. @ https://static-1.metaso.cn/_next/static/chunks/72669-348a17ece366ec7d.js:0
+[    1134ms] [LOG] extraSessionTypes: [1, 4, 5, 6, 7] @ https://static-1.metaso.cn/_next/static/chunks/72669-348a17ece366ec7d.js:0
+[    1141ms] [LOG] 数据库版本更新，当前版本： 1 @ https://static-1.metaso.cn/_next/static/chunks/72669-348a17ece366ec7d.js:0
+[    1141ms] [LOG] IndexedDB打开成功 @ https://static-1.metaso.cn/_next/static/chunks/72669-348a17ece366ec7d.js:0
+[    2420ms] [LOG] undefined @ https://static-1.metaso.cn/_next/static/chunks/8464-a6f3a5fb99b08be9.js:0
+[    2443ms] [WARNING] [DEPRECATED] Use `createWithEqualityFn` instead of `create` or use `useStoreWithEqualityFn` instead of `useStore`. They can be imported from 'zustand/traditional'. https://github.com/pmndrs/zustand/discussions/1937 @ https://static-1.metaso.cn/_next/static/chunks/40268-79adb36142d089a2.js:0
+[    2445ms] [LOG] lastGroup undefined @ https://static-1.metaso.cn/_next/static/chunks/app/(pages)/(menu-attached)/search-v2/@desktop/%5Bid%5D/page-bf318242d88aeeeb.js:0
+[    2445ms] [ERROR] lastGroup model or mode is undefined undefined @ https://static-1.metaso.cn/_next/static/chunks/27115-9d04bf3fc8b4c4ea.js:0
+[    2459ms] [LOG] init_page 2118314676831186944 /chat/2118314676831186944 @ https://static-1.metaso.cn/_next/static/chunks/44421-b110388671fb37c5.js:0
+[    2463ms] [LOG] ae92cf6b-1580-420a-aa2d-604e4429afbf Map(0) {current: Map(0)} @ https://static-1.metaso.cn/_next/static/chunks/29353-54e01c93a5b9190e.js:0
+[    2464ms] [LOG] login: false  loginStateRef.current: null   hasHydrated: false   needSyncHistory: false @ https://static-1.metaso.cn/_next/static/chunks/8464-a6f3a5fb99b08be9.js:0
+[    2470ms] [LOG] useChapterEffect  undefined false undefined [] [] null false @ https://static-1.metaso.cn/_next/static/chunks/app/layout-bf1327f1662e6806.js:0
+[    2471ms] [LOG] leftWidth: 0   nextPPTFullScreen: false @ https://static-1.metaso.cn/_next/static/chunks/app/layout-bf1327f1662e6806.js:0
+[    2471ms] [LOG] leftWidth: 0   document.fullscreenElement: null @ https://static-1.metaso.cn/_next/static/chunks/app/layout-bf1327f1662e6806.js:0
+[    2472ms] [LOG] debugger ChapterDialog 0 false function(){return M(!1)} function(e,t){M(!1),ev(e),e&&A(!0);var n=new URL(location.href);n.searchParams.set("chapterId",e),history.replaceState(null,"chapterId",n.href),Q(t),er.current=!0,S(),eM(e)} [] undefined null @ https://static-1.metaso.cn/_next/static/chunks/72081-77fe786f9fe6fb76.js:0
+[    2472ms] [LOG] debugger showPaperPage false false @ https://static-1.metaso.cn/_next/static/chunks/72081-77fe786f9fe6fb76.js:0
+[    2482ms] [LOG] undefined @ https://static-1.metaso.cn/_next/static/chunks/8464-a6f3a5fb99b08be9.js:0
+[    2496ms] [LOG] doAutoLogin***** @ https://static-1.metaso.cn/_next/static/chunks/app/layout-bf1327f1662e6806.js:0
+[    2510ms] [LOG] useNavigationBuryingPoint  path: /chat/[id] @ https://static-1.metaso.cn/_next/static/chunks/app/layout-bf1327f1662e6806.js:0
+[    2510ms] [LOG] useNavigationBuryingPoint  pageName: SearchV2 @ https://static-1.metaso.cn/_next/static/chunks/app/layout-bf1327f1662e6806.js:0
+[    2515ms] [LOG] debugger selectedChapterId  @ https://static-1.metaso.cn/_next/static/chunks/72081-77fe786f9fe6fb76.js:0
+[    2517ms] [LOG] https://metaso.cn/chat/2118314676831186944?shareType=15&ssi=UyAYG66 @ https://static-1.metaso.cn/_next/static/chunks/app/layout-bf1327f1662e6806.js:0
+[    2518ms] [LOG] 更新用户信息 @ https://static-1.metaso.cn/_next/static/chunks/72669-348a17ece366ec7d.js:0
+[    2518ms] [LOG] chat-next-web-store-user rehydrate. @ https://static-1.metaso.cn/_next/static/chunks/72669-348a17ece366ec7d.js:0
+[    2519ms] [LOG] data-store rehydrate. @ https://static-1.metaso.cn/_next/static/chunks/app/(pages)/(menu-attached)/search-v2/@h5/layout-326eaff5bc631573.js:0
+[    2519ms] [LOG] pathname------------------ /chat/2118314676831186944 @ https://static-1.metaso.cn/_next/static/chunks/app/layout-bf1327f1662e6806.js:0
+[    2520ms] [LOG] base: 4   history.length: 4 @ https://static-1.metaso.cn/_next/static/chunks/app/layout-bf1327f1662e6806.js:0
+[    2526ms] [LOG] Aliyun FP SDK loaded and initialized. {init: , getToken: } @ https://static-1.metaso.cn/_next/static/chunks/app/layout-bf1327f1662e6806.js:0
+[    2526ms] [LOG] useChapterEffect  undefined false undefined [] [] null false @ https://static-1.metaso.cn/_next/static/chunks/app/layout-bf1327f1662e6806.js:0
+[    2526ms] [LOG] leftWidth: 0   nextPPTFullScreen: false @ https://static-1.metaso.cn/_next/static/chunks/app/layout-bf1327f1662e6806.js:0
+[    2526ms] [LOG] leftWidth: 0   document.fullscreenElement: null @ https://static-1.metaso.cn/_next/static/chunks/app/layout-bf1327f1662e6806.js:0
+[    2526ms] [LOG] debugger ChapterDialog 0 false function(){return M(!1)} function(e,t){M(!1),ev(e),e&&A(!0);var n=new URL(location.href);n.searchParams.set("chapterId",e),history.replaceState(null,"chapterId",n.href),Q(t),er.current=!0,S(),eM(e)} [] undefined null @ https://static-1.metaso.cn/_next/static/chunks/72081-77fe786f9fe6fb76.js:0
+[    2527ms] [LOG] debugger showPaperPage false false @ https://static-1.metaso.cn/_next/static/chunks/72081-77fe786f9fe6fb76.js:0
+[    2530ms] [LOG] undefined @ https://static-1.metaso.cn/_next/static/chunks/8464-a6f3a5fb99b08be9.js:0
+[    2533ms] [LOG] doAutoLogin***** @ https://static-1.metaso.cn/_next/static/chunks/app/layout-bf1327f1662e6806.js:0
+[    2606ms] [LOG] 清除session ---  @ https://static-1.metaso.cn/static/init.js:6
+[    2606ms] [LOG] ServiceWorker registration successful with scope:  https://metaso.cn/ @ https://static-1.metaso.cn/static/serviceWorkerRegister.js:17
+[    2626ms] [LOG] ChatSettingPopover-box {input: , engineType: undefined, mode: undefined, model: undefined, filter: undefined} undefined @ https://static-1.metaso.cn/_next/static/chunks/2879.9deee21f92e526a6.js:0
+[    2633ms] [LOG] ChatSettingPopover  open: {mode: undefined, filter: undefined, model: undefined, outputStyle: undefined, engineType: undefined} @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    2633ms] [LOG] useEscCloser  enabled: false @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    2635ms] [LOG] [genAvailablePdfUrl] input: {paramUrl: , previewUrl: undefined, originalUrl: undefined, _id: undefined, internalFile: undefined} @ https://static-1.metaso.cn/_next/static/chunks/28097.76a4bc86a346dec3.js:0
+[    2635ms] [LOG] [genAvailablePdfUrl] branch3 (fallback): {previewUrl: undefined, result: } @ https://static-1.metaso.cn/_next/static/chunks/28097.76a4bc86a346dec3.js:0
+[    2663ms] [LOG] _logToES  res ===  {data: Object, status: 200, statusText: OK, headers: tP, config: Object} @ https://static-1.metaso.cn/_next/static/chunks/72669-348a17ece366ec7d.js:0
+[    2669ms] [LOG] ChatSettingPopover-box {input: , engineType: undefined, mode: undefined, model: undefined, filter: undefined} undefined @ https://static-1.metaso.cn/_next/static/chunks/2879.9deee21f92e526a6.js:0
+[    2671ms] [LOG] requestUrl ===  /api/presentation/config @ https://static-1.metaso.cn/_next/static/chunks/72669-348a17ece366ec7d.js:0
+[    2673ms] [LOG] ChatSettingPopover  open: {mode: undefined, filter: undefined, model: undefined, outputStyle: undefined, engineType: undefined} @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    2673ms] [LOG] useEscCloser  enabled: false @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    2674ms] [LOG] [genAvailablePdfUrl] input: {paramUrl: , previewUrl: undefined, originalUrl: undefined, _id: undefined, internalFile: undefined} @ https://static-1.metaso.cn/_next/static/chunks/28097.76a4bc86a346dec3.js:0
+[    2674ms] [LOG] [genAvailablePdfUrl] branch3 (fallback): {previewUrl: undefined, result: } @ https://static-1.metaso.cn/_next/static/chunks/28097.76a4bc86a346dec3.js:0
+[    2680ms] [LOG] ChatSettingPopover-box {input: , engineType: undefined, mode: undefined, model: undefined, filter: undefined} undefined @ https://static-1.metaso.cn/_next/static/chunks/2879.9deee21f92e526a6.js:0
+[    2681ms] [LOG] ChatSettingPopover  open: {mode: undefined, filter: undefined, model: undefined, outputStyle: undefined, engineType: undefined} @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    2681ms] [LOG] useEscCloser  enabled: false @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    2681ms] [LOG] [genAvailablePdfUrl] input: {paramUrl: , previewUrl: undefined, originalUrl: undefined, _id: undefined, internalFile: undefined} @ https://static-1.metaso.cn/_next/static/chunks/28097.76a4bc86a346dec3.js:0
+[    2682ms] [LOG] [genAvailablePdfUrl] branch3 (fallback): {previewUrl: undefined, result: } @ https://static-1.metaso.cn/_next/static/chunks/28097.76a4bc86a346dec3.js:0
+[    2716ms] [LOG] => client端清理过期sid,uid @ https://static-1.metaso.cn/_next/static/chunks/72669-348a17ece366ec7d.js:0
+[    2717ms] [LOG] undefined @ https://static-1.metaso.cn/_next/static/chunks/8464-a6f3a5fb99b08be9.js:0
+[    2719ms] [LOG] doAutoLogin***** @ https://static-1.metaso.cn/_next/static/chunks/app/layout-bf1327f1662e6806.js:0
+[    2722ms] [LOG] requestUrl ===  /api/metaso-ai-config @ https://static-1.metaso.cn/_next/static/chunks/72669-348a17ece366ec7d.js:0
+[    2722ms] [LOG] global-effects  getMetasoAIConfig  res: {data: Object, status: 200, statusText: , headers: tP, config: Object} @ https://static-1.metaso.cn/_next/static/chunks/app/layout-bf1327f1662e6806.js:0
+[    2723ms] [LOG] undefined @ https://static-1.metaso.cn/_next/static/chunks/8464-a6f3a5fb99b08be9.js:0
+[    2731ms] [LOG] doAutoLogin***** @ https://static-1.metaso.cn/_next/static/chunks/app/layout-bf1327f1662e6806.js:0
+[    2737ms] [LOG] AvatarMenu   urlLogin:  @ https://static-1.metaso.cn/_next/static/chunks/8464-a6f3a5fb99b08be9.js:0
+[    2739ms] [LOG] undefined @ https://static-1.metaso.cn/_next/static/chunks/8464-a6f3a5fb99b08be9.js:0
+[    2746ms] [LOG] ChatSettingPopover-box {input: , engineType: undefined, mode: undefined, model: undefined, filter: undefined} undefined @ https://static-1.metaso.cn/_next/static/chunks/2879.9deee21f92e526a6.js:0
+[    2747ms] [LOG] ChatSettingPopover  open: {mode: undefined, filter: undefined, model: undefined, outputStyle: undefined, engineType: undefined} @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    2747ms] [LOG] useEscCloser  enabled: false @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    2747ms] [LOG] [genAvailablePdfUrl] input: {paramUrl: , previewUrl: undefined, originalUrl: undefined, _id: undefined, internalFile: undefined} @ https://static-1.metaso.cn/_next/static/chunks/28097.76a4bc86a346dec3.js:0
+[    2748ms] [LOG] [genAvailablePdfUrl] branch3 (fallback): {previewUrl: undefined, result: } @ https://static-1.metaso.cn/_next/static/chunks/28097.76a4bc86a346dec3.js:0
+[    2749ms] [LOG] requestUrl ===  /api/meta-config/by-key?configKey=outputTheme @ https://static-1.metaso.cn/_next/static/chunks/72669-348a17ece366ec7d.js:0
+[    2766ms] [LOG] _logToES  res ===  {data: Object, status: 200, statusText: OK, headers: tP, config: Object} @ https://static-1.metaso.cn/_next/static/chunks/72669-348a17ece366ec7d.js:0
+[    2767ms] [LOG] _logToES  res ===  {data: Object, status: 200, statusText: OK, headers: tP, config: Object} @ https://static-1.metaso.cn/_next/static/chunks/72669-348a17ece366ec7d.js:0
+[    2781ms] [LOG] undefined @ https://static-1.metaso.cn/_next/static/chunks/8464-a6f3a5fb99b08be9.js:0
+[    2785ms] [LOG] doAutoLogin***** @ https://static-1.metaso.cn/_next/static/chunks/app/layout-bf1327f1662e6806.js:0
+[    2786ms] [LOG] undefined @ https://static-1.metaso.cn/_next/static/chunks/8464-a6f3a5fb99b08be9.js:0
+[    2791ms] [LOG] ChatSettingPopover-box {input: , engineType: undefined, mode: undefined, model: undefined, filter: undefined} undefined @ https://static-1.metaso.cn/_next/static/chunks/2879.9deee21f92e526a6.js:0
+[    2793ms] [LOG] ChatSettingPopover  open: {mode: undefined, filter: undefined, model: undefined, outputStyle: undefined, engineType: undefined} @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    2793ms] [LOG] useEscCloser  enabled: false @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    2793ms] [LOG] [genAvailablePdfUrl] input: {paramUrl: , previewUrl: undefined, originalUrl: undefined, _id: undefined, internalFile: undefined} @ https://static-1.metaso.cn/_next/static/chunks/28097.76a4bc86a346dec3.js:0
+[    2793ms] [LOG] [genAvailablePdfUrl] branch3 (fallback): {previewUrl: undefined, result: } @ https://static-1.metaso.cn/_next/static/chunks/28097.76a4bc86a346dec3.js:0
+[    2907ms] [LOG] requestUrl ===  /api/search-template @ https://static-1.metaso.cn/_next/static/chunks/72669-348a17ece366ec7d.js:0
+[    2913ms] [LOG] ChatSettingPopover-box {input: , engineType: undefined, mode: undefined, model: undefined, filter: undefined} undefined @ https://static-1.metaso.cn/_next/static/chunks/2879.9deee21f92e526a6.js:0
+[    2916ms] [LOG] ChatSettingPopover  open: {mode: undefined, filter: undefined, model: undefined, outputStyle: undefined, engineType: undefined} @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    2916ms] [LOG] useEscCloser  enabled: false @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    2916ms] [LOG] [genAvailablePdfUrl] input: {paramUrl: , previewUrl: undefined, originalUrl: undefined, _id: undefined, internalFile: undefined} @ https://static-1.metaso.cn/_next/static/chunks/28097.76a4bc86a346dec3.js:0
+[    2916ms] [LOG] [genAvailablePdfUrl] branch3 (fallback): {previewUrl: undefined, result: } @ https://static-1.metaso.cn/_next/static/chunks/28097.76a4bc86a346dec3.js:0
+[    2929ms] [LOG] chatInputBox undefined undefined undefined undefined @ https://static-1.metaso.cn/_next/static/chunks/2879.9deee21f92e526a6.js:0
+[    2932ms] [LOG] ChatSettingPopover-box {input: , engineType: undefined, mode: undefined, model: undefined, filter: undefined} undefined @ https://static-1.metaso.cn/_next/static/chunks/2879.9deee21f92e526a6.js:0
+[    3368ms] [LOG] props.setting {} @ https://static-1.metaso.cn/_next/static/chunks/83216-be78aa3af00a4fc9.js:0
+[    3686ms] [LOG] requestUrl ===  /api/conversation/2118314676831186944/branched-messages?shareKey=UyAYG66&shareType=15 @ https://static-1.metaso.cn/_next/static/chunks/72669-348a17ece366ec7d.js:0
+[    3686ms] [LOG] images undefined @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3687ms] [LOG] images undefined @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3687ms] [LOG] images undefined @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3687ms] [LOG] images undefined @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3687ms] [LOG] images undefined @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3687ms] [LOG] images undefined @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3688ms] [LOG] multi-conversation-store initialized: {nodeMap: Map(6), rootNodes: Array(1), activePathNodeIds: Array(6), navigationMap: Map(6), messageIdMap: Map(0)} @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3689ms] [LOG] lastGroup {id: 2118314676982181888, conversationId: 2118314676831186944, isNewSearch: false, role: user, content: 写在一起做成一个报告} @ https://static-1.metaso.cn/_next/static/chunks/app/(pages)/(menu-attached)/search-v2/@desktop/%5Bid%5D/page-bf318242d88aeeeb.js:0
+[    3691ms] [LOG] ChatSettingPopover-box {input: , engineType: , mode: detail, model: fast_thinking, filter: all} undefined @ https://static-1.metaso.cn/_next/static/chunks/2879.9deee21f92e526a6.js:0
+[    3694ms] [LOG] chatInputBox  detail fast_thinking 正常 @ https://static-1.metaso.cn/_next/static/chunks/2879.9deee21f92e526a6.js:0
+[    3694ms] [LOG] [SearchChatContext.tsx:750] lastMessageIdRef.current,null,messages[messages.length - 1]?.id:2118314676986376192 @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3694ms] [LOG] [SearchChatContext.tsx:753] manualScrollTargetRef.current null @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3694ms] [LOG] [SearchChatContext.tsx:769] setAutoScrollMessageId lastUserMessageId 2118314676982181888 @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3695ms] [LOG] startNewChat - ConversationId: 2118314676831186944 @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3700ms] [LOG] _ResultTitle  props: {onTitleClick: , collapse: false, resultId: 2118314676948627456, title: 调研2000年以来我国寒潮的分布特征与新变化, wrap: true} @ https://static-1.metaso.cn/_next/static/chunks/56488-697db41d5a10f7af.js:0
+[    3704ms] [LOG] textLength ====  992 @ https://static-1.metaso.cn/_next/static/chunks/86981-6ac66ac2c0b7d603.js:0
+[    3716ms] [LOG] SearchBridge context: {bridges: Object, parent: Object} @ https://static-1.metaso.cn/_next/static/chunks/44421-b110388671fb37c5.js:0
+[    3716ms] [LOG] totalTokens 918 @ https://static-1.metaso.cn/_next/static/chunks/44421-b110388671fb37c5.js:0
+[    3733ms] [LOG] popover draw @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3734ms] [LOG] _ResultTitle  props: {onTitleClick: , collapse: false, resultId: 2118314676965404672, title: 需要更加精确的到我国的哪些地区寒潮次数的差异和时间变化, wrap: true} @ https://static-1.metaso.cn/_next/static/chunks/56488-697db41d5a10f7af.js:0
+[    3735ms] [LOG] textLength ====  862 @ https://static-1.metaso.cn/_next/static/chunks/86981-6ac66ac2c0b7d603.js:0
+[    3740ms] [LOG] SearchBridge context: {bridges: Object, parent: Object} @ https://static-1.metaso.cn/_next/static/chunks/44421-b110388671fb37c5.js:0
+[    3740ms] [LOG] totalTokens 799 @ https://static-1.metaso.cn/_next/static/chunks/44421-b110388671fb37c5.js:0
+[    3740ms] [LOG] popover draw @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3743ms] [LOG] _ResultTitle  props: {onTitleClick: , collapse: false, resultId: 2118314676982181888, title: 写在一起做成一个报告, wrap: true} @ https://static-1.metaso.cn/_next/static/chunks/56488-697db41d5a10f7af.js:0
+[    3745ms] [LOG] textLength ====  1698 @ https://static-1.metaso.cn/_next/static/chunks/86981-6ac66ac2c0b7d603.js:0
+[    3748ms] [LOG] SearchBridge context: {bridges: Object, parent: Object} @ https://static-1.metaso.cn/_next/static/chunks/44421-b110388671fb37c5.js:0
+[    3748ms] [LOG] totalTokens 1611 @ https://static-1.metaso.cn/_next/static/chunks/44421-b110388671fb37c5.js:0
+[    3749ms] [LOG] popover draw @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3749ms] [LOG] ChatSettingPopover-box {input: , engineType: , mode: detail, model: fast_thinking, filter: all} detail @ https://static-1.metaso.cn/_next/static/chunks/2879.9deee21f92e526a6.js:0
+[    3750ms] [LOG] ChatSettingPopover  open: {mode: detail, filter: all, model: fast_thinking, outputStyle: 正常, engineType: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3750ms] [LOG] useEscCloser  enabled: false @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3757ms] [LOG] all {type: all, rangeType: , date: null} @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3757ms] [LOG] filter {type: all, rangeType: , date: null} @ https://static-1.metaso.cn/_next/static/chunks/44421-b110388671fb37c5.js:0
+[    3758ms] [LOG] all {type: all, rangeType: , date: null} @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3758ms] [LOG] filter {type: all, rangeType: , date: null} @ https://static-1.metaso.cn/_next/static/chunks/44421-b110388671fb37c5.js:0
+[    3759ms] [LOG] all {type: all, rangeType: , date: null} @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3760ms] [LOG] filter {type: all, rangeType: , date: null} @ https://static-1.metaso.cn/_next/static/chunks/44421-b110388671fb37c5.js:0
+[    3775ms] [LOG] lines: [调研2000年以来我国寒潮的分布特征与新变化] @ https://static-1.metaso.cn/_next/static/chunks/56488-697db41d5a10f7af.js:0
+[    3777ms] [LOG] uuid 1bd91b5d-6fc0-49e5-a4df-635185d51f25 @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3777ms] [LOG] scene undefined @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3778ms] [LOG] [TTS Debug] 主音频播放器初始化完成, volume: 0.5 speed: 1 @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3778ms] [LOG] [TTS Debug] 系统音频播放器初始化完成 @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3778ms] [LOG] [TTS Debug] 准备解锁音频上下文 @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3779ms] [LOG] open false @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3779ms] [LOG] session changed:********** null @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3780ms] [LOG] error-index 0 [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3781ms] [LOG] error-index 1 [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3781ms] [LOG] error-index 2 [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3781ms] [LOG] error-index 3 [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3781ms] [LOG] error-index 4 [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3782ms] [LOG] error-index 5 [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3782ms] [LOG] error-index 6 [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3782ms] [LOG] error-index 7 [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3782ms] [LOG] error-index 8 [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3782ms] [LOG] error-index 9 [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3783ms] [LOG] error-index 10 [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3783ms] [LOG] error-index 11 [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3783ms] [LOG] error-index 12 [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3783ms] [LOG] error-index 13 [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3784ms] [LOG] cache Map(0) @ https://static-1.metaso.cn/_next/static/chunks/44421-b110388671fb37c5.js:0
+[    3785ms] [LOG] *******getSortedLinkNumHighlights [某日 14 时以后 24 小时内的日最低气温与该日日最低气温之差...某日 14 时以后 48 小时…≥8℃，或48小时内降温幅度≥10℃，或72小时内降温GB/T 21987—2017</mark>, 幅度≥12℃，而且使该地日最低气温≤4℃的冷空气活动...使某地的日最低气温 24 小时内降温幅度 …幅度≥14℃，或72小时内降温幅度≥16℃，而且使该地日最低气温≤0℃的冷空气活动。</mark>, 本文基于中国1961—2018年的0.25°×0.25°逐日最低气温数据，利用n阶多项式拟合、滑动t…、强度都明显减少，但**2000**年后变为增加，寒潮活动频发、持续时间久且强度大。</mark>, 图4展示了气候变暖前后冬春季寒潮频次和寒潮强度的差值分布...从图中可以看出，大部分地区的差值为负值…为显著。</mark>而东南沿海地区和西南地区则显示出较小的差值，表明这些地区的寒潮变化相对较小。, <mark>统计结果显示，**1990**～ **2000** 年 31 次区域寒潮过程中，影响范围…rc} \mathrm{C}$ ，出现在 **2002** 年 12 月 21 日。</mark>, <mark>**2020**年12月至**2021**年1月，中国多地遭遇寒潮，北京最低温达-**1…*年以来最低。</mark>
+...**2021**年寒潮虽异常，但整体仍属暖冬，未来可能更频繁。, <mark>可是在全球变暖背景下，北极以其他地区2~3倍的速率升温，导致海冰快速融化。</mark>**2020**年9月北极海冰为有观测以来第二少，这是北极增暖的有力证据。, 此次寒潮部分源于全球变暖，极地涡旋南移导致冷空气南侵。<mark>北极海冰减少使极地涡旋减弱，分裂后…了冷冬。</mark>
+...北极升温三倍于其他地区，温差减小，导致大气环流异常，冷空气更易南侵。, <mark>在全球变暖的气候背景下, 北极海冰呈线性减少的趋势 ${ }^{[15-17]}$, 特…北极海冰面积达到历史最小, 呈现出加速融化的趋势 ${ }^{[18-19]}$ 。</mark>, <mark>EOF1 北极海冰全是正值, 对应着时间序列是年代际下降, 表明整个北冰洋的海冰在近些年…频数的增多, 夏季海冰融化如何影响到冬季我国寒潮冷空气的活动?
+下面将进行初步探讨。</mark>, <mark>结果表明，**2000** 年代初巴芬湾附近强度关键区秋季到冬季海冰减少，对应 **20…关系，因此本文继续分析关键区海冰变化如何影响 1990 年代与 **2000** 年代的华北寒潮。, 图7 冬春季AO指数与寒潮发生频次（a）和强度（b）的相关分布
+<mark>图7展示了冬春季北极涛动…寒潮强度与AO指数的相关性，同样地，高AO指数区域的寒潮强度较高，而低AO指数区域的寒潮强度较低。, <mark>北极海冰减少使极地涡旋减弱，分裂后更易南下，影响中高纬度气候。同时，拉尼娜现象加剧了冷冬。</mark>, <mark>本文基于中国**1961**—**2018**年的0.25°×0.25°逐日最低气温数据…2018**年中国寒潮变化划分为1960—1979年、1980—1999年和2000年后三个阶段。] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3785ms] [LOG] highlight [某日 14 时以后 24 小时内的日最低气温与该日日最低气温之差...某日 14 时以后 48 小时…≥8℃，或48小时内降温幅度≥10℃，或72小时内降温GB/T 21987—2017</mark>, 幅度≥12℃，而且使该地日最低气温≤4℃的冷空气活动...使某地的日最低气温 24 小时内降温幅度 …幅度≥14℃，或72小时内降温幅度≥16℃，而且使该地日最低气温≤0℃的冷空气活动。</mark>, 本文基于中国1961—2018年的0.25°×0.25°逐日最低气温数据，利用n阶多项式拟合、滑动t…、强度都明显减少，但**2000**年后变为增加，寒潮活动频发、持续时间久且强度大。</mark>, 图4展示了气候变暖前后冬春季寒潮频次和寒潮强度的差值分布...从图中可以看出，大部分地区的差值为负值…为显著。</mark>而东南沿海地区和西南地区则显示出较小的差值，表明这些地区的寒潮变化相对较小。, <mark>统计结果显示，**1990**～ **2000** 年 31 次区域寒潮过程中，影响范围…rc} \mathrm{C}$ ，出现在 **2002** 年 12 月 21 日。</mark>, <mark>**2020**年12月至**2021**年1月，中国多地遭遇寒潮，北京最低温达-**1…*年以来最低。</mark>
+...**2021**年寒潮虽异常，但整体仍属暖冬，未来可能更频繁。, <mark>可是在全球变暖背景下，北极以其他地区2~3倍的速率升温，导致海冰快速融化。</mark>**2020**年9月北极海冰为有观测以来第二少，这是北极增暖的有力证据。, 此次寒潮部分源于全球变暖，极地涡旋南移导致冷空气南侵。<mark>北极海冰减少使极地涡旋减弱，分裂后…了冷冬。</mark>
+...北极升温三倍于其他地区，温差减小，导致大气环流异常，冷空气更易南侵。, <mark>在全球变暖的气候背景下, 北极海冰呈线性减少的趋势 ${ }^{[15-17]}$, 特…北极海冰面积达到历史最小, 呈现出加速融化的趋势 ${ }^{[18-19]}$ 。</mark>, <mark>EOF1 北极海冰全是正值, 对应着时间序列是年代际下降, 表明整个北冰洋的海冰在近些年…频数的增多, 夏季海冰融化如何影响到冬季我国寒潮冷空气的活动?
+下面将进行初步探讨。</mark>, <mark>结果表明，**2000** 年代初巴芬湾附近强度关键区秋季到冬季海冰减少，对应 **20…关系，因此本文继续分析关键区海冰变化如何影响 1990 年代与 **2000** 年代的华北寒潮。, 图7 冬春季AO指数与寒潮发生频次（a）和强度（b）的相关分布
+<mark>图7展示了冬春季北极涛动…寒潮强度与AO指数的相关性，同样地，高AO指数区域的寒潮强度较高，而低AO指数区域的寒潮强度较低。, <mark>北极海冰减少使极地涡旋减弱，分裂后更易南下，影响中高纬度气候。同时，拉尼娜现象加剧了冷冬。</mark>, <mark>本文基于中国**1961**—**2018**年的0.25°×0.25°逐日最低气温数据…2018**年中国寒潮变化划分为1960—1979年、1980—1999年和2000年后三个阶段。] @ https://static-1.metaso.cn/_next/static/chunks/44421-b110388671fb37c5.js:0
+[    3786ms] [LOG] content ## 2000年以来我国寒潮的分布特征与新变化
+
+### 一、寒潮的监测标准
+
+根据国家标准《寒潮等级》（GB/T 21987—2017），**寒潮**指高纬冷空气大规模向中低纬度侵袭、造成剧烈降温的天气活动。具体判定为：某地日最低气温 **24小时内降温≥8℃、或48小时≥10℃、或72小时≥12℃**，且该地日最低气温≤4℃[[1]]。寒潮分三个等级：寒潮、强寒潮（24h降温≥10℃且最低气温≤2℃）、超强寒潮（24h降温≥12℃且最低气温≤0℃）[[2]]。
+
+### 二、2000年以来的总体变化趋势
+
+以2000年为分界，我国寒潮活动呈现一个重要的"转折"：**1962—1999年全国平均寒潮日数、频次、强度明显减少，但2000年后转为增加**，寒潮活动趋于频发、持续时间久且强度大[[3]]。
+
+具体到区域，气候变暖前后对比显示，冬春季寒潮频次和强度总体减少，其中**东北、华北及青藏高原东部减少最为显著**，而东南沿海和西南地区变化相对较小[[4]]。这说明历史上寒潮的高发区（北方、高原）在变暖背景下减少幅度更大。
+
+### 三、华北地区的具体变化
+
+华北的监测数据更为细致：1990—2000年华北寒潮发生31次，而2001—2011年仅12次，频次明显减少；但**21世纪初期寒潮强度明显增强**——2001—2011年平均降温幅度达12.0℃，高于1990年代的11.1℃，其中2002年12月21日的最高降温幅度达15.2℃[[5]]。
+
+### 四、新变化：极端寒潮事件频发
+
+近几年来，极端寒潮事件屡次创下历史记录。以2020年12月至2021年1月的寒潮为例，北京最低气温达**-19.6℃，为1966年以来最低**[[6]]。这类极端事件的增多，背后有深层的气候机制。
+
+### 五、新变化的成因机制
+
+1. **北极放大效应**：全球变暖背景下，北极以其他地区约2-3倍的速率升温，导致海冰快速融化（2020年9月北极海冰为有观测以来第二少）[[7]]。正常情况下极地冷空气被强西风带这道"围栏"圈住；而北极升温使赤道—极地温差减小，西风减弱、波动加大，**极地涡旋减弱、分裂后冷空气更易南下**入侵我国[[8]]。<mt type='videos' data='[1]'></mt>
+
+2. **北极海冰减少**：北极海冰呈线性减少趋势（2007、2012年夏季面积达历史最小）[[9]]。东北半球（拉普捷夫海、东西伯利亚海）夏秋季海冰减少，可能导致中国后冬**南方**寒潮冷空气频数增多[[10]]。巴芬湾附近海冰减少则对应2000年代华北寒潮强度的增强[[11]]。
+
+3. **北极涛动（AO）**：冬春季AO指数与寒潮发生频次和强度存在显著相关[[12]]。
+
+4. **拉尼娜事件**：拉尼娜现象也加剧了冷冬的形成[[13]]。
+
+### 六、小结
+
+2000年以来我国寒潮呈现"**总量先减后增、强度增强、极端事件增多**"的新变化：虽然气候变暖背景下寒潮频次在一段时间内减少，但2000年后寒潮活动重新增多；尤其在全球变暖与北极海冰减少的共同作用下，极地冷空气更容易突破"围栏"南下，导致近年来极端寒潮事件（如2021年初华北创纪录低温）明显增多。**北方（东北、华北）和青藏高原东部是寒潮减少最显著的区域，但一旦发生，强度更大、影响更剧烈**。
+
+---
+
+> 注：以上结论主要基于1961—2018年的长期观测数据[[14]]及近年研究文献，截至上述证据发表时间，后续年份的寒潮活动可能仍有新变化。 @ https://static-1.metaso.cn/_next/static/chunks/44421-b110388671fb37c5.js:0
+[    3787ms] [LOG] *******getSortedLinkNumHighlights [某日 14 时以后 24 小时内的日最低气温与该日日最低气温之差...某日 14 时以后 48 小时…≥8℃，或48小时内降温幅度≥10℃，或72小时内降温GB/T 21987—2017</mark>, 幅度≥12℃，而且使该地日最低气温≤4℃的冷空气活动...使某地的日最低气温 24 小时内降温幅度 …幅度≥14℃，或72小时内降温幅度≥16℃，而且使该地日最低气温≤0℃的冷空气活动。</mark>, 本文基于中国1961—2018年的0.25°×0.25°逐日最低气温数据，利用n阶多项式拟合、滑动t…、强度都明显减少，但**2000**年后变为增加，寒潮活动频发、持续时间久且强度大。</mark>, 图4展示了气候变暖前后冬春季寒潮频次和寒潮强度的差值分布...从图中可以看出，大部分地区的差值为负值…为显著。</mark>而东南沿海地区和西南地区则显示出较小的差值，表明这些地区的寒潮变化相对较小。, <mark>统计结果显示，**1990**～ **2000** 年 31 次区域寒潮过程中，影响范围…rc} \mathrm{C}$ ，出现在 **2002** 年 12 月 21 日。</mark>, <mark>**2020**年12月至**2021**年1月，中国多地遭遇寒潮，北京最低温达-**1…*年以来最低。</mark>
+...**2021**年寒潮虽异常，但整体仍属暖冬，未来可能更频繁。, <mark>可是在全球变暖背景下，北极以其他地区2~3倍的速率升温，导致海冰快速融化。</mark>**2020**年9月北极海冰为有观测以来第二少，这是北极增暖的有力证据。, 此次寒潮部分源于全球变暖，极地涡旋南移导致冷空气南侵。<mark>北极海冰减少使极地涡旋减弱，分裂后…了冷冬。</mark>
+...北极升温三倍于其他地区，温差减小，导致大气环流异常，冷空气更易南侵。, <mark>在全球变暖的气候背景下, 北极海冰呈线性减少的趋势 ${ }^{[15-17]}$, 特…北极海冰面积达到历史最小, 呈现出加速融化的趋势 ${ }^{[18-19]}$ 。</mark>, <mark>EOF1 北极海冰全是正值, 对应着时间序列是年代际下降, 表明整个北冰洋的海冰在近些年…频数的增多, 夏季海冰融化如何影响到冬季我国寒潮冷空气的活动?
+下面将进行初步探讨。</mark>, <mark>结果表明，**2000** 年代初巴芬湾附近强度关键区秋季到冬季海冰减少，对应 **20…关系，因此本文继续分析关键区海冰变化如何影响 1990 年代与 **2000** 年代的华北寒潮。, 图7 冬春季AO指数与寒潮发生频次（a）和强度（b）的相关分布
+<mark>图7展示了冬春季北极涛动…寒潮强度与AO指数的相关性，同样地，高AO指数区域的寒潮强度较高，而低AO指数区域的寒潮强度较低。, <mark>北极海冰减少使极地涡旋减弱，分裂后更易南下，影响中高纬度气候。同时，拉尼娜现象加剧了冷冬。</mark>, <mark>本文基于中国**1961**—**2018**年的0.25°×0.25°逐日最低气温数据…2018**年中国寒潮变化划分为1960—1979年、1980—1999年和2000年后三个阶段。] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3789ms] [LOG] lines: [需要更加精确的到我国的哪些地区寒潮次数的差异和时, 间变化] @ https://static-1.metaso.cn/_next/static/chunks/56488-697db41d5a10f7af.js:0
+[    3790ms] [LOG] uuid 35e89a45-045a-4f47-87a1-b2f4aa4fa5aa @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3790ms] [LOG] scene undefined @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3790ms] [LOG] [TTS Debug] 主音频播放器初始化完成, volume: 0.5 speed: 1 @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3790ms] [LOG] [TTS Debug] 系统音频播放器初始化完成 @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3790ms] [LOG] [TTS Debug] 准备解锁音频上下文 @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3791ms] [LOG] open false @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3791ms] [LOG] session changed:********** null @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3791ms] [LOG] error-index 0 [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3791ms] [LOG] error-index 1 [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3792ms] [LOG] error-index 2 [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3792ms] [LOG] error-index 3 [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3792ms] [LOG] error-index 4 [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3792ms] [LOG] error-index 5 [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3792ms] [LOG] error-index 6 [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3793ms] [LOG] error-index 7 [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3793ms] [LOG] error-index 8 [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3794ms] [LOG] error-index 9 [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3794ms] [LOG] error-index 10 [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3794ms] [LOG] error-index 11 [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3795ms] [LOG] error-index 12 [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3795ms] [LOG] error-index 13 [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3795ms] [LOG] error-index 14 [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3795ms] [LOG] error-index 15 [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3795ms] [LOG] error-index 16 [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3796ms] [LOG] error-index 17 [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3796ms] [LOG] error-index 18 [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3796ms] [LOG] error-index 19 [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3796ms] [LOG] error-index 20 [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3797ms] [LOG] error-index 21 [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3797ms] [LOG] cache Map(0) @ https://static-1.metaso.cn/_next/static/chunks/44421-b110388671fb37c5.js:0
+[    3798ms] [LOG] *******getSortedLinkNumHighlights [我国寒潮主要发生在秋末、冬季和初春，尤其是秋末冬初和冬末春初最为常见。<mark>全国寒潮年频次分布…/mark>1961-2005年我国年寒潮频次数据表明，寒潮发生频率在北方地区较高，南方地区较低。, 气候变暖前后全国性寒潮频次的差异更是显著，从图 3 的两段直线可知，变暖前的 1955/1956—1…频次和寒潮强度差值分布。
+<mark>冬春季寒潮频次分布呈现东多西少的特点（图略）。</mark>, <mark>全国寒潮年频次分布北多南少，东北、华北西北部、西北地区、江南、华南部分及内蒙古平均每年发生寒潮3次以上，其中北疆北部、内蒙古中北部、吉林大部、辽宁北部达6次以上。</mark>, 今年入冬以来最强寒潮将从11月26日至30日影响我国，大部地区气温将大幅下降...<mark>我国寒…东北、西北等地可达25至30℃。历史上降温最强的寒潮如2021年11月，全国80%国土降温超8℃。, <mark>全国寒潮年频次分布北多南少，东北、华北西北部、西北地区、江南、华南部分及内蒙古平均每年发…/mark>1961-2005年我国年寒潮频次数据表明，寒潮发生频率在北方地区较高，南方地区较低。, <mark>全国寒潮年频次分布北多南少，东北、华北西北部、西北地区、江南、华南部分及内蒙古平均每年发…/mark>1961-2005年我国年寒潮频次数据表明，寒潮发生频率在北方地区较高，南方地区较低。, 今年入冬以来最强寒潮将从11月26日至30日影响我国，大部地区气温将大幅下降...我国寒潮多发生在秋…大，东北、西北等地可达25至30℃...我国寒潮频次北多南少，东北、华北、西北、西藏等地受影响大。, <mark>全国寒潮年频次分布北多南少，东北、华北西北部、西北地区、江南、华南部分及内蒙古平均每年发…/mark>1961-2005年我国年寒潮频次数据表明，寒潮发生频率在北方地区较高，南方地区较低。, <mark>由北向南逐渐递减，寒潮频次较高区域分布在江苏北部和安徽大部分地区，寿县和宁国站寒潮频次最…进入21世纪后，长江中下游寒潮发生频次略有增加的趋势，频次范围在1~20次/站占比约为83.0%。, 我国寒潮主要发生在秋末、冬季和初春，尤其是秋末冬初和冬末春初最为常见。全国寒潮年频次分布北多南少，东…达6次以上。1961-2005年我国年寒潮频次数据表明，寒潮发生频率在北方地区较高，南方地区较低。, <mark>研究发现，东北地区春季寒潮频次和强度在20世纪80年代末出现转折，频次减少，强度增强，而…；反之，当20世纪90年代前期海冰偏少，高纬度SAP偏低，东亚大槽偏强，冷空气频次减少，强度增强。, 研究发现，东北地区春季寒潮频次和强度在20世纪80年代末出现转折，频次减少，强度增强，而21世纪初开…；反之，当20世纪90年代前期海冰偏少，高纬度SAP偏低，东亚大槽偏强，冷空气频次减少，强度增强。, 图 4 气候变暖前后冬春季寒潮频次和寒潮强度差值分布
+...全国寒潮发生频次最多的地区，其次是东北地…的北部地区的寒潮频次也有所减少；但西部大部地区及东北、华南地区的寒潮频次并没有减少。</mark>, 图 4 气候变暖前后冬春季寒潮频次和寒潮强度差值分布
+图4展示了气候变暖前后冬春季寒潮频次和寒潮强度…区、华北地区以及青藏高原东部的差值较大，显示出这些地区寒潮频次和强度的减少更为显著。</mark>, 具体而言，东北地区、华北地区以及青藏高原东部的差值较大，显示出这些地区寒潮频次和强度的减少更为显著。, 全国寒潮发生频次最多的地区，其次是东北地区，在长江流域的中游及华南也是寒潮发生比较多的地区。
+<ma…的北部地区的寒潮频次也有所减少；但西部大部地区及东北、华南地区的寒潮频次并没有减少。</mark>, 由北向南逐渐递减，寒潮频次较高区域分布在江苏北部和安徽大部分地区，寿县和宁国站寒潮频次最高（51次）…，长江中下游寒潮发生频次略有增加的趋势，频次范围在1~20次/站占比约为83.0%。</mark>, 并且，东北地区寒潮的减少趋势达到了95%的信度水平。
+在其余地区，寒潮频次的变化趋势大都为-0.02…各站寒潮季寒潮频次的线性变化趋势系数（单位：次/a），阴影区为通过了95%的信度检验</mark>, <mark>摘要：近40年来，中国冬季寒潮频次呈显著减少趋势，影响范围扩大，强寒潮强度显著增加且年际…统阻挡下的东移有关；西北华北型寒潮与东欧平原上空暖性高压脊的发展及欧亚大陆两脊一槽的形势密切相关。, 从北方地区1960 - 2017年寒潮频次逐年序列及线性趋势[图3(a)]明显的看出，1960 - …点的寒潮频次变化趋势，通过三角形大小表示趋势值的绝对值，空心方框标记通过0.05显著性检验的站点。, <mark>摘要：近40年来，中国冬季寒潮频次呈显著减少趋势，影响范围扩大，强寒潮强度显著增加且年际…统阻挡下的东移有关；西北华北型寒潮与东欧平原上空暖性高压脊的发展及欧亚大陆两脊一槽的形势密切相关。, 由图 1 可见，全国型寒潮的降温过程集中在我国除青藏高原外的大部分地区，影响范围最大，达到单站寒潮标…南型寒潮的数量较少，前者主要影响东北、华北和青藏高原区域，后者主要影响青藏高原地区。</mark>] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3799ms] [LOG] highlight [我国寒潮主要发生在秋末、冬季和初春，尤其是秋末冬初和冬末春初最为常见。<mark>全国寒潮年频次分布…/mark>1961-2005年我国年寒潮频次数据表明，寒潮发生频率在北方地区较高，南方地区较低。, 气候变暖前后全国性寒潮频次的差异更是显著，从图 3 的两段直线可知，变暖前的 1955/1956—1…频次和寒潮强度差值分布。
+<mark>冬春季寒潮频次分布呈现东多西少的特点（图略）。</mark>, <mark>全国寒潮年频次分布北多南少，东北、华北西北部、西北地区、江南、华南部分及内蒙古平均每年发生寒潮3次以上，其中北疆北部、内蒙古中北部、吉林大部、辽宁北部达6次以上。</mark>, 今年入冬以来最强寒潮将从11月26日至30日影响我国，大部地区气温将大幅下降...<mark>我国寒…东北、西北等地可达25至30℃。历史上降温最强的寒潮如2021年11月，全国80%国土降温超8℃。, <mark>全国寒潮年频次分布北多南少，东北、华北西北部、西北地区、江南、华南部分及内蒙古平均每年发…/mark>1961-2005年我国年寒潮频次数据表明，寒潮发生频率在北方地区较高，南方地区较低。, <mark>全国寒潮年频次分布北多南少，东北、华北西北部、西北地区、江南、华南部分及内蒙古平均每年发…/mark>1961-2005年我国年寒潮频次数据表明，寒潮发生频率在北方地区较高，南方地区较低。, 今年入冬以来最强寒潮将从11月26日至30日影响我国，大部地区气温将大幅下降...我国寒潮多发生在秋…大，东北、西北等地可达25至30℃...我国寒潮频次北多南少，东北、华北、西北、西藏等地受影响大。, <mark>全国寒潮年频次分布北多南少，东北、华北西北部、西北地区、江南、华南部分及内蒙古平均每年发…/mark>1961-2005年我国年寒潮频次数据表明，寒潮发生频率在北方地区较高，南方地区较低。, <mark>由北向南逐渐递减，寒潮频次较高区域分布在江苏北部和安徽大部分地区，寿县和宁国站寒潮频次最…进入21世纪后，长江中下游寒潮发生频次略有增加的趋势，频次范围在1~20次/站占比约为83.0%。, 我国寒潮主要发生在秋末、冬季和初春，尤其是秋末冬初和冬末春初最为常见。全国寒潮年频次分布北多南少，东…达6次以上。1961-2005年我国年寒潮频次数据表明，寒潮发生频率在北方地区较高，南方地区较低。, <mark>研究发现，东北地区春季寒潮频次和强度在20世纪80年代末出现转折，频次减少，强度增强，而…；反之，当20世纪90年代前期海冰偏少，高纬度SAP偏低，东亚大槽偏强，冷空气频次减少，强度增强。, 研究发现，东北地区春季寒潮频次和强度在20世纪80年代末出现转折，频次减少，强度增强，而21世纪初开…；反之，当20世纪90年代前期海冰偏少，高纬度SAP偏低，东亚大槽偏强，冷空气频次减少，强度增强。, 图 4 气候变暖前后冬春季寒潮频次和寒潮强度差值分布
+...全国寒潮发生频次最多的地区，其次是东北地…的北部地区的寒潮频次也有所减少；但西部大部地区及东北、华南地区的寒潮频次并没有减少。</mark>, 图 4 气候变暖前后冬春季寒潮频次和寒潮强度差值分布
+图4展示了气候变暖前后冬春季寒潮频次和寒潮强度…区、华北地区以及青藏高原东部的差值较大，显示出这些地区寒潮频次和强度的减少更为显著。</mark>, 具体而言，东北地区、华北地区以及青藏高原东部的差值较大，显示出这些地区寒潮频次和强度的减少更为显著。, 全国寒潮发生频次最多的地区，其次是东北地区，在长江流域的中游及华南也是寒潮发生比较多的地区。
+<ma…的北部地区的寒潮频次也有所减少；但西部大部地区及东北、华南地区的寒潮频次并没有减少。</mark>, 由北向南逐渐递减，寒潮频次较高区域分布在江苏北部和安徽大部分地区，寿县和宁国站寒潮频次最高（51次）…，长江中下游寒潮发生频次略有增加的趋势，频次范围在1~20次/站占比约为83.0%。</mark>, 并且，东北地区寒潮的减少趋势达到了95%的信度水平。
+在其余地区，寒潮频次的变化趋势大都为-0.02…各站寒潮季寒潮频次的线性变化趋势系数（单位：次/a），阴影区为通过了95%的信度检验</mark>, <mark>摘要：近40年来，中国冬季寒潮频次呈显著减少趋势，影响范围扩大，强寒潮强度显著增加且年际…统阻挡下的东移有关；西北华北型寒潮与东欧平原上空暖性高压脊的发展及欧亚大陆两脊一槽的形势密切相关。, 从北方地区1960 - 2017年寒潮频次逐年序列及线性趋势[图3(a)]明显的看出，1960 - …点的寒潮频次变化趋势，通过三角形大小表示趋势值的绝对值，空心方框标记通过0.05显著性检验的站点。, <mark>摘要：近40年来，中国冬季寒潮频次呈显著减少趋势，影响范围扩大，强寒潮强度显著增加且年际…统阻挡下的东移有关；西北华北型寒潮与东欧平原上空暖性高压脊的发展及欧亚大陆两脊一槽的形势密切相关。, 由图 1 可见，全国型寒潮的降温过程集中在我国除青藏高原外的大部分地区，影响范围最大，达到单站寒潮标…南型寒潮的数量较少，前者主要影响东北、华北和青藏高原区域，后者主要影响青藏高原地区。</mark>] @ https://static-1.metaso.cn/_next/static/chunks/44421-b110388671fb37c5.js:0
+[    3799ms] [LOG] content #### 一、寒潮频次的整体区域格局
+
+我国寒潮频次呈现**北多南少、东多西少**的总体格局[[1]][[2]]。高发区位于：**北疆北部、内蒙古中北部、吉林大部、辽宁北部**，年均达6次以上；**东北、华北西北部、西北、江南、华南部分及内蒙古**年均3次以上[[3]]。近30年全国平均每年发生寒潮5.4次[[4]]。
+
+#### 二、各区域的具体频次差异
+
+**东北地区**：寒潮最频繁的区域之一，吉林大部、辽宁北部为全国高发中心（6次以上/年）[[5]]。
+
+**西北地区**：北疆北部为全国最高值之一（6次以上/年）[[6]]；青藏高原西北部也是频次较高区域[[7]]。
+
+**华北地区**：华北西北部年均3次以上[[8]]，属中等偏高水平。
+
+**长江中下游**：频次远低于北方，且**由北向南递减**——江苏北部、安徽大部偏高（**寿县、宁国站最高，58年累计51次，年均近1次**）；而江苏南部、浙江、江西、上海及湘鄂地区仅13-30次/站，其中**温州站最低（13次）**[[9]]。
+
+**华南**：寒潮频次低[[10]]，温州为其南界代表。
+
+#### 三、2000年前后各区域时间变化
+
+**东北地区**：演变最为复杂。1979-2011年数据显示，**20世纪90年代寒潮频次减少但强度增强；21世纪初（2000年后）频次重新回升，但强度减弱**[[11]]。同时冷空气路径发生转变：20世纪80年代多来自新地岛，90年代转向格陵兰岛，21世纪初期又减少[[12]]。
+
+**华北及内蒙古、江淮**：气候变暖后寒潮频次**明显减少**[[13]]，是减少最显著的东部区域之一[[14]]。
+
+**青藏高原东部**：减少也较显著[[15]]。
+
+**西北西部、东北、华南**：**寒潮频次并未明显减少**[[16]]——这是与华北、江淮形成鲜明对比的区域。
+
+**长江中下游**：20世纪70-90年代频次均<35次/站，但**进入21世纪后略有增加**（1-20次/站的站点占比约83%）[[17]]。
+
+#### 四、近40年总体趋势与"新变化"
+
+综合来看：
+- **频次**：近40年中国冬季寒潮**频次呈显著减少趋势**，尤其在东北（达95%信度）[[18]][[19]]；北方整体递减速率0.20次/10年[[20]]。
+- **强度与影响**：尽管频次减少，但**影响范围扩大、强寒潮强度显著增加、年际变化幅度明显增大**[[21]]——即寒潮减少的是"次数"，变强的是"每一次的强度与覆盖面"。
+- **类型分化**：寒潮可划分为全国型、东北华北型、西北华北型、东部型、东北西南型和西南型6类，分别影响不同区域[[22]]，因此区域间变化规律并不一致。
+
+#### 五、小结
+
+**北方（尤其东北）、青藏高原东部是寒潮"次数减少、强度增强"最典型的区域；华北、江淮减少最明显；西北西部、华南频次变化不明显；而长江中下游在21世纪反而略增。** 新变化的核心是：**寒潮不再是"靠次数取胜"，而是"单次强度更大、影响范围更广、极端性更强"**——这正是全球变暖与北极海冰减少背景下，极地冷空气突破西风带"围栏"南下所驱动的结果。 @ https://static-1.metaso.cn/_next/static/chunks/44421-b110388671fb37c5.js:0
+[    3800ms] [LOG] *******getSortedLinkNumHighlights [我国寒潮主要发生在秋末、冬季和初春，尤其是秋末冬初和冬末春初最为常见。<mark>全国寒潮年频次分布…/mark>1961-2005年我国年寒潮频次数据表明，寒潮发生频率在北方地区较高，南方地区较低。, 气候变暖前后全国性寒潮频次的差异更是显著，从图 3 的两段直线可知，变暖前的 1955/1956—1…频次和寒潮强度差值分布。
+<mark>冬春季寒潮频次分布呈现东多西少的特点（图略）。</mark>, <mark>全国寒潮年频次分布北多南少，东北、华北西北部、西北地区、江南、华南部分及内蒙古平均每年发生寒潮3次以上，其中北疆北部、内蒙古中北部、吉林大部、辽宁北部达6次以上。</mark>, 今年入冬以来最强寒潮将从11月26日至30日影响我国，大部地区气温将大幅下降...<mark>我国寒…东北、西北等地可达25至30℃。历史上降温最强的寒潮如2021年11月，全国80%国土降温超8℃。, <mark>全国寒潮年频次分布北多南少，东北、华北西北部、西北地区、江南、华南部分及内蒙古平均每年发…/mark>1961-2005年我国年寒潮频次数据表明，寒潮发生频率在北方地区较高，南方地区较低。, <mark>全国寒潮年频次分布北多南少，东北、华北西北部、西北地区、江南、华南部分及内蒙古平均每年发…/mark>1961-2005年我国年寒潮频次数据表明，寒潮发生频率在北方地区较高，南方地区较低。, 今年入冬以来最强寒潮将从11月26日至30日影响我国，大部地区气温将大幅下降...我国寒潮多发生在秋…大，东北、西北等地可达25至30℃...我国寒潮频次北多南少，东北、华北、西北、西藏等地受影响大。, <mark>全国寒潮年频次分布北多南少，东北、华北西北部、西北地区、江南、华南部分及内蒙古平均每年发…/mark>1961-2005年我国年寒潮频次数据表明，寒潮发生频率在北方地区较高，南方地区较低。, <mark>由北向南逐渐递减，寒潮频次较高区域分布在江苏北部和安徽大部分地区，寿县和宁国站寒潮频次最…进入21世纪后，长江中下游寒潮发生频次略有增加的趋势，频次范围在1~20次/站占比约为83.0%。, 我国寒潮主要发生在秋末、冬季和初春，尤其是秋末冬初和冬末春初最为常见。全国寒潮年频次分布北多南少，东…达6次以上。1961-2005年我国年寒潮频次数据表明，寒潮发生频率在北方地区较高，南方地区较低。, <mark>研究发现，东北地区春季寒潮频次和强度在20世纪80年代末出现转折，频次减少，强度增强，而…；反之，当20世纪90年代前期海冰偏少，高纬度SAP偏低，东亚大槽偏强，冷空气频次减少，强度增强。, 研究发现，东北地区春季寒潮频次和强度在20世纪80年代末出现转折，频次减少，强度增强，而21世纪初开…；反之，当20世纪90年代前期海冰偏少，高纬度SAP偏低，东亚大槽偏强，冷空气频次减少，强度增强。, 图 4 气候变暖前后冬春季寒潮频次和寒潮强度差值分布
+...全国寒潮发生频次最多的地区，其次是东北地…的北部地区的寒潮频次也有所减少；但西部大部地区及东北、华南地区的寒潮频次并没有减少。</mark>, 图 4 气候变暖前后冬春季寒潮频次和寒潮强度差值分布
+图4展示了气候变暖前后冬春季寒潮频次和寒潮强度…区、华北地区以及青藏高原东部的差值较大，显示出这些地区寒潮频次和强度的减少更为显著。</mark>, 具体而言，东北地区、华北地区以及青藏高原东部的差值较大，显示出这些地区寒潮频次和强度的减少更为显著。, 全国寒潮发生频次最多的地区，其次是东北地区，在长江流域的中游及华南也是寒潮发生比较多的地区。
+<ma…的北部地区的寒潮频次也有所减少；但西部大部地区及东北、华南地区的寒潮频次并没有减少。</mark>, 由北向南逐渐递减，寒潮频次较高区域分布在江苏北部和安徽大部分地区，寿县和宁国站寒潮频次最高（51次）…，长江中下游寒潮发生频次略有增加的趋势，频次范围在1~20次/站占比约为83.0%。</mark>, 并且，东北地区寒潮的减少趋势达到了95%的信度水平。
+在其余地区，寒潮频次的变化趋势大都为-0.02…各站寒潮季寒潮频次的线性变化趋势系数（单位：次/a），阴影区为通过了95%的信度检验</mark>, <mark>摘要：近40年来，中国冬季寒潮频次呈显著减少趋势，影响范围扩大，强寒潮强度显著增加且年际…统阻挡下的东移有关；西北华北型寒潮与东欧平原上空暖性高压脊的发展及欧亚大陆两脊一槽的形势密切相关。, 从北方地区1960 - 2017年寒潮频次逐年序列及线性趋势[图3(a)]明显的看出，1960 - …点的寒潮频次变化趋势，通过三角形大小表示趋势值的绝对值，空心方框标记通过0.05显著性检验的站点。, <mark>摘要：近40年来，中国冬季寒潮频次呈显著减少趋势，影响范围扩大，强寒潮强度显著增加且年际…统阻挡下的东移有关；西北华北型寒潮与东欧平原上空暖性高压脊的发展及欧亚大陆两脊一槽的形势密切相关。, 由图 1 可见，全国型寒潮的降温过程集中在我国除青藏高原外的大部分地区，影响范围最大，达到单站寒潮标…南型寒潮的数量较少，前者主要影响东北、华北和青藏高原区域，后者主要影响青藏高原地区。</mark>] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3801ms] [LOG] lines: [写在一起做成一个报告] @ https://static-1.metaso.cn/_next/static/chunks/56488-697db41d5a10f7af.js:0
+[    3802ms] [LOG] uuid be4f2f3e-f989-4557-b7e9-08bcecd5d2b9 @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3802ms] [LOG] scene undefined @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3803ms] [LOG] [TTS Debug] 主音频播放器初始化完成, volume: 0.5 speed: 1 @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3803ms] [LOG] [TTS Debug] 系统音频播放器初始化完成 @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3803ms] [LOG] [TTS Debug] 准备解锁音频上下文 @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3803ms] [LOG] open false @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3804ms] [LOG] session changed:********** null @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3804ms] [LOG] cache Map(0) @ https://static-1.metaso.cn/_next/static/chunks/44421-b110388671fb37c5.js:0
+[    3804ms] [LOG] content 已为你把前两轮的分析整理成一份完整报告👇
+
+---
+
+# 2000年以来我国寒潮的分布特征与新变化研究报告
+
+## 一、引言
+
+寒潮是指高纬冷空气大规模向中低纬度侵袭、造成剧烈降温的天气活动，常引发大风、雨雪、冻害等灾害，对农业、交通、能源和人民生产生活影响重大。本报告基于2000年以来（含与之对比的更长历史序列）的观测数据与研究成果，系统梳理我国寒潮的空间分布规律、时间演变特征及其新变化。
+
+## 二、寒潮的监测标准
+
+根据国家标准《寒潮等级》（GB/T 21987—2017），寒潮的判定标准为：**某地日最低气温24小时内降温≥8℃、或48小时≥10℃、或72小时≥12℃，且该地日最低气温≤4℃**。寒潮分为三个等级：
+
+- **寒潮**：24h降温≥8℃且最低气温≤4℃
+- **强寒潮**：24h降温≥10℃且最低气温≤2℃
+- **超强寒潮**：24h降温≥12℃且最低气温≤0℃
+
+## 三、我国寒潮的总体空间分布格局
+
+我国寒潮频次呈现**北多南少、东多西少**的总体格局：
+
+- **全国高发区**：北疆北部、内蒙古中北部、吉林大部、辽宁北部，年均达6次以上；
+- **中等偏高区域**：东北、华北西北部、西北、江南、华南部分及内蒙古，年均3次以上；
+- 近30年全国平均每年发生寒潮约5.4次。
+
+### 各区域具体频次
+
+| 区域 | 频次水平 | 代表性特征 |
+|------|---------|-----------|
+| **东北** | 全国高发中心（6次以上/年） | 吉林大部、辽宁北部最频繁 |
+| **西北** | 高发中心之一 | 北疆北部为全国最高值之一，青藏高原西北部频次较高 |
+| **华北** | 中等偏高 | 华北西北部年均3次以上 |
+| **长江中下游** | 明显低于北方，由北向南递减 | 苏北、皖北偏高（寿县、宁国站58年累计51次）；浙、赣、湘、沪仅13-30次，温州站最低（13次） |
+| **华南** | 频次低 | 温州为其南界代表 |
+
+## 四、2000年前后各区域的时间演变
+
+### （一）东北地区：演变最为复杂
+1979-2011年数据显示，东北寒潮**20世纪90年代频次减少但强度增强；21世纪初（2000年后）频次重新回升，但强度减弱**。冷空气路径也发生转变：80年代多来自新地岛，90年代转向格陵兰岛，21世纪初期又减少。
+
+### （二）华北及内蒙古、江淮：减少最明显
+气候变暖后，华北、江淮、内蒙古地区寒潮频次**明显减少**，是东部减少最显著的区域之一。
+
+### （三）青藏高原东部：显著减少
+与华北类似，青藏高原东部寒潮频次也明显减少。
+
+### （四）西北西部、东北、华南：减少不明显
+这些区域寒潮频次**并未明显减少**，与华北、江淮形成鲜明对比。
+
+### （五）长江中下游：21世纪略有增加
+该区域20世纪70-90年代频次均小于35次/站，但**进入21世纪后略有增加**（1-20次/站的站点占比约83%）。
+
+## 五、2000年以来的总体趋势与新变化
+
+### （一）频次变化趋势
+- 近40年中国冬季寒潮**频次呈显著减少趋势**，尤其在东北（达95%信度）；
+- 北方整体递减速率约0.20次/10年；
+- 1962-1999年全国寒潮日数、频次、强度明显减少，但**2000年后转为增加**，寒潮活动趋于频发、持续久且强度大。
+
+### （二）强度与影响的新变化
+尽管频次总体减少，但寒潮呈现三大新特征：
+
+1. **影响范围扩大**——单次寒潮波及区域更广；
+2. **强寒潮强度显著增加**——如华北2001-2011年平均降温幅度达12.0℃（高于1990年代的11.1℃），最高达15.2℃；
+3. **年际变率增大**——极端事件增多，如2021年初北京最低气温达-19.6℃，为1966年以来最低。
+
+## 六、新变化的成因机制
+
+### （一）北极放大效应
+全球变暖背景下，北极以其他地区约2-3倍的速率升温，海冰快速融化（2020年9月北极海冰为有观测以来第二少）。正常情况下极地冷空气被强西风带"围栏"圈住；北极升温使赤道—极地温差减小，西风减弱、波动加大，**极地涡旋减弱、分裂后冷空气更易南下入侵我国**。
+
+### （二）北极海冰减少
+北极海冰呈线性减少趋势（2007、2012年夏季面积达历史最小）。东北半球夏秋季海冰减少可能导致中国后冬**南方**寒潮冷空气频数增多；巴芬湾附近海冰减少则对应2000年代华北寒潮强度的增强。
+
+### （三）北极涛动（AO）与拉尼娜
+冬春季北极涛动指数与寒潮发生频次和强度存在显著相关；拉尼娜现象也加剧了冷冬的形成。
+
+## 七、总结与展望
+
+### 区域差异小结
+
+| 区域 | 2000年以来变化 |
+|------|---------------|
+| 东北 | 频次90年代减、2000年后回升但强度减弱；总体近40年显著减少 |
+| 华北/江淮 | 减少最明显 |
+| 青藏高原东部 | 明显减少 |
+| 西北西部/华南 | 变化不明显 |
+| 长江中下游 | 21世纪略有增加 |
+
+### 核心结论
+**北方（尤其东北）、青藏高原东部是寒潮"次数减少、强度增强"最典型的区域；华北、江淮减少最明显；西北西部、华南频次变化不明显；长江中下游在21世纪反而略增。** 新变化的核心在于：**寒潮不再是"靠次数取胜"，而是"单次强度更大、影响范围更广、极端性更强"**——这正是全球变暖与北极海冰减少背景下，极地冷空气突破西风带"围栏"南下所驱动的结果。
+
+**展望**：在全球持续变暖与北极海冰继续减少的背景下，我国寒潮的极端化、突发性特征可能进一步增强，需要加强对高影响寒潮事件的监测预警能力，尤其关注极端降温对农业、能源、交通等领域的连锁影响。
+
+---
+
+> **说明**：本报告综合了1961-2018年观测数据及近年研究成果，以上证据对应观测时段不同，结论截至各证据发表年份，后续年份寒潮活动可能仍有新变化。
+
+如果你需要**PPT版**、**Word文档版**，或想**补充图表/加大某一章节的篇幅**，告诉我即可，我可以继续帮你完善。 @ https://static-1.metaso.cn/_next/static/chunks/44421-b110388671fb37c5.js:0
+[    3805ms] [LOG] _ResultTitle  props: {onTitleClick: , collapse: false, resultId: 2118314676948627456, title: 调研2000年以来我国寒潮的分布特征与新变化, wrap: true} @ https://static-1.metaso.cn/_next/static/chunks/56488-697db41d5a10f7af.js:0
+[    3825ms] [LOG] chatId 01a1aadc-55c7-74eb-b8c5-5fc21220af4a @ https://static-1.metaso.cn/_next/static/chunks/44421-b110388671fb37c5.js:0
+[    3826ms] [LOG] *******tabSort: 结论 0 @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3826ms] [LOG] *******tabSort: 来源 1 @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3826ms] [LOG] *******tabSort: 脑图 2 @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3826ms] [LOG] *******tabSort: 大纲 3 @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3827ms] [LOG] _ResultTitle  props: {onTitleClick: , collapse: false, resultId: 2118314676965404672, title: 需要更加精确的到我国的哪些地区寒潮次数的差异和时间变化, wrap: true} @ https://static-1.metaso.cn/_next/static/chunks/56488-697db41d5a10f7af.js:0
+[    3838ms] [LOG] chatId 01a1ab80-e76a-7057-b032-b2a3c7d13a4f @ https://static-1.metaso.cn/_next/static/chunks/44421-b110388671fb37c5.js:0
+[    3838ms] [LOG] *******tabSort: 结论 0 @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3838ms] [LOG] *******tabSort: 来源 1 @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3838ms] [LOG] *******tabSort: 脑图 2 @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3838ms] [LOG] *******tabSort: 大纲 3 @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3839ms] [LOG] _ResultTitle  props: {onTitleClick: , collapse: false, resultId: 2118314676982181888, title: 写在一起做成一个报告, wrap: true} @ https://static-1.metaso.cn/_next/static/chunks/56488-697db41d5a10f7af.js:0
+[    3854ms] [LOG] chatId 01a1ab81-b604-702a-9c1c-0994891a13b7 @ https://static-1.metaso.cn/_next/static/chunks/44421-b110388671fb37c5.js:0
+[    3854ms] [LOG] *******tabSort: 结论 0 @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3854ms] [LOG] *******tabSort: 来源 1 @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3854ms] [LOG] *******tabSort: 脑图 2 @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3854ms] [LOG] *******tabSort: 大纲 3 @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3858ms] [LOG] *********计算marginTop [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3858ms] [LOG] *********计算marginTop [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3859ms] [LOG] *********计算marginTop [5] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3860ms] [LOG] *************extraBoxInfo [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3861ms] [LOG] [SearchOriginListBox] mounted/remounted, scheduling delayed recalculation for: 2118314676957016064 @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3861ms] [LOG] **********************watch before calculate [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3861ms] [LOG] *********calculateBoxAnchorInfo [Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object] [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3937ms] [LOG] injectExtraBoxAnchorUIInfo,extraBoxInfo: [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3937ms] [LOG] => tabValue, 结论 @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3938ms] [LOG] *************extraBoxInfo [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3938ms] [LOG] [SearchOriginListBox] mounted/remounted, scheduling delayed recalculation for: 2118314676973793280 @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3938ms] [LOG] **********************watch before calculate [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3938ms] [LOG] *********calculateBoxAnchorInfo [Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object] [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3939ms] [LOG] injectExtraBoxAnchorUIInfo,extraBoxInfo: [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3939ms] [LOG] => tabValue, 结论 @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3940ms] [LOG] *************extraBoxInfo [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3940ms] [LOG] [SearchOriginListBox] mounted/remounted, scheduling delayed recalculation for: 2118314676986376192 @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3940ms] [LOG] **********************watch before calculate [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3941ms] [LOG] *********calculateBoxAnchorInfo [Object] [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3942ms] [LOG] injectExtraBoxAnchorUIInfo,extraBoxInfo: [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3942ms] [LOG] => tabValue, 结论 @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3956ms] [LOG] *******tabSort: 来源 0 @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3956ms] [LOG] *******tabSort: 脑图 1 @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3956ms] [LOG] *******tabSort: 大纲 2 @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3967ms] [LOG] *******tabSort: 来源 0 @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3967ms] [LOG] *******tabSort: 脑图 1 @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3967ms] [LOG] *******tabSort: 大纲 2 @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3975ms] [LOG] *******tabSort: 来源 0 @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3975ms] [LOG] *******tabSort: 脑图 1 @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3975ms] [LOG] *******tabSort: 大纲 2 @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3979ms] [LOG] => tabValue, 来源 @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3979ms] [LOG] => tabValue, 来源 @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3979ms] [LOG] => tabValue, 来源 @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3983ms] [LOG] **********************watch before calculate [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3983ms] [LOG] *********calculateBoxAnchorInfo [Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object] [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3990ms] [LOG] injectExtraBoxAnchorUIInfo,extraBoxInfo: [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3990ms] [LOG] **********************watch before calculate [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3991ms] [LOG] *********calculateBoxAnchorInfo [Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object] [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3992ms] [LOG] injectExtraBoxAnchorUIInfo,extraBoxInfo: [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3992ms] [LOG] **********************watch before calculate [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3992ms] [LOG] *********calculateBoxAnchorInfo [Object] [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3992ms] [LOG] injectExtraBoxAnchorUIInfo,extraBoxInfo: [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3994ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3994ms] [LOG] undefined @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3995ms] [LOG] description:********** {type: 1, nodeId: 62a3c76b-54ad-4118-90e8-db2e0d01ae39, num: 1, repeatKey: 1_某日 14 时以后 24 小时内的日最低气温与该日日最低气温之差...某日 14 时以后 48 …≥8℃，或48小时内降温幅度≥10℃，或72小时内降温GB/T 21987—2017</mark>, offsetTopOfMarkdownBody: 308.34375} @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3996ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3996ms] [LOG] undefined @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3996ms] [LOG] description:********** {type: 1, nodeId: 788e4b8d-1173-47cf-a81e-7839594b0d29, num: 2, repeatKey: 1_幅度≥12℃，而且使该地日最低气温≤4℃的冷空气活动...使某地的日最低气温 24 小时内降温幅…幅度≥14℃，或72小时内降温幅度≥16℃，而且使该地日最低气温≤0℃的冷空气活动。</mark>, offsetTopOfMarkdownBody: 336.34375} @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3997ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3997ms] [LOG] [马力, 韦志刚, 李娴茹, 王欢, 郭仕侗] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3997ms] [LOG] description:********** {type: 1, nodeId: 4aaa09e7-5700-44ba-8a80-2ccd8c29cbc4, num: 3, repeatKey: 2_本文基于中国1961—2018年的0.25°×0.25°逐日最低气温数据，利用n阶多项式拟合、滑…、强度都明显减少，但**2000**年后变为增加，寒潮活动频发、持续时间久且强度大。</mark>, offsetTopOfMarkdownBody: 461.34375} @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3997ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3998ms] [LOG] [魏凤英] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3998ms] [LOG] description:********** {type: 1, nodeId: d5beb0e8-7db7-4dca-baf5-5c321e6717d4, num: 4, repeatKey: 3_图4展示了气候变暖前后冬春季寒潮频次和寒潮强度的差值分布...从图中可以看出，大部分地区的差值为…为显著。</mark>而东南沿海地区和西南地区则显示出较小的差值，表明这些地区的寒潮变化相对较小。, offsetTopOfMarkdownBody: 538.84375} @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3998ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3998ms] [LOG] [白寒冰, 曾刚] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3998ms] [LOG] description:********** {type: 1, nodeId: c7cdbd80-a25f-4d64-bfb0-2728ef06b7df, num: 5, repeatKey: 4_<mark>统计结果显示，**1990**～ **2000** 年 31 次区域寒潮过程中，影响…rc} \mathrm{C}$ ，出现在 **2002** 年 12 月 21 日。</mark>, offsetTopOfMarkdownBody: 719.84375} @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3999ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3999ms] [LOG] [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3999ms] [LOG] description:********** {type: 1, nodeId: ce9be522-893b-464c-a9ae-6fd49208f1d4, num: 6, repeatKey: 5_<mark>**2020**年12月至**2021**年1月，中国多地遭遇寒潮，北京最低温达-*…*年以来最低。</mark>
+...**2021**年寒潮虽异常，但整体仍属暖冬，未来可能更频繁。, offsetTopOfMarkdownBody: 839.34375} @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3999ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3999ms] [LOG] undefined @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    3999ms] [LOG] description:********** {type: 1, nodeId: a19e67d4-0ed4-4d02-9be1-451d6de3cf7f, num: 7, repeatKey: 6_<mark>可是在全球变暖背景下，北极以其他地区2~3倍的速率升温，导致海冰快速融化。</mark>**2020**年9月北极海冰为有观测以来第二少，这是北极增暖的有力证据。, offsetTopOfMarkdownBody: 964.34375} @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4000ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4000ms] [LOG] [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4000ms] [LOG] description:********** {type: 1, nodeId: 6313974f-0c60-4994-9dac-3b2c9fa3271b, num: 8, repeatKey: 5_此次寒潮部分源于全球变暖，极地涡旋南移导致冷空气南侵。<mark>北极海冰减少使极地涡旋减弱，分…了冷冬。</mark>
+...北极升温三倍于其他地区，温差减小，导致大气环流异常，冷空气更易南侵。, offsetTopOfMarkdownBody: 992.34375} @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4000ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4000ms] [LOG] [朱晨玉, 黄菲, 石运昊, 党振中, 张玉轩] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4000ms] [LOG] description:********** {type: 1, nodeId: a8a3011e-3686-4bf7-baad-a1852a574ce5, num: 9, repeatKey: 7_<mark>在全球变暖的气候背景下, 北极海冰呈线性减少的趋势 ${ }^{[15-17]}$,…北极海冰面积达到历史最小, 呈现出加速融化的趋势 ${ }^{[18-19]}$ 。</mark>, offsetTopOfMarkdownBody: 1300.84375} @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4001ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4001ms] [LOG] [朱晨玉, 黄菲, 石运昊, 党振中, 张玉轩] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4001ms] [LOG] description:********** {type: 1, nodeId: 816a725c-1e2c-4712-bc92-d87ae51c6859, num: 10, repeatKey: 7_<mark>EOF1 北极海冰全是正值, 对应着时间序列是年代际下降, 表明整个北冰洋的海冰在近…频数的增多, 夏季海冰融化如何影响到冬季我国寒潮冷空气的活动?
+下面将进行初步探讨。</mark>, offsetTopOfMarkdownBody: 1330.84375} @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4001ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4001ms] [LOG] [白寒冰, 曾刚] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4001ms] [LOG] description:********** {type: 1, nodeId: a5c23ac3-b6d7-42c9-a6e7-54e9b2e2f0bb, num: 11, repeatKey: 4_<mark>结果表明，**2000** 年代初巴芬湾附近强度关键区秋季到冬季海冰减少，对应 **…关系，因此本文继续分析关键区海冰变化如何影响 1990 年代与 **2000** 年代的华北寒潮。, offsetTopOfMarkdownBody: 1360.84375} @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4002ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4002ms] [LOG] [魏凤英] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4002ms] [LOG] description:********** {type: 1, nodeId: b9ba0df2-f1e4-42b1-9842-3121733021d8, num: 12, repeatKey: 3_图7 冬春季AO指数与寒潮发生频次（a）和强度（b）的相关分布
+<mark>图7展示了冬春季北极…寒潮强度与AO指数的相关性，同样地，高AO指数区域的寒潮强度较高，而低AO指数区域的寒潮强度较低。, offsetTopOfMarkdownBody: 1404.84375} @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4002ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4003ms] [LOG] [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4003ms] [LOG] description:********** {type: 1, nodeId: c2678cc5-229e-4766-9e8b-b58b89711a6b, num: 13, repeatKey: 5_<mark>北极海冰减少使极地涡旋减弱，分裂后更易南下，影响中高纬度气候。同时，拉尼娜现象加剧了冷冬。</mark>, offsetTopOfMarkdownBody: 1449.34375} @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4003ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4003ms] [LOG] [马力, 韦志刚, 李娴茹, 王欢, 郭仕侗] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4003ms] [LOG] description:********** {type: 1, nodeId: e39160cd-4685-4741-851f-1217be1de63f, num: 14, repeatKey: 2_<mark>本文基于中国**1961**—**2018**年的0.25°×0.25°逐日最低气温…2018**年中国寒潮变化划分为1960—1979年、1980—1999年和2000年后三个阶段。, offsetTopOfMarkdownBody: 1708.84375} @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4004ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4004ms] [LOG] [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4004ms] [LOG] description:********** {type: 1, nodeId: 22d6a879-0cda-415b-ac1c-f956217c4485, num: 1, repeatKey: 1_我国寒潮主要发生在秋末、冬季和初春，尤其是秋末冬初和冬末春初最为常见。<mark>全国寒潮年频次…/mark>1961-2005年我国年寒潮频次数据表明，寒潮发生频率在北方地区较高，南方地区较低。, offsetTopOfMarkdownBody: 226.15625} @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4005ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4005ms] [LOG] [魏凤英] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4005ms] [LOG] description:********** {type: 1, nodeId: 8a27bbfe-715f-4ea9-b9ee-f847341017c1, num: 2, repeatKey: 2_气候变暖前后全国性寒潮频次的差异更是显著，从图 3 的两段直线可知，变暖前的 1955/1956…频次和寒潮强度差值分布。
+<mark>冬春季寒潮频次分布呈现东多西少的特点（图略）。</mark>, offsetTopOfMarkdownBody: 227.65625} @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4005ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4005ms] [LOG] [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4005ms] [LOG] description:********** {type: 1, nodeId: 0969d52e-8f48-4b25-80cb-a2c49462ce34, num: 3, repeatKey: 1_<mark>全国寒潮年频次分布北多南少，东北、华北西北部、西北地区、江南、华南部分及内蒙古平均每年发生寒潮3次以上，其中北疆北部、内蒙古中北部、吉林大部、辽宁北部达6次以上。</mark>, offsetTopOfMarkdownBody: 256.15625} @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4005ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4006ms] [LOG] [张娟, 叶殿秀] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4006ms] [LOG] description:********** {type: 1, nodeId: 56aedefd-3f99-4fec-a1a4-0caf231d531e, num: 4, repeatKey: 3_今年入冬以来最强寒潮将从11月26日至30日影响我国，大部地区气温将大幅下降...<mark>我…东北、西北等地可达25至30℃。历史上降温最强的寒潮如2021年11月，全国80%国土降温超8℃。, offsetTopOfMarkdownBody: 286.15625} @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4006ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4006ms] [LOG] [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4006ms] [LOG] description:********** {type: 1, nodeId: 596cf3ca-902e-419c-9865-e7fb284cf947, num: 5, repeatKey: 1_<mark>全国寒潮年频次分布北多南少，东北、华北西北部、西北地区、江南、华南部分及内蒙古平均每…/mark>1961-2005年我国年寒潮频次数据表明，寒潮发生频率在北方地区较高，南方地区较低。, offsetTopOfMarkdownBody: 374.15625} @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4006ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4007ms] [LOG] [张娟, 叶殿秀] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4007ms] [LOG] description:********** {type: 1, nodeId: ffa50075-b0d5-4d27-808f-9c3abd9470cf, num: 7, repeatKey: 3_今年入冬以来最强寒潮将从11月26日至30日影响我国，大部地区气温将大幅下降...我国寒潮多发生…大，东北、西北等地可达25至30℃...我国寒潮频次北多南少，东北、华北、西北、西藏等地受影响大。, offsetTopOfMarkdownBody: 420.15625} @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4007ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4007ms] [LOG] [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4007ms] [LOG] description:********** {type: 1, nodeId: ea03e14d-1071-4214-9d0a-6fb2b9bae7f7, num: 8, repeatKey: 1_<mark>全国寒潮年频次分布北多南少，东北、华北西北部、西北地区、江南、华南部分及内蒙古平均每…/mark>1961-2005年我国年寒潮频次数据表明，寒潮发生频率在北方地区较高，南方地区较低。, offsetTopOfMarkdownBody: 466.15625} @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4007ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4008ms] [LOG] [王珂依, 刘园, 刘布春, 邱美娟, 杨晓娟, 张玥滢, 吴昕悦, 肖楠舒, 庞静漪] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4008ms] [LOG] description:********** {type: 1, nodeId: 1ea7b540-8928-48b6-b6b8-48545d3811c6, num: 9, repeatKey: 4_<mark>由北向南逐渐递减，寒潮频次较高区域分布在江苏北部和安徽大部分地区，寿县和宁国站寒潮频…进入21世纪后，长江中下游寒潮发生频次略有增加的趋势，频次范围在1~20次/站占比约为83.0%。, offsetTopOfMarkdownBody: 573.65625} @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4008ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4008ms] [LOG] [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4008ms] [LOG] description:********** {type: 1, nodeId: 6f56f7f4-e3a1-45e8-a31b-9c16cd626ef2, num: 10, repeatKey: 1_我国寒潮主要发生在秋末、冬季和初春，尤其是秋末冬初和冬末春初最为常见。全国寒潮年频次分布北多南少…达6次以上。1961-2005年我国年寒潮频次数据表明，寒潮发生频率在北方地区较高，南方地区较低。, offsetTopOfMarkdownBody: 618.15625} @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4008ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4008ms] [LOG] [唐孟琪, 曾刚] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4009ms] [LOG] description:********** {type: 1, nodeId: 7e787041-a051-42c7-a715-94f00a5f2179, num: 11, repeatKey: 5_<mark>研究发现，东北地区春季寒潮频次和强度在20世纪80年代末出现转折，频次减少，强度增强…；反之，当20世纪90年代前期海冰偏少，高纬度SAP偏低，东亚大槽偏强，冷空气频次减少，强度增强。, offsetTopOfMarkdownBody: 739.65625} @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4009ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4009ms] [LOG] [唐孟琪, 曾刚] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4009ms] [LOG] description:********** {type: 1, nodeId: 21aeede6-8700-4697-8c51-75bac24efe4d, num: 12, repeatKey: 5_研究发现，东北地区春季寒潮频次和强度在20世纪80年代末出现转折，频次减少，强度增强，而21世纪…；反之，当20世纪90年代前期海冰偏少，高纬度SAP偏低，东亚大槽偏强，冷空气频次减少，强度增强。, offsetTopOfMarkdownBody: 769.65625} @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4009ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4010ms] [LOG] [魏凤英] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4010ms] [LOG] description:********** {type: 1, nodeId: 6003491d-3679-4f0f-8c4d-57ab200a367a, num: 13, repeatKey: 2_图 4 气候变暖前后冬春季寒潮频次和寒潮强度差值分布
+...全国寒潮发生频次最多的地区，其次是东…的北部地区的寒潮频次也有所减少；但西部大部地区及东北、华南地区的寒潮频次并没有减少。</mark>, offsetTopOfMarkdownBody: 813.65625} @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4010ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4010ms] [LOG] [魏凤英] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4010ms] [LOG] description:********** {type: 1, nodeId: 0f85675f-5a5f-4a09-b1bc-5c1683805905, num: 14, repeatKey: 2_图 4 气候变暖前后冬春季寒潮频次和寒潮强度差值分布
+图4展示了气候变暖前后冬春季寒潮频次和寒潮…区、华北地区以及青藏高原东部的差值较大，显示出这些地区寒潮频次和强度的减少更为显著。</mark>, offsetTopOfMarkdownBody: 813.65625} @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4010ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4010ms] [LOG] [魏凤英] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4010ms] [LOG] description:********** {type: 1, nodeId: d671b93d-8152-4aa4-94c2-10a8e1275c1e, num: 15, repeatKey: 2_具体而言，东北地区、华北地区以及青藏高原东部的差值较大，显示出这些地区寒潮频次和强度的减少更为显著。, offsetTopOfMarkdownBody: 859.65625} @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4011ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4011ms] [LOG] [魏凤英] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4011ms] [LOG] description:********** {type: 1, nodeId: 4de9837a-a91a-4716-9293-ece896b07308, num: 16, repeatKey: 2_全国寒潮发生频次最多的地区，其次是东北地区，在长江流域的中游及华南也是寒潮发生比较多的地区。
+<…的北部地区的寒潮频次也有所减少；但西部大部地区及东北、华南地区的寒潮频次并没有减少。</mark>, offsetTopOfMarkdownBody: 905.65625} @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4011ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4011ms] [LOG] [王珂依, 刘园, 刘布春, 邱美娟, 杨晓娟, 张玥滢, 吴昕悦, 肖楠舒, 庞静漪] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4011ms] [LOG] description:********** {type: 1, nodeId: 1fd3c40a-221c-48e0-8069-353373eaee44, num: 17, repeatKey: 4_由北向南逐渐递减，寒潮频次较高区域分布在江苏北部和安徽大部分地区，寿县和宁国站寒潮频次最高（51…，长江中下游寒潮发生频次略有增加的趋势，频次范围在1~20次/站占比约为83.0%。</mark>, offsetTopOfMarkdownBody: 981.65625} @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4011ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4012ms] [LOG] [王遵娅, 丁一汇] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4012ms] [LOG] description:********** {type: 1, nodeId: 2c4a66d1-b93d-4619-97b5-09c42a289e6a, num: 18, repeatKey: 6_并且，东北地区寒潮的减少趋势达到了95%的信度水平。
+在其余地区，寒潮频次的变化趋势大都为-0.…各站寒潮季寒潮频次的线性变化趋势系数（单位：次/a），阴影区为通过了95%的信度检验</mark>, offsetTopOfMarkdownBody: 1113.65625} @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4012ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4012ms] [LOG] [王淼淼, 丁明虎, 吕俊梅, 等] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4012ms] [LOG] description:********** {type: 1, nodeId: aad38bfa-812f-4bee-9392-89611d535a83, num: 19, repeatKey: 7_<mark>摘要：近40年来，中国冬季寒潮频次呈显著减少趋势，影响范围扩大，强寒潮强度显著增加且…统阻挡下的东移有关；西北华北型寒潮与东欧平原上空暖性高压脊的发展及欧亚大陆两脊一槽的形势密切相关。, offsetTopOfMarkdownBody: 1113.65625} @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4012ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4012ms] [LOG] [乔雪梅, 刘普幸] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4012ms] [LOG] description:********** {type: 1, nodeId: ba9806c1-cd0e-4b2d-998a-446a5f46ff61, num: 20, repeatKey: 8_从北方地区1960 - 2017年寒潮频次逐年序列及线性趋势[图3(a)]明显的看出，1960 …点的寒潮频次变化趋势，通过三角形大小表示趋势值的绝对值，空心方框标记通过0.05显著性检验的站点。, offsetTopOfMarkdownBody: 1143.65625} @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4013ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4013ms] [LOG] [王淼淼, 丁明虎, 吕俊梅, 等] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4013ms] [LOG] description:********** {type: 1, nodeId: 598371a4-0cc7-463d-9a56-5b3c3bbf0529, num: 21, repeatKey: 7_<mark>摘要：近40年来，中国冬季寒潮频次呈显著减少趋势，影响范围扩大，强寒潮强度显著增加且…统阻挡下的东移有关；西北华北型寒潮与东欧平原上空暖性高压脊的发展及欧亚大陆两脊一槽的形势密切相关。, offsetTopOfMarkdownBody: 1175.65625} @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4013ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4013ms] [LOG] [王淼淼, 丁明虎, 吕俊梅, 等] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4013ms] [LOG] description:********** {type: 1, nodeId: 6b1c37a9-7976-410d-b77c-bcb17db8f756, num: 22, repeatKey: 7_由图 1 可见，全国型寒潮的降温过程集中在我国除青藏高原外的大部分地区，影响范围最大，达到单站寒…南型寒潮的数量较少，前者主要影响东北、华北和青藏高原区域，后者主要影响青藏高原地区。</mark>, offsetTopOfMarkdownBody: 1267.65625} @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4021ms] [LOG] *********计算marginTop [303.34375, 5, 86, 46, 151, 91, 95, 5, 270, 5, 5, 5, 15, 229.5] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4021ms] [LOG] *********计算marginTop [219.15625, 5, 5, 5, 13, 16, 16, 76, 16, 90, 5, 9, 5, 5, 5, 33, 102, 5, 5, 5, 19] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4024ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4026ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4026ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4026ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4027ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4027ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4027ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4027ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4027ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4028ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4028ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4028ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4028ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4028ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4029ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4029ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4029ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4029ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4029ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4030ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4030ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4030ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4030ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4030ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4031ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4031ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4031ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4031ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4031ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4031ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4032ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4032ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4032ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4032ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4032ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4034ms] [WARNING] Mixed Content: The page at 'https://metaso.cn/chat/2118314676831186944?shareType=15&ssi=UyAYG66' was loaded over HTTPS, but requested an insecure element 'http://i0.hdslb.com/bfs/archive/ca310601871051465ed42b8de567e38add47cc21.jpg'. This request was automatically upgraded to HTTPS, For more information see https://blog.chromium.org/2019/10/no-more-mixed-messages-about-https.html @ https://metaso.cn/chat/2118314676831186944?shareType=15&ssi=UyAYG66:0
+[    4034ms] [WARNING] Mixed Content: The page at 'https://metaso.cn/chat/2118314676831186944?shareType=15&ssi=UyAYG66' was loaded over HTTPS, but requested an insecure element 'http://i0.hdslb.com/bfs/archive/ca310601871051465ed42b8de567e38add47cc21.jpg'. This request was automatically upgraded to HTTPS, For more information see https://blog.chromium.org/2019/10/no-more-mixed-messages-about-https.html @ https://metaso.cn/chat/2118314676831186944?shareType=15&ssi=UyAYG66:0
+[    4038ms] [LOG] [search-v2 page] 滚动到消息: 2118314676982181888 @ https://static-1.metaso.cn/_next/static/chunks/app/(pages)/(menu-attached)/search-v2/@desktop/%5Bid%5D/page-bf318242d88aeeeb.js:0
+[    4041ms] [LOG] lines: [调研2000年以来我国寒潮的分布特征与新变化] @ https://static-1.metaso.cn/_next/static/chunks/56488-697db41d5a10f7af.js:0
+[    4041ms] [LOG] lines: [需要更加精确的到我国的哪些地区寒潮次数的差异和, 时间变化] @ https://static-1.metaso.cn/_next/static/chunks/56488-697db41d5a10f7af.js:0
+[    4041ms] [LOG] lines: [写在一起做成一个报告] @ https://static-1.metaso.cn/_next/static/chunks/56488-697db41d5a10f7af.js:0
+[    4047ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4047ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4047ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4047ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4047ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4047ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4047ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4047ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4047ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4047ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4047ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4048ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4048ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4048ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4049ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4049ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4049ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4049ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4049ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4049ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4049ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4049ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4049ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4049ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4050ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4050ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4050ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4050ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4050ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4051ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4051ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4051ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4051ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4051ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4051ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4118ms] [LOG] requestUrl ===  /api/search-result?shareType=15 @ https://static-1.metaso.cn/_next/static/chunks/72669-348a17ece366ec7d.js:0
+[    4149ms] [LOG] requestUrl ===  /api/search-result?shareType=15 @ https://static-1.metaso.cn/_next/static/chunks/72669-348a17ece366ec7d.js:0
+[    4156ms] [LOG] requestUrl ===  /api/realtime/information @ https://static-1.metaso.cn/_next/static/chunks/72669-348a17ece366ec7d.js:0
+[    4202ms] [LOG] requestUrl ===  /api/html-report?dataIds=2118314676831186944 @ https://static-1.metaso.cn/_next/static/chunks/72669-348a17ece366ec7d.js:0
+[    4204ms] [LOG] => client端清理过期sid,uid @ https://static-1.metaso.cn/_next/static/chunks/72669-348a17ece366ec7d.js:0
+[    4205ms] [LOG] undefined @ https://static-1.metaso.cn/_next/static/chunks/8464-a6f3a5fb99b08be9.js:0
+[    4212ms] [LOG] doAutoLogin***** @ https://static-1.metaso.cn/_next/static/chunks/app/layout-bf1327f1662e6806.js:0
+[    4258ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://cdn.metaso.cn/favicon/cma.gov.cn.ico:0
+[    4259ms] [ERROR] reject: X @ https://static-1.metaso.cn/_next/static/chunks/27115-9d04bf3fc8b4c4ea.js:0
+[    4262ms] X
+[    4263ms] [LOG] *********calculateBoxAnchorInfo [Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object] [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4263ms] [LOG] injectExtraBoxAnchorUIInfo,extraBoxInfo: [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4264ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4264ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4265ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4265ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4265ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4265ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4266ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4266ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4267ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4267ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4267ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4267ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4267ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4268ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4268ms] [LOG] *********计算marginTop [303.34375, 5, 86, 46, 151, 91, 95, 5, 270, 5, 5, 5, 15, 229.5] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4270ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4270ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4271ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4271ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4272ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4272ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4273ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4273ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4274ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4275ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4276ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4276ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4277ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4277ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4279ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://cdn.metaso.cn/favicon/cma.gov.cn.ico:0
+[    4279ms] [ERROR] reject: X @ https://static-1.metaso.cn/_next/static/chunks/27115-9d04bf3fc8b4c4ea.js:0
+[    4281ms] X
+[    4285ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://cdn.metaso.cn/favicon/cma.gov.cn.ico:0
+[    4285ms] [ERROR] reject: X @ https://static-1.metaso.cn/_next/static/chunks/27115-9d04bf3fc8b4c4ea.js:0
+[    4288ms] X
+[    4289ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://cdn.metaso.cn/favicon/bcdt.ac.cn.ico:0
+[    4290ms] [ERROR] reject: X @ https://static-1.metaso.cn/_next/static/chunks/27115-9d04bf3fc8b4c4ea.js:0
+[    4289ms] X
+[    4299ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://cdn.metaso.cn/favicon/cma.gov.cn.ico:0
+[    4300ms] [ERROR] reject: X @ https://static-1.metaso.cn/_next/static/chunks/27115-9d04bf3fc8b4c4ea.js:0
+[    4303ms] X
+[    4303ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://cdn.metaso.cn/favicon/bcdt.ac.cn.ico:0
+[    4303ms] [ERROR] reject: X @ https://static-1.metaso.cn/_next/static/chunks/27115-9d04bf3fc8b4c4ea.js:0
+[    4304ms] X
+[    4309ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://cdn.metaso.cn/favicon/cma.gov.cn.ico:0
+[    4310ms] [ERROR] reject: X @ https://static-1.metaso.cn/_next/static/chunks/27115-9d04bf3fc8b4c4ea.js:0
+[    4309ms] X
+[    4313ms] [LOG] requestUrl ===  /api/html-report?dataIds=2118314676957016064 @ https://static-1.metaso.cn/_next/static/chunks/72669-348a17ece366ec7d.js:0
+[    4313ms] [LOG] => client端清理过期sid,uid @ https://static-1.metaso.cn/_next/static/chunks/72669-348a17ece366ec7d.js:0
+[    4314ms] [LOG] undefined @ https://static-1.metaso.cn/_next/static/chunks/8464-a6f3a5fb99b08be9.js:0
+[    4318ms] [LOG] doAutoLogin***** @ https://static-1.metaso.cn/_next/static/chunks/app/layout-bf1327f1662e6806.js:0
+[    4321ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://cdn.metaso.cn/favicon/cma.gov.cn.ico:0
+[    4321ms] [ERROR] reject: X @ https://static-1.metaso.cn/_next/static/chunks/27115-9d04bf3fc8b4c4ea.js:0
+[    4322ms] X
+[    4332ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://cdn.metaso.cn/favicon/cma.gov.cn.ico:0
+[    4332ms] [ERROR] reject: X @ https://static-1.metaso.cn/_next/static/chunks/27115-9d04bf3fc8b4c4ea.js:0
+[    4333ms] X
+[    4338ms] [LOG] *********calculateBoxAnchorInfo [Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object] [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4339ms] [LOG] injectExtraBoxAnchorUIInfo,extraBoxInfo: [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4340ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4340ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4340ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4341ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4341ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4341ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4341ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4342ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4342ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4342ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4343ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4343ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4343ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4344ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4344ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4344ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4344ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4344ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4345ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4345ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4345ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4346ms] [LOG] *********计算marginTop [219.15625, 5, 5, 5, 13, 16, 16, 76, 16, 90, 5, 9, 5, 5, 5, 33, 102, 5, 5, 5, 19] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4346ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4347ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4347ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4347ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4347ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4347ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4348ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4348ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4348ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4348ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4348ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4349ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4349ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4349ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4349ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4349ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4350ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4350ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4350ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4350ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4350ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676973793280, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4352ms] [LOG] *********calculateBoxAnchorInfo [Object] [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4352ms] [LOG] injectExtraBoxAnchorUIInfo,extraBoxInfo: [] @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4408ms] [LOG] requestUrl ===  /api/search-result?shareType=15 @ https://static-1.metaso.cn/_next/static/chunks/72669-348a17ece366ec7d.js:0
+[    4518ms] [LOG] _logToES  res ===  {data: Object, status: 200, statusText: OK, headers: tP, config: Object} @ https://static-1.metaso.cn/_next/static/chunks/72669-348a17ece366ec7d.js:0
+[    4557ms] [LOG] _logToES  res ===  {data: Object, status: 200, statusText: OK, headers: tP, config: Object} @ https://static-1.metaso.cn/_next/static/chunks/72669-348a17ece366ec7d.js:0
+[    4817ms] [LOG] lines: [调研2000年以来我国寒潮的分布特征与新变化] @ https://static-1.metaso.cn/_next/static/chunks/56488-697db41d5a10f7af.js:0
+[    4817ms] [LOG] lines: [需要更加精确的到我国的哪些地区寒潮次数的差异和, 时间变化] @ https://static-1.metaso.cn/_next/static/chunks/56488-697db41d5a10f7af.js:0
+[    4817ms] [LOG] lines: [写在一起做成一个报告] @ https://static-1.metaso.cn/_next/static/chunks/56488-697db41d5a10f7af.js:0
+[    4908ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    4909ms] [LOG] SearchOriginBox  props: {sessionTopicChanged: , dbResultId: 2118314676957016064, onExtraBoxRemove: , item: Object, onLinkClicked: } @ https://static-1.metaso.cn/_next/static/chunks/7060-57e725bdc6bd2f5d.js:0
+[    5049ms] [COUNT] %c%d: 1 @ https://g.alicdn.com/captcha-frontend/FeiLin/1.5.4/feilin069.57fbf02434971a0fc579b6ae076f3f1bb4055ee4caca259f5388e571157b3f39.js?v=1:0
+[    5050ms] [DIR] %c%d font-size:0;color:transparent Error @ https://g.alicdn.com/captcha-frontend/FeiLin/1.5.4/feilin069.57fbf02434971a0fc579b6ae076f3f1bb4055ee4caca259f5388e571157b3f39.js?v=1:0
+[    5050ms] [DIRXML] %c%d font-size:0;color:transparent Error @ https://g.alicdn.com/captcha-frontend/FeiLin/1.5.4/feilin069.57fbf02434971a0fc579b6ae076f3f1bb4055ee4caca259f5388e571157b3f39.js?v=1:0
+[    5050ms] [INFO] %c%d font-size:0;color:transparent NaN @ https://g.alicdn.com/captcha-frontend/FeiLin/1.5.4/feilin069.57fbf02434971a0fc579b6ae076f3f1bb4055ee4caca259f5388e571157b3f39.js?v=1:0
+[    5050ms] [INFO] %c%d font-size:0;color:transparent NaN @ https://g.alicdn.com/captcha-frontend/FeiLin/1.5.4/feilin069.57fbf02434971a0fc579b6ae076f3f1bb4055ee4caca259f5388e571157b3f39.js?v=1:0
+[    5050ms] [LOG] %c%d font-size:0;color:transparent NaN @ https://g.alicdn.com/captcha-frontend/FeiLin/1.5.4/feilin069.57fbf02434971a0fc579b6ae076f3f1bb4055ee4caca259f5388e571157b3f39.js?v=1:0
+[    5050ms] [TABLE] %c%d font-size:0;color:transparent Error @ https://g.alicdn.com/captcha-frontend/FeiLin/1.5.4/feilin069.57fbf02434971a0fc579b6ae076f3f1bb4055ee4caca259f5388e571157b3f39.js?v=1:0
+[    5050ms] [INFO] %c%d font-size:0;color:transparent NaN @ https://g.alicdn.com/captcha-frontend/FeiLin/1.5.4/feilin069.57fbf02434971a0fc579b6ae076f3f1bb4055ee4caca259f5388e571157b3f39.js?v=1:0
+[    8521ms] [WARNING] The resource https://static-1.metaso.cn/_next/static/css/c37340727ca4fe15.css was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally. @ https://metaso.cn/chat/2118314676831186944?shareType=15&ssi=UyAYG66:0
+[   17524ms] [LOG] => doubao anti-controller disconnected @ https://static-1.metaso.cn/_next/static/chunks/app/layout-bf1327f1662e6806.js:0
+[   17524ms] [LOG] => kimi anti-controller disconnected @ https://static-1.metaso.cn/_next/static/chunks/app/layout-bf1327f1662e6806.js:0

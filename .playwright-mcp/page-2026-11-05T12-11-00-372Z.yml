@@ -1,0 +1,57 @@
+- generic [ref=f2e1]:
+  - banner [ref=f2e2]:
+    - generic [ref=f2e3]:
+      - link "Michael 首页" [ref=f2e4] [cursor=pointer]:
+        - /url: ../../index.html
+        - text: Michael
+        - generic [ref=f2e5]: .
+      - navigation "主导航" [ref=f2e6]:
+        - link "首页" [ref=f2e7] [cursor=pointer]:
+          - /url: ../../index.html
+        - link "工具" [ref=f2e8] [cursor=pointer]:
+          - /url: ../../tools.html
+        - link "笔记" [ref=f2e9] [cursor=pointer]:
+          - /url: ../../notes.html
+        - link "分支" [ref=f2e10] [cursor=pointer]:
+          - /url: ../../branches.html
+        - link "关于" [ref=f2e11] [cursor=pointer]:
+          - /url: ../../index.html#about
+      - button "切换主题" [ref=f2e13] [cursor=pointer]
+  - main [ref=f2e19]:
+    - generic [ref=f2e21]:
+      - generic [ref=f2e22]:
+        - link "工具" [ref=f2e23] [cursor=pointer]:
+          - /url: ../../tools.html
+        - generic [ref=f2e26]: Stardy
+      - generic [ref=f2e27]:
+        - generic [ref=f2e28]:
+          - heading "大气探测学" [level=1] [ref=f2e29]
+          - paragraph [ref=f2e30]: 15 章节 · 44 张知识卡片
+        - generic [ref=f2e31]:
+          - generic [ref=f2e32]:
+            - generic [ref=f2e33]: "0"
+            - generic [ref=f2e34]: 已学
+          - generic [ref=f2e35]:
+            - generic [ref=f2e36]: "0"
+            - generic [ref=f2e37]: 已掌握
+          - generic [ref=f2e38]:
+            - generic [ref=f2e39]: "1"
+            - generic [ref=f2e40]: 连续天
+      - generic [ref=f2e41]:
+        - button "浏览" [ref=f2e42] [cursor=pointer]
+        - button "背诵" [ref=f2e48] [cursor=pointer]
+        - button "问答" [active] [ref=f2e52] [cursor=pointer]
+    - generic [ref=f2e779]:
+      - generic [ref=f2e780]:
+        - generic [ref=f2e781]:
+          - text: 1 / 0
+          - generic [ref=f2e782]:
+            - text: 得分
+            - strong [ref=f2e783]: "0"
+        - button "换一批" [ref=f2e784] [cursor=pointer]
+      - generic [ref=f2e785]:
+        - paragraph [ref=f2e787]: 点击"开始"进入问答模式
+        - group "选项"
+      - button "开始问答" [ref=f2e788] [cursor=pointer]
+  - contentinfo [ref=f2e567]:
+    - paragraph [ref=f2e569]: Stardy · 大气探测学知识卡片 · 本地运行，无数据上传

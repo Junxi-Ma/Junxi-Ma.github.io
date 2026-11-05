@@ -1,0 +1,33 @@
+- generic [ref=f2e3]:
+  - generic [ref=f2e4]: Stardy
+  - generic [ref=f2e6]:
+    - banner [ref=f2e7]:
+      - generic [ref=f2e8]:
+        - generic [ref=f2e9]: Stardy
+        - paragraph [ref=f2e10]: 把零散的资料，整理成一条走得通的知识链。
+      - button "设置" [ref=f2e11] [cursor=pointer]
+    - generic [ref=f2e15]:
+      - generic [ref=f2e16]: 1个科目
+      - generic [ref=f2e18]: 0个知识点
+      - generic [ref=f2e20]: 0张卡待复习
+    - generic [ref=f2e21] [cursor=pointer]:
+      - generic [ref=f2e22]:
+        - text: 继续学习
+        - heading "PDF 测试" [level=2] [ref=f2e23]
+        - paragraph [ref=f2e24]: 0 个知识点 · 0 张卡 · 1 份资料
+        - generic [ref=f2e25]: 进入知识树
+      - generic [ref=f2e26]:
+        - generic [ref=f2e31]:
+          - text: "0"
+          - generic [ref=f2e32]: "%"
+        - generic [ref=f2e33]: 闪卡掌握度
+    - generic [ref=f2e34]: 我的科目
+    - generic [ref=f2e35]:
+      - button "PDF 测试 0 个知识点 · 1 份资料 今天 更多" [ref=f2e36] [cursor=pointer]:
+        - generic [ref=f2e38]:
+          - heading "PDF 测试" [level=3] [ref=f2e39]
+          - paragraph [ref=f2e40]: 0 个知识点 · 1 份资料
+        - generic [ref=f2e41]:
+          - generic [ref=f2e42]: 今天
+          - button "更多" [ref=f2e43]
+      - button "新建科目" [ref=f2e48] [cursor=pointer]

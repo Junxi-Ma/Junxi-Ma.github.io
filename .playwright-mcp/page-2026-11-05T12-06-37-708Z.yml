@@ -1,0 +1,49 @@
+- generic [active] [ref=f1e1]:
+  - banner [ref=f1e2]:
+    - generic [ref=f1e3]:
+      - link "Michael 首页" [ref=f1e4] [cursor=pointer]:
+        - /url: ../../index.html
+        - text: Michael
+        - generic [ref=f1e5]: .
+      - navigation "主导航" [ref=f1e6]:
+        - link "首页" [ref=f1e7] [cursor=pointer]:
+          - /url: ../../index.html
+        - link "工具" [ref=f1e8] [cursor=pointer]:
+          - /url: ../../tools.html
+        - link "笔记" [ref=f1e9] [cursor=pointer]:
+          - /url: ../../notes.html
+        - link "分支" [ref=f1e10] [cursor=pointer]:
+          - /url: ../../branches.html
+        - link "关于" [ref=f1e11] [cursor=pointer]:
+          - /url: ../../index.html#about
+      - button "切换主题" [ref=f1e13] [cursor=pointer]
+  - main [ref=f1e19]:
+    - generic [ref=f1e21]:
+      - generic [ref=f1e22]:
+        - link "工具" [ref=f1e23] [cursor=pointer]:
+          - /url: ../../tools.html
+        - generic [ref=f1e26]: Stardy
+      - generic [ref=f1e27]:
+        - generic [ref=f1e28]:
+          - heading "大气探测学" [level=1] [ref=f1e29]
+          - paragraph [ref=f1e30]: 15 章节 · 0 张知识卡片
+        - generic [ref=f1e31]:
+          - generic [ref=f1e32]:
+            - generic [ref=f1e33]: "0"
+            - generic [ref=f1e34]: 已学
+          - generic [ref=f1e35]:
+            - generic [ref=f1e36]: "0"
+            - generic [ref=f1e37]: 已掌握
+          - generic [ref=f1e38]:
+            - generic [ref=f1e39]: "0"
+            - generic [ref=f1e40]: 连续天
+      - generic [ref=f1e41]:
+        - button "浏览" [ref=f1e42] [cursor=pointer]
+        - button "背诵" [ref=f1e48] [cursor=pointer]
+        - button "问答" [ref=f1e52] [cursor=pointer]
+    - generic [ref=f1e57]:
+      - group "按章节筛选" [ref=f1e58]:
+        - button "全部" [ref=f1e59] [cursor=pointer]
+      - list [ref=f1e60]
+  - contentinfo [ref=f1e64]:
+    - paragraph [ref=f1e66]: Stardy · 大气探测学知识卡片 · 本地运行，无数据上传

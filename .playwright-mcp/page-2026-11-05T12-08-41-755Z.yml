@@ -1,0 +1,542 @@
+- generic [active] [ref=f2e1]:
+  - banner [ref=f2e2]:
+    - generic [ref=f2e3]:
+      - link "Michael 首页" [ref=f2e4] [cursor=pointer]:
+        - /url: ../../index.html
+        - text: Michael
+        - generic [ref=f2e5]: .
+      - navigation "主导航" [ref=f2e6]:
+        - link "首页" [ref=f2e7] [cursor=pointer]:
+          - /url: ../../index.html
+        - link "工具" [ref=f2e8] [cursor=pointer]:
+          - /url: ../../tools.html
+        - link "笔记" [ref=f2e9] [cursor=pointer]:
+          - /url: ../../notes.html
+        - link "分支" [ref=f2e10] [cursor=pointer]:
+          - /url: ../../branches.html
+        - link "关于" [ref=f2e11] [cursor=pointer]:
+          - /url: ../../index.html#about
+      - button "切换主题" [ref=f2e13] [cursor=pointer]
+  - main [ref=f2e19]:
+    - generic [ref=f2e21]:
+      - generic [ref=f2e22]:
+        - link "工具" [ref=f2e23] [cursor=pointer]:
+          - /url: ../../tools.html
+        - generic [ref=f2e26]: Stardy
+      - generic [ref=f2e27]:
+        - generic [ref=f2e28]:
+          - heading "大气探测学" [level=1] [ref=f2e29]
+          - paragraph [ref=f2e30]: 15 章节 · 44 张知识卡片
+        - generic [ref=f2e31]:
+          - generic [ref=f2e32]:
+            - generic [ref=f2e33]: "0"
+            - generic [ref=f2e34]: 已学
+          - generic [ref=f2e35]:
+            - generic [ref=f2e36]: "0"
+            - generic [ref=f2e37]: 已掌握
+          - generic [ref=f2e38]:
+            - generic [ref=f2e39]: "1"
+            - generic [ref=f2e40]: 连续天
+      - generic [ref=f2e41]:
+        - button "浏览" [ref=f2e42] [cursor=pointer]
+        - button "背诵" [ref=f2e48] [cursor=pointer]
+        - button "问答" [ref=f2e52] [cursor=pointer]
+    - generic [ref=f2e57]:
+      - group "按章节筛选" [ref=f2e58]:
+        - button "全部" [ref=f2e59] [cursor=pointer]
+        - button "云的观测 14" [ref=f2e60] [cursor=pointer]:
+          - text: 云的观测
+          - generic [ref=f2e61]: "14"
+        - button "能见度 4" [ref=f2e62] [cursor=pointer]:
+          - text: 能见度
+          - generic [ref=f2e63]: "4"
+        - button "天气现象 2" [ref=f2e64] [cursor=pointer]:
+          - text: 天气现象
+          - generic [ref=f2e65]: "2"
+        - button "温度测量 3" [ref=f2e66] [cursor=pointer]:
+          - text: 温度测量
+          - generic [ref=f2e67]: "3"
+        - button "空气湿度的测量 3" [ref=f2e68] [cursor=pointer]:
+          - text: 空气湿度的测量
+          - generic [ref=f2e69]: "3"
+        - button "气压 3" [ref=f2e70] [cursor=pointer]:
+          - text: 气压
+          - generic [ref=f2e71]: "3"
+        - button "地面风的观测 2" [ref=f2e72] [cursor=pointer]:
+          - text: 地面风的观测
+          - generic [ref=f2e73]: "2"
+        - button "辐射及日照时数的观测 2" [ref=f2e74] [cursor=pointer]:
+          - text: 辐射及日照时数的观测
+          - generic [ref=f2e75]: "2"
+        - button "积雪冻土电线积冰 1" [ref=f2e76] [cursor=pointer]:
+          - text: 积雪冻土电线积冰
+          - generic [ref=f2e77]: "1"
+        - button "降水和蒸发 2" [ref=f2e78] [cursor=pointer]:
+          - text: 降水和蒸发
+          - generic [ref=f2e79]: "2"
+        - button "高空探测 2" [ref=f2e80] [cursor=pointer]:
+          - text: 高空探测
+          - generic [ref=f2e81]: "2"
+        - button "雷达气象探测 2" [ref=f2e82] [cursor=pointer]:
+          - text: 雷达气象探测
+          - generic [ref=f2e83]: "2"
+        - button "风廓线雷达 1" [ref=f2e84] [cursor=pointer]:
+          - text: 风廓线雷达
+          - generic [ref=f2e85]: "1"
+        - button "激光雷达探测 1" [ref=f2e86] [cursor=pointer]:
+          - text: 激光雷达探测
+          - generic [ref=f2e87]: "1"
+        - button "卫星探测 2" [ref=f2e88] [cursor=pointer]:
+          - text: 卫星探测
+          - generic [ref=f2e89]: "2"
+      - list [ref=f2e90]:
+        - listitem [ref=f2e91] [cursor=pointer]:
+          - generic [ref=f2e92]:
+            - generic [ref=f2e93]: ☁️ 云的观测
+            - generic [ref=f2e94]: 未学习
+          - heading "云的定义" [level=3] [ref=f2e96]
+          - generic [ref=f2e97]: 什么是云？
+          - generic [ref=f2e98]:
+            - generic [ref=f2e99]: 定义
+            - generic [ref=f2e100]: 基础
+        - listitem [ref=f2e101] [cursor=pointer]:
+          - generic [ref=f2e102]:
+            - generic [ref=f2e103]: ☁️ 云的观测
+            - generic [ref=f2e104]: 未学习
+          - heading "云的观测意义" [level=3] [ref=f2e106]
+          - generic [ref=f2e107]: 云的观测有哪四大意义？
+          - generic [ref=f2e108]:
+            - generic [ref=f2e109]: 意义
+            - generic [ref=f2e110]: 应用
+        - listitem [ref=f2e111] [cursor=pointer]:
+          - generic [ref=f2e112]:
+            - generic [ref=f2e113]: ☁️ 云的观测
+            - generic [ref=f2e114]: 未学习
+          - heading "云的分类体系" [level=3] [ref=f2e116]
+          - generic [ref=f2e117]: 云按高度分为哪三族？各对应什么高度范围？
+          - generic [ref=f2e118]:
+            - generic [ref=f2e119]: 分类
+            - generic [ref=f2e120]: 高度
+        - listitem [ref=f2e121] [cursor=pointer]:
+          - generic [ref=f2e122]:
+            - generic [ref=f2e123]: ☁️ 云的观测
+            - generic [ref=f2e124]: 未学习
+          - heading "积云（Cu）" [level=3] [ref=f2e126]
+          - generic [ref=f2e127]: 积云的主要特征和成因？
+          - generic [ref=f2e128]:
+            - generic [ref=f2e129]: 低云
+            - generic [ref=f2e130]: 积云
+            - generic [ref=f2e131]: 对流
+        - listitem [ref=f2e132] [cursor=pointer]:
+          - generic [ref=f2e133]:
+            - generic [ref=f2e134]: ☁️ 云的观测
+            - generic [ref=f2e135]: 未学习
+          - heading "积雨云（Cb）" [level=3] [ref=f2e137]
+          - generic [ref=f2e138]: 积雨云有什么特殊结构？与积云区别？
+          - generic [ref=f2e139]:
+            - generic [ref=f2e140]: 低云
+            - generic [ref=f2e141]: 积雨云
+            - generic [ref=f2e142]: 强对流
+        - listitem [ref=f2e143] [cursor=pointer]:
+          - generic [ref=f2e144]:
+            - generic [ref=f2e145]: ☁️ 云的观测
+            - generic [ref=f2e146]: 未学习
+          - heading "层积云（Sc）" [level=3] [ref=f2e148]
+          - generic [ref=f2e149]: 层积云的特征和成因？
+          - generic [ref=f2e150]:
+            - generic [ref=f2e151]: 低云
+            - generic [ref=f2e152]: 层积云
+        - listitem [ref=f2e153] [cursor=pointer]:
+          - generic [ref=f2e154]:
+            - generic [ref=f2e155]: ☁️ 云的观测
+            - generic [ref=f2e156]: 未学习
+          - heading "层云（St）" [level=3] [ref=f2e158]
+          - generic [ref=f2e159]: 层云与雾的区别？
+          - generic [ref=f2e160]:
+            - generic [ref=f2e161]: 低云
+            - generic [ref=f2e162]: 层云
+            - generic [ref=f2e163]: 与雾对比
+        - listitem [ref=f2e164] [cursor=pointer]:
+          - generic [ref=f2e165]:
+            - generic [ref=f2e166]: ☁️ 云的观测
+            - generic [ref=f2e167]: 未学习
+          - heading "雨层云（Ns）" [level=3] [ref=f2e169]
+          - generic [ref=f2e170]: 雨层云的特征及其天气意义？
+          - generic [ref=f2e171]:
+            - generic [ref=f2e172]: 低云
+            - generic [ref=f2e173]: 雨层云
+            - generic [ref=f2e174]: 锋面天气
+        - listitem [ref=f2e175] [cursor=pointer]:
+          - generic [ref=f2e176]:
+            - generic [ref=f2e177]: ☁️ 云的观测
+            - generic [ref=f2e178]: 未学习
+          - heading "高层云（As）" [level=3] [ref=f2e180]
+          - generic [ref=f2e181]: 高层云的识别特征？
+          - generic [ref=f2e182]:
+            - generic [ref=f2e183]: 中云
+            - generic [ref=f2e184]: 高层云
+        - listitem [ref=f2e185] [cursor=pointer]:
+          - generic [ref=f2e186]:
+            - generic [ref=f2e187]: ☁️ 云的观测
+            - generic [ref=f2e188]: 未学习
+          - heading "高积云（Ac）" [level=3] [ref=f2e190]
+          - generic [ref=f2e191]: 高积云的外形特征及分类？
+          - generic [ref=f2e192]:
+            - generic [ref=f2e193]: 中云
+            - generic [ref=f2e194]: 高积云
+            - generic [ref=f2e195]: 分类
+        - listitem [ref=f2e196] [cursor=pointer]:
+          - generic [ref=f2e197]:
+            - generic [ref=f2e198]: ☁️ 云的观测
+            - generic [ref=f2e199]: 未学习
+          - heading "卷云（Ci）" [level=3] [ref=f2e201]
+          - generic [ref=f2e202]: 卷云的主要特征？
+          - generic [ref=f2e203]:
+            - generic [ref=f2e204]: 高云
+            - generic [ref=f2e205]: 卷云
+            - generic [ref=f2e206]: 冰晶
+        - listitem [ref=f2e207] [cursor=pointer]:
+          - generic [ref=f2e208]:
+            - generic [ref=f2e209]: ☁️ 云的观测
+            - generic [ref=f2e210]: 未学习
+          - heading "卷层云（Cs）与卷积云（Cc）" [level=3] [ref=f2e212]
+          - generic [ref=f2e213]: 卷层云与卷积云各有什么特征？
+          - generic [ref=f2e214]:
+            - generic [ref=f2e215]: 高云
+            - generic [ref=f2e216]: 卷层云
+            - generic [ref=f2e217]: 卷积云
+            - generic [ref=f2e218]: 光学现象
+        - listitem [ref=f2e219] [cursor=pointer]:
+          - generic [ref=f2e220]:
+            - generic [ref=f2e221]: ☁️ 云的观测
+            - generic [ref=f2e222]: 未学习
+          - heading "云量的记录" [level=3] [ref=f2e224]
+          - generic [ref=f2e225]: 云量如何记录？总云量和低云量有何规定？
+          - generic [ref=f2e226]:
+            - generic [ref=f2e227]: 云量
+            - generic [ref=f2e228]: 观测方法
+        - listitem [ref=f2e229] [cursor=pointer]:
+          - generic [ref=f2e230]:
+            - generic [ref=f2e231]: ☁️ 云的观测
+            - generic [ref=f2e232]: 未学习
+          - heading "云高的测量方法" [level=3] [ref=f2e234]
+          - generic [ref=f2e235]: 测量云底高度有哪些方法？
+          - generic [ref=f2e236]:
+            - generic [ref=f2e237]: 云高
+            - generic [ref=f2e238]: 测量方法
+            - generic [ref=f2e239]: 仪器
+        - listitem [ref=f2e240] [cursor=pointer]:
+          - generic [ref=f2e241]:
+            - generic [ref=f2e242]: 👁️ 能见度
+            - generic [ref=f2e243]: 未学习
+          - heading "能见度的定义" [level=3] [ref=f2e245]
+          - generic [ref=f2e246]: 气象能见度的定义是什么？
+          - generic [ref=f2e247]:
+            - generic [ref=f2e248]: 定义
+            - generic [ref=f2e249]: 能见度
+        - listitem [ref=f2e250] [cursor=pointer]:
+          - generic [ref=f2e251]:
+            - generic [ref=f2e252]: 👁️ 能见度
+            - generic [ref=f2e253]: 未学习
+          - heading "Koschmieder定律" [level=3] [ref=f2e255]
+          - generic [ref=f2e256]: Koschmieder定律的公式及其含义？
+          - generic [ref=f2e257]:
+            - generic [ref=f2e258]: 公式
+            - generic [ref=f2e259]: Koschmieder
+            - generic [ref=f2e260]: 消光系数
+        - listitem [ref=f2e261] [cursor=pointer]:
+          - generic [ref=f2e262]:
+            - generic [ref=f2e263]: 👁️ 能见度
+            - generic [ref=f2e264]: 未学习
+          - heading "大气消光系数" [level=3] [ref=f2e266]
+          - generic [ref=f2e267]: 大气消光系数由哪些部分组成？
+          - generic [ref=f2e268]:
+            - generic [ref=f2e269]: 消光系数
+            - generic [ref=f2e270]: 散射
+            - generic [ref=f2e271]: 大气光学
+        - listitem [ref=f2e272] [cursor=pointer]:
+          - generic [ref=f2e273]:
+            - generic [ref=f2e274]: 👁️ 能见度
+            - generic [ref=f2e275]: 未学习
+          - heading "能见度仪器" [level=3] [ref=f2e277]
+          - generic [ref=f2e278]: 前向散射式能见度仪的原理？
+          - generic [ref=f2e279]:
+            - generic [ref=f2e280]: 仪器
+            - generic [ref=f2e281]: 前向散射
+            - generic [ref=f2e282]: 透射仪
+        - listitem [ref=f2e283] [cursor=pointer]:
+          - generic [ref=f2e284]:
+            - generic [ref=f2e285]: ⛈️ 天气现象
+            - generic [ref=f2e286]: 未学习
+          - heading "天气现象分类" [level=3] [ref=f2e288]
+          - generic [ref=f2e289]: 天气现象分为哪几大类？
+          - generic [ref=f2e290]:
+            - generic [ref=f2e291]: 分类
+            - generic [ref=f2e292]: 天气现象
+        - listitem [ref=f2e293] [cursor=pointer]:
+          - generic [ref=f2e294]:
+            - generic [ref=f2e295]: ⛈️ 天气现象
+            - generic [ref=f2e296]: 未学习
+          - heading "雾的分类" [level=3] [ref=f2e298]
+          - generic [ref=f2e299]: 雾按成因分为哪几类？各有什么特点？
+          - generic [ref=f2e300]:
+            - generic [ref=f2e301]: 雾
+            - generic [ref=f2e302]: 成因分类
+        - listitem [ref=f2e303] [cursor=pointer]:
+          - generic [ref=f2e304]:
+            - generic [ref=f2e305]: 🌡️ 温度测量
+            - generic [ref=f2e306]: 未学习
+          - heading "温度表分类" [level=3] [ref=f2e308]
+          - generic [ref=f2e309]: 气象站常用的温度表有哪几种？
+          - generic [ref=f2e310]:
+            - generic [ref=f2e311]: 温度表
+            - generic [ref=f2e312]: 仪器分类
+        - listitem [ref=f2e313] [cursor=pointer]:
+          - generic [ref=f2e314]:
+            - generic [ref=f2e315]: 🌡️ 温度测量
+            - generic [ref=f2e316]: 未学习
+          - heading "百叶箱" [level=3] [ref=f2e318]
+          - generic [ref=f2e319]: 百叶箱的作用和安装规范？
+          - generic [ref=f2e320]:
+            - generic [ref=f2e321]: 百叶箱
+            - generic [ref=f2e322]: 安装规范
+            - generic [ref=f2e323]: 温度测量
+        - listitem [ref=f2e324] [cursor=pointer]:
+          - generic [ref=f2e325]:
+            - generic [ref=f2e326]: 🌡️ 温度测量
+            - generic [ref=f2e327]: 未学习
+          - heading "气温订正" [level=3] [ref=f2e329]
+          - generic [ref=f2e330]: 温度表有哪些误差来源？如何订正？
+          - generic [ref=f2e331]:
+            - generic [ref=f2e332]: 误差
+            - generic [ref=f2e333]: 订正
+            - generic [ref=f2e334]: 通风
+        - listitem [ref=f2e335] [cursor=pointer]:
+          - generic [ref=f2e336]:
+            - generic [ref=f2e337]: 💧 空气湿度的测量
+            - generic [ref=f2e338]: 未学习
+          - heading "湿度的定义量" [level=3] [ref=f2e340]
+          - generic [ref=f2e341]: 描述大气湿度的物理量有哪些？写出各量的定义。
+          - generic [ref=f2e342]:
+            - generic [ref=f2e343]: 湿度定义
+            - generic [ref=f2e344]: 公式
+            - generic [ref=f2e345]: 水汽压
+        - listitem [ref=f2e346] [cursor=pointer]:
+          - generic [ref=f2e347]:
+            - generic [ref=f2e348]: 💧 空气湿度的测量
+            - generic [ref=f2e349]: 未学习
+          - heading "干湿球温度表" [level=3] [ref=f2e351]
+          - generic [ref=f2e352]: 干湿球温度表的测湿原理及计算公式？
+          - generic [ref=f2e353]:
+            - generic [ref=f2e354]: 干湿球
+            - generic [ref=f2e355]: 原理
+            - generic [ref=f2e356]: 公式
+        - listitem [ref=f2e357] [cursor=pointer]:
+          - generic [ref=f2e358]:
+            - generic [ref=f2e359]: 💧 空气湿度的测量
+            - generic [ref=f2e360]: 未学习
+          - heading "毛发湿度计" [level=3] [ref=f2e362]
+          - generic [ref=f2e363]: 毛发湿度计的原理及优缺点？
+          - generic [ref=f2e364]:
+            - generic [ref=f2e365]: 毛发湿度计
+            - generic [ref=f2e366]: 仪器
+            - generic [ref=f2e367]: 优缺点
+        - listitem [ref=f2e368] [cursor=pointer]:
+          - generic [ref=f2e369]:
+            - generic [ref=f2e370]: 🔵 气压
+            - generic [ref=f2e371]: 未学习
+          - heading "气压的定义" [level=3] [ref=f2e373]
+          - generic [ref=f2e374]: 气压的物理定义是什么？标准大气压是多少？
+          - generic [ref=f2e375]:
+            - generic [ref=f2e376]: 气压定义
+            - generic [ref=f2e377]: 标准大气压
+            - generic [ref=f2e378]: 公式
+        - listitem [ref=f2e379] [cursor=pointer]:
+          - generic [ref=f2e380]:
+            - generic [ref=f2e381]: 🔵 气压
+            - generic [ref=f2e382]: 未学习
+          - heading "气压表种类" [level=3] [ref=f2e384]
+          - generic [ref=f2e385]: 常用气压表有哪几种？各自原理？
+          - generic [ref=f2e386]:
+            - generic [ref=f2e387]: 气压表
+            - generic [ref=f2e388]: 仪器
+            - generic [ref=f2e389]: 水银气压表
+        - listitem [ref=f2e390] [cursor=pointer]:
+          - generic [ref=f2e391]:
+            - generic [ref=f2e392]: 🔵 气压
+            - generic [ref=f2e393]: 未学习
+          - heading "气压的订正" [level=3] [ref=f2e395]
+          - generic [ref=f2e396]: 水银气压表读数需要做哪些订正？
+          - generic [ref=f2e397]:
+            - generic [ref=f2e398]: 气压订正
+            - generic [ref=f2e399]: 误差来源
+        - listitem [ref=f2e400] [cursor=pointer]:
+          - generic [ref=f2e401]:
+            - generic [ref=f2e402]: 🌀 地面风的观测
+            - generic [ref=f2e403]: 未学习
+          - heading "风的要素" [level=3] [ref=f2e405]
+          - generic [ref=f2e406]: 描述地面风需要哪些要素？各如何定义？
+          - generic [ref=f2e407]:
+            - generic [ref=f2e408]: 风向
+            - generic [ref=f2e409]: 风速
+            - generic [ref=f2e410]: 观测规范
+        - listitem [ref=f2e411] [cursor=pointer]:
+          - generic [ref=f2e412]:
+            - generic [ref=f2e413]: 🌀 地面风的观测
+            - generic [ref=f2e414]: 未学习
+          - heading "风速仪原理" [level=3] [ref=f2e416]
+          - generic [ref=f2e417]: 旋转风杯式风速计和超声波风速仪的工作原理？
+          - generic [ref=f2e418]:
+            - generic [ref=f2e419]: 风速仪
+            - generic [ref=f2e420]: 旋转风杯
+            - generic [ref=f2e421]: 超声波
+        - listitem [ref=f2e422] [cursor=pointer]:
+          - generic [ref=f2e423]:
+            - generic [ref=f2e424]: ☀️ 辐射及日照时数的观测
+            - generic [ref=f2e425]: 未学习
+          - heading "辐射的分类" [level=3] [ref=f2e427]
+          - generic [ref=f2e428]: 气象辐射观测包括哪些主要项目？
+          - generic [ref=f2e429]:
+            - generic [ref=f2e430]: 辐射分类
+            - generic [ref=f2e431]: 太阳辐射
+            - generic [ref=f2e432]: 辐射平衡
+        - listitem [ref=f2e433] [cursor=pointer]:
+          - generic [ref=f2e434]:
+            - generic [ref=f2e435]: ☀️ 辐射及日照时数的观测
+            - generic [ref=f2e436]: 未学习
+          - heading "日照时数" [level=3] [ref=f2e438]
+          - generic [ref=f2e439]: 日照时数的定义与观测方法？
+          - generic [ref=f2e440]:
+            - generic [ref=f2e441]: 日照时数
+            - generic [ref=f2e442]: 仪器
+            - generic [ref=f2e443]: 定义
+        - listitem [ref=f2e444] [cursor=pointer]:
+          - generic [ref=f2e445]:
+            - generic [ref=f2e446]: ❄️ 积雪冻土电线积冰
+            - generic [ref=f2e447]: 未学习
+          - heading "雪深与雪压" [level=3] [ref=f2e449]
+          - generic [ref=f2e450]: 雪深与雪压如何测量？有何区别？
+          - generic [ref=f2e451]:
+            - generic [ref=f2e452]: 雪深
+            - generic [ref=f2e453]: 雪压
+            - generic [ref=f2e454]: 测量
+        - listitem [ref=f2e455] [cursor=pointer]:
+          - generic [ref=f2e456]:
+            - generic [ref=f2e457]: 🌧️ 降水和蒸发
+            - generic [ref=f2e458]: 未学习
+          - heading "降水量的测量" [level=3] [ref=f2e460]
+          - generic [ref=f2e461]: 雨量计的基本原理？翻斗雨量计如何工作？
+          - generic [ref=f2e462]:
+            - generic [ref=f2e463]: 降水量
+            - generic [ref=f2e464]: 雨量计
+            - generic [ref=f2e465]: 翻斗
+        - listitem [ref=f2e466] [cursor=pointer]:
+          - generic [ref=f2e467]:
+            - generic [ref=f2e468]: 🌧️ 降水和蒸发
+            - generic [ref=f2e469]: 未学习
+          - heading "蒸发量的测量" [level=3] [ref=f2e471]
+          - generic [ref=f2e472]: 气象站如何测量蒸发量？
+          - generic [ref=f2e473]:
+            - generic [ref=f2e474]: 蒸发量
+            - generic [ref=f2e475]: E601
+            - generic [ref=f2e476]: 测量方法
+        - listitem [ref=f2e477] [cursor=pointer]:
+          - generic [ref=f2e478]:
+            - generic [ref=f2e479]: 🪂 高空探测
+            - generic [ref=f2e480]: 未学习
+          - heading "无线电探空仪" [level=3] [ref=f2e482]
+          - generic [ref=f2e483]: 无线电探空仪的工作原理及探测要素？
+          - generic [ref=f2e484]:
+            - generic [ref=f2e485]: 探空仪
+            - generic [ref=f2e486]: 高空探测
+            - generic [ref=f2e487]: 工作原理
+        - listitem [ref=f2e488] [cursor=pointer]:
+          - generic [ref=f2e489]:
+            - generic [ref=f2e490]: 🪂 高空探测
+            - generic [ref=f2e491]: 未学习
+          - heading "探空数据应用" [level=3] [ref=f2e493]
+          - generic [ref=f2e494]: 探空数据可以制作哪些产品？有什么用途？
+          - generic [ref=f2e495]:
+            - generic [ref=f2e496]: T-logP图
+            - generic [ref=f2e497]: 稳定度指数
+            - generic [ref=f2e498]: CAPE
+        - listitem [ref=f2e499] [cursor=pointer]:
+          - generic [ref=f2e500]:
+            - generic [ref=f2e501]: 📡 雷达气象探测
+            - generic [ref=f2e502]: 未学习
+          - heading "天气雷达基本原理" [level=3] [ref=f2e504]
+          - generic [ref=f2e505]: 天气雷达的工作原理及基本参数？
+          - generic [ref=f2e506]:
+            - generic [ref=f2e507]: 雷达原理
+            - generic [ref=f2e508]: 反射率
+            - generic [ref=f2e509]: 雷达方程
+        - listitem [ref=f2e510] [cursor=pointer]:
+          - generic [ref=f2e511]:
+            - generic [ref=f2e512]: 📡 雷达气象探测
+            - generic [ref=f2e513]: 未学习
+          - heading "多普勒效应与径向速度" [level=3] [ref=f2e515]
+          - generic [ref=f2e516]: 天气雷达如何利用多普勒效应测量风速？
+          - generic [ref=f2e517]:
+            - generic [ref=f2e518]: 多普勒雷达
+            - generic [ref=f2e519]: 径向速度
+            - generic [ref=f2e520]: 风场
+        - listitem [ref=f2e521] [cursor=pointer]:
+          - generic [ref=f2e522]:
+            - generic [ref=f2e523]: 📶 风廓线雷达
+            - generic [ref=f2e524]: 未学习
+          - heading "风廓线雷达原理" [level=3] [ref=f2e526]
+          - generic [ref=f2e527]: 风廓线雷达与天气雷达有何区别？探测原理？
+          - generic [ref=f2e528]:
+            - generic [ref=f2e529]: 风廓线雷达
+            - generic [ref=f2e530]: 布拉格散射
+            - generic [ref=f2e531]: 边界层
+        - listitem [ref=f2e532] [cursor=pointer]:
+          - generic [ref=f2e533]:
+            - generic [ref=f2e534]: 🔬 激光雷达探测
+            - generic [ref=f2e535]: 未学习
+          - heading "激光雷达工作原理" [level=3] [ref=f2e537]
+          - generic [ref=f2e538]: 激光雷达（Lidar）的基本方程及主要应用？
+          - generic [ref=f2e539]:
+            - generic [ref=f2e540]: 激光雷达
+            - generic [ref=f2e541]: Lidar方程
+            - generic [ref=f2e542]: 气溶胶
+        - listitem [ref=f2e543] [cursor=pointer]:
+          - generic [ref=f2e544]:
+            - generic [ref=f2e545]: 🛰️ 卫星探测
+            - generic [ref=f2e546]: 未学习
+          - heading "气象卫星轨道类型" [level=3] [ref=f2e548]
+          - generic [ref=f2e549]: 气象卫星分为哪两类轨道？各有什么特点？
+          - generic [ref=f2e550]:
+            - generic [ref=f2e551]: 卫星轨道
+            - generic [ref=f2e552]: GEO
+            - generic [ref=f2e553]: LEO
+            - generic [ref=f2e554]: FY-4
+        - listitem [ref=f2e555] [cursor=pointer]:
+          - generic [ref=f2e556]:
+            - generic [ref=f2e557]: 🛰️ 卫星探测
+            - generic [ref=f2e558]: 未学习
+          - heading "卫星遥感通道" [level=3] [ref=f2e560]
+          - generic [ref=f2e561]: 气象卫星主要使用哪些通道？各通道的探测信息？
+          - generic [ref=f2e562]:
+            - generic [ref=f2e563]: 卫星通道
+            - generic [ref=f2e564]: 红外
+            - generic [ref=f2e565]: 微波
+            - generic [ref=f2e566]: 亮温
+  - dialog [ref=f2e570]:
+    - generic [ref=f2e571]:
+      - button "关闭" [ref=f2e572] [cursor=pointer]
+      - generic [ref=f2e575]: ☁️ 云的观测
+      - heading "云的定义" [level=2] [ref=f2e576]
+      - paragraph [ref=f2e578]: 什么是云？
+      - generic [ref=f2e580]:
+        - paragraph [ref=f2e581]:
+          - text: 云是
+          - strong [ref=f2e582]: 悬浮在大气中的小水滴或冰晶微粒
+          - text: ，或两者混合组成的可见聚合体。
+        - paragraph [ref=f2e583]: 有时也包含一些较大的雨滴、冰晶或雪花，云的底部不接触地面（区别于雾）。
+      - generic [ref=f2e584]:
+        - button "← 上一张" [ref=f2e585] [cursor=pointer]
+        - button "开始背诵此卡" [ref=f2e586] [cursor=pointer]
+        - button "下一张 →" [ref=f2e587] [cursor=pointer]
+  - contentinfo [ref=f2e567]:
+    - paragraph [ref=f2e569]: Stardy · 大气探测学知识卡片 · 本地运行，无数据上传

@@ -1,0 +1,1202 @@
+/* ============================================================
+   Stardy · 大气探测学知识卡片
+   设计：与站点 token 系统融合（暗色 + 琥珀金）
+   ============================================================ */
+
+/* ===== 主题变量（Stardy 专属） ===== */
+:root {
+  --sdy-accent: var(--accent);
+  --sdy-accent-soft: var(--accent-soft);
+  --sdy-surface: var(--surface-2);
+  --sdy-surface-2: var(--surface-3);
+  --sdy-radius: 14px;
+  --sdy-radius-lg: 20px;
+  --sdy-transition: 500ms cubic-bezier(0.16, 1, 0.3, 1);
+  --sdy-transition-fast: 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ===== Hero ===== */
+.sdy-hero {
+  padding: clamp(40px, 6vw, 72px) 0 clamp(28px, 4vw, 40px);
+  background:
+    radial-gradient(ellipse 100% 60% at 50% 0%, rgba(242, 169, 59, 0.06), transparent 60%),
+    var(--bg);
+}
+
+.sdy-hero__breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--fs-xs);
+  color: var(--text-3);
+  margin-bottom: 20px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.sdy-hero__breadcrumb a {
+  color: var(--text-2);
+  text-decoration: none;
+  transition: color var(--sdy-transition-fast);
+}
+
+.sdy-hero__breadcrumb a:hover {
+  color: var(--accent);
+}
+
+.sdy-hero__breadcrumb svg {
+  opacity: 0.4;
+}
+
+.sdy-hero__top {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.sdy-hero__title {
+  font-family: var(--font-serif);
+  font-size: clamp(36px, 5vw, 56px);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-tight);
+  letter-spacing: -0.02em;
+  margin: 0;
+  background: linear-gradient(105deg, var(--text-1) 15%, var(--accent) 85%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.sdy-hero__sub {
+  font-size: var(--fs-sm);
+  color: var(--text-3);
+  margin: 8px 0 0;
+  letter-spacing: 0.02em;
+}
+
+.sdy-hero__sub span {
+  color: var(--accent);
+  font-weight: var(--fw-semibold);
+}
+
+/* Stats */
+.sdy-hero__stats {
+  display: flex;
+  gap: 20px;
+}
+
+.sdy-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 64px;
+}
+
+.sdy-stat__num {
+  font-family: var(--font-serif);
+  font-size: 32px;
+  font-weight: var(--fw-semibold);
+  color: var(--accent);
+  line-height: 1;
+}
+
+.sdy-stat__label {
+  font-size: var(--fs-xs);
+  color: var(--text-3);
+  margin-top: 6px;
+  letter-spacing: 0.05em;
+}
+
+/* ===== 模式切换条 ===== */
+.sdy-mode-bar {
+  display: flex;
+  gap: 8px;
+  margin-top: 32px;
+  padding: 4px;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--sdy-radius);
+  width: fit-content;
+}
+
+.sdy-mode-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  font-family: inherit;
+  cursor: pointer;
+  transition: all var(--sdy-transition-fast);
+}
+
+.sdy-mode-btn:hover {
+  color: var(--text-1);
+  background: var(--tint-hover);
+}
+
+.sdy-mode-btn.active {
+  background: var(--accent-fill);
+  color: var(--accent-fg);
+  font-weight: var(--fw-semibold);
+  box-shadow: 0 4px 14px var(--accent-glow);
+}
+
+.sdy-mode-btn svg {
+  flex-shrink: 0;
+}
+
+/* ===== View 切换 ===== */
+.sdy-view {
+  padding: clamp(24px, 4vw, 40px) 0 clamp(48px, 6vw, 72px);
+  animation: sdy-fade-in 500ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sdy-view.hidden {
+  display: none;
+}
+
+@keyframes sdy-fade-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== 章节过滤条 ===== */
+.sdy-chapters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 32px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sdy-ch-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: 1px solid var(--border);
+  border-radius: 99px;
+  background: var(--surface-1);
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+  font-family: inherit;
+  cursor: pointer;
+  transition: all var(--sdy-transition-fast);
+}
+
+.sdy-ch-btn:hover {
+  border-color: var(--border-hover);
+  color: var(--text-1);
+}
+
+.sdy-ch-btn.active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: var(--fw-semibold);
+}
+
+.sdy-ch-btn__count {
+  font-size: var(--fs-xs);
+  color: var(--text-3);
+  opacity: 0.7;
+}
+
+.sdy-ch-btn.active .sdy-ch-btn__count {
+  color: var(--accent);
+}
+
+/* ===== 卡片网格 ===== */
+.sdy-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
+}
+
+/* 骨架屏 */
+.sdy-skel {
+  height: 140px;
+  border-radius: var(--sdy-radius);
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  position: relative;
+  overflow: hidden;
+}
+
+.sdy-skel::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, var(--tint-hover), transparent);
+  animation: sdy-shimmer 1.5s infinite;
+}
+
+@keyframes sdy-shimmer {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100%); }
+}
+
+/* ===== 知识卡片 ===== */
+.sdy-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 24px;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--sdy-radius);
+  cursor: pointer;
+  transition: all var(--sdy-transition);
+  overflow: hidden;
+  animation: sdy-card-in 600ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+@keyframes sdy-card-in {
+  from { opacity: 0; transform: translateY(20px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.sdy-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--card-color, var(--accent));
+  opacity: 0;
+  transition: opacity var(--sdy-transition-fast);
+}
+
+.sdy-card:hover {
+  border-color: var(--border-hover);
+  background: var(--surface-2);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+}
+
+.sdy-card:hover::before {
+  opacity: 1;
+}
+
+.sdy-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.sdy-card__chapter {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--fs-xs);
+  color: var(--card-color, var(--accent));
+  font-weight: var(--fw-semibold);
+  letter-spacing: 0.02em;
+}
+
+.sdy-card__status {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--fs-xs);
+  color: var(--text-3);
+}
+
+.sdy-card__status .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-3);
+  opacity: 0.4;
+}
+
+.sdy-card__status.studied .dot {
+  background: var(--accent);
+  opacity: 1;
+}
+
+.sdy-card__status.mastered .dot {
+  background: var(--ok);
+  opacity: 1;
+}
+
+.sdy-card__title {
+  font-family: var(--font-serif);
+  font-size: 19px;
+  font-weight: var(--fw-semibold);
+  color: var(--text-1);
+  line-height: 1.3;
+  margin: 0;
+}
+
+.sdy-card__front {
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+  line-height: 1.6;
+  flex: 1;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.sdy-card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: auto;
+}
+
+.sdy-card__tag {
+  padding: 3px 10px;
+  border-radius: 99px;
+  background: var(--tint-subtle);
+  border: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--text-3);
+  letter-spacing: 0.02em;
+}
+
+/* ===== 闪卡 (Flashcard) ===== */
+.sdy-study-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.sdy-progress-track {
+  width: 100%;
+  height: 4px;
+  border-radius: 99px;
+  background: var(--surface-3);
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.sdy-progress-bar {
+  height: 100%;
+  width: 0%;
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-hover));
+  transition: width 400ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sdy-progress-text {
+  font-size: var(--fs-sm);
+  color: var(--text-3);
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.sdy-progress-text span:first-child {
+  color: var(--accent);
+  font-weight: var(--fw-semibold);
+}
+
+/* 章节选择 */
+.sdy-study-filter {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+  width: 100%;
+}
+
+.sdy-label {
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+  white-space: nowrap;
+}
+
+.sdy-select {
+  flex: 1;
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-1);
+  color: var(--text-1);
+  font-size: var(--fs-sm);
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color var(--sdy-transition-fast);
+}
+
+.sdy-select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.sdy-select option {
+  background: var(--bg);
+}
+
+/* 闪卡容器 */
+.sdy-flashcard-wrap {
+  width: 100%;
+  perspective: 1600px;
+  margin-bottom: 24px;
+}
+
+.sdy-flashcard {
+  position: relative;
+  width: 100%;
+  min-height: 320px;
+  cursor: pointer;
+}
+
+.sdy-flashcard__inner {
+  position: relative;
+  width: 100%;
+  min-height: 320px;
+  transition: transform 700ms cubic-bezier(0.16, 1, 0.3, 1);
+  transform-style: preserve-3d;
+}
+
+.sdy-flashcard.flipped .sdy-flashcard__inner {
+  transform: rotateY(180deg);
+}
+
+.sdy-flashcard__face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 36px 32px;
+  border-radius: var(--sdy-radius-lg);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.sdy-flashcard__front {
+  background:
+    radial-gradient(ellipse 120% 80% at 50% 0%, rgba(242, 169, 59, 0.08), transparent),
+    var(--surface-2);
+  border: 1px solid var(--border);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+}
+
+.sdy-flashcard__back {
+  background: var(--surface-1);
+  border: 1px solid var(--accent);
+  box-shadow: 0 8px 40px var(--accent-glow);
+  transform: rotateY(180deg);
+  align-items: flex-start;
+  text-align: left;
+  justify-content: flex-start;
+  overflow-y: auto;
+}
+
+.sdy-flashcard__chapter-tag {
+  position: absolute;
+  top: 20px;
+  left: 24px;
+  font-size: var(--fs-xs);
+  color: var(--accent);
+  font-weight: var(--fw-semibold);
+  letter-spacing: 0.04em;
+}
+
+.sdy-flashcard__content {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  line-height: 1.6;
+  color: var(--text-1);
+  text-align: center;
+  max-width: 560px;
+}
+
+.sdy-flashcard__content--back {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.75;
+  color: var(--text-read);
+  text-align: left;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.sdy-flashcard__back-title {
+  font-family: var(--font-serif);
+  font-size: 20px;
+  font-weight: var(--fw-semibold);
+  color: var(--text-1);
+  margin: 28px 0 0;
+  padding-left: 0;
+}
+
+.sdy-flashcard__hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-xs);
+  color: var(--text-3);
+  position: absolute;
+  bottom: 20px;
+}
+
+/* 操作按钮 */
+.sdy-fc-actions {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  max-width: 480px;
+}
+
+.sdy-fc-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 20px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-1);
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  font-family: inherit;
+  cursor: pointer;
+  transition: all var(--sdy-transition-fast);
+}
+
+.sdy-fc-btn:hover:not(:disabled) {
+  border-color: var(--border-hover);
+  background: var(--surface-2);
+  color: var(--text-1);
+  transform: translateY(-2px);
+}
+
+.sdy-fc-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.sdy-fc-btn--ok:hover:not(:disabled) {
+  border-color: var(--ok);
+  color: var(--ok);
+  background: rgba(63, 185, 80, 0.08);
+}
+
+.sdy-fc-btn--no:hover:not(:disabled) {
+  border-color: var(--err);
+  color: var(--err);
+  background: var(--danger-soft);
+}
+
+/* 挖空开关 */
+.sdy-cloze-toggle-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.sdy-switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  gap: 8px;
+}
+
+.sdy-switch input {
+  opacity: 0;
+  position: absolute;
+  pointer-events: none;
+}
+
+.sdy-switch__track {
+  width: 36px;
+  height: 20px;
+  border-radius: 99px;
+  background: var(--surface-3);
+  border: 1px solid var(--border);
+  transition: background var(--sdy-transition-fast);
+  position: relative;
+}
+
+.sdy-switch__track::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--text-3);
+  transition: all var(--sdy-transition-fast);
+}
+
+.sdy-switch input:checked + .sdy-switch__track {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+.sdy-switch input:checked + .sdy-switch__track::after {
+  transform: translateX(16px);
+  background: var(--accent);
+}
+
+.sdy-switch__label {
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+  font-weight: var(--fw-medium);
+}
+
+.sdy-switch__hint {
+  font-size: var(--fs-xs);
+  color: var(--text-3);
+}
+
+/* ===== 挖空样式 ===== */
+.sdy-blank {
+  display: inline-block;
+  min-width: 2.5em;
+  height: 1.3em;
+  margin: 0 3px;
+  vertical-align: -0.15em;
+  border-bottom: 2px solid var(--accent);
+  border-radius: 3px 3px 0 0;
+  background: var(--accent-soft);
+  cursor: pointer;
+  transition: all 200ms ease;
+  text-align: center;
+  font-weight: var(--fw-semibold);
+  color: transparent;
+}
+
+.sdy-blank.revealed {
+  background: transparent;
+  border-bottom-color: transparent;
+  color: var(--accent);
+  cursor: default;
+}
+
+.sdy-blank:hover:not(.revealed) {
+  background: var(--accent-glow);
+  transform: scale(1.05);
+}
+
+.sdy-blank.press {
+  transform: scale(0.95);
+}
+
+/* ===== 问答模式 ===== */
+.sdy-quiz-wrap {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.sdy-quiz-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.sdy-quiz-meta {
+  font-size: var(--fs-sm);
+  color: var(--text-3);
+}
+
+.sdy-quiz-meta span:first-child {
+  color: var(--accent);
+  font-weight: var(--fw-semibold);
+  font-size: 18px;
+}
+
+.sdy-quiz-score {
+  margin-left: 16px;
+  color: var(--text-2);
+}
+
+.sdy-quiz-score strong {
+  color: var(--accent);
+}
+
+.sdy-quiz-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--sdy-radius-lg);
+  padding: 40px 32px;
+  min-height: 280px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  animation: sdy-fade-in 400ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sdy-quiz-q {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  line-height: 1.5;
+  color: var(--text-1);
+}
+
+.sdy-quiz-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sdy-quiz-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-1);
+  color: var(--text-1);
+  font-size: 16px;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: all var(--sdy-transition-fast);
+}
+
+.sdy-quiz-option:hover:not(.disabled) {
+  border-color: var(--border-hover);
+  background: var(--surface-2);
+  transform: translateX(4px);
+}
+
+.sdy-quiz-option__letter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--surface-3);
+  font-size: 13px;
+  font-weight: var(--fw-semibold);
+  color: var(--text-2);
+  flex-shrink: 0;
+  transition: all var(--sdy-transition-fast);
+}
+
+.sdy-quiz-option:hover:not(.disabled) .sdy-quiz-option__letter {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.sdy-quiz-option.correct {
+  border-color: var(--ok);
+  background: rgba(63, 185, 80, 0.08);
+}
+
+.sdy-quiz-option.correct .sdy-quiz-option__letter {
+  background: var(--ok);
+  color: #fff;
+}
+
+.sdy-quiz-option.wrong {
+  border-color: var(--err);
+  background: var(--danger-soft);
+}
+
+.sdy-quiz-option.wrong .sdy-quiz-option__letter {
+  background: var(--err);
+  color: #fff;
+}
+
+.sdy-quiz-option.disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.sdy-quiz-feedback {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  animation: sdy-fade-in 300ms;
+}
+
+.sdy-quiz-feedback.hidden {
+  display: none;
+}
+
+.sdy-quiz-feedback__inner {
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+  text-align: center;
+  line-height: 1.6;
+}
+
+.sdy-quiz-feedback__inner strong {
+  color: var(--accent);
+}
+
+.sdy-quiz-start {
+  display: block;
+  margin: 40px auto 0;
+  font-size: 16px;
+  padding: 14px 40px;
+}
+
+/* ===== 按钮 ===== */
+.sdy-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  font-family: inherit;
+  cursor: pointer;
+  transition: all var(--sdy-transition-fast);
+  text-decoration: none;
+}
+
+.sdy-btn--primary {
+  background: var(--accent-fill);
+  color: var(--accent-fg);
+  font-weight: var(--fw-semibold);
+}
+
+.sdy-btn--primary:hover {
+  background: var(--accent-fill-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px var(--accent-glow);
+}
+
+.sdy-btn--ghost {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--text-2);
+}
+
+.sdy-btn--ghost:hover {
+  border-color: var(--border-hover);
+  color: var(--text-1);
+  background: var(--tint-hover);
+}
+
+.sdy-btn--sm {
+  padding: 8px 16px;
+  font-size: var(--fs-xs);
+}
+
+/* ===== Modal ===== */
+.sdy-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--modal-veil);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  animation: sdy-overlay-in 300ms;
+}
+
+.sdy-modal-overlay.hidden {
+  display: none;
+}
+
+@keyframes sdy-overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.sdy-modal {
+  position: relative;
+  width: min(560px, 92vw);
+  max-height: 85vh;
+  overflow-y: auto;
+  padding: 36px 32px 28px;
+  background: var(--surface-1);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--sdy-radius-lg);
+  box-shadow: var(--shadow-pop);
+  animation: sdy-modal-in 400ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes sdy-modal-in {
+  from { opacity: 0; transform: translateY(24px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.sdy-modal__close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: var(--surface-2);
+  color: var(--text-2);
+  cursor: pointer;
+  transition: all var(--sdy-transition-fast);
+}
+
+.sdy-modal__close:hover {
+  background: var(--surface-3);
+  color: var(--text-1);
+}
+
+.sdy-modal__chapter-tag {
+  font-size: var(--fs-xs);
+  color: var(--accent);
+  font-weight: var(--fw-semibold);
+  letter-spacing: 0.04em;
+  margin-bottom: 8px;
+}
+
+.sdy-modal__title {
+  font-family: var(--font-serif);
+  font-size: 24px;
+  font-weight: var(--fw-semibold);
+  color: var(--text-1);
+  margin: 0 0 16px;
+  line-height: 1.3;
+}
+
+.sdy-modal__front {
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+  margin-bottom: 20px;
+  line-height: 1.6;
+}
+
+.sdy-modal__divider {
+  height: 1px;
+  background: var(--border);
+  margin: 20px 0;
+}
+
+.sdy-modal__back {
+  font-size: 16px;
+  line-height: 1.75;
+  color: var(--text-read);
+}
+
+.sdy-modal__back strong,
+.sdy-modal__back b {
+  color: var(--text-1);
+  font-weight: var(--fw-semibold);
+}
+
+.sdy-modal__actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+
+/* ===== Markdown 渲染（卡片内容） ===== */
+.sdy-md {
+  line-height: 1.75;
+  font-size: 16px;
+  color: var(--text-read);
+}
+
+.sdy-md strong,
+.sdy-md b {
+  color: var(--text-1);
+  font-weight: var(--fw-semibold);
+}
+
+.sdy-md em,
+.sdy-md i {
+  color: var(--accent);
+}
+
+.sdy-md p {
+  margin: 0 0 12px;
+}
+
+.sdy-md ul,
+.sdy-md ol {
+  margin: 0 0 12px;
+  padding-left: 20px;
+}
+
+.sdy-md li {
+  margin-bottom: 6px;
+}
+
+.sdy-md table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0;
+  font-size: 14px;
+}
+
+.sdy-md th,
+.sdy-md td {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  text-align: left;
+}
+
+.sdy-md th {
+  background: var(--surface-2);
+  color: var(--text-1);
+  font-weight: var(--fw-semibold);
+}
+
+.sdy-md td {
+  color: var(--text-2);
+}
+
+.sdy-md tr:nth-child(even) td {
+  background: var(--tint-faint);
+}
+
+.sdy-md code {
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--surface-3);
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  color: var(--code-inline-fg);
+}
+
+.sdy-md blockquote {
+  margin: 12px 0;
+  padding: 8px 16px;
+  border-left: 3px solid var(--accent);
+  background: var(--accent-soft);
+  border-radius: 0 8px 8px 0;
+  color: var(--text-2);
+}
+
+.sdy-md .katex-display {
+  margin: 12px 0;
+  overflow-x: auto;
+}
+
+/* ===== Footer ===== */
+.footer {
+  padding: 32px 0;
+  border-top: 1px solid var(--border);
+  background: var(--bg);
+}
+
+.footer__inner {
+  text-align: center;
+  font-size: var(--fs-xs);
+  color: var(--text-3);
+}
+
+/* ===== 响应式 ===== */
+@media (max-width: 640px) {
+  .sdy-hero__top {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .sdy-hero__stats {
+    width: 100%;
+    justify-content: space-around;
+  }
+
+  .sdy-mode-bar {
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  .sdy-mode-btn {
+    flex-shrink: 0;
+    padding: 10px 16px;
+  }
+
+  .sdy-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sdy-flashcard {
+    min-height: 280px;
+  }
+
+  .sdy-flashcard__inner {
+    min-height: 280px;
+  }
+
+  .sdy-flashcard__content {
+    font-size: 18px;
+  }
+
+  .sdy-fc-actions {
+    flex-wrap: wrap;
+  }
+
+  .sdy-fc-btn {
+    flex: 1 1 calc(50% - 6px);
+    font-size: var(--fs-xs);
+  }
+}
+
+@media (max-width: 480px) {
+  .sdy-flashcard__face {
+    padding: 28px 20px;
+  }
+
+  .sdy-modal {
+    padding: 28px 20px 20px;
+  }
+
+  .sdy-quiz-card {
+    padding: 28px 20px;
+  }
+}
+
+/* ===== 滚动入场动画（IntersectionObserver 驱动） ===== */
+.sdy-card.sdy-anim-pending {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.sdy-card.sdy-anim-in {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 500ms cubic-bezier(0.16, 1, 0.3, 1),
+              transform 500ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ===== 浅色主题适配 ===== */
+html[data-theme="light"] .sdy-hero {
+  background:
+    radial-gradient(ellipse 100% 60% at 50% 0%, rgba(242, 169, 59, 0.08), transparent 60%),
+    var(--bg);
+}
+
+html[data-theme="light"] .sdy-flashcard__front {
+  background: var(--surface-2);
+  border-color: var(--border);
+}
+
+html[data-theme="light"] .sdy-flashcard__back {
+  background: var(--surface-1);
+}
