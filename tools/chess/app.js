@@ -10,10 +10,10 @@
    ============================================================ */
 import {
   START_FEN, ChessGame, chessAiMove, pieceGlyph, sqToAlg, algToSq,
-} from './engine.js?v=22';
-import * as Gomoku from './gomoku.js?v=22';
-import * as Xiangqi from './xiangqi.js?v=22';
-import * as Go from './go.js?v=22';
+} from './engine.js?v=26';
+import * as Gomoku from './gomoku.js?v=26';
+import * as Xiangqi from './xiangqi.js?v=26';
+import * as Go from './go.js?v=26';
 import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
 
 (() => {
@@ -132,7 +132,7 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     if (aiWorkerTried) return aiWorker;
     aiWorkerTried = true;
     try {
-      const w = new Worker(new URL('./ai-worker.js?v=22', import.meta.url), { type: 'module' });
+      const w = new Worker(new URL('./ai-worker.js?v=26', import.meta.url), { type: 'module' });
       w.onmessage = (e) => {
         const { id, ok, result, error } = e.data || {};
         const p = aiPending.get(id);
@@ -331,8 +331,7 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     if (over || gameEl.hidden) return;
     if (GC.thinking) return;
     if (mode === 'ai' && GC.game.turn() === oppSide('chess', GC.me)) return;
-    if (mode === 'online' && (!online || online.room?.status !== 'playing')) return;
-    if (mode === 'online' && online.seat && GC.game.turn() !== sideOf('chess', online.seat)) return;
+    if (mode === 'online' && !onlineCanPlay('chess')) return;
     const sq = chessDispToSq(dp);
     const bdArr = GC.game.boardArray();
     if (GC.selected >= 0) {
@@ -531,16 +530,19 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
 
   function gomokuPlace(i) {
     if (over || !GG.bd || GG.bd[i]) return;
-    GG.history.push({ bd: Int8Array.from(GG.bd), turnNow: GG.turnNow, i });
-    GG.bd[i] = GG.turnNow;
+    const mover = GG.turnNow;
+    GG.history.push({ bd: Int8Array.from(GG.bd), turnNow: mover, i });
+    GG.bd[i] = mover;
     GG.moves.push(i);
     GG.lastIdx = i;
-    if (mode === 'online' && online) onlinePush(); // 先同步，再判终局
+    // 先翻面再同步：房间里的 state.turn 表示「接下来谁走」，否则对方按旧回合判断会以为还是自己走
+    GG.turnNow = mover === 1 ? 2 : 1;
+    if (mode === 'online' && online) onlinePush();
     const line = Gomoku.checkWin(GG.bd, i);
     if (line) {
       GG.winLine = line;
       gomokuRender();
-      gomokuEnd(GG.turnNow, (GG.turnNow === 1 ? '黑方' : '白方') + '五连获胜 🎉');
+      gomokuEnd(mover, (mover === 1 ? '黑方' : '白方') + '五连获胜 🎉');
       return;
     }
     // 棋盘下满仍无五连 → 和棋（无禁手休闲规则下唯一的和棋情形）
@@ -549,10 +551,9 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
       gomokuEnd(null, '棋盘已下满，双方未成五连 —— 和棋 🤝');
       return;
     }
-    GG.turnNow = GG.turnNow === 1 ? 2 : 1;
     gomokuRender();
     renderStatus();
-    if (GG.vsAI && GG.turnNow !== GG.me && kind === 'gomoku' && !over) gomokuAiMove();
+    if (mode === 'ai' && GG.vsAI && GG.turnNow !== GG.me && kind === 'gomoku' && !over) gomokuAiMove();
   }
 
   function gomokuEnd(winnerSide, text) {
@@ -668,7 +669,7 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     goRender();
     renderStatus();
     if (mode === 'online' && online) onlinePush(); // 先同步，再触发后续
-    if (GO.vsAI && GO.turn !== GO.me && kind === 'go' && !over) goAiMove();
+    if (mode === 'ai' && GO.vsAI && GO.turn !== GO.me && kind === 'go' && !over) goAiMove();
     return true;
   }
 
@@ -685,6 +686,11 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
   }
 
   function goPass(ai) {
+    // 手动停一手必须轮到自己；AI 停手（ai=true）不受此限
+    if (!ai) {
+      if (mode === 'ai' && GO.turn !== GO.me) return;
+      if (mode === 'online' && !onlineCanPlay('go')) return;
+    }
     GO.history.push({ bd: Int8Array.from(GO.bd), turn: GO.turn, ko: GO.ko, passes: GO.passes, caps: { ...GO.caps }, lastIdx: GO.lastIdx });
     GO.moves.push(-1);
     GO.passes++;
@@ -695,7 +701,7 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     if (mode === 'online' && online) onlinePush(); // 先同步，再判双停
     if (GO.passes >= 2) { goScoreEnd(); return; }
     renderStatus();
-    if (!over && GO.vsAI && GO.turn !== GO.me && kind === 'go') goAiMove();
+    if (!over && mode === 'ai' && GO.vsAI && GO.turn !== GO.me && kind === 'go') goAiMove();
   }
 
   function goScoreEnd() {
@@ -835,7 +841,7 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
       renderStatus();
       return;
     }
-    if (XQ.vsAI && XQ.st.turn !== XQ.me && kind === 'xiangqi' && !over) xiangqiAiMove();
+    if (mode === 'ai' && XQ.vsAI && XQ.st.turn !== XQ.me && kind === 'xiangqi' && !over) xiangqiAiMove();
   }
 
   function xiangqiRepetitions() {
@@ -874,17 +880,15 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
 
   function gomokuClick(i) {
     if (over || gameEl.hidden) return;
-    if (GG.vsAI && GG.turnNow !== GG.me) return;
-    if (mode === 'online' && (!online || online.room?.status !== 'playing')) return;
-    if (mode === 'online' && online.seat && GG.turnNow !== sideOf('gomoku', online.seat)) return;
+    if (mode === 'ai' && GG.vsAI && GG.turnNow !== GG.me) return;
+    if (mode === 'online' && !onlineCanPlay('gomoku')) return;
     gomokuPlace(i);
   }
 
   function xiangqiClick(i) {
     if (over || gameEl.hidden) return;
-    if (XQ.vsAI && XQ.st.turn !== XQ.me) return;
-    if (mode === 'online' && (!online || online.room?.status !== 'playing')) return;
-    if (mode === 'online' && online.seat && XQ.st.turn !== sideOf('xiangqi', online.seat)) return;
+    if (mode === 'ai' && XQ.vsAI && XQ.st.turn !== XQ.me) return;
+    if (mode === 'online' && !onlineCanPlay('xiangqi')) return;
     if (XQ.selected >= 0) {
       const m = XQ.targets.find((x) => x.to === i);
       if (m) { xiangqiApply(m); return; }
@@ -902,9 +906,8 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
 
   function goClick(i) {
     if (over || gameEl.hidden) return;
-    if (GO.vsAI && GO.turn !== GO.me) return;
-    if (mode === 'online' && (!online || online.room?.status !== 'playing')) return;
-    if (mode === 'online' && online.seat && GO.turn !== sideOf('go', online.seat)) return;
+    if (mode === 'ai' && GO.vsAI && GO.turn !== GO.me) return;
+    if (mode === 'online' && !onlineCanPlay('go')) return;
     goPlayAt(i);
   }
 
@@ -958,19 +961,34 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     return GO.me;
   }
 
+  function currentTurnSide() {
+    if (kind === 'chess') return GC.game.turn();
+    if (kind === 'xiangqi') return XQ.st.turn;
+    if (kind === 'gomoku') return GG.turnNow;
+    return GO.turn;
+  }
+  function onlineStatusText() {
+    if (!online) return '';
+    const room = online.room || {};
+    const host = room.host_name || '先手';
+    const guest = room.guest_name || '后手';
+    if (room.status === 'waiting') return '等待对手加入 — 把房间码 ' + online.code + ' 发给对方';
+    if (room.status === 'closed') return '房间已关闭';
+    if (room.status === 'abandoned') return '对手已离开房间';
+    if (room.status === 'finished') return room.result ? onlineResultText(room.result) : '对局结束';
+    const mySide = onlineMySide(kind);
+    const turn = currentTurnSide();
+    const piece = SIDE_NAME[kind][turn] || '';
+    if (mySide == null) return host + ' ⚔ ' + guest + ' · 观战中';
+    return host + ' ⚔ ' + guest + ' · ' + (String(turn) === String(mySide) ? '你走（' + piece + '）' : '对方走（' + piece + '）');
+  }
+
   function renderStatus() {
     let s = '';
     if (over) s = resultText;
+    else if (mode === 'online') s = onlineStatusText();
     else if (kind === 'chess') {
       if (mode === 'ai') s = GC.thinking ? 'AI 思考中…' : (GC.game.turn() === GC.me ? '你的回合' : 'AI 回合');
-      else if (online) {
-        if (online.room?.status === 'waiting') s = `等待对手加入 — 房间码 ${online.code}`;
-        else if (online.room?.status === 'finished') s = online.room.result || '对局结束';
-        else {
-          const my = online.seat ? sideOf('chess', online.seat) : null;
-          s = `${online.room?.host_name || '先手'} ⚔ ${online.room?.guest_name || '后手'} · ${my && GC.game.turn() === my ? '你走' : '对方走'}`;
-        }
-      }
     } else if (kind === 'gomoku') {
       s = thinking ? 'AI 思考中…' : (GG.vsAI ? (GG.turnNow === GG.me ? '你的回合（' + SIDE_NAME.gomoku[GG.me] + '）' : 'AI 回合') : (GG.turnNow === 1 ? '黑方回合' : '白方回合'));
     } else if (kind === 'xiangqi') {
@@ -978,7 +996,7 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     } else if (kind === 'go') {
       s = thinking ? 'AI 思考中…' : (GO.vsAI ? (GO.turn === GO.me ? '你的回合（' + SIDE_NAME.go[GO.me] + '）' : 'AI 回合') : (GO.turn === 1 ? '黑方回合' : '白方回合'));
     }
-    if (!over && s) {
+    if (!over && s && !(mode === 'online' && online && online.room?.status !== 'playing')) {
       if (kind === 'go' && GO.passes > 0) s += ` · 对方已停一手，再停一手即终局`;
       if (kind === 'chess') {
         const san = GC.game.sanHistory();
@@ -1008,17 +1026,23 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     const restartBtn = $('#ch-restart');
     const undoBtn = $('#ch-undo');
     const resignBtn = $('#ch-resign');
+    const spectating = mode === 'online' && (!online || !online.seat);
     flipBtn.hidden = kind !== 'chess';
     restartBtn.hidden = mode === 'online';
     undoBtn.hidden = mode === 'online'; // 联机禁悔棋；人机撤两步、双人同屏撤一步
-    resignBtn.hidden = mode === 'local';
-    $('#ch-pass').hidden = kind !== 'go';
+    resignBtn.hidden = mode === 'local' || spectating;
+    $('#ch-pass').hidden = kind !== 'go' || spectating;
     const hist = kind === 'chess' ? GC.game.moveCount()
       : kind === 'gomoku' ? GG.history.length
         : kind === 'xiangqi' ? XQ.history.length
           : kind === 'go' ? GO.history.length : 0;
     undoBtn.disabled = thinking || GC.thinking || over || !hist;
     resignBtn.disabled = over;
+    // 停一手只在轮到自己时可用（观战/等待/对方回合都灰掉）
+    const passBtn = $('#ch-pass');
+    if (passBtn) {
+      passBtn.disabled = over || (mode === 'online' ? !onlineCanPlay('go') : (mode === 'ai' ? GO.turn !== GO.me : false));
+    }
   }
 
   function endGame(text) {
@@ -1063,6 +1087,7 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
 
   /* ---------- 按钮动作 ---------- */
   $('#ch-exit').addEventListener('click', () => {
+    onlineLeave();
     onlineCleanup();
     kind = null;
     showLauncher();
@@ -1143,17 +1168,54 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
   renderTheme();
 
   /* ---------- 尺寸 ---------- */
+  /* 棋盘尺寸：取棋盘框（顶栏 / 吃子条之外）的可用宽高较小者。
+     旧实现让顶栏也吃 --skw（由 100vh 推出）的宽度，横屏手机上顶栏被压成 220px、
+     换行成 194px 高，棋盘只剩 200px，底部还被 overflow:hidden 裁掉。 */
   function fitBoard() {
-    const w = boardEl.clientWidth;
-    const h = boardEl.clientHeight;
-    if (w > 0) boardEl.style.setProperty('--ch-piece', (w / 8 * 0.74).toFixed(1) + 'px');
-    if (w > 0) boardEl.style.setProperty('--gk-stone', (w / 15 * 0.72).toFixed(1) + 'px');
-    const wq = Math.min(w, h * 9 / 10);
-    if (wq > 0) boardEl.style.setProperty('--xq-piece', (wq / 9 * 0.82).toFixed(1) + 'px');
-    if (w > 0) boardEl.style.setProperty('--go-stone', (w / 19 * 0.92).toFixed(1) + 'px');
+    if (gameEl.hidden) return;
+    const frame = boardEl.parentElement;
+    if (!frame) return;
+    const gcs = getComputedStyle(gameEl);
+    const fcs = getComputedStyle(frame);
+    const gPadX = (parseFloat(gcs.paddingLeft) || 0) + (parseFloat(gcs.paddingRight) || 0);
+    const gPadY = (parseFloat(gcs.paddingTop) || 0) + (parseFloat(gcs.paddingBottom) || 0);
+    const fPadX = (parseFloat(fcs.paddingLeft) || 0) + (parseFloat(fcs.paddingRight) || 0);
+    const fPadY = (parseFloat(fcs.paddingTop) || 0) + (parseFloat(fcs.paddingBottom) || 0);
+    const gap = parseFloat(gcs.rowGap) || 0;
+    const kids = [...gameEl.children].filter((el) => getComputedStyle(el).display !== 'none');
+    const topbar = gameEl.querySelector('.ch-topbar');
+    const strips = kids.filter((el) => el.classList.contains('ch-capstrip'));
+    let usedH = gPadY + gap * Math.max(0, kids.length - 1);
+    if (topbar) usedH += topbar.offsetHeight;
+    for (const s of strips) usedH += s.offsetHeight;
+    const availW = Math.max(0, gameEl.clientWidth - gPadX - fPadX);
+    const availH = Math.max(0, gameEl.clientHeight - usedH - fPadY);
+    const ratio = kind === 'xiangqi' ? 9 / 10 : 1; // 宽 / 高
+    const w = Math.min(availW, availH * ratio);
+    if (!(w > 0)) return;
+    const wq = Math.floor(w);
+    const hq = Math.round(wq / ratio);
+    // 木框贴着棋盘收窄，不再整屏拉出一大块空木纹
+    frame.style.width = (wq + fPadX) + 'px';
+    boardEl.style.width = wq + 'px';
+    boardEl.style.height = hq + 'px';
+    boardEl.style.setProperty('--ch-piece', (wq / 8 * 0.74).toFixed(1) + 'px');
+    boardEl.style.setProperty('--gk-stone', (wq / 15 * 0.72).toFixed(1) + 'px');
+    boardEl.style.setProperty('--xq-piece', (Math.min(wq, hq * 9 / 10) / 9 * 0.82).toFixed(1) + 'px');
+    boardEl.style.setProperty('--go-stone', (wq / 19 * 0.92).toFixed(1) + 'px');
   }
-  window.addEventListener('resize', fitBoard);
-  window.addEventListener('orientationchange', fitBoard);
+  let fitRaf = 0;
+  function scheduleFit() {
+    if (fitRaf) return;
+    fitRaf = requestAnimationFrame(() => { fitRaf = 0; fitBoard(); });
+  }
+  window.addEventListener('resize', scheduleFit);
+  window.addEventListener('orientationchange', scheduleFit);
+  if (typeof ResizeObserver === 'function') {
+    const ro = new ResizeObserver(scheduleFit);
+    ro.observe(boardEl.parentElement);
+    ro.observe(document.querySelector('.ch-topbar'));
+  }
 
   /* ================================================================
      联机（四棋通用 board_rooms）
@@ -1170,7 +1232,7 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
   function localRoomState(k) {
     if (k === 'chess') return { fen: GC.game.fen() };
     if (k === 'xiangqi') return { bd: enc(XQ.st.bd), turn: XQ.st.turn, half: XQ.st.half || 0 };
-    if (k === 'gomoku') return { bd: Array.from(GG.bd) };
+    if (k === 'gomoku') return { bd: Array.from(GG.bd), turn: GG.turnNow };
     return { bd: Array.from(GO.bd), turn: GO.turn, ko: GO.ko, passes: GO.passes, caps: { ...GO.caps } };
   }
   function localRoomMoves(k) {
@@ -1197,13 +1259,18 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
           XQ.selected = -1; XQ.targets = [];
         }
       }
+      XQ.moves = Array.isArray(moves) ? moves.slice() : [];
       XQ.lastMove = movesTail(moves);
     } else if (k === 'gomoku') {
+      // 着法列表必须整份接住：只接 bd 的话，本地 moves 只剩自己走的几步，
+      // 再推上去时对方按 moves.length 推回合就会算反（五子棋曾因此串回合）。
+      GG.moves = Array.isArray(moves) ? moves.slice() : [];
       if (state?.bd) {
         const bd = Int8Array.from(state.bd);
-        if (!GG.bd || bd.length !== GG.bd.length || bd.some((v, j) => v !== GG.bd[j])) {
-          GG.bd = bd;
-          GG.turnNow = (moves?.length || 0) % 2 ? 2 : 1;
+        const changed = !GG.bd || bd.length !== GG.bd.length || bd.some((v, j) => v !== GG.bd[j]);
+        if (changed) GG.bd = bd;
+        if (changed || state.turn) {
+          GG.turnNow = state.turn || (GG.moves.length % 2 ? 2 : 1);
         }
       }
       const tail = movesTail(moves);
@@ -1221,6 +1288,7 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
           GO.caps = { 1: state.caps?.[1] || 0, 2: state.caps?.[2] || 0 };
         }
       }
+      GO.moves = Array.isArray(moves) ? moves.slice() : [];
       const tail = movesTail(moves);
       GO.lastIdx = tail != null && tail >= 0 ? tail : null;
     }
@@ -1238,54 +1306,144 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     return seat === 'first' ? first : oppSide(k, first);
   }
 
+  /* 联机权限：观战（seat=null）、等待开局、非自己回合都不允许落子 */
+  function onlineCanPlay(k) {
+    if (!online || !online.seat || online.room?.status !== 'playing') return false;
+    const s = sideOf(k, online.seat);
+    if (k === 'chess') return GC.game.turn() === s;
+    if (k === 'xiangqi') return XQ.st.turn === s;
+    if (k === 'gomoku') return GG.turnNow === s;
+    return GO.turn === s;
+  }
+  function onlineMySide(k) {
+    return online && online.seat ? sideOf(k, online.seat) : null;
+  }
+
+  async function waitCloud() {
+    if (cloudSb) return true;
+    await Promise.race([cloudReady, new Promise((r) => setTimeout(r, 4000))]);
+    return Boolean(cloudSb);
+  }
+
+  let creating = false;
   async function createRoom() {
-    if (!cloudSb) { showDialog('联机不可用', '云端未连接，稍后再试。'); return; }
+    if (!(await waitCloud())) { showDialog('联机不可用', '云端未连接，检查网络后再试。'); return; }
+    if (creating) return;
     const k = sel.kind;
     const name = await ensureName();
-    const code = genCode();
     const mySeatSide = sel.side[k];
     const firstSide = { chess: 'w', xiangqi: 'r', gomoku: 1, go: 1 }[k];
     const iAmFirst = String(mySeatSide) === String(firstSide);
-    const payload = {
-      code,
-      kind: k,
-      state: roomInitialState(k),
-      moves: [],
-      host_name: name,
-      host_side: String(mySeatSide),
-      guest_name: '',
-      status: 'waiting',
-      result: '',
-    };
-    const { error } = await cloudSb.from('board_rooms').insert(payload);
-    if (error) { showDialog('创建失败', error.message); return; }
-    // seat 指的是「先手位 / 后手位」，不是加入顺序
-    startBoardOnline(code, iAmFirst ? 'first' : 'second', payload);
+    creating = true;
+    if (createBtn) createBtn.disabled = true;
+    try {
+      let code = '';
+      let lastErr = null;
+      for (let attempt = 0; attempt < 4; attempt++) {
+        code = genCode();
+        const payload = {
+          code,
+          kind: k,
+          state: roomInitialState(k),
+          moves: [],
+          host_name: name,
+          host_side: String(mySeatSide),
+          guest_name: '',
+          status: 'waiting',
+          result: '',
+        };
+        const { error } = await cloudSb.from('board_rooms').insert(payload);
+        if (!error) {
+          // 记住「这个房间是本标签页建的」（sessionStorage：同浏览器另一个标签页不会误判成房主）
+          try { sessionStorage.setItem('ch-host-' + code, '1'); } catch { /* 静默 */ }
+          // seat 指的是「先手位 / 后手位」，不是加入顺序
+          startBoardOnline(code, iAmFirst ? 'first' : 'second', payload);
+          return;
+        }
+        lastErr = error;
+        if (error.code !== '23505') break; // 只有房间码撞车才重试
+      }
+      showDialog('创建失败', lastErr?.message || '请稍后再试。');
+    } finally {
+      creating = false;
+      if (createBtn) createBtn.disabled = false;
+    }
   }
 
   async function joinRoom() {
-    if (!cloudSb) { showDialog('联机不可用', '云端未连接，稍后再试。'); return; }
+    if (!(await waitCloud())) { showDialog('联机不可用', '云端未连接，检查网络后再试。'); return; }
+    if (creating) return;
     const code = ($('#ch-code-input').value || '').trim().toUpperCase();
-    if (!code) return;
+    if (!code) { showDialog('先输入房间码', '房间码在对方对局顶栏显示（4 位字母数字）。'); return; }
     const { data, error } = await cloudSb.from('board_rooms').select('*').eq('code', code).maybeSingle();
-    if (error || !data) { showDialog('房间不存在', '检查一下房间码？'); return; }
-    const remembered = store.get('ch-seat2-' + code, null);
+    if (error) { showDialog('加入失败', error.message); return; }
+    if (!data) { showDialog('房间不存在', '检查一下房间码？'); return; }
+    if (data.status === 'closed') { showDialog('房间已关闭', '房主离开了这张牌桌，请让对方重新创建。'); return; }
+
     const firstSide = { chess: 'w', xiangqi: 'r', gomoku: 1, go: 1 }[data.kind];
     const hostIsFirst = String(data.host_side) === String(firstSide);
+    const hostSeat = hostIsFirst ? 'first' : 'second';
     const guestSeat = hostIsFirst ? 'second' : 'first';
-    if (data.status === 'waiting' && !data.guest_name && !remembered) {
-      const name = await ensureName();
-      const { error: uerr } = await cloudSb.from('board_rooms')
-        .update({ guest_name: name, status: 'playing', updated_at: new Date().toISOString() })
-        .eq('code', code);
-      if (uerr) { showDialog('加入失败', uerr.message); return; }
-      data.guest_name = name;
-      data.status = 'playing';
-      startBoardOnline(code, guestSeat, data);
+
+    // 自己建的房间（刷新/退出后重进）：按房主位坐下
+    let amHost = false;
+    try { amHost = sessionStorage.getItem('ch-host-' + code) === '1'; } catch { /* 静默 */ }
+    if (amHost) { startBoardOnline(code, hostSeat, data); return; }
+    const remembered = recalledSeat(code);
+    if (remembered === 'first' || remembered === 'second') { startBoardOnline(code, remembered, data); return; }
+
+    if (data.status === 'finished') {
+      showDialog('这局已经结束', (body) => {
+        const p = document.createElement('p');
+        p.className = 'ch-dialog-note';
+        p.textContent = '对局已经结束，你可以进去看看终局，或者回启动器开新局。';
+        body.appendChild(p);
+        const foot = document.createElement('div');
+        foot.className = 'ch-actions';
+        const ok = document.createElement('button');
+        ok.className = 'ch-btn primary'; ok.type = 'button'; ok.textContent = '看终局';
+        ok.addEventListener('click', () => { closeDialog(); startBoardOnline(code, null, data); });
+        foot.appendChild(ok); body.appendChild(foot);
+      });
       return;
     }
-    if (remembered === 'first' || remembered === 'second') { startBoardOnline(code, remembered, data); return; }
-    startBoardOnline(code, null, data);
+
+    // 只有仍在等对手的空房间才允许占座；条件更新确保两台设备同时加入时只有一台成功
+    if (data.status === 'waiting' && !data.guest_name) {
+      const name = await ensureName();
+      const { data: claimed, error: uerr } = await cloudSb.from('board_rooms')
+        .update({ guest_name: name, status: 'playing', updated_at: new Date().toISOString() })
+        .eq('code', code).eq('status', 'waiting').eq('guest_name', '')
+        .select();
+      if (uerr) { showDialog('加入失败', uerr.message); return; }
+      if (claimed && claimed.length) {
+        const room = { ...data, ...claimed[0], guest_name: name, status: 'playing' };
+        startBoardOnline(code, guestSeat, room);
+        return;
+      }
+    }
+
+    // 已经有两个棋手（或座位被抢）→ 观战，明确告知，不要让人以为自己在下棋
+    showDialog('以观战身份进入', (body) => {
+      const p = document.createElement('p');
+      p.className = 'ch-dialog-note';
+      p.textContent = '房间里已经有两名棋手：' + (data.host_name || '先手') + ' vs ' + (data.guest_name || '后手') + '。走子会实时同步，你只能看，不能落子。';
+      body.appendChild(p);
+      const foot = document.createElement('div');
+      foot.className = 'ch-actions';
+      const ok = document.createElement('button');
+      ok.className = 'ch-btn primary'; ok.type = 'button'; ok.textContent = '开始观战';
+      ok.addEventListener('click', () => { closeDialog(); startBoardOnline(code, null, data); });
+      foot.appendChild(ok); body.appendChild(foot);
+    });
+  }
+
+  /* 座位记忆放在 sessionStorage：同浏览器另一个标签页不会被误判成这个座位 */
+  function rememberSeat(code, seat) {
+    try { sessionStorage.setItem('ch-seat2-' + code, seat); } catch { /* 静默 */ }
+  }
+  function recalledSeat(code) {
+    try { return sessionStorage.getItem('ch-seat2-' + code); } catch { return null; }
   }
 
   function startBoardOnline(code, seat, room) {
@@ -1296,20 +1454,26 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     flipped = seat === 'second';
     startTime = Date.now();
     online = { code, kind, seat, channel: null, poll: null, room, finishedShown: false };
-    if (seat) store.set('ch-seat2-' + code, seat);
+    if (seat) rememberSeat(code, seat);
+    thinking = false;
+    const mySide = seat ? sideOf(kind, seat) : null;
     if (kind === 'chess') {
       GC.game = new ChessGame();
       GC.selected = -1; GC.selMoves = []; GC.selPiece = null; GC.thinking = false;
       chessBuild();
     } else if (kind === 'xiangqi') {
+      // 联机必须关掉 AI：否则上一局人机的 vsAI / me 残留，会自动替对手走子
+      XQ.vsAI = false; XQ.me = mySide || 'r';
       XQ.st = Xiangqi.initState(); XQ.history = []; XQ.moves = [];
       XQ.selected = -1; XQ.targets = []; XQ.lastMove = null;
       xiangqiBuild();
     } else if (kind === 'gomoku') {
+      GG.vsAI = false; GG.me = mySide || 1;
       GG.bd = Gomoku.emptyBoard(); GG.history = []; GG.moves = [];
       GG.lastIdx = null; GG.winLine = null; GG.turnNow = 1;
       gomokuBuild();
     } else if (kind === 'go') {
+      GO.vsAI = false; GO.me = mySide || 1;
       GO.bd = Go.emptyBoard(); GO.history = []; GO.moves = [];
       GO.turn = 1; GO.ko = -1; GO.passes = 0; GO.caps = { 1: 0, 2: 0 }; GO.lastIdx = null;
       goBuild();
@@ -1337,6 +1501,15 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     online.room = room;
     adoptRoomState(kind, room.state, room.moves);
     const status = kind === 'chess' ? GC.game.status() : null;
+    if ((room.status === 'closed' || room.status === 'abandoned') && !over) {
+      over = true;
+      if (!online.finishedShown) {
+        online.finishedShown = true;
+        endGame(room.status === 'closed' ? '房间已关闭' : '对手离开了房间');
+      }
+      render();
+      return;
+    }
     if (room.status === 'finished' && !over) {
       over = true;
       if (!online.finishedShown) {
@@ -1370,7 +1543,9 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
   }
 
   function onlinePush() {
-    if (!online || !cloudSb || over) return;
+    // 观战者（没有座位）绝不写局面：否则点一下棋盘就会改掉对局真相
+    if (!online || !cloudSb || over || !online.seat) return;
+    if (online.room?.status !== 'playing') return;
     cloudSb.from('board_rooms').update({
       state: localRoomState(online.kind),
       moves: localRoomMoves(online.kind),
@@ -1381,7 +1556,7 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
   }
 
   function onlineMarkFinished(result) {
-    if (!online || !cloudSb || !result) return;
+    if (!online || !cloudSb || !result || !online.seat) return;
     if (online.room && online.room.status === 'finished') return;
     online.room = { ...(online.room || {}), status: 'finished', result };
     cloudSb.from('board_rooms').update({
@@ -1394,6 +1569,19 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
       recorded = true;
       recordResult(online.kind, result === 'draw' ? 'draw' : result === online.seat ? 'win' : 'loss', 'online', String(sideOf(online.kind, online.seat)), 0, Math.floor((Date.now() - startTime) / 1000));
     }
+  }
+
+  /* 主动退出：告诉云端这张桌子散了，免得对方一直等 */
+  function onlineLeave() {
+    if (!online || !cloudSb || !online.seat) return;
+    const st = online.room?.status;
+    if (st !== 'waiting' && st !== 'playing') return;
+    cloudSb.from('board_rooms').update({
+      status: st === 'waiting' ? 'closed' : 'abandoned',
+      updated_at: new Date().toISOString(),
+    }).eq('code', online.code).eq('status', st).then(({ error }) => {
+      if (error) console.warn('[棋] 退出房间同步失败：', error.message);
+    });
   }
 
   function onlineCleanup() {
@@ -1429,13 +1617,31 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     go: [['0', '简单'], ['1', '中等'], ['2', '困难']],
   };
   const diffWrap = $('#sel-diff');
+  const diffWrapBox = $('#sel-diff-wrap');
   const sideWrap = $('#sel-side-wrap');
+  const sideLabel = $('#sel-side-label');
   const onlineWrap = $('#sel-online-wrap');
+  const startBtn = $('#ch-start');
+  const createBtn = $('#ch-create');
+  const joinBtn = $('#ch-join');
 
   function renderSel() {
     for (const b of document.querySelectorAll('#sel-kind .ch-chip')) b.classList.toggle('on', b.dataset.v === sel.kind);
     for (const b of document.querySelectorAll('#sel-mode .ch-chip')) b.classList.toggle('on', b.dataset.v === sel.mode);
-    onlineWrap.hidden = sel.mode !== 'online';
+    const isAi = sel.mode === 'ai';
+    const isOnline = sel.mode === 'online';
+    // 难度只对人机有意义；双人同屏不需要执子（两边同一个屏幕）；联机的「我执」= 我的座位
+    diffWrapBox.hidden = !isAi;
+    sideWrap.hidden = sel.mode === 'local';
+    onlineWrap.hidden = !isOnline;
+    startBtn.hidden = isOnline;
+    startBtn.textContent = sel.mode === 'local' ? '开始双人同屏 →' : '开始对弈 →';
+    sideLabel.textContent = isOnline ? '我执（对方执另一边）' : '我执';
+    if (createBtn) {
+      const sideName = SIDE_NAME[sel.kind][sel.side[sel.kind]];
+      createBtn.textContent = '✚ 创建房间（我执' + sideName + '）';
+    }
+    if (joinBtn) joinBtn.disabled = false;
     // 执子 chips（四棋都有）
     const sideDiv = $('#sel-side');
     sideDiv.textContent = '';
@@ -1584,18 +1790,22 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
   });
 
   /* ---------- 启动 ---------- */
+  let cloudReadyResolve = null;
+  const cloudReady = new Promise((r) => { cloudReadyResolve = r; });
   async function initCloud() {
-    if (!isConfigured()) return;
+    if (!isConfigured()) { cloudReadyResolve(); return; }
     try {
       const sb = await getSupabase();
       if (!sb) return;
       cloudSb = sb;
+      cloudReadyResolve();
       const { data } = await sb.auth.getSession();
       cloudUser = data?.session?.user ? {
         id: data.session.user.id,
         name: data.session.user.user_metadata?.display_name || data.session.user.email?.split('@')[0] || '用户',
       } : null;
     } catch { /* 静默 */ }
+    finally { cloudReadyResolve(); }
   }
   renderSel();
   initCloud();

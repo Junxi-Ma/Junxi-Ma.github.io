@@ -22,7 +22,7 @@
   </script>
   <link rel="stylesheet" href="../../assets/css/tokens.css">
   <link rel="stylesheet" href="../../assets/css/main.css">
-  <link rel="stylesheet" href="style.css?v=1">
+  <link rel="stylesheet" href="style.css?v=3">
   <style>
     /* ---- 页面骨架：与 json-formatter 逐字一致，顶距内联提供 ---- */
     .tool {
@@ -127,6 +127,15 @@
           </div>
 
           <p class="sk-tip">点格选中 → 数字键或下方键作答；✏ 笔记模式写候选数；键盘方向键可移动，N 切笔记，⌫ 擦除</p>
+
+          <!-- 现代卡片式对话框（胜利 / 失败 / 新纪录 / 纪录）。
+               放在 .sk-stage 里面：全屏时 stage 是顶层元素，放在外面的弹窗根本不会显示。 -->
+          <div class="sk-modal" id="sk-modal" hidden>
+            <div class="sk-card" role="dialog" aria-modal="true" aria-labelledby="sk-card-title">
+              <h3 id="sk-card-title"></h3>
+              <div class="sk-card-body" id="sk-card-body"></div>
+            </div>
+          </div>
         </div>
 
         <!-- 右侧全站英雄榜：四档难度各自的最快纪录 -->
@@ -151,14 +160,6 @@
     </div>
   </main>
 
-  <!-- 现代卡片式对话框（胜利 / 失败 / 新纪录 / 纪录） -->
-  <div class="sk-modal" id="sk-modal" hidden>
-    <div class="sk-card" role="dialog" aria-modal="true" aria-labelledby="sk-card-title">
-      <h3 id="sk-card-title"></h3>
-      <div class="sk-card-body" id="sk-card-body"></div>
-    </div>
-  </div>
-
   <footer class="footer">
     <div class="container footer__inner">
       <span>© <span data-year>2026</span> Michael · <span class="footer__heart">♥</span> 手工打造 · 动静结合</span>
@@ -171,7 +172,7 @@
   </footer>
 
   <script type="module" src="../../assets/js/main.js"></script>
-  <script type="module" src="app.js?v=1"></script>
+  <script type="module" src="app.js?v=4"></script>
   <script type="module" src="../../assets/js/site-gate.js"></script>
 </body>
 </html>

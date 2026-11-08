@@ -20,3 +20,6 @@ Message Board/
 # 本地迁移参考与回滚备份：仅供本机使用，不参与提交或 GitHub Pages 部署
 XinghuisamaBlogs-main/
 _backups/
+
+# Playwright MCP 自动产物（页面快照 / 控制台日志）
+.playwright-mcp/

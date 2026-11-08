@@ -21,7 +21,7 @@
   </script>
   <link rel="stylesheet" href="../../assets/css/tokens.css">
   <link rel="stylesheet" href="../../assets/css/main.css">
-  <link rel="stylesheet" href="style.css?v=14">
+  <link rel="stylesheet" href="style.css?v=16">
   <!-- 棋牌桌背景（用户提供照片）：进对局视图时预加载，避免首帧空白 -->
   <link rel="preload" as="image" href="../../assets/img/chess-table.webp" type="image/webp">
   <style>
@@ -95,20 +95,23 @@
             <button type="button" class="ch-chip" data-v="local">双人同屏</button>
             <button type="button" class="ch-chip" data-v="online" id="sel-mode-online">联机房间</button>
           </div>
-          <p class="ch-label" id="sel-diff-label">AI 难度</p>
-          <div class="ch-chips" id="sel-diff"></div>
+          <div id="sel-diff-wrap">
+            <p class="ch-label" id="sel-diff-label">AI 难度</p>
+            <div class="ch-chips" id="sel-diff"></div>
+          </div>
           <div id="sel-side-wrap">
-            <p class="ch-label">我执</p>
+            <p class="ch-label" id="sel-side-label">我执</p>
             <div class="ch-chips" id="sel-side"></div>
           </div>
           <div id="sel-online-wrap" hidden>
+            <p class="ch-online-note">一台设备创建房间 → 另一台用房间码加入。房间码即邀请函，先选中一边执子，对方自动执另一边。</p>
             <button type="button" class="ch-btn primary wide" id="ch-create">✚ 创建房间</button>
             <p class="ch-label" style="margin-top:12px">已有房间码？在此加入</p>
             <div class="ch-joinrow">
               <input class="ch-code-input" id="ch-code-input" maxlength="5" placeholder="房间码" autocomplete="off">
               <button type="button" class="ch-btn" id="ch-join">加入</button>
             </div>
-            <p class="ch-label" style="margin-top:10px">不输码则创建新房间</p>
+            <p class="ch-online-hint" id="ch-online-hint">房间开局后加入的第三台设备只能观战</p>
           </div>
           <button type="button" class="ch-btn primary wide" id="ch-start">开始对弈 →</button>
           <button type="button" class="ch-btn wide" id="ch-lb-btn" style="margin-top:10px">🏆 棋力排行榜</button>
@@ -187,6 +190,6 @@
   </footer>
 
   <script type="module" src="../../assets/js/main.js"></script>
-  <script type="module" src="app.js?v=22"></script>
+  <script type="module" src="app.js?v=26"></script>
 </body>
 </html>

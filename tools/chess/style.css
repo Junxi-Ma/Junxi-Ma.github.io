@@ -62,6 +62,14 @@ body.ch-page [hidden] { display: none !important; }
   border-color: var(--accent, #f2a93b);
   color: #241a05;
 }
+.ch-online-note {
+  margin: 0 0 10px;
+  color: var(--text-3);
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+.ch-online-hint { margin: 8px 0 0; color: var(--text-3); font-size: 12px; }
+.ch-dialog-note { margin: 0; color: var(--text-2); font-size: 13.5px; line-height: 1.7; }
 .ch-joinrow { display: flex; gap: 8px; }
 .ch-code-input {
   flex: 1;
@@ -99,7 +107,8 @@ body.ch-page [hidden] { display: none !important; }
 
 /* ---------- 对局视图：棋牌桌背景（用户提供照片）+ 日夜两级压暗 ---------- */
 .ch-game {
-  --skw: min(calc(100vw - 24px), calc(100vh - 170px));
+  /* 棋盘尺寸由 JS 按「顶栏之外剩下的空间」精确算，不再用 100vh 常量猜 */
+  --skw: 100%;
   /* 夜：雨夜（照片压暗 + 冷调） */
   --scene:
     radial-gradient(circle at 78% 26%, rgba(255, 196, 110, 0.10) 0 5%, transparent 6%),
@@ -123,8 +132,10 @@ body.ch-page [hidden] { display: none !important; }
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  padding: 12px;
-  overflow: hidden;
+  padding: 10px 12px;
+  overflow-x: hidden;
+  /* 极短视口（横屏手机）兜底：宁可滚动，也不要把棋盘/吃子条裁掉 */
+  overflow-y: auto;
 }
 /* 照片路径：优先 WebP（136KB），不支持时回落 JPEG（234KB）。
    image-set 在旧浏览器中整条声明作废，故先给 JPEG 兜底再给 image-set 覆盖。 */
@@ -155,7 +166,7 @@ body.ch-page [hidden] { display: none !important; }
 /* 桌面上方的聚光/暗角，让照片中央像被台灯照亮 */
 .ch-game::before {
   content: '';
-  position: absolute;
+  position: fixed; /* 装饰层不参与滚动高度，否则会给对局视图凭空加出可滚动区 */
   inset: 0;
   background:
     radial-gradient(75% 62% at 50% 42%, rgba(255, 236, 200, 0.10), transparent 70%),
@@ -166,7 +177,7 @@ body.ch-page [hidden] { display: none !important; }
    都是极低对比度的叠加层，只为让静态照片有呼吸感，不干扰看棋盘。 */
 .ch-game::after {
   content: '';
-  position: absolute;
+  position: fixed;
   inset: -60px;
   pointer-events: none;
   background: repeating-linear-gradient(112deg, transparent 0 14px, rgba(190, 215, 255, 0.035) 14px 15.5px, transparent 15.5px 26px);
@@ -185,25 +196,26 @@ body.ch-page [hidden] { display: none !important; }
 .ch-game > * { position: relative; z-index: 1; }
 
 .ch-topbar,
-.ch-capstrip,
-.ch-boardframe {
-  width: var(--skw);
+.ch-capstrip {
+  width: 100%;
 }
-/* 棋盘框同时受宽、高约束：内部棋盘按 100% 填充，
-   竖长方盘（中国象棋 9:10）据此自动缩小，不会顶破视口。
-   减去顶栏 + 两条吃子条 + 边距的实测高度。 */
+/* 顶栏可以换行（手机上按钮多），棋盘框吃掉顶栏与吃子条之外的全部空间 */
 .ch-boardframe {
+  width: 100%;
+  flex: 1 1 auto;
+  /* 保底高度：空间实在不够时让整页滚动，而不是把棋盘压成一条缝 */
+  min-height: 168px;
   display: flex;
   justify-content: center;
   align-items: center;
-  max-height: calc(100vh - 190px);
+  overflow: auto;
 }
-.ch-game:fullscreen .ch-boardframe { max-height: calc(100vh - 170px); }
-/* 棋盘在框内按「宽或高的较小者」定尺寸；用 aspect-ratio 保证不变形 */
-.ch-board { max-height: 100%; }
+/* 棋盘尺寸由 app.js 的 fitBoard() 按可用宽高算好写成内联宽高，
+   这里只兜底，避免未执行 JS 时塌成 0。 */
+.ch-board { flex: none; max-width: 100%; }
 .ch-board.gomoku,
-.ch-board.go { max-width: 100%; max-height: 100%; }
-.ch-board.xiangqi { max-width: 100%; max-height: 100%; }
+.ch-board.go,
+.ch-board.xiangqi { max-width: 100%; }
 .ch-topbar {
   display: flex;
   align-items: center;
@@ -437,9 +449,16 @@ body.ch-page [hidden] { display: none !important; }
 .ch-promo-row button:hover { background: var(--accent-glow); }
 
 /* ---------- 真全屏（Fullscreen API）微调 ---------- */
-.ch-game:fullscreen {
-  --skw: min(calc(100vw - 32px), calc(100vh - 150px));
-  padding: 12px 16px;
+.ch-game:fullscreen { padding: 10px 16px; }
+
+/* ---------- 矮视口（横屏手机）：压缩顶栏，给棋盘让路 ---------- */
+@media (max-height: 520px) {
+  .ch-game { padding: 6px 10px; gap: 5px; }
+  .ch-topbar { padding: 5px 8px; gap: 6px; }
+  .ch-tbtn { padding: 5px 9px; font-size: 11.5px; }
+  .ch-modechip { padding: 4px 9px; font-size: 11px; letter-spacing: 0.08em; }
+  .ch-status { font-size: 12.5px; }
+  .ch-capstrip { display: none; }
 }
 
 /* ---------- 五子棋棋盘 ---------- */

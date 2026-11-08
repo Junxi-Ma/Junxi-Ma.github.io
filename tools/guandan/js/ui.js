@@ -312,6 +312,8 @@ const UI = {
       });
       hand.appendChild(colEl);
     });
+    // 手牌超出可视宽度时，右缘给一条渐隐提示（触屏没有滚动条）
+    this.updateHandHint();
     // 出牌按钮同步已选张数与就绪高光
     const canPlay = this.selected.size && !this.pickMode;
     const playBtn = this.$('gd-btn-play');
@@ -353,6 +355,8 @@ const UI = {
   onCardPointerDown(e, id) {
     if (e.button !== undefined && e.button !== 0) return;
     if (this.pickMode) { this.drag = null; return; } // 进贡模式：不做拖拽，交给 pointerup 点选
+    // 触屏：把横向滑动让给手牌滚动；拖拽理牌仅鼠标可用（排序另有「理牌」按钮）
+    if (e.pointerType === 'touch') { this.drag = null; return; }
     e.preventDefault();
     try { e.currentTarget.setPointerCapture(e.pointerId); } catch (err) {}
     this.drag = { id, startX: e.clientX, startY: e.clientY, active: false, ghost: null, line: null };
@@ -386,7 +390,7 @@ const UI = {
   onCardPointerUp(e, id) {
     if (this.pickMode) { this.clickCard(id); return; } // 进贡/还贡：点选
     const d = this.drag;
-    if (!d) return;
+    if (!d) { this.clickCard(id); return; } // 触屏点按（拖拽已在 pointerdown 让给滚动）
     this.drag = null;
     this.clearDropHint();
     if (d.ghost) d.ghost.remove();
@@ -484,6 +488,15 @@ const UI = {
     }
   },
 
+  /* 手牌滚动提示：还有牌被挡住时右缘渐隐，滑到底就撤掉 */
+  updateHandHint() {
+    const sc = this.$('gd-hand-scroll');
+    if (!sc || !sc.parentElement) return;
+    const more = sc.scrollWidth - sc.clientWidth > 6;
+    const atEnd = sc.scrollLeft + sc.clientWidth >= sc.scrollWidth - 6;
+    sc.parentElement.classList.toggle('has-more', more && !atEnd);
+  },
+
   /* ---------------- 点选 / 出牌 ---------------- */
   clickCard(id) {
     if (this.pickMode) {
@@ -532,6 +545,7 @@ const UI = {
   },
 
   wireGame() {
+    this.$('gd-hand-scroll').addEventListener('scroll', () => this.updateHandHint(), { passive: true });
     this.$('gd-btn-play').addEventListener('click', () => {
       if (!this.playerResolve) return;
       const S = Game.S;

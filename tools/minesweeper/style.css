@@ -319,6 +319,10 @@ body.ms-page {
 .ms-window:-webkit-full-screen .ms-board-outer {
   flex: 1;
   min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: auto;
 }
 .ms-window:fullscreen .ms-board,
 .ms-window:-webkit-full-screen .ms-board { margin: 0 auto; }
@@ -327,7 +331,7 @@ body.ms-page {
 body.ms-win-fake .ms-window {
   position: fixed;
   inset: 0;
-  z-index: 80;
+  z-index: 120; /* 压过站点导航（--z-nav: 100），假全屏的标题栏不再被盖住 */
   width: auto;
   max-width: none;
   display: flex;
@@ -337,7 +341,14 @@ body.ms-win-fake .ms-window {
 }
 body.ms-win-fake .ms-title { margin: 0 -8px 3px; }
 body.ms-win-fake .ms-body { display: flex; flex-direction: column; flex: 1; min-height: 0; }
-body.ms-win-fake .ms-board-outer { flex: 1; min-height: 0; }
+body.ms-win-fake .ms-board-outer {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: auto;
+}
 body.ms-win-fake .ms-board { margin: 0 auto; }
 
 /* ---------- 窗体下方的站点风格操作条 ---------- */
@@ -376,7 +387,7 @@ body.ms-win-fake .ms-board { margin: 0 auto; }
 .ms-modal {
   position: fixed;
   inset: 0;
-  z-index: 90;
+  z-index: 200;
   display: grid;
   place-items: center;
   background: rgba(0, 0, 0, 0.4);

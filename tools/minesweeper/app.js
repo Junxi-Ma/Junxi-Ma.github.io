@@ -175,16 +175,19 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
   }
 
   function fitBoard() {
-    // 40 = 窗体边框与内边距，6 = 雷区凹槽边框；过小则保底 20px 交给横向滚动
-    let cs = Math.floor((stageEl.clientWidth - 40) / cols);
+    let cs;
     if (isFullscreen()) {
-      // 窗口全屏：宽高都参与，150 ≈ 标题栏+菜单+HUD+凹槽边框+窗体内边距
-      cs = Math.min(
-        Math.floor((window.innerWidth - 44) / cols),
-        Math.floor((window.innerHeight - 150) / rows)
-      );
+      // 全屏：盘区容器（HUD 之下的全部空间）里取宽/高较小者。
+      // 旧实现把格子封顶 44px，1080p 全屏也只有 396px 的盘，屏幕大半是空的。
+      const outer = boardEl.parentElement;
+      const w = Math.max(0, outer.clientWidth - 8);
+      const h = Math.max(0, outer.clientHeight - 8);
+      cs = Math.floor(Math.min(w / cols, h / rows));
+      cs = clamp(cs, 16, 120);
+    } else {
+      // 40 = 窗体边框与内边距，过小则保底 20px 交给横向滚动
+      cs = clamp(Math.floor((stageEl.clientWidth - 40) / cols), 20, 30);
     }
-    cs = clamp(cs, 20, isFullscreen() ? 44 : 30);
     boardEl.style.setProperty('--cs', cs + 'px');
   }
 

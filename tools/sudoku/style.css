@@ -346,27 +346,44 @@ body.sk-page [hidden] { display: none !important; }
   .sk-num b { font-size: 17px; }
 }
 
-/* ---------- 全屏：数独纸铺满 ---------- */
-#sk-sheet:fullscreen,
-#sk-sheet:-webkit-full-screen {
-  width: min(100vw, calc(100vh - 190px));
-  height: auto;
-  max-width: none;
-  border-radius: 0;
-  padding: 18px 18px 14px;
-}
-body.sk-fs-fake #sk-sheet {
+/* ---------- 全屏：整张数独纸居中，尺寸由 app.js 按可用空间算 ---------- */
+.sk-stage:fullscreen,
+.sk-stage:-webkit-full-screen,
+body.sk-fs-fake .sk-stage {
   position: fixed;
   inset: 0;
-  z-index: 80;
-  width: min(100vw, calc(100vh - 190px));
-  max-width: none;
-  border-radius: 0;
-  margin: 0 auto;
-  left: 0;
-  right: 0;
+  z-index: 120; /* 压过站点导航（--z-nav: 100），假全屏时标题栏不会再盖住纸头 */
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* 用 flex-start + 子项 auto 外边距：有富余时居中，溢出时自动退回顶部，
+     不会像 justify-content:center 那样把纸头顶出可滚动范围 */
+  justify-content: flex-start;
+  gap: 0;
+  padding: 14px;
+  margin: 0;
+  background: var(--bg);
   overflow: auto;
 }
+.sk-stage:fullscreen .sk-sheet,
+.sk-stage:-webkit-full-screen .sk-sheet,
+body.sk-fs-fake .sk-stage .sk-sheet {
+  width: min(100%, 540px);
+  max-width: none;
+  flex: none;
+  margin: auto 0;
+}
+/* 全屏里只留棋盘与按键，难度/提示让位 */
+.sk-stage:fullscreen .sk-diffs,
+.sk-stage:-webkit-full-screen .sk-diffs,
+.sk-stage:fullscreen .sk-tip,
+.sk-stage:-webkit-full-screen .sk-tip,
+body.sk-fs-fake .sk-stage .sk-diffs,
+body.sk-fs-fake .sk-stage .sk-tip { display: none; }
+body.sk-fs-fake { overflow: hidden; }
+body.sk-fs-fake .sk-modal { z-index: 200; }
 
 /* ---------- 卡片式对话框 ---------- */
 .sk-modal {

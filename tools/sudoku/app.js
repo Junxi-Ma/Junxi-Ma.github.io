@@ -759,9 +759,32 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
   $('#sk-lb-refresh')?.addEventListener('click', loadLeaderboard);
 
   /* ---------- 全屏 ---------- */
-  function renderFs() { fitSudoku(); }
+  const stageEl = sheetEl.parentElement;
+  function fsActive() {
+    return document.fullscreenElement === stageEl ||
+      document.webkitFullscreenElement === stageEl ||
+      document.body.classList.contains('sk-fs-fake');
+  }
+  function renderFs() {
+    const on = fsActive();
+    document.body.classList.toggle('sk-fs-on', on);
+    fsBtn.textContent = on ? '⛶ 退出全屏' : '⛶ 全屏';
+    fsBtn.title = on ? '退出全屏' : '全屏';
+    fitSudoku();
+    setTimeout(fitSudoku, 120);
+  }
+  function exitFake() {
+    document.body.classList.remove('sk-fs-fake');
+    renderFs();
+  }
   fsBtn.addEventListener('click', async () => {
-    const api = sheetEl.requestFullscreen || sheetEl.webkitRequestFullscreen;
+    const api = stageEl.requestFullscreen || stageEl.webkitRequestFullscreen;
+    // 假全屏（API 被拒/不可用）下再点按钮：直接撤掉 CSS 全屏，不要又去申请一次
+    if (document.body.classList.contains('sk-fs-fake') &&
+        !(document.fullscreenElement || document.webkitFullscreenElement)) {
+      exitFake();
+      return;
+    }
     if (document.fullscreenElement || document.webkitFullscreenElement) {
       const exit = document.exitFullscreen || document.webkitExitFullscreen;
       const p = exit.call(document);
@@ -770,9 +793,8 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
       document.body.classList.remove('sk-fs-fake');
     } else if (api) {
       try {
-        let entered = false;
         await Promise.race([
-          api.call(sheetEl).then(() => { entered = true; }),
+          api.call(stageEl),
           new Promise((_, rej) => setTimeout(() => rej(new Error('fs-timeout')), 800)),
         ]);
         setTimeout(renderFs, 50);
@@ -791,11 +813,34 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
       document.body.classList.remove('sk-fs-fake');
     renderFs();
   });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && document.body.classList.contains('sk-fs-fake')) exitFake();
+  });
 
   /* ---------- 尺寸自适应 ---------- */
   function fitSudoku() {
-    const w = gridEl.clientWidth;
-    if (w > 0) gridEl.style.fontSize = (w / 9 * 0.52).toFixed(1) + 'px';
+    if (!fsActive()) {
+      sheetEl.style.width = '';
+      const w0 = gridEl.clientWidth;
+      if (w0 > 0) gridEl.style.fontSize = (w0 / 9 * 0.52).toFixed(1) + 'px';
+      return;
+    }
+    // 全屏：纸张宽度 = 可用宽度 与（可用高度 - 纸头 - 数字键）中的较小者
+    const scs = getComputedStyle(stageEl);
+    const gcs = getComputedStyle(sheetEl);
+    const sPadX = (parseFloat(scs.paddingLeft) || 0) + (parseFloat(scs.paddingRight) || 0);
+    const sPadY = (parseFloat(scs.paddingTop) || 0) + (parseFloat(scs.paddingBottom) || 0);
+    const pPadX = (parseFloat(gcs.paddingLeft) || 0) + (parseFloat(gcs.paddingRight) || 0);
+    const pPadY = (parseFloat(gcs.paddingTop) || 0) + (parseFloat(gcs.paddingBottom) || 0);
+    const headEl = sheetEl.querySelector('.sk-head');
+    const padEl = sheetEl.querySelector('.sk-pad');
+    const headH = headEl ? headEl.offsetHeight : 0;
+    const padH = padEl ? padEl.offsetHeight : 0;
+    const availW = Math.max(0, stageEl.clientWidth - sPadX - pPadX);
+    const availH = Math.max(0, stageEl.clientHeight - sPadY - pPadY - headH - padH - 12);
+    const side = Math.max(150, Math.min(availW, availH));
+    sheetEl.style.width = Math.floor(side + pPadX) + 'px';
+    gridEl.style.fontSize = (side / 9 * 0.52).toFixed(1) + 'px';
   }
   window.addEventListener('resize', fitSudoku);
 
