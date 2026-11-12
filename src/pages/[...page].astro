@@ -1,6 +1,7 @@
 ---
 import type { GetStaticPaths } from "astro";
 import Pagination from "@/components/common/Pagination.astro";
+import HomeHighlights from "@/components/custom/HomeHighlights.astro";
 import PostPage from "@/components/layout/PostPage.astro";
 import { siteConfig } from "@/config";
 import I18nKey from "@/i18n/i18nKey";
@@ -28,6 +29,7 @@ const heading =
 ---
 
 <MainGridLayout heading={heading}>
+  {page.currentPage === 1 && <HomeHighlights />}
   <PostPage page={page} />
   {
     page.total > page.size && (

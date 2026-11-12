@@ -1,27 +1,30 @@
-# 关于我 / About Me
+# 关于这个站
 
-你好！我是 **夏叶** ，一个在数字世界中默默无闻的一片叶子。
+这是一个人的数字工坊：把零散的想法做成能用的东西，顺手把学过的记下来。
 
-## 🛠️ 关于本站
+## 这里有什么
 
-这个网站使用 **Astro** 框架构建，采用了 [Firefly](https://github.com/CuteLeaf/Firefly) 模板，Firefly 是基于 [Fuwari](https://github.com/saicaca/fuwari) 的二次开发。
+**工具**——十二个在浏览器里跑的小应用：棋类（国际象棋、中国象棋、五子棋、围棋、四子棋）、扫雷、数独、魔方求解、掼蛋、炸弹机甲、JSON 格式化、AES 加解密、外出名额、Stardy 背卡。全部在本地运行，数据不上传。
 
-**Firefly** 是一款基于 Astro 框架和 Fuwari 模板开发的清新美观且现代化个人博客主题模板，专为技术爱好者和内容创作者设计。该主题融合了现代 Web 技术栈，提供了丰富的功能模块和高度可定制的界面，让您能够轻松打造出专业且美观的个人博客网站。
+**分支**——独立成篇的小网页：军训祝福墙、可见光云量识别、Shiroha 刷题、看图识天。各有各的样子，只是和主站同源部署。
 
+**笔记**——天气学原理、动力气象学、大气探测学的课程笔记，加上一些做网站时踩过的坑。
 
-**🖥️在线预览： [Firefly - Demo site](https://firefly.cuteleaf.cn/)**
+## 怎么搭的
 
-**📝Firefly使用文档： [https://docs-firefly.cuteleaf.cn](https://docs-firefly.cuteleaf.cn/)**
+前端是静态的：Astro 在构建时把笔记渲染成 HTML，整站丢给 GitHub Pages，没有服务器。
 
-**⭐Firefly开源地址：[https://github.com/CuteLeaf/Firefly](https://github.com/CuteLeaf/Firefly)** 
+动态的部分交给 Supabase：登录注册、访客统计、游戏排行榜、联机房间、留言墙，都是 Postgres 加 RLS 策略。没登录也能看，只是少了这些。
 
-**⭐Fuwari开源地址：[https://github.com/saicaca/fuwari](https://github.com/saicaca/fuwari)**
+写一篇笔记只需要往 `src/content/posts/` 放一个 Markdown 文件，推上去就发布了。
 
-::github{repo="CuteLeaf/Firefly"}
+## 说两句
 
-::github{repo="saicaca/fuwari"}
+这个站最早是一堆手写 HTML，后来换过一次前端又退回去过——改得乱七八糟，因为没想清楚哪些该动、哪些该留。现在这版是重新做的，边界写在计划里，一步一步来。
+
+工具和分支都是自己写的，笔记是自己整理的。有错漏欢迎指出来。
 
 ---
 
-*感谢你的来访！希望在这里能找到对你有用的内容！*
-
+- GitHub：[@Junxi-Ma](https://github.com/Junxi-Ma)
+- 站点仓库：[Junxi-Ma.github.io](https://github.com/Junxi-Ma/Junxi-Ma.github.io)

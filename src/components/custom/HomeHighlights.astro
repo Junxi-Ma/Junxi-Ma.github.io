@@ -1,0 +1,188 @@
+---
+/**
+ * 首页的「工具 / 分支」入口区块
+ *
+ * 本站的主体是工具与分支页，不是文章流。首页只放文章列表会让人以为
+ * 这里是个博客，所以把两个板块的入口提到最前面。
+ *
+ * 数据源与 /tools/、/branches/ 列表页一致：
+ *   public/tools/<folder>/meta.json
+ *   public/branches/index.json（+ 未登记目录的 meta.json 兜底）
+ * 只在首页第一页显示。
+ */
+import fs from "node:fs";
+import path from "node:path";
+
+interface Card {
+	title: string;
+	description: string;
+	icon: string;
+	url: string;
+	tags: string[];
+	order: number;
+}
+
+const TOOL_LIMIT = 4;
+const BRANCH_LIMIT = 2;
+
+const toolsRoot = path.join(process.cwd(), "public", "tools");
+const branchesRoot = path.join(process.cwd(), "public", "branches");
+
+function readTools(): Card[] {
+	if (!fs.existsSync(toolsRoot)) return [];
+	return fs
+		.readdirSync(toolsRoot, { withFileTypes: true })
+		.filter((d) => d.isDirectory())
+		.map((d) => {
+			const p = path.join(toolsRoot, d.name, "meta.json");
+			if (!fs.existsSync(p)) return null;
+			try {
+				const raw = JSON.parse(fs.readFileSync(p, "utf8"));
+				return {
+					title: raw.title ?? d.name,
+					description: raw.description ?? "",
+					icon: raw.icon ?? "🧩",
+					url: `/tools/${d.name}/`,
+					tags: Array.isArray(raw.tags) ? raw.tags : [],
+					order: typeof raw.order === "number" ? raw.order : 100,
+				} satisfies Card;
+			} catch {
+				return null;
+			}
+		})
+		.filter((c): c is Card => c !== null)
+		.sort((a, b) => a.order - b.order);
+}
+
+function readBranches(): Card[] {
+	if (!fs.existsSync(branchesRoot)) return [];
+	const out: Card[] = [];
+	const seen = new Set<string>();
+
+	const listPath = path.join(branchesRoot, "index.json");
+	if (fs.existsSync(listPath)) {
+		try {
+			const raw = JSON.parse(fs.readFileSync(listPath, "utf8"));
+			for (const item of Array.isArray(raw.branches) ? raw.branches : []) {
+				if (!item?.folder) continue;
+				seen.add(item.folder);
+				out.push({
+					title: item.title ?? item.folder,
+					description: item.description ?? "",
+					icon: item.icon ?? "📄",
+					url: item.url ?? `/branches/${item.folder}/`,
+					tags: Array.isArray(item.tags) ? item.tags : [],
+					order: typeof item.order === "number" ? item.order : 100,
+				});
+			}
+		} catch {
+			/* 清单损坏时退回全量扫描 */
+		}
+	}
+
+	for (const d of fs.readdirSync(branchesRoot, { withFileTypes: true })) {
+		if (!d.isDirectory() || seen.has(d.name)) continue;
+		if (!fs.existsSync(path.join(branchesRoot, d.name, "index.html"))) continue;
+		let meta: Record<string, unknown> = {};
+		const mp = path.join(branchesRoot, d.name, "meta.json");
+		if (fs.existsSync(mp)) {
+			try {
+				meta = JSON.parse(fs.readFileSync(mp, "utf8"));
+			} catch {
+				meta = {};
+			}
+		}
+		out.push({
+			title: (meta.title as string) ?? d.name,
+			description: (meta.description as string) ?? "",
+			icon: (meta.icon as string) ?? "📄",
+			url: `/branches/${d.name}/`,
+			tags: Array.isArray(meta.tags) ? (meta.tags as string[]) : [],
+			order: typeof meta.order === "number" ? (meta.order as number) : 100,
+		});
+	}
+
+	return out.sort((a, b) => a.order - b.order);
+}
+
+const tools = readTools();
+const branches = readBranches();
+const topTools = tools.slice(0, TOOL_LIMIT);
+const topBranches = branches.slice(0, BRANCH_LIMIT);
+---
+
+{
+	tools.length > 0 && (
+		<section class="mb-4">
+			<div class="mb-3 flex items-end justify-between">
+				<h2 class="m-0 text-lg font-bold text-neutral-900 dark:text-neutral-100">
+					工具
+				</h2>
+				<a
+					href="/tools/"
+					class="text-sm text-(--primary) transition-opacity hover:opacity-70"
+				>
+					全部 {tools.length} 个 →
+				</a>
+			</div>
+			<div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+				{topTools.map((tool) => (
+					<a
+						href={tool.url}
+						class="group flex gap-3 rounded-(--radius-large) border border-(--line-divider) bg-(--card-bg) p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-(--primary) hover:shadow-md"
+					>
+						<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-(--btn-regular-bg) text-xl">
+							{tool.icon}
+						</div>
+						<div class="min-w-0 flex-1">
+							<h3 class="mb-0.5 truncate text-sm font-bold text-neutral-900 group-hover:text-(--primary) dark:text-neutral-100">
+								{tool.title}
+							</h3>
+							<p class="line-clamp-2 text-xs leading-relaxed text-neutral-600 dark:text-neutral-400">
+								{tool.description}
+							</p>
+						</div>
+					</a>
+				))}
+			</div>
+		</section>
+	)
+}
+
+{
+	branches.length > 0 && (
+		<section class="mb-4">
+			<div class="mb-3 flex items-end justify-between">
+				<h2 class="m-0 text-lg font-bold text-neutral-900 dark:text-neutral-100">
+					分支
+				</h2>
+				<a
+					href="/branches/"
+					class="text-sm text-(--primary) transition-opacity hover:opacity-70"
+				>
+					全部 {branches.length} 个 →
+				</a>
+			</div>
+			<div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+				{topBranches.map((branch) => (
+					<a
+						href={branch.url}
+						class="group flex gap-3 rounded-(--radius-large) border border-(--line-divider) bg-(--card-bg) p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-(--primary) hover:shadow-md"
+					>
+						<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-(--btn-regular-bg) text-xl">
+							{branch.icon}
+						</div>
+						<div class="min-w-0 flex-1">
+							<h3 class="mb-0.5 truncate text-sm font-bold text-neutral-900 group-hover:text-(--primary) dark:text-neutral-100">
+								{branch.title}
+							</h3>
+							<p class="line-clamp-2 text-xs leading-relaxed text-neutral-600 dark:text-neutral-400">
+								{branch.description}
+							</p>
+						</div>
+					</a>
+				))}
+			</div>
+		</section>
+	)
+}
