@@ -1,14 +1,17 @@
-# 自动构建内容索引并部署到 GitHub Pages
+# 构建 Astro 站点并部署到 GitHub Pages
 #
-# 为什么用这个方案而不是 pre-commit 钩子：
-#   钩子只在你本机 git commit 时运行。一旦用 GUI 客户端、或直接在 GitHub 网页上
-#   编辑 notes/，钩子就不会执行，data/index.json 就会落后于内容（列表页/首页摘要
-#   显示旧信息）。把 build_index.py 放到服务端构建阶段，索引永远由当时的仓库内容
-#   现场生成，任何提交方式都不会漏。
+# 为什么在 CI 里构建而不是提交 dist/：
+#   · Astro 需要 Node 侧编译（图片优化、字体子集化、Pagefind 索引），
+#     这些产物提交进仓库既大又容易冲突
+#   · 让每次部署都由当时的仓库内容现场生成，任何提交方式都不会漏
+#
+# 2026-11 前端迁移：从「零框架静态站 + python 生成索引」改成
+# 「Astro 构建 + dist 部署」。工具页与分支页仍是静态资源，
+# 放在 public/ 下，由 Astro 原样复制进 dist，路径不变。
 #
 # 前置设置（一次性）：仓库 Settings → Pages → Source 选 "GitHub Actions"。
 
-name: 构建索引并部署站点
+name: 构建并部署站点
 
 on:
   push:
@@ -34,30 +37,51 @@ jobs:
       - name: 检出仓库
         uses: actions/checkout@v4
 
+      # pnpm 版本跟 package.json 的 packageManager 字段保持一致
+      - name: 准备 pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.22.0
+
+      - name: 准备 Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
       - name: 准备 Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: "3.12"
 
       - name: 检查笔记排版
         # 只提示、不拦截：网页端直接改 Markdown 时也能在日志里看到问题，
-        # 但不让排版小问题挡住部署。
+        # 但不让排版小问题挡住部署。notes/ 现在只是源文件留档，
+        # 真正发布的是 src/content/posts/。
         continue-on-error: true
         run: python scripts/lint_notes.py
 
-      - name: 生成 data/index.json
-        run: python scripts/build_index.py
+      - name: 安装依赖
+        # lockfile 是模板带过来的，依赖集合没动过，可以 frozen
+        run: pnpm install --frozen-lockfile
+
+      - name: 构建
+        # 构建链路见 package.json 的 build 脚本：
+        #   astro build → 裁剪看板娘资源 → 字体子集化 → 压缩内联脚本 → Pagefind 索引
+        # 其中 Pagefind 必须在 astro build 之后跑，它要扫描已生成的 HTML。
+        env:
+          ASTRO_TELEMETRY_DISABLED: "1"
+        run: pnpm build
 
       - name: 配置 Pages
         uses: actions/configure-pages@v5
 
-      - name: 剔除不该发布的目录
-        run: rm -rf .git .github
-
       - name: 打包站点
         uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          # 只上传构建产物。工具页、分支页、.nojekyll 都在 public/ 下，
+          # 已由 Astro 复制进 dist，不需要额外处理。
+          path: dist
 
   deploy:
     name: 部署
