@@ -73,17 +73,14 @@ export const backgroundWallpaper: BackgroundWallpaperConfig = {
 			// 是否启用主页横幅文字
 			enable: true,
 			// 主页横幅主标题
-			title: "Lovely firefly!",
-			// 主页横幅主标题字体大小
-			titleSize: "4.5rem",
+			title: "Michael 的数字工坊",
+			// 主页横幅主标题字体大小（中文长标题，比模板默认的 4.5rem 收一档）
+			titleSize: "3.5rem",
 			// 主页横幅副标题
 			subtitle: [
-				"In Reddened Chrysalis, I Once Rest",
-				"From Shattered Sky, I Free Fall",
-				"Amidst Silenced Stars, I Deep Sleep",
-				"Upon Lighted Fyrefly, I Soon Gaze",
-				"From Undreamt Night, I Thence Shine",
-				"In Finalized Morrow, I Full Bloom",
+				"构建小工具，记录学习与思考",
+				"小工具 · 子网页 · 学习笔记",
+				"把零散的想法做成能用的东西",
 			],
 			// 主页横幅副标题字体大小
 			subtitleSize: "1.5rem",

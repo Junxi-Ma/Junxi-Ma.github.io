@@ -1,0 +1,56 @@
+/* ============================================================
+   自建内容样式（不属于 Firefly 模板，升级模板时不会被覆盖）
+
+   目前只有一项：课程笔记里的「多色批注」。
+   原站在 assets/css/markdown.css 里定义，迁移后笔记正文里的
+   <span class="mk-red"> 等标记需要这套样式，否则批注全部变成普通文字。
+
+   颜色沿用原站色板：暗色用高亮版，浅色用加深版，保证两套主题下都够对比度。
+   ============================================================ */
+
+:root {
+	--mk-red: #ff7b72;
+	--mk-blue: #79c0ff;
+	--mk-green: #56d364;
+	--mk-purple: #d2a8ff;
+	--mk-orange: #ffa657;
+}
+
+:root:not(.dark) {
+	--mk-red: #c73a34;
+	--mk-blue: #0b62c4;
+	--mk-green: #177a37;
+	--mk-purple: #7c3edd;
+	--mk-orange: #b25107;
+}
+
+.custom-md .mk-red,
+.custom-md .mk-blue,
+.custom-md .mk-green,
+.custom-md .mk-purple,
+.custom-md .mk-orange {
+	font-weight: 500;
+}
+
+.custom-md .mk-red {
+	color: var(--mk-red);
+}
+.custom-md .mk-blue {
+	color: var(--mk-blue);
+}
+.custom-md .mk-green {
+	color: var(--mk-green);
+}
+.custom-md .mk-purple {
+	color: var(--mk-purple);
+}
+.custom-md .mk-orange {
+	color: var(--mk-orange);
+}
+
+/* 高亮标记：原站用主题色 22% 透明度铺底 */
+.custom-md .mk-hl {
+	background: color-mix(in srgb, var(--primary) 22%, transparent);
+	border-radius: 3px;
+	padding: 0 3px;
+}
