@@ -1,0 +1,443 @@
+/* ============================================================
+   tool-shell.css — 工具页 / 分支页的共用外壳
+
+   为什么需要它：
+     12 个工具页原本引用主站的 tokens.css + main.css，那套变量是
+     「近黑 + 琥珀金」的暗色体系。主站换成 Firefly 的浅色体系后，
+     工具页要么跟着换、要么变成视觉孤岛。
+
+   做法：
+     不重写工具页的 style.css，而是在这里把「旧的变量名」用
+     「Firefly 的色值」重新定义一遍。工具页只换一个 <link>，
+     布局与逻辑一行不动。
+
+   变量对照（旧名 → Firefly 来源）：
+     --bg / --surface-*  →  --page-bg / --card-bg 系
+     --text-1/2/3        →  neutral 文字阶
+     --accent            →  --primary（oklch + --hue 主题色）
+     --border            →  --line-divider
+   ============================================================ */
+
+/* ---------- 主题基色（与 Firefly 的 variables.styl 保持一致） ---------- */
+:root {
+	--hue: 165;
+
+	/* Firefly 原始变量，工具页里也可能直接用到 */
+	--primary: oklch(0.7 0.14 var(--hue));
+	--page-bg: oklch(0.95 0.01 var(--hue));
+	--card-bg: white;
+	--line-divider: rgba(0, 0, 0, 0.08);
+	--line-color: rgba(0, 0, 0, 0.1);
+	--content-meta: rgba(0, 0, 0, 0.7);
+	--float-panel-bg: white;
+	--btn-regular-bg: oklch(0.95 0.025 var(--hue));
+	--btn-regular-bg-hover: oklch(0.9 0.05 var(--hue));
+	--btn-content: oklch(0.55 0.12 var(--hue));
+	--radius-large: 1rem;
+
+	/* ---------- 旧变量名映射（工具页读的就是这些） ---------- */
+	--bg: var(--page-bg);
+	--surface-1: var(--card-bg);
+	--surface-2: oklch(0.98 0.008 var(--hue));
+	--surface-3: oklch(0.96 0.012 var(--hue));
+
+	--text-1: oklch(0.25 0.02 var(--hue));
+	--text-2: oklch(0.45 0.02 var(--hue));
+	--text-3: oklch(0.6 0.015 var(--hue));
+	--text-read: oklch(0.32 0.02 var(--hue));
+
+	--border: var(--line-divider);
+	--border-hover: var(--line-color);
+	--border-strong: rgba(0, 0, 0, 0.18);
+
+	--accent: var(--primary);
+	--accent-hover: oklch(0.64 0.15 var(--hue));
+	--accent-dim: oklch(0.62 0.12 var(--hue));
+	--accent-fg: oklch(0.3 0.06 var(--hue));
+	--accent-fill: oklch(0.72 0.14 var(--hue));
+	--accent-fill-hover: oklch(0.66 0.15 var(--hue));
+	--accent-soft: oklch(0.95 0.03 var(--hue));
+	--accent-glow: oklch(0.72 0.14 var(--hue) / 0.22);
+	--accent-glow-strong: oklch(0.72 0.14 var(--hue) / 0.4);
+
+	--gradient-accent: linear-gradient(
+		135deg,
+		oklch(0.72 0.14 var(--hue)),
+		oklch(0.68 0.15 calc(var(--hue) + 24))
+	);
+	--gradient-gold: var(--gradient-accent);
+	--gradient-warm: linear-gradient(
+		135deg,
+		oklch(0.9 0.06 var(--hue)),
+		oklch(0.96 0.03 var(--hue))
+	);
+
+	--ok: #15803d;
+	--err: #dc2626;
+	--danger-fg: #b91c1c;
+	--danger-soft: rgba(185, 28, 28, 0.06);
+	--danger-hover: rgba(185, 28, 28, 0.12);
+	--danger-border: rgba(185, 28, 28, 0.3);
+
+	--tint-hover: rgba(28, 25, 23, 0.05);
+	--tint-subtle: rgba(28, 25, 23, 0.032);
+	--tint-faint: rgba(28, 25, 23, 0.018);
+
+	--selection: oklch(0.72 0.14 var(--hue) / 0.3);
+	--scroll-thumb: rgba(28, 25, 23, 0.16);
+	--scroll-thumb-hover: rgba(28, 25, 23, 0.28);
+	--code-inline-fg: oklch(0.45 0.12 var(--hue));
+	--modal-veil: rgba(28, 25, 23, 0.42);
+
+	--shadow-card: 0 2px 12px rgba(28, 25, 23, 0.06);
+	--shadow-pop: 0 12px 32px rgba(28, 25, 23, 0.12);
+
+	/* 尺寸与排版 */
+	--nav-h: 56px;
+	--container: 72rem;
+	--gutter: clamp(1rem, 4vw, 2rem);
+	--section-y: clamp(3rem, 7vw, 5rem);
+
+	--radius-card: 1rem;
+	--radius-btn: 0.75rem;
+	--radius-sm: 0.5rem;
+
+	--font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", "PingFang SC",
+		"Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+	--font-serif: var(--font-sans);
+	--font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+		"Liberation Mono", "Courier New", monospace;
+
+	--fs-display: clamp(2.2rem, 5vw, 3.4rem);
+	--fs-h1: clamp(1.8rem, 3.4vw, 2.4rem);
+	--fs-h2: clamp(1.3rem, 2.2vw, 1.6rem);
+	--fs-h3: 1.1rem;
+	--fs-body: 1rem;
+	--fs-note: 0.9rem;
+	--fs-sm: 0.875rem;
+	--fs-xs: 0.75rem;
+
+	--fw-medium: 500;
+	--fw-semibold: 600;
+	--fw-bold: 700;
+
+	--lh-tight: 1.25;
+	--lh-base: 1.65;
+	--lh-relaxed: 1.85;
+
+	--ease: cubic-bezier(0.4, 0, 0.2, 1);
+	--ease-smooth: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+	--ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+	--ease-elastic: cubic-bezier(0.68, -0.55, 0.27, 1.55);
+	--dur-fast: 120ms;
+	--dur-hover: 180ms;
+	--dur-reveal: 500ms;
+	--stagger: 60ms;
+
+	--z-nav: 100;
+	--z-menu: 120;
+	--z-progress: 130;
+
+	--nav-bg: var(--page-bg);
+	--nav-bg-solid: var(--page-bg);
+	--nav-menu-bg: var(--card-bg);
+	--noise-opacity: 0;
+	--link-underline: var(--accent-glow);
+}
+
+/* ---------- 暗色：只覆盖与颜色相关的，尺寸排版不动 ---------- */
+:root.dark {
+	--primary: oklch(0.75 0.14 var(--hue));
+	--page-bg: oklch(0.16 0.014 var(--hue));
+	--card-bg: oklch(0.23 0.015 var(--hue));
+	--line-divider: rgba(255, 255, 255, 0.08);
+	--line-color: rgba(255, 255, 255, 0.1);
+	--content-meta: rgba(255, 255, 255, 0.6);
+	--float-panel-bg: oklch(0.19 0.015 var(--hue));
+	--btn-regular-bg: oklch(0.33 0.035 var(--hue));
+	--btn-regular-bg-hover: oklch(0.38 0.04 var(--hue));
+	--btn-content: oklch(0.75 0.1 var(--hue));
+
+	--surface-2: oklch(0.2 0.016 var(--hue));
+	--surface-3: oklch(0.26 0.018 var(--hue));
+
+	--text-1: oklch(0.93 0.01 var(--hue));
+	--text-2: oklch(0.72 0.015 var(--hue));
+	--text-3: oklch(0.55 0.015 var(--hue));
+	--text-read: oklch(0.88 0.012 var(--hue));
+
+	--border-strong: rgba(255, 255, 255, 0.2);
+
+	--accent-hover: oklch(0.8 0.14 var(--hue));
+	--accent-dim: oklch(0.6 0.1 var(--hue));
+	--accent-fg: oklch(0.92 0.05 var(--hue));
+	--accent-fill: oklch(0.7 0.13 var(--hue));
+	--accent-fill-hover: oklch(0.76 0.14 var(--hue));
+	--accent-soft: oklch(0.32 0.05 var(--hue));
+	--accent-glow: oklch(0.75 0.14 var(--hue) / 0.25);
+	--accent-glow-strong: oklch(0.75 0.14 var(--hue) / 0.45);
+
+	--ok: #4ade80;
+	--err: #f87171;
+	--danger-fg: #fca5a5;
+	--danger-soft: rgba(248, 113, 113, 0.1);
+	--danger-hover: rgba(248, 113, 113, 0.18);
+	--danger-border: rgba(248, 113, 113, 0.35);
+
+	--tint-hover: rgba(255, 255, 255, 0.06);
+	--tint-subtle: rgba(255, 255, 255, 0.04);
+	--tint-faint: rgba(255, 255, 255, 0.02);
+
+	--scroll-thumb: rgba(255, 255, 255, 0.16);
+	--scroll-thumb-hover: rgba(255, 255, 255, 0.28);
+	--code-inline-fg: oklch(0.8 0.1 var(--hue));
+	--modal-veil: rgba(0, 0, 0, 0.6);
+
+	--shadow-card: 0 2px 12px rgba(0, 0, 0, 0.3);
+	--shadow-pop: 0 12px 32px rgba(0, 0, 0, 0.45);
+
+	--nav-bg: var(--page-bg);
+	--nav-bg-solid: var(--page-bg);
+	--nav-menu-bg: var(--card-bg);
+	--link-underline: var(--accent-glow);
+}
+
+/* ---------- 基础重置（工具页原先靠 main.css 提供） ---------- */
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+html {
+	-webkit-text-size-adjust: 100%;
+	scroll-behavior: smooth;
+}
+
+body {
+	margin: 0;
+	min-height: 100vh;
+	background: var(--bg);
+	color: var(--text-1);
+	font-family: var(--font-sans);
+	font-size: var(--fs-body);
+	line-height: var(--lh-base);
+	-webkit-font-smoothing: antialiased;
+	text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3,
+h4 {
+	margin: 0 0 0.6em;
+	line-height: var(--lh-tight);
+	font-weight: var(--fw-bold);
+	color: var(--text-1);
+}
+
+p {
+	margin: 0 0 1em;
+}
+
+a {
+	color: var(--accent);
+	text-decoration: none;
+	text-underline-offset: 0.2em;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+img,
+svg,
+canvas,
+video {
+	max-width: 100%;
+	display: block;
+}
+
+button {
+	font: inherit;
+	color: inherit;
+}
+
+::selection {
+	background: var(--selection);
+}
+
+::-webkit-scrollbar {
+	width: 10px;
+	height: 10px;
+}
+::-webkit-scrollbar-track {
+	background: transparent;
+}
+::-webkit-scrollbar-thumb {
+	background: var(--scroll-thumb);
+	border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+	background: var(--scroll-thumb-hover);
+}
+
+.container {
+	width: 100%;
+	max-width: var(--container);
+	margin-inline: auto;
+	padding-inline: var(--gutter);
+}
+
+/* ---------- 返回站点胶囊 ---------- */
+/* 取代原来每页硬编码的完整站点导航：工具页是全屏应用，
+   只需要一个出口，不需要 12 份同步维护的导航栏。 */
+.tool-back {
+	position: fixed;
+	top: 16px;
+	left: 16px;
+	z-index: var(--z-nav);
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	height: 36px;
+	padding: 0 14px 0 10px;
+	border: 1px solid var(--border);
+	border-radius: 999px;
+	background: color-mix(in oklch, var(--card-bg) 82%, transparent);
+	backdrop-filter: blur(10px);
+	-webkit-backdrop-filter: blur(10px);
+	color: var(--text-2);
+	font-size: var(--fs-sm);
+	font-weight: var(--fw-medium);
+	line-height: 1;
+	text-decoration: none;
+	box-shadow: var(--shadow-card);
+	transition:
+		color var(--dur-hover) var(--ease),
+		border-color var(--dur-hover) var(--ease),
+		background var(--dur-hover) var(--ease),
+		transform var(--dur-hover) var(--ease);
+}
+
+.tool-back:hover {
+	color: var(--accent);
+	border-color: var(--accent);
+	text-decoration: none;
+	transform: translateY(-1px);
+}
+
+.tool-back:active {
+	transform: translateY(0);
+}
+
+.tool-back__arrow {
+	font-size: 1.05em;
+	line-height: 1;
+	transition: transform var(--dur-hover) var(--ease);
+}
+
+.tool-back:hover .tool-back__arrow {
+	transform: translateX(-2px);
+}
+
+/* 主题切换按钮：与返回胶囊并排，读同一套 localStorage 键 */
+.tool-theme {
+	position: fixed;
+	top: 16px;
+	right: 16px;
+	z-index: var(--z-nav);
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 36px;
+	height: 36px;
+	padding: 0;
+	border: 1px solid var(--border);
+	border-radius: 999px;
+	background: color-mix(in oklch, var(--card-bg) 82%, transparent);
+	backdrop-filter: blur(10px);
+	-webkit-backdrop-filter: blur(10px);
+	color: var(--text-2);
+	cursor: pointer;
+	box-shadow: var(--shadow-card);
+	transition:
+		color var(--dur-hover) var(--ease),
+		border-color var(--dur-hover) var(--ease),
+		transform var(--dur-hover) var(--ease);
+}
+
+.tool-theme:hover {
+	color: var(--accent);
+	border-color: var(--accent);
+	transform: translateY(-1px);
+}
+
+.tool-theme svg {
+	width: 17px;
+	height: 17px;
+	stroke: currentColor;
+	fill: none;
+	stroke-width: 1.8;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+
+/* 图标随主题切换显隐 */
+:root:not(.dark) .tool-theme__moon,
+:root.dark .tool-theme__sun {
+	display: none;
+}
+
+@media (max-width: 640px) {
+	.tool-back {
+		top: 12px;
+		left: 12px;
+		height: 32px;
+		padding: 0 12px 0 8px;
+		font-size: var(--fs-xs);
+	}
+	.tool-theme {
+		top: 12px;
+		right: 12px;
+		width: 32px;
+		height: 32px;
+	}
+}
+
+/* ---------- 工具页通用排版（原 tool-ui.css 的部分能力） ---------- */
+.tool__head {
+	max-width: 720px;
+	margin-bottom: 32px;
+}
+
+.tool__head h1 {
+	font-size: var(--fs-h1);
+	letter-spacing: -0.02em;
+	margin-bottom: 0.4em;
+}
+
+.tool__head p {
+	color: var(--text-2);
+	font-size: var(--fs-note);
+	line-height: var(--lh-relaxed);
+}
+
+.mono-label {
+	font-family: var(--font-mono);
+	font-size: var(--fs-xs);
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--text-3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+		scroll-behavior: auto !important;
+	}
+}
