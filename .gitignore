@@ -21,5 +21,32 @@ Message Board/
 XinghuisamaBlogs-main/
 _backups/
 
+# 迁移期的临时工作目录（技能草稿、抓取数据），不入库
+_skillwork/
+_ykt/
+
 # Playwright MCP 自动产物（页面快照 / 控制台日志）
 .playwright-mcp/
+
+# ===== Astro 工程（2026-11 前端迁移引入）=====
+# 依赖与构建产物：体积大且可重建，绝不入库
+node_modules/
+dist/
+.astro/
+package-lock.json
+pnpm-debug.log*
+.vercel/
+
+# 迁移期参考目录：模板原样拷贝，内容已落到仓库根，仅供本机对照
+Firefly-master/
+
+# 迁移期临时产物（构建日志、npm 缓存、pnpm store）
+# 注意：tmp/ 下已有若干历史文件被跟踪，所以这里只排除迁移期间新产生的，
+# 不能用整目录规则（对已跟踪文件无效，还会误导后来人）。
+tmp/npmcache/
+tmp/pnpm-global/
+tmp/pnpm-store/
+tmp/pnpm-cache/
+tmp/*.log
+tmp/build-*/
+

@@ -13,6 +13,19 @@
 *.yml   text eol=lf
 *.svg   text eol=lf
 
+# Astro 工程（2026-11 迁移引入）：同样锁 LF，
+# 否则 Windows 上改过的 .ts/.astro 到 Linux 构建机换行不一致，diff 与产物都会抖。
+*.ts     text eol=lf
+*.tsx    text eol=lf
+*.mjs    text eol=lf
+*.cjs    text eol=lf
+*.astro  text eol=lf
+*.svelte text eol=lf
+*.styl   text eol=lf
+*.yaml   text eol=lf
+*.txt    text eol=lf
+*.atlas  text eol=lf
+
 # 钩子脚本必须是 LF：CRLF 会让 sh 报 "bad interpreter" / $'\r' 之类的错，
 # 而 core.autocrlf=true 时 text=auto 会把它转成 CRLF，所以这里显式锁死。
 .githooks/**  text eol=lf
@@ -23,3 +36,16 @@
 *.gif   binary
 *.ico   binary
 *.webp  binary
+*.avif  binary
+*.woff2 binary
+*.otf   binary
+*.ttf   binary
+*.mp3   binary
+*.wav   binary
+*.moc   binary
+*.spine binary
+*.mtn   binary
+*.bcmap binary
+*.onnx  binary
+*.pdf   binary
+*.xlsx  binary

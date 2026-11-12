@@ -1,0 +1,108 @@
+---
+/**
+ * 工具列表页
+ *
+ * 数据源：public/tools/<folder>/meta.json
+ *   { title, description, tags: string[], icon: string, order: number }
+ *
+ * 工具本身是独立的 HTML 应用，原样放在 public/tools/<folder>/index.html，
+ * 这里只负责列表展示与入口链接。构建时读取，不依赖运行时 fetch。
+ */
+import fs from "node:fs";
+import path from "node:path";
+import { Icon } from "astro-icon/components";
+import MainGridLayout from "@/layouts/MainGridLayout.astro";
+
+interface ToolMeta {
+	folder: string;
+	title: string;
+	description: string;
+	tags: string[];
+	icon: string;
+	order: number;
+}
+
+const toolsRoot = path.join(process.cwd(), "public", "tools");
+
+const tools: ToolMeta[] = fs.existsSync(toolsRoot)
+	? fs
+			.readdirSync(toolsRoot, { withFileTypes: true })
+			.filter((d) => d.isDirectory())
+			.map((d) => {
+				const metaPath = path.join(toolsRoot, d.name, "meta.json");
+				if (!fs.existsSync(metaPath)) return null;
+				try {
+					const raw = JSON.parse(fs.readFileSync(metaPath, "utf8"));
+					return {
+						folder: d.name,
+						title: raw.title ?? d.name,
+						description: raw.description ?? "",
+						tags: Array.isArray(raw.tags) ? raw.tags : [],
+						icon: raw.icon ?? "🧩",
+						order: typeof raw.order === "number" ? raw.order : 100,
+					} satisfies ToolMeta;
+				} catch {
+					return null;
+				}
+			})
+			.filter((t): t is ToolMeta => t !== null)
+			.sort((a, b) => a.order - b.order)
+	: [];
+
+const title = "工具";
+const description = "日常开发与学习中打磨的效率小工具，全部在浏览器本地运行，无需上传任何数据。";
+---
+
+<MainGridLayout title={title} description={description}>
+	<div class="flex w-full rounded-(--radius-large) overflow-hidden relative min-h-32">
+		<div class="card-base z-10 px-9 py-6 relative w-full">
+			<div class="mb-6">
+				<div class="page-heading">
+					<div class="page-icon" aria-hidden="true">
+						<Icon name="material-symbols:build" />
+					</div>
+					<div>
+						<h2>{title}</h2>
+						<p>{description}</p>
+					</div>
+				</div>
+			</div>
+
+			{
+				tools.length === 0 ? (
+					<p class="text-sm opacity-70">还没有工具。</p>
+				) : (
+					<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+						{tools.map((tool) => (
+							<a
+								href={`/tools/${tool.folder}/`}
+								class="group relative flex gap-4 rounded-(--radius-large) border border-(--line-divider) bg-(--card-bg) p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-(--primary) hover:shadow-lg"
+							>
+								<div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-(--btn-regular-bg) text-2xl">
+									{tool.icon}
+								</div>
+								<div class="min-w-0 flex-1">
+									<h3 class="mb-1 truncate text-base font-bold text-neutral-900 dark:text-neutral-100 group-hover:text-(--primary)">
+										{tool.title}
+									</h3>
+									<p class="line-clamp-2 text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">
+										{tool.description}
+									</p>
+									{tool.tags.length > 0 && (
+										<div class="mt-2 flex flex-wrap gap-1.5">
+											{tool.tags.map((tag) => (
+												<span class="rounded-full bg-(--btn-regular-bg) px-2 py-0.5 text-xs text-(--btn-content)">
+													{tag}
+												</span>
+											))}
+										</div>
+									)}
+								</div>
+							</a>
+						))}
+					</div>
+				)
+			}
+		</div>
+	</div>
+</MainGridLayout>

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>三维四子棋 — Michael</title>
+  <meta name="description" content="现代三维四子棋：入门到专家四档唯一解棋盘，铅笔笔记、提示、撤销与三次失误上限；成绩自动署名上云，英雄榜每人只计最快。">
+  <meta name="theme-color" content="#0a0a0b">
+  <meta name="color-scheme" content="dark light">
+  <link rel="icon" type="image/svg+xml" href="../../assets/img/favicon.svg">
+  <script>
+    /* 首帧前定下主题，避免闪烁；无记录时默认暗色（站点基调） */
+    (function () {
+      var t = null;
+      try { t = localStorage.getItem('site-theme'); } catch (e) {}
+      if (t !== 'dark' && t !== 'light') t = 'dark';
+      document.documentElement.dataset.theme = t;
+      document.documentElement.classList.add('js');
+      var m = document.querySelector('meta[name="theme-color"]');
+      if (m) m.content = t === 'light' ? '#faf8f5' : '#0a0a0b';
+    })();
+  </script>
+  <link rel="stylesheet" href="../../assets/css/tokens.css">
+  <link rel="stylesheet" href="../../assets/css/main.css">
+  <link rel="stylesheet" href="../sudoku/style.css?v=3">
+  <link rel="stylesheet" href="style.css?v=2">
+  <script type="importmap">{"imports":{"three":"./vendor/three.module.js"}}</script>
+  <style>
+    /* ---- 页面骨架：与 json-formatter 逐字一致，顶距内联提供 ---- */
+    .tool {
+      padding-top: calc(var(--nav-h) + clamp(40px, 7vw, 72px));
+      padding-bottom: var(--section-y);
+    }
+    .tool__head {
+      max-width: 720px;
+      margin-bottom: 32px;
+    }
+    .tool__head h1 {
+      font-size: var(--fs-h1);
+      letter-spacing: -0.02em;
+      margin-top: 22px;
+    }
+    .tool__head p {
+      margin-top: 14px;
+      color: var(--text-2);
+      line-height: 1.7;
+    }
+    @media (max-width: 640px) {
+      .tool__head h1 {
+        font-size: clamp(28px, 8vw, 36px);
+      }
+    }
+  </style>
+  <link rel="stylesheet" href="../../assets/css/site-gate.css">
+  <script>document.documentElement.dataset.gateCheck = "1";</script>
+</head>
+<body class="sk-page">
+  <a class="skip-link" href="#main">跳到主要内容</a>
+
+  <header class="nav" id="nav">
+    <div class="container nav__inner">
+      <a class="nav__logo" href="../../index.html" aria-label="Michael 首页">Michael<i>.</i></a>
+      <nav class="nav__links" id="nav-links" aria-label="主导航">
+        <a href="../../index.html">首页</a>
+        <a href="../../tools.html" aria-current="page">工具</a>
+        <a href="../../notes.html">笔记</a>
+        <a href="../../branches.html">分支</a>
+        <a href="../../index.html#about">关于</a>
+      </nav>
+      <div class="nav__actions">
+        <button class="nav__icon" id="theme-toggle" type="button" aria-label="切换到浅色模式" title="浅色模式">
+          <svg class="ico-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="4"/>
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+          </svg>
+          <svg class="ico-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+        </button>
+        <button class="nav__toggle" id="nav-toggle" aria-label="打开菜单" aria-expanded="false" aria-controls="nav-links">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+            <path d="M4 7h16M4 12h16M4 17h16"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <div class="container tool">
+      <div class="tool__head">
+        <a class="article-back" href="../../tools.html"><span class="arr">←</span>全部工具</a>
+        <p class="mono-label">Tool <span>/</span> 12</p>
+        <h1>三维四子棋</h1>
+        <p>两个人，一张棋盘。点立柱落子，拖动转个角度；任意方向四子相连就获胜。</p>
+      </div>
+
+      <div class="sk-stage c4-stage" id="c4-stage">
+        <section class="sk-sheet c4-sheet" aria-label="三维四子棋双人棋盘">
+          <header class="c4-head">
+            <div class="c4-players" aria-label="当前回合"><span class="c4-player active" id="player-1"><i class="black"></i>黑方<span>先手</span></span><span class="c4-versus">/</span><span class="c4-player" id="player-2"><i class="white"></i>白方<span>后手</span></span></div>
+            <span class="c4-count" id="c4-count">00 <span>/ 64</span></span>
+          </header>
+          <div class="c4-viewport" id="c4-viewport" tabindex="0" role="application" aria-label="三维四子棋。点击立柱直接落子；拖动旋转。方向键选列，Enter 落子。">
+            <div class="c4-loading" id="c4-loading" role="status">正在摆好棋盘…</div>
+            <div class="c4-viewbar" aria-label="视角"><button class="c4-view on" data-view="angle" type="button" aria-pressed="true">立体</button><button class="c4-view" data-view="top" type="button" aria-pressed="false">俯视</button><button class="c4-reset" id="c4-reset" type="button" aria-label="复位视角" title="复位视角">↺</button></div>
+            <span class="c4-gesture">拖动旋转 · 点按落子</span>
+          </div>
+          <div class="c4-statusline"><p id="c4-status" aria-live="polite">黑方先行，点一根立柱开始。</p><span id="c4-position"></span></div>
+          <div class="sk-tools c4-tools">
+            <button type="button" class="sk-btn" id="c4-undo" disabled>↶ 悔棋</button>
+            <button type="button" class="sk-btn" id="c4-hint">✧ 提示</button>
+            <button type="button" class="sk-btn" id="c4-new">↻ 重开</button>
+            <button type="button" class="sk-btn" id="c4-fs">⛶ 全屏</button>
+          </div>
+        </section>
+        <p class="sk-tip c4-tip">4 × 4 × 4 · 棋子沿杆落下，横、竖或空间斜线连成四子获胜。<br>看不清落点时，转动棋盘，或切到俯视。</p>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer__inner">
+      <span>© <span data-year>2026</span> Michael · <span class="footer__heart">♥</span> 手工打造 · 动静结合</span>
+      <nav class="footer__links" aria-label="页脚导航">
+        <a href="../../tools.html">Tools</a>
+        <a href="../../notes.html">Notes</a>
+        <a href="https://github.com/" target="_blank" rel="noopener noreferrer">GitHub</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script type="module" src="../../assets/js/main.js"></script>
+  <script type="module" src="app.js?v=2"></script>
+  <script type="module" src="../../assets/js/site-gate.js"></script>
+</body>
+</html>

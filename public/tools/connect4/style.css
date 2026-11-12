@@ -1,0 +1,52 @@
+/* Same ivory sheet and controls as paper Sudoku; the physical board owns the space. */
+.c4-stage { width: min(100%, 920px); margin: 0 auto; }
+.c4-sheet { width: 100%; padding: 20px 24px 18px; color: #4c4436; }
+.c4-head { display: flex; justify-content: space-between; align-items: center; padding: 0 4px 14px; border-bottom: 1px solid #dfd5c1; gap: 12px; }
+.c4-players { display: flex; align-items: center; gap: 16px; }
+.c4-player { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: #958a77; transition: color .2s; }
+.c4-player.active { color: #33302a; }
+.c4-player.active::after { content: ''; width: 5px; height: 5px; background: #967843; border-radius: 50%; }
+.c4-player > span { font-size: 11px; font-weight: 400; }
+.c4-player i { display: block; width: 20px; height: 20px; border-radius: 50%; box-shadow: 0 2px 3px #493c2529; }
+.c4-player .black { background: radial-gradient(circle at 32% 25%, #65645f, #262723 65%, #171915); }
+.c4-player .white { background: radial-gradient(circle at 32% 25%, #fffef7, #e8dfcd 70%, #c4b79d); border: 1px solid #d0c4af; }
+.c4-versus { color: #c8bda8; }
+.c4-count { font: 600 19px/1 ui-monospace, Consolas, monospace; font-variant-numeric: tabular-nums; color: #4c4436; }
+.c4-count span { color: #a39782; font-size: 12px; }
+.c4-viewport { position: relative; width: 100%; height: clamp(360px, 54vw, 570px); outline: none; touch-action: none; }
+.c4-viewport:focus-visible { outline: 2px solid #a48b57; outline-offset: 2px; border-radius: 8px; }
+.c4-viewport canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
+.c4-viewport canvas:active { cursor: grabbing; }
+.c4-viewbar { position: absolute; top: 16px; left: 0; display: flex; align-items: center; gap: 3px; border: 1px solid #d8cfba; border-radius: 9px; padding: 3px; background: #fdfaf2da; }
+.c4-view, .c4-reset { border: 0; background: transparent; padding: 7px 11px; border-radius: 6px; color: #8a7a5c; font: 600 12px/1 'Microsoft YaHei', sans-serif; min-height: 32px; cursor: pointer; }
+.c4-view.on { background: #e8deca; color: #4c4436; }
+.c4-reset { font-size: 18px; border-left: 1px solid #ddd3bd; border-radius: 0; padding: 5px 10px; }
+.c4-view:hover,.c4-reset:hover { color: #33302a; background: #eee4cf; }
+.c4-gesture { position: absolute; bottom: 6px; right: 4px; color: #a39782; font-size: 11px; pointer-events: none; }
+.c4-loading { position: absolute; z-index: 2; inset: 0; display: grid; place-content: center; text-align: center; gap: 12px; color: #8a7a5c; font-size: 14px; background: #f8f3e6e8; border-radius: 10px; }
+.c4-loading button { color: #4c4436; border: 1px solid #d8cfba; background: #fffdf6; padding: 10px; border-radius: 8px; cursor: pointer; }
+.c4-statusline { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 4px; border-top: 1px solid #dfd5c1; min-height: 53px; }
+.c4-statusline p { margin: 0; font-size: 13px; line-height: 1.7; color: #655942; }
+#c4-position { flex-shrink: 0; color: #9c8b6c; font: 12px ui-monospace, Consolas, monospace; }
+.c4-tools { gap: 8px; }
+.c4-tools .sk-btn { flex: 1; min-height: 42px; font-size: 13px; }
+.c4-tip { margin-top: 4px; line-height: 1.9; text-align: center; max-width: 640px; }
+.c4-stage:fullscreen { background: var(--bg); width: 100%; max-width: none; padding: 18px; overflow: auto; justify-content: center; }
+.c4-stage:fullscreen .c4-sheet { max-width: 1050px; }
+.c4-stage:fullscreen .c4-viewport { height: min(68dvh, 720px); }
+.c4-tools button:focus-visible,.c4-viewbar button:focus-visible { outline: 2px solid #967843; outline-offset: 3px; }
+@media (max-width: 600px) {
+ .c4-sheet { padding: 14px 12px 12px; border-radius: 15px; }
+ .c4-head { padding: 0 2px 12px; }
+ .c4-players { gap: 9px; }
+ .c4-player { font-size: 13px; gap: 6px; }
+ .c4-player > span { display: none; }
+ .c4-player i { width: 18px; height: 18px; }
+ .c4-viewport { height: clamp(330px, 100vw, 440px); margin-top: 4px; }
+ .c4-viewbar { top: 9px; }
+ .c4-statusline { padding: 10px 2px; }
+ .c4-tools { gap: 6px; }
+ .c4-tools .sk-btn { font-size: 12px; min-height: 42px; }
+ .c4-gesture { font-size: 10px; right: 0; }
+ .tool__head { margin-bottom: 24px; }
+}

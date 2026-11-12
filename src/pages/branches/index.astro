@@ -1,0 +1,144 @@
+---
+/**
+ * 分支列表页
+ *
+ * 数据源：public/branches/index.json（登记清单，优先级高）
+ *        public/branches/<folder>/meta.json（未登记时的兜底）
+ *
+ * 「分支」是独立成篇的小网页：有自己的视觉风格与交互，只是和主站同源部署。
+ * 页面本身原样放在 public/branches/<folder>/index.html，这里只做列表与入口。
+ */
+import fs from "node:fs";
+import path from "node:path";
+import { Icon } from "astro-icon/components";
+import MainGridLayout from "@/layouts/MainGridLayout.astro";
+
+interface BranchMeta {
+	folder: string;
+	title: string;
+	description: string;
+	tags: string[];
+	icon: string;
+	order: number;
+	url: string;
+}
+
+const branchesRoot = path.join(process.cwd(), "public", "branches");
+
+function readMeta(folder: string): Partial<BranchMeta> {
+	const metaPath = path.join(branchesRoot, folder, "meta.json");
+	if (!fs.existsSync(metaPath)) return {};
+	try {
+		return JSON.parse(fs.readFileSync(metaPath, "utf8"));
+	} catch {
+		return {};
+	}
+}
+
+let branches: BranchMeta[] = [];
+
+if (fs.existsSync(branchesRoot)) {
+	// 1) 登记清单
+	const listPath = path.join(branchesRoot, "index.json");
+	const registered: BranchMeta[] = [];
+	const seen = new Set<string>();
+
+	if (fs.existsSync(listPath)) {
+		try {
+			const raw = JSON.parse(fs.readFileSync(listPath, "utf8"));
+			for (const item of Array.isArray(raw.branches) ? raw.branches : []) {
+				if (!item?.folder) continue;
+				seen.add(item.folder);
+				registered.push({
+					folder: item.folder,
+					title: item.title ?? item.folder,
+					description: item.description ?? "",
+					tags: Array.isArray(item.tags) ? item.tags : [],
+					icon: item.icon ?? "📄",
+					order: typeof item.order === "number" ? item.order : 100,
+					url: item.url ?? `/branches/${item.folder}/`,
+				});
+			}
+		} catch {
+			/* 清单损坏时退回全量扫描 */
+		}
+	}
+
+	// 2) 未登记的子目录兜底扫描
+	const scanned: BranchMeta[] = [];
+	for (const d of fs.readdirSync(branchesRoot, { withFileTypes: true })) {
+		if (!d.isDirectory() || seen.has(d.name)) continue;
+		const entry = path.join(branchesRoot, d.name, "index.html");
+		if (!fs.existsSync(entry)) continue;
+		const meta = readMeta(d.name);
+		scanned.push({
+			folder: d.name,
+			title: meta.title ?? d.name,
+			description: meta.description ?? "",
+			tags: Array.isArray(meta.tags) ? meta.tags : [],
+			icon: meta.icon ?? "📄",
+			order: typeof meta.order === "number" ? meta.order : 100,
+			url: `/branches/${d.name}/`,
+		});
+	}
+
+	branches = [...registered, ...scanned].sort((a, b) => a.order - b.order);
+}
+
+const title = "分支";
+const description = "独立成篇的小网页：和主站同源部署，但各有自己的视觉与交互。";
+---
+
+<MainGridLayout title={title} description={description}>
+	<div class="flex w-full rounded-(--radius-large) overflow-hidden relative min-h-32">
+		<div class="card-base z-10 px-9 py-6 relative w-full">
+			<div class="mb-6">
+				<div class="page-heading">
+					<div class="page-icon" aria-hidden="true">
+						<Icon name="material-symbols:account-tree" />
+					</div>
+					<div>
+						<h2>{title}</h2>
+						<p>{description}</p>
+					</div>
+				</div>
+			</div>
+
+			{
+				branches.length === 0 ? (
+					<p class="text-sm opacity-70">还没有分支页。</p>
+				) : (
+					<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+						{branches.map((branch) => (
+							<a
+								href={branch.url}
+								class="group relative flex gap-4 rounded-(--radius-large) border border-(--line-divider) bg-(--card-bg) p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-(--primary) hover:shadow-lg"
+							>
+								<div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-(--btn-regular-bg) text-2xl">
+									{branch.icon}
+								</div>
+								<div class="min-w-0 flex-1">
+									<h3 class="mb-1 truncate text-base font-bold text-neutral-900 dark:text-neutral-100 group-hover:text-(--primary)">
+										{branch.title}
+									</h3>
+									<p class="line-clamp-3 text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">
+										{branch.description}
+									</p>
+									{branch.tags.length > 0 && (
+										<div class="mt-2 flex flex-wrap gap-1.5">
+											{branch.tags.map((tag) => (
+												<span class="rounded-full bg-(--btn-regular-bg) px-2 py-0.5 text-xs text-(--btn-content)">
+													{tag}
+												</span>
+											))}
+										</div>
+									)}
+								</div>
+							</a>
+						))}
+					</div>
+				)
+			}
+		</div>
+	</div>
+</MainGridLayout>
