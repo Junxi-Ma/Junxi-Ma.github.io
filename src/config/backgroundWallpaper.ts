@@ -3,8 +3,11 @@ import type { BackgroundWallpaperConfig } from "@/types/backgroundWallpaper";
 export const backgroundWallpaper: BackgroundWallpaperConfig = {
 	// 壁纸模式："banner" 横幅壁纸，"fullscreen" 全屏壁纸，"overlay" 覆盖透明，"none" 纯色背景无壁纸
 	mode: "banner",
-	// 是否启用背景视频播放，配置后将在导航栏显示视频播放按钮
-	playerEnable: true,
+	// 是否启用背景视频播放，配置后将在导航栏显示视频播放按钮。
+	// 2026-11 关闭：模板自带的 playerUrl 是第三方 CDN（bed.twoleaf.cn）上的远程 mp4，
+	// 当前网络下加载失败，控制台会持续报「视频加载失败」。壁纸本身不受影响。
+	// 以后要开，把视频放到 public/assets/videos/ 下再用本地路径。
+	playerEnable: false,
 	/**
 	 * 背景图片配置
 	 * 图片路径支持三种格式：

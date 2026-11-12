@@ -1,6 +1,7 @@
 ---
 import { Icon } from "astro-icon/components";
 import WidgetLayout from "@/components/common/WidgetLayout.astro";
+import VisitStats from "@/components/custom/VisitStats.svelte";
 import { siteConfig } from "@/config";
 import I18nKey from "@/i18n/i18nKey";
 import { i18n } from "@/i18n/translation";
@@ -138,6 +139,12 @@ const stats = [
         </div>
       </div>
     ))}
+  </div>
+
+  <!-- 实时访客统计：上面的六行是构建时算出来的静态数字，
+       这三行来自 Supabase 的 get_site_stats，未配置后端时自动不显示。 -->
+  <div class="mt-2 border-t border-(--line-divider) pt-2">
+    <VisitStats client:only="svelte" />
   </div>
 </WidgetLayout>
 

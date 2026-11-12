@@ -244,8 +244,12 @@ export const siteConfig: SiteConfig = {
 		relatedPosts: true,
 		// 是否显示随机文章推荐
 		randomPosts: true,
-		// OpenGraph图片功能，注意开启后要渲染很长时间，不建议本地调试的时候开启
-		generateOgImages: true,
+		// OpenGraph图片功能，注意开启后要渲染很长时间，不建议本地调试的时候开启。
+		// 2026-11 迁移时关闭：Takumi 在遇到本地字体子集覆盖不到的字符时，
+		// 会回退去 cdn.jsdelivr.net 拉字体，本机与国内 CI 都可能解析失败，
+		// 导致整次构建报 [TypeError: fetch failed] 中断。
+		// 需要分享预览图时，改用静态图片（siteConfig 的 og 配置）而不是自动生成。
+		generateOgImages: false,
 		// 沉浸阅读配置：电脑端文章详情页右下角按钮，进入后只留文章卡片+左侧目录
 		immersiveReading: {
 			// 总开关：false 则不显示按钮

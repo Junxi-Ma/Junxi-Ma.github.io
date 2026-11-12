@@ -4,6 +4,7 @@ import * as path from "node:path";
 import type { ImageMetadata } from "astro";
 import { Icon } from "astro-icon/components";
 import DisplaySettings from "@/components/controls/DisplaySettingsIntegrated.svelte";
+import AccountButton from "@/components/custom/AccountButton.svelte";
 import LightDarkSwitch from "@/components/controls/LightDarkSwitch.svelte";
 import Search from "@/components/controls/Search.svelte";
 import MusicPlayer from "@/components/features/MusicPlayer.astro";
@@ -200,6 +201,8 @@ const logoVariants = await Promise.all(
                 })}
             </div>
             <div class="flex col-start-3 justify-self-end">
+                {/* 账号入口：未配置 Supabase 时整个组件不渲染，可以无脑放 */}
+                <AccountButton client:load />
                 <!--<SearchPanel client:load>-->
                 <Search
                     client:load

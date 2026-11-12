@@ -8,6 +8,7 @@ import FancyboxManager from "@components/features/FancyboxManager.astro";
 import FontSetup from "@components/features/FontSetup.astro";
 import GithubCardManager from "@components/features/GithubCardManager.astro";
 import MusicManager from "@components/features/MusicManager.astro";
+import SiteGate from "@components/custom/SiteGate.svelte";
 import MusicPlayerView from "@components/features/MusicPlayerView.astro";
 import SakuraEffect from "@components/features/SakuraEffect.astro";
 import WavesEffect from "@components/features/WavesEffect.astro";
@@ -512,6 +513,30 @@ const ogImageAlt = propsOgImageAlt ?? pageTitle;
 
     <!-- Font Setup (Astro Font API) -->
     <FontSetup />
+
+    <!-- ===== 全站门禁：首帧钩子 =====
+         与 src/components/custom/SiteGate.svelte 配套。
+         · 默认写 data-gate-check='check'，先藏起页面本体，避免未登录内容闪现
+         · 上次判定为「已放行」且缓存未过期时写 'open'，立即显示，不用等网络
+         · 组件裁决后自行把 gateCheck 改成 'open' 解除隐藏
+         缓存键与 TTL 与旧站一致（5 分钟），迁移后老访客不会重新等一次。 -->
+    <script is:inline>
+      (function () {
+        try {
+          var c = JSON.parse(localStorage.getItem("site-gate-cache-v1") || "null");
+          var fresh = c && Date.now() - c.ts < 300000;
+          document.documentElement.dataset.gateCheck =
+            fresh && c.state === "open" ? "open" : "check";
+        } catch (e) {
+          document.documentElement.dataset.gateCheck = "check";
+        }
+      })();
+    </script>
+    <style is:inline>
+      html[data-gate-check="check"] body > :not(.sg-veil) {
+        visibility: hidden;
+      }
+    </style>
   </head>
   <body
     class="min-h-screen"
@@ -563,6 +588,11 @@ const ogImageAlt = propsOgImageAlt ?? pageTitle;
     <ConfigCarrier />
     <MusicManager />
     <slot />
+
+    <!-- 全站门禁：client:only 是因为它要读 localStorage 与 location，
+         并且要在浏览器里同步裁决。放行时不渲染任何 DOM。
+         首帧防闪的钩子在 <head> 里（data-gate-check）。 -->
+    <SiteGate client:only="svelte" />
 
     <!-- 播放器视图脚本：必须在 <slot /> 之后（解析到它时所有 widget 的 DOM 要已存在），
          且在 MusicManager 之后（swup 重跑按文档顺序，window.__fireflyMusic 得先就位） -->
