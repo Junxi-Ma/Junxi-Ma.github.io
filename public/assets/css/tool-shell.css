@@ -53,6 +53,8 @@
 	--accent: var(--primary);
 	--accent-hover: oklch(0.64 0.15 var(--hue));
 	--accent-dim: oklch(0.62 0.12 var(--hue));
+	/* 浅底上的强调文字：--accent 在浅色主题下亮度 0.7，做小字按钮会糊，这里给一个更深的变体 */
+	--accent-strong: oklch(0.45 0.12 var(--hue));
 	--accent-fg: oklch(0.3 0.06 var(--hue));
 	--accent-fill: oklch(0.72 0.14 var(--hue));
 	--accent-fill-hover: oklch(0.66 0.15 var(--hue));
@@ -171,7 +173,11 @@
 
 	--accent-hover: oklch(0.8 0.14 var(--hue));
 	--accent-dim: oklch(0.6 0.1 var(--hue));
-	--accent-fg: oklch(0.92 0.05 var(--hue));
+	--accent-strong: oklch(0.8 0.11 var(--hue));
+	/* 压在 --accent / --accent-fill 这类亮色填充上的文字。
+	   原先这里取亮色（0.92），和 0.7 的填充底几乎同亮度，
+	   选中态标签的分段按钮就成了「亮绿底 + 浅绿字」，对比度只有 2:1。 */
+	--accent-fg: oklch(0.2 0.04 var(--hue));
 	--accent-fill: oklch(0.7 0.13 var(--hue));
 	--accent-fill-hover: oklch(0.76 0.14 var(--hue));
 	--accent-soft: oklch(0.32 0.05 var(--hue));
@@ -259,9 +265,19 @@ video {
 	display: block;
 }
 
-button {
+/* 按钮兜底：浏览器原生按钮的 background 是 buttonface 浅灰，
+   在深色主题下会变成「灰底 + 继承来的浅色字」，几乎看不清。
+   这里统一抹成透明，具体外观交给 .btn 体系或各工具自己的类。 */
+button,
+input[type="button"],
+input[type="submit"],
+input[type="reset"] {
 	font: inherit;
 	color: inherit;
+	background-color: transparent;
+	border: 0;
+	-webkit-appearance: none;
+	appearance: none;
 }
 
 ::selection {
@@ -430,6 +446,97 @@ button {
 	letter-spacing: 0.08em;
 	text-transform: uppercase;
 	color: var(--text-3);
+}
+
+/* ---------- 按钮体系 ----------
+   工具页的 <button class="btn btn--primary"> 原先依赖已被移除的旧 main.css，
+   类名还在、样式没了，于是退化成浏览器原生按钮（灰底黑字）。
+   这里按主站主题变量补齐整套，一处定义，12 个工具页通用。 */
+.btn {
+	appearance: none;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	padding: 8px 16px;
+	min-height: 36px;
+	border: 1px solid transparent;
+	border-radius: var(--radius-btn);
+	background: var(--btn-regular-bg);
+	color: var(--btn-content);
+	font-family: inherit;
+	font-size: 13.5px;
+	font-weight: 500;
+	line-height: 1.2;
+	white-space: nowrap;
+	cursor: pointer;
+	user-select: none;
+	transition: background var(--dur-fast) var(--ease),
+		color var(--dur-fast) var(--ease),
+		border-color var(--dur-fast) var(--ease),
+		box-shadow var(--dur-fast) var(--ease),
+		transform var(--dur-fast) var(--ease);
+}
+
+.btn:hover {
+	background: var(--btn-regular-bg-hover);
+	color: var(--text-1);
+	transform: translateY(-1px);
+}
+
+.btn:active {
+	transform: translateY(0) scale(0.98);
+}
+
+.btn:focus-visible {
+	outline: 2px solid var(--accent-fill);
+	outline-offset: 2px;
+}
+
+.btn:disabled {
+	opacity: 0.45;
+	cursor: not-allowed;
+	transform: none !important;
+	box-shadow: none !important;
+}
+
+.btn--primary {
+	background: var(--accent-fill);
+	border-color: var(--accent-fill);
+	color: oklch(0.2 0.03 var(--hue));
+	font-weight: 600;
+	box-shadow: 0 3px 12px var(--accent-glow);
+}
+
+.btn--primary:hover {
+	background: var(--accent-fill-hover);
+	border-color: var(--accent-fill-hover);
+	color: oklch(0.18 0.03 var(--hue));
+	box-shadow: 0 5px 18px var(--accent-glow-strong);
+}
+
+.btn--ghost {
+	background: transparent;
+	border-color: var(--border-strong);
+	color: var(--text-2);
+}
+
+.btn--ghost:hover {
+	background: var(--btn-regular-bg);
+	border-color: var(--border-hover);
+	color: var(--text-1);
+}
+
+.btn--sm {
+	padding: 6px 12px;
+	min-height: 30px;
+	font-size: 12.5px;
+	border-radius: var(--radius-sm);
+}
+
+.btn--block {
+	display: flex;
+	width: 100%;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -201,7 +201,8 @@
 .sdy-ch-btn.active {
   border-color: var(--accent);
   background: var(--accent-soft);
-  color: var(--accent);
+  /* --accent 在浅色主题下偏亮，压在同色系浅底上只有 2.2:1，改用深一档的强调色 */
+  color: var(--accent-strong);
   font-weight: var(--fw-semibold);
 }
 
@@ -212,7 +213,7 @@
 }
 
 .sdy-ch-btn.active .sdy-ch-btn__count {
-  color: var(--accent);
+  color: var(--accent-strong);
 }
 
 /* ===== 卡片网格 ===== */
