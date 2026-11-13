@@ -3,7 +3,7 @@
 
 纯标准库，零第三方依赖。
 
-    python scripts/lint_notes.py              # 检查 notes/ 下全部 .md
+    python scripts/lint_notes.py              # 检查 src/content/posts/ 下全部 .md
     python scripts/lint_notes.py a.md b.md    # 只检查指定文件
 
 发现问题时退出码为 1（方便 pre-commit / CI 拦截）。
@@ -31,7 +31,7 @@ import unicodedata
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-NOTES_DIR = ROOT / "notes"
+NOTES_DIR = ROOT / "src" / "content" / "posts"
 
 MATH_INLINE = re.compile(r"\$([^$\n]+?)\$")
 HEADING = re.compile(r"^(#{2,4})\s+(.*)$")
@@ -40,7 +40,7 @@ FENCE = re.compile(r"^\s*(```|~~~)")
 ASCII_PUNCT = set("!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~")
 
 # 这些笔记约定「小节标题不带括号说明」；其余笔记标题里的括号（如页码）保留。
-STRICT_HEADING_FILES = {"notes/synoptic-principles-notes.md"}
+STRICT_HEADING_FILES = {"src/content/posts/synoptic-principles-notes.md"}
 
 
 def is_punct(ch: str) -> bool:
