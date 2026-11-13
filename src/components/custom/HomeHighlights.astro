@@ -25,6 +25,17 @@ interface Card {
 const TOOL_LIMIT = 4;
 const BRANCH_LIMIT = 2;
 
+/**
+ * 把清单里的 url 规范成站点根绝对路径。
+ * index.json 里登记的写法是「相对站点根目录」（如 branches/junxun/index.html），
+ * 直接塞进 href 会被浏览器按当前页面路径解析，落到 /branches/branches/... 上。
+ */
+function toRootUrl(raw: unknown, fallback: string): string {
+	const value = String(raw ?? "").trim() || fallback;
+	if (/^(?:[a-z][a-z0-9+.-]*:)?\/\//i.test(value)) return value; // 外链原样保留
+	return value.startsWith("/") ? value : `/${value}`;
+}
+
 const toolsRoot = path.join(process.cwd(), "public", "tools");
 const branchesRoot = path.join(process.cwd(), "public", "branches");
 
@@ -70,7 +81,7 @@ function readBranches(): Card[] {
 					title: item.title ?? item.folder,
 					description: item.description ?? "",
 					icon: item.icon ?? "📄",
-					url: item.url ?? `/branches/${item.folder}/`,
+					url: toRootUrl(item.url, `/branches/${item.folder}/`),
 					tags: Array.isArray(item.tags) ? item.tags : [],
 					order: typeof item.order === "number" ? item.order : 100,
 				});

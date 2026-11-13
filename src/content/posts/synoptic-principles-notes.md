@@ -69,7 +69,9 @@ tags: [天气学原理]
 
 ### ⭐ 简化后的 Margules 锋面坡度公式
 
-$$tg\alpha = \frac{f}{g} T_m \frac{\Delta u}{\Delta T}$$
+$$
+tg\alpha = \frac{f}{g} T_m \frac{\Delta u}{\Delta T}
+$$
 
 其中（$N$ 侧为冷空气，$L$ 侧为暖空气）：
 
@@ -290,7 +292,9 @@ $$tg\alpha = \frac{f}{g} T_m \frac{\Delta u}{\Delta T}$$
 
 暖空气沿锋面的**垂直速度**有解析式：
 
-$$\omega = (v - C_y)\tan\alpha$$
+$$
+\omega = (v - C_y)\tan\alpha
+$$
 
 其中 $v$ 是**暖空气移动速度**，$C_y$ 是**锋面移动速度**，$\alpha$ 是**锋面倾角**。
 
@@ -507,7 +511,9 @@ $$\omega = (v - C_y)\tan\alpha$$
 
 锋生函数 $F$ 的物理含义：**描述水平位温梯度随时间的变化率**。
 
-$$F=\frac{d}{dt}\left(-\frac{\partial \theta}{\partial y}\right)$$
+$$
+F=\frac{d}{dt}\left(-\frac{\partial \theta}{\partial y}\right)
+$$
 
 判读：
 
@@ -518,7 +524,9 @@ $$F=\frac{d}{dt}\left(-\frac{\partial \theta}{\partial y}\right)$$
 
 把全导数展开，锋生函数分成**三项物理因子**：
 
-$$F = F_1 + F_2 + F_3$$
+$$
+F = F_1 + F_2 + F_3
+$$
 
 | 项 | 表达式 | 名称 |
 | --- | --- | --- |
@@ -536,7 +544,9 @@ $$F = F_1 + F_2 + F_3$$
 
 ### ⭐ 水平运动项
 
-$$F_1=\frac{\partial v}{\partial y}\frac{\partial \theta}{\partial y}$$
+$$
+F_1=\frac{\partial v}{\partial y}\frac{\partial \theta}{\partial y}
+$$
 
 **这是最主要的一项，各个高度都起作用。**
 
@@ -560,7 +570,9 @@ $$F_1=\frac{\partial v}{\partial y}\frac{\partial \theta}{\partial y}$$
 
 ### ⭐ 垂直运动项
 
-$$F_2=\frac{\partial \omega}{\partial y}\frac{\partial \theta}{\partial p}$$
+$$
+F_2=\frac{\partial \omega}{\partial y}\frac{\partial \theta}{\partial p}
+$$
 
 - **层结稳定**（$\partial\theta/\partial p>0$）：一般 $F_2<0$，**有利于锋消** —— 冷暖空气垂直混合，**抹平水平温差**；
 - **层结不稳定**：垂直运动（上升、下沉）可以**造成锋生**。
@@ -573,7 +585,9 @@ $$F_2=\frac{\partial \omega}{\partial y}\frac{\partial \theta}{\partial p}$$
 
 ### ⭐ 非绝热加热项
 
-$$F_3=-\frac{\partial}{\partial y}\left(\frac{d\theta}{dt}\right)$$
+$$
+F_3=-\frac{\partial}{\partial y}\left(\frac{d\theta}{dt}\right)
+$$
 
 **① 下垫面热力**
 
@@ -637,9 +651,13 @@ $$F_3=-\frac{\partial}{\partial y}\left(\frac{d\theta}{dt}\right)$$
 
 必背公式：
 
-$$F=\frac{d}{dt}\left(-\frac{\partial \theta}{\partial y}\right),\qquad F=F_1+F_2+F_3$$
+$$
+F=\frac{d}{dt}\left(-\frac{\partial \theta}{\partial y}\right),\qquad F=F_1+F_2+F_3
+$$
 
-$$F_1=\frac{\partial v}{\partial y}\frac{\partial \theta}{\partial y},\quad F_2=\frac{\partial \omega}{\partial y}\frac{\partial \theta}{\partial p},\quad F_3=-\frac{\partial}{\partial y}\left(\frac{d\theta}{dt}\right)$$
+$$
+F_1=\frac{\partial v}{\partial y}\frac{\partial \theta}{\partial y},\quad F_2=\frac{\partial \omega}{\partial y}\frac{\partial \theta}{\partial p},\quad F_3=-\frac{\partial}{\partial y}\left(\frac{d\theta}{dt}\right)
+$$
 
 ## 第 6 讲 · 温带气旋
 
@@ -743,11 +761,15 @@ $$F_1=\frac{\partial v}{\partial y}\frac{\partial \theta}{\partial y},\quad F_2=
 
 北半球的梯度风公式：
 
-$$V_c=-\frac{fR_t}{2}+\sqrt{\left(\frac{fR_t}{2}\right)^{2}+R_t\left|-\frac{1}{\rho}\frac{\partial P}{\partial n}\right|}$$
+$$
+V_c=-\frac{fR_t}{2}+\sqrt{\left(\frac{fR_t}{2}\right)^{2}+R_t\left|-\frac{1}{\rho}\frac{\partial P}{\partial n}\right|}
+$$
 
 对应地，反气旋取另一支：
 
-$$V_a=\frac{fR_t}{2}-\sqrt{\left(\frac{fR_t}{2}\right)^{2}-R_t\left|-\frac{1}{\rho}\frac{\partial P}{\partial n}\right|}$$
+$$
+V_a=\frac{fR_t}{2}-\sqrt{\left(\frac{fR_t}{2}\right)^{2}-R_t\left|-\frac{1}{\rho}\frac{\partial P}{\partial n}\right|}
+$$
 
 背记要点：
 

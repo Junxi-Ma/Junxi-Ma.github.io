@@ -24,7 +24,9 @@ const pages = resolvePageToggles({
 	// 相册页面开关
 	gallery: true,
 	// 书签导航页面开关
-	booknav: true,
+	// 页面代码保留，但模板自带的示例书签（Firefly 项目、作者博客等）与本站无关，
+	// 先关掉避免误导；以后往 booknavConfig.ts 填自己的书签再打开。
+	booknav: false,
 	// 哔哩哔哩追番页面开关
 	bilibili: false,
 	// 番组计划页面开关

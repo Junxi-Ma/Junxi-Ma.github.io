@@ -25,6 +25,17 @@ interface BranchMeta {
 
 const branchesRoot = path.join(process.cwd(), "public", "branches");
 
+/**
+ * 把清单里的 url 规范成站点根绝对路径。
+ * index.json 登记的是「相对站点根目录」写法（如 branches/junxun/index.html），
+ * 直接进 href 会被解析成 /branches/branches/...，导致点进去 404。
+ */
+function toRootUrl(raw: unknown, fallback: string): string {
+	const value = String(raw ?? "").trim() || fallback;
+	if (/^(?:[a-z][a-z0-9+.-]*:)?\/\//i.test(value)) return value; // 外链原样保留
+	return value.startsWith("/") ? value : `/${value}`;
+}
+
 function readMeta(folder: string): Partial<BranchMeta> {
 	const metaPath = path.join(branchesRoot, folder, "meta.json");
 	if (!fs.existsSync(metaPath)) return {};
@@ -56,7 +67,7 @@ if (fs.existsSync(branchesRoot)) {
 					tags: Array.isArray(item.tags) ? item.tags : [],
 					icon: item.icon ?? "📄",
 					order: typeof item.order === "number" ? item.order : 100,
-					url: item.url ?? `/branches/${item.folder}/`,
+					url: toRootUrl(item.url, `/branches/${item.folder}/`),
 				});
 			}
 		} catch {

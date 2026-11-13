@@ -39,19 +39,27 @@ tags: [动力气象学]
 
 **坐标与单位矢量**（第 5 页）：任一点 $P$ 用经度 $\lambda$、纬度 $\varphi$、到地心距离 $r$ 表示；$\vec{i}$ 沿纬线圈指向东、$\vec{j}$ 沿经线圈指向北、$\vec{k}$ 铅直向上，则
 
-$$\vec{V}_3=u\,\vec{i}+v\,\vec{j}+w\,\vec{k}$$
+$$
+\vec{V}_3=u\,\vec{i}+v\,\vec{j}+w\,\vec{k}
+$$
 
 **弧长关系与速度分量**（第 6 页）：沿三个坐标方向走 $d\lambda,d\varphi,dr$ 对应的弧长为
 
-$$\delta x=r\cos\varphi\,\delta\lambda,\qquad \delta y=r\,\delta\varphi,\qquad \delta z=\delta r$$
+$$
+\delta x=r\cos\varphi\,\delta\lambda,\qquad \delta y=r\,\delta\varphi,\qquad \delta z=\delta r
+$$
 
-$$\boxed{\ u=r\cos\varphi\,\frac{d\lambda}{dt},\qquad v=r\,\frac{d\varphi}{dt},\qquad w=\frac{dr}{dt}\ }$$
+$$
+\boxed{\ u=r\cos\varphi\,\frac{d\lambda}{dt},\qquad v=r\,\frac{d\varphi}{dt},\qquad w=\frac{dr}{dt}\ }
+$$
 
 <span class="mk-blue">记忆锚点只有一个：纬圈的半径是 $r\cos\varphi$——走同样的经度，纬度越高实际走的路越短。</span>
 
 **随体导数的球坐标展开**（第 7 页，绿框）：
 
-$$\boxed{\ \frac{df}{dt}=\frac{\partial f}{\partial t}+\frac{u}{r\cos\varphi}\frac{\partial f}{\partial\lambda}+\frac{v}{r}\frac{\partial f}{\partial\varphi}+w\frac{\partial f}{\partial r}\ }$$
+$$
+\boxed{\ \frac{df}{dt}=\frac{\partial f}{\partial t}+\frac{u}{r\cos\varphi}\frac{\partial f}{\partial\lambda}+\frac{v}{r}\frac{\partial f}{\partial\varphi}+w\frac{\partial f}{\partial r}\ }
+$$
 
 ### 推导 · 非重点
 
@@ -63,9 +71,11 @@ $$\boxed{\ \frac{df}{dt}=\frac{\partial f}{\partial t}+\frac{u}{r\cos\varphi}\fr
 
 由 $\vec{V}_3=u\vec{i}+v\vec{j}+w\vec{k}$ 求导，除 $\frac{du}{dt}$ 等分量项外还多出 $u\frac{d\vec{i}}{dt}+v\frac{d\vec{j}}{dt}+w\frac{d\vec{k}}{dt}$——**单位矢量随点的位置而改变**（第 8 页红框）。三个变化率是（第 10、13、14 页，小结见第 26 页）：
 
-$$\boxed{\ \frac{d\vec{i}}{dt}=\frac{u\tan\varphi}{r}\vec{j}-\frac{u}{r}\vec{k},\qquad
+$$
+\boxed{\ \frac{d\vec{i}}{dt}=\frac{u\tan\varphi}{r}\vec{j}-\frac{u}{r}\vec{k},\qquad
 \frac{d\vec{j}}{dt}=-\frac{u\tan\varphi}{r}\vec{i}-\frac{v}{r}\vec{k},\qquad
-\frac{d\vec{k}}{dt}=\frac{u}{r}\vec{i}+\frac{v}{r}\vec{j}\ }$$
+\frac{d\vec{k}}{dt}=\frac{u}{r}\vec{i}+\frac{v}{r}\vec{j}\ }
+$$
 
 <span class="mk-blue">**各自的几何来历一句话**：$\vec{i}$ 只随经度转（沿纬圈走，"东"偏向地轴方向）；$\vec{j}$ 有两处变化——随经度增加，相邻经线向极点辐合使"北"偏向西（$-\vec{i}$ 方向），随纬度增加"北"向下俯（$-\vec{k}$ 方向）；$\vec{k}$ 的变化不用另算，用 $\vec{k}=\vec{i}\times\vec{j}$ 叉乘出来（第 14 页的巧妙一步）。</span>
 
@@ -75,29 +85,39 @@ $$\boxed{\ \frac{d\vec{i}}{dt}=\frac{u\tan\varphi}{r}\vec{j}-\frac{u}{r}\vec{k},
 
 **$\partial\vec{i}/\partial x$**（第 10 页）：沿纬圈走 $\delta x$，单位矢量转角 $\delta\lambda$，$\left|\delta\vec{i}\right|=\left|\vec{i}\right|\delta\lambda=\delta\lambda$，纬圈半径 $R=r\cos\varphi$，故
 
-$$\left|\frac{\partial\vec{i}}{\partial x}\right|=\lim_{\delta x\to0}\frac{\left|\delta\vec{i}\right|}{\left|\delta x\right|}=\lim\frac{\delta\lambda}{R\,\delta\lambda}=\frac{1}{r\cos\varphi}$$
+$$
+\left|\frac{\partial\vec{i}}{\partial x}\right|=\lim_{\delta x\to0}\frac{\left|\delta\vec{i}\right|}{\left|\delta x\right|}=\lim\frac{\delta\lambda}{R\,\delta\lambda}=\frac{1}{r\cos\varphi}
+$$
 
 方向指向地轴，分解为向北与铅直分量，该方向单位矢量为 $\vec{j}\sin\varphi-\vec{k}\cos\varphi$，于是
 
-$$\frac{\partial\vec{i}}{\partial x}=\frac{1}{r\cos\varphi}\left(\vec{j}\sin\varphi-\vec{k}\cos\varphi\right)=\frac{\tan\varphi}{r}\vec{j}-\frac{1}{r}\vec{k}
+$$
+\frac{\partial\vec{i}}{\partial x}=\frac{1}{r\cos\varphi}\left(\vec{j}\sin\varphi-\vec{k}\cos\varphi\right)=\frac{\tan\varphi}{r}\vec{j}-\frac{1}{r}\vec{k}
 \;\Longrightarrow\;
-\frac{d\vec{i}}{dt}=u\frac{\partial\vec{i}}{\partial x}=\frac{u\tan\varphi}{r}\vec{j}-\frac{u}{r}\vec{k}$$
+\frac{d\vec{i}}{dt}=u\frac{\partial\vec{i}}{\partial x}=\frac{u\tan\varphi}{r}\vec{j}-\frac{u}{r}\vec{k}
+$$
 
 **$\partial\vec{j}/\partial x$**（第 12 页）：由相交于极点的两条经线辐合引起，$\left|\partial\vec{j}/\partial x\right|=\lim\left|\vec{j}\right|\delta\theta/\delta x=\tan\varphi/r$，方向与 $\vec{i}$ 相反：
 
-$$\frac{\partial\vec{j}}{\partial x}=-\frac{\tan\varphi}{r}\vec{i}$$
+$$
+\frac{\partial\vec{j}}{\partial x}=-\frac{\tan\varphi}{r}\vec{i}
+$$
 
 **$\partial\vec{j}/\partial y$**（第 13 页）：沿经线向北走 $\delta y=r\,\delta\varphi$，$\vec{j}$ 向下俯 $\delta\varphi$，$\left|\partial\vec{j}/\partial y\right|=\lim\left|\vec{j}\right|\delta\varphi/(r\delta\varphi)=1/r$，方向与 $\vec{k}$ 相反：
 
-$$\frac{\partial\vec{j}}{\partial y}=-\frac{1}{r}\vec{k}
+$$
+\frac{\partial\vec{j}}{\partial y}=-\frac{1}{r}\vec{k}
 \;\Longrightarrow\;
-\frac{d\vec{j}}{dt}=u\frac{\partial\vec{j}}{\partial x}+v\frac{\partial\vec{j}}{\partial y}=-\frac{u\tan\varphi}{r}\vec{i}-\frac{v}{r}\vec{k}$$
+\frac{d\vec{j}}{dt}=u\frac{\partial\vec{j}}{\partial x}+v\frac{\partial\vec{j}}{\partial y}=-\frac{u\tan\varphi}{r}\vec{i}-\frac{v}{r}\vec{k}
+$$
 
 **$d\vec{k}/dt$**（第 14 页）：利用叉乘性质 $\vec{k}=\vec{i}\times\vec{j}$，$\vec{i}\times\vec{i}=\vec{j}\times\vec{j}=\vec 0$、$\vec{k}\times\vec{j}=-\vec{i}$、$\vec{i}\times\vec{k}=-\vec{j}$：
 
-$$\frac{d\vec{k}}{dt}=\frac{d(\vec{i}\times\vec{j})}{dt}=\frac{d\vec{i}}{dt}\times\vec{j}+\vec{i}\times\frac{d\vec{j}}{dt}
+$$
+\frac{d\vec{k}}{dt}=\frac{d(\vec{i}\times\vec{j})}{dt}=\frac{d\vec{i}}{dt}\times\vec{j}+\vec{i}\times\frac{d\vec{j}}{dt}
 =\left(\frac{u\tan\varphi}{r}\vec{j}-\frac{u}{r}\vec{k}\right)\times\vec{j}+\vec{i}\times\left(-\frac{u\tan\varphi}{r}\vec{i}-\frac{v}{r}\vec{k}\right)
-=\frac{u}{r}\vec{i}+\frac{v}{r}\vec{j}$$
+=\frac{u}{r}\vec{i}+\frac{v}{r}\vec{j}
+$$
 
 <span class="mk-purple">自检：三式两两正交、模长不超过速度本身量级 $V/r$；$\vec{k}$ 对 $r$ 的偏导为零——标架只随"在球面的哪里"变，不随高度变。</span>
 
@@ -107,9 +127,11 @@ $$\frac{d\vec{k}}{dt}=\frac{d(\vec{i}\times\vec{j})}{dt}=\frac{d\vec{i}}{dt}\tim
 
 从矢量方程 $\dfrac{d\vec{V}_3}{dt}=-\dfrac{1}{\rho}\nabla_3p-2\vec{\Omega}\times\vec{V}_3+\tilde{g}+\vec{F}$（第 16 页）出发，把第 2 节的单位矢量变化率代入，加速度分解为（第 16 页）：
 
-$$\frac{d\vec{V}_3}{dt}=\left(\frac{du}{dt}-\frac{uv\tan\varphi}{r}+\frac{uw}{r}\right)\vec{i}
+$$
+\frac{d\vec{V}_3}{dt}=\left(\frac{du}{dt}-\frac{uv\tan\varphi}{r}+\frac{uw}{r}\right)\vec{i}
 +\left(\frac{dv}{dt}+\frac{u^{2}\tan\varphi}{r}+\frac{vw}{r}\right)\vec{j}
-+\left(\frac{dw}{dt}-\frac{u^{2}+v^{2}}{r}\right)\vec{k}$$
++\left(\frac{dw}{dt}-\frac{u^{2}+v^{2}}{r}\right)\vec{k}
+$$
 
 力的投影（第 17-18 页）：
 
@@ -122,15 +144,19 @@ $$\frac{d\vec{V}_3}{dt}=\left(\frac{du}{dt}-\frac{uv\tan\varphi}{r}+\frac{uw}{r}
 
 其中科氏力的展开要注意<span class="mk-red">$\vec{\Omega}$ 在 $\vec{i}$ 方向没有分量</span>（第 18 页）：$\vec{\Omega}=\Omega(\cos\varphi\,\vec{j}+\sin\varphi\,\vec{k})$。科氏参数（或称地转参数）$f$ 与 $\tilde{f}$ 定义为
 
-$$f\equiv2\Omega\sin\varphi,\qquad \tilde{f}\equiv2\Omega\cos\varphi$$
+$$
+f\equiv2\Omega\sin\varphi,\qquad \tilde{f}\equiv2\Omega\cos\varphi
+$$
 
 合并得三个分量方程（第 19 页）：
 
-$$\boxed{\begin{aligned}
+$$
+\boxed{\begin{aligned}
 \frac{du}{dt}-\frac{uv\tan\varphi}{r}+\frac{uw}{r}&=-\frac{1}{\rho r\cos\varphi}\frac{\partial p}{\partial\lambda}+fv-\tilde{f}w+F_\lambda\\[1ex]
 \frac{dv}{dt}+\frac{u^{2}\tan\varphi}{r}+\frac{vw}{r}&=-\frac{1}{\rho r}\frac{\partial p}{\partial\varphi}-fu+F_\varphi\\[1ex]
 \frac{dw}{dt}-\frac{u^{2}+v^{2}}{r}&=-\frac{1}{\rho}\frac{\partial p}{\partial r}-g+\tilde{f}u+F_r
-\end{aligned}}$$
+\end{aligned}}
+$$
 
 <div class="mk-box mk-box--why">
 
@@ -150,11 +176,15 @@ $$\boxed{\begin{aligned}
 
 连续方程形式不变：$\dfrac{d\rho}{dt}+\rho\nabla_3\cdot\vec{V}_3=0$，换的只是散度（第 21 页）：
 
-$$\boxed{\ \nabla_3\cdot\vec{V}_3=\frac{1}{r\cos\varphi}\frac{\partial u}{\partial\lambda}+\frac{1}{r\cos\varphi}\frac{\partial\left(v\cos\varphi\right)}{\partial\varphi}+\frac{1}{r^{2}}\frac{\partial\left(r^{2}w\right)}{\partial r}\ }$$
+$$
+\boxed{\ \nabla_3\cdot\vec{V}_3=\frac{1}{r\cos\varphi}\frac{\partial u}{\partial\lambda}+\frac{1}{r\cos\varphi}\frac{\partial\left(v\cos\varphi\right)}{\partial\varphi}+\frac{1}{r^{2}}\frac{\partial\left(r^{2}w\right)}{\partial r}\ }
+$$
 
 等价的展开形式（第 21 页）：
 
-$$\nabla_3\cdot\vec{V}_3=\frac{2w}{r}-\frac{v\tan\varphi}{r}+\frac{1}{r\cos\varphi}\left(\frac{\partial u}{\partial\lambda}+\frac{\partial v}{\partial\varphi}\right)+\frac{\partial w}{\partial r}$$
+$$
+\nabla_3\cdot\vec{V}_3=\frac{2w}{r}-\frac{v\tan\varphi}{r}+\frac{1}{r\cos\varphi}\left(\frac{\partial u}{\partial\lambda}+\frac{\partial v}{\partial\varphi}\right)+\frac{\partial w}{\partial r}
+$$
 
 <span class="mk-blue">**两处"球面味"**：$-\dfrac{v\tan\varphi}{r}$——纬圈周长随纬度收缩，向北流的空气管子变细、要散开；$\dfrac{2w}{r}$——球壳面积随高度变大，上升的空气管子变粗、也要散开。散度"体积相对膨胀率"的几何意义与上一讲完全一致。</span>
 
@@ -168,12 +198,16 @@ $$\nabla_3\cdot\vec{V}_3=\frac{2w}{r}-\frac{v\tan\varphi}{r}+\frac{1}{r\cos\varp
 
 **守恒量**：绕地轴的**绝对角动量**＝绝对纬向速度 $(u+\Omega r\cos\varphi)$ × 杠杆半径 $r\cos\varphi$：
 
-$$\boxed{\ M=r\cos\varphi\left(u+\Omega r\cos\varphi\right)=r^{2}\cos^{2}\varphi\left(\Omega+\frac{d\lambda}{dt}\right)\ }$$
+$$
+\boxed{\ M=r\cos\varphi\left(u+\Omega r\cos\varphi\right)=r^{2}\cos^{2}\varphi\left(\Omega+\frac{d\lambda}{dt}\right)\ }
+$$
 
 **课件的处理**（第 23 页）：绝对角动量随时间的变化等于所受的**合外力矩**（纬向合力 × 杠杆半径）：
 
-$$\frac{dM}{dt}=r\cos\varphi\left(-\frac{1}{\rho r\cos\varphi}\frac{\partial p}{\partial\lambda}\right)+r\cos\varphi\,F_\lambda
-=-\frac{1}{\rho}\frac{\partial p}{\partial\lambda}+r\cos\varphi\,F_\lambda$$
+$$
+\frac{dM}{dt}=r\cos\varphi\left(-\frac{1}{\rho r\cos\varphi}\frac{\partial p}{\partial\lambda}\right)+r\cos\varphi\,F_\lambda
+=-\frac{1}{\rho}\frac{\partial p}{\partial\lambda}+r\cos\varphi\,F_\lambda
+$$
 
 课件据此指出：球坐标系动量方程与绝对角动量守恒原理**相调一致**。
 
@@ -200,11 +234,15 @@ $$\frac{dM}{dt}=r\cos\varphi\left(-\frac{1}{\rho r\cos\varphi}\frac{\partial p}{
 
 **课件的处理**（第 24 页）：把三个分量方程分别乘以 $u,v,w$ 再相加——<span class="mk-purple">曲率项两两相消（$u\cdot(-\frac{uv\tan\varphi}{r})+v\cdot\frac{u^{2}\tan\varphi}{r}=0$ 等三对），科氏项也两两相消（$u\,fv+v\cdot(-fu)=0$、$w\,\tilde{f}u+u\cdot(-\tilde{f}w)=0$）</span>——得
 
-$$\frac{d}{dt}\left(\frac{u^{2}+v^{2}+w^{2}}{2}\right)=-\frac{1}{\rho}\left(\frac{u}{r\cos\varphi}\frac{\partial p}{\partial\lambda}+\frac{v}{r}\frac{\partial p}{\partial\varphi}+w\frac{\partial p}{\partial r}\right)-wg+uF_\lambda+vF_\varphi+wF_r$$
+$$
+\frac{d}{dt}\left(\frac{u^{2}+v^{2}+w^{2}}{2}\right)=-\frac{1}{\rho}\left(\frac{u}{r\cos\varphi}\frac{\partial p}{\partial\lambda}+\frac{v}{r}\frac{\partial p}{\partial\varphi}+w\frac{\partial p}{\partial r}\right)-wg+uF_\lambda+vF_\varphi+wF_r
+$$
 
 **技巧**（第 25 页）：$r=a+z$（$a$ 为地球半径，$z$ 为海拔高度），故 $wg=g\,\dfrac{dz}{dt}$，把它挪到左边：
 
-$$\boxed{\ \frac{d}{dt}\left(\frac{u^{2}+v^{2}+w^{2}}{2}+gz\right)=-\frac{1}{\rho}\left(\frac{u}{r\cos\varphi}\frac{\partial p}{\partial\lambda}+\frac{v}{r}\frac{\partial p}{\partial\varphi}+w\frac{\partial p}{\partial r}\right)+uF_\lambda+vF_\varphi+wF_r\ }$$
+$$
+\boxed{\ \frac{d}{dt}\left(\frac{u^{2}+v^{2}+w^{2}}{2}+gz\right)=-\frac{1}{\rho}\left(\frac{u}{r\cos\varphi}\frac{\partial p}{\partial\lambda}+\frac{v}{r}\frac{\partial p}{\partial\varphi}+w\frac{\partial p}{\partial r}\right)+uF_\lambda+vF_\varphi+wF_r\ }
+$$
 
 <div class="mk-box mk-box--key">
 
@@ -237,9 +275,11 @@ $$\boxed{\ \frac{d}{dt}\left(\frac{u^{2}+v^{2}+w^{2}}{2}+gz\right)=-\frac{1}{\rh
 
 故可取 $r=a+z\approx a$（$z$ 为海拔高度），这一近似<span class="mk-orange">被郭晓岚称为**薄层近似**（第 34 页）</span>。替换后弧长与速度变为（第 34 页）：
 
-$$\delta x\approx a\cos\varphi\,\delta\lambda,\quad \delta y\approx a\,\delta\varphi,\quad \delta z=\delta r
+$$
+\delta x\approx a\cos\varphi\,\delta\lambda,\quad \delta y\approx a\,\delta\varphi,\quad \delta z=\delta r
 \;\Longrightarrow\;
-u\approx a\cos\varphi\,\frac{d\lambda}{dt},\quad v\approx a\,\frac{d\varphi}{dt},\quad w=\frac{dz}{dt}$$
+u\approx a\cos\varphi\,\frac{d\lambda}{dt},\quad v\approx a\,\frac{d\varphi}{dt},\quad w=\frac{dz}{dt}
+$$
 
 <span class="mk-red">课件的设问（第 34 页）：**能否这样直接替换？** 答案是不能随手换——要看替换后的方程还守恒不守恒。</span>
 
@@ -257,13 +297,15 @@ u\approx a\cos\varphi\,\frac{d\lambda}{dt},\quad v\approx a\,\frac{d\varphi}{dt}
 
 两条约束修剪后（第 38、46 页），再配连续方程与热力学、状态方程，得到**闭合**的薄层球坐标方程组（第 41 页）：
 
-$$\boxed{\begin{aligned}
+$$
+\boxed{\begin{aligned}
 \frac{du}{dt}-\frac{uv\tan\varphi}{a}&=-\frac{1}{\rho a\cos\varphi}\frac{\partial p}{\partial\lambda}+fv+F_\lambda\\[1ex]
 \frac{dv}{dt}+\frac{u^{2}\tan\varphi}{a}+\frac{vw}{a}&=-\frac{1}{\rho a}\frac{\partial p}{\partial\varphi}-fu+F_\varphi\\[1ex]
 \frac{dw}{dt}&=-\frac{1}{\rho}\frac{\partial p}{\partial z}-g+F_r\\[1ex]
 \frac{d\rho}{dt}+\rho\left(\frac{1}{a\cos\varphi}\frac{\partial u}{\partial\lambda}+\frac{1}{a}\frac{\partial v}{\partial\varphi}-\frac{v\tan\varphi}{a}+\frac{\partial w}{\partial z}\right)&=0\\[1ex]
 c_{p}\frac{d\ln\theta}{dt}&=\frac{\dot{Q}}{T},\qquad p=\rho RT
-\end{aligned}}$$
+\end{aligned}}
+$$
 
 其中连续方程（第 39 页）：体积元换为 $\delta\tau=a^{2}\cos\varphi\,\delta\lambda\,\delta\varphi\,\delta z$，散度中的 $\dfrac{2w}{r}$ 变成 $\dfrac{2w}{a}$，<span class="mk-green">由守恒约束，连续方程中也略去了 $\dfrac{2w}{a}$</span>（与动量方程去掉 $w$ 项相呼应——它同样来自"球壳面积随高度变大"的曲率效应）；热力学能量方程取**位温形式** $c_p\frac{d\ln\theta}{dt}=\dot Q/T$。注意水平曲率项 $\frac{uv\tan\varphi}{a}$、$\frac{u^{2}\tan\varphi}{a}$、$\frac{vw}{a}$ **保留**在薄层球坐标方程组里。
 
@@ -275,13 +317,15 @@ c_{p}\frac{d\ln\theta}{dt}&=\frac{\dot{Q}}{T},\qquad p=\rho RT
 
 **关键一步**（第 44 页）：不考虑单位矢量的空间变化，即 $\dfrac{d\vec{i}}{dt}=\dfrac{d\vec{j}}{dt}=\dfrac{d\vec{k}}{dt}=\vec 0$——相当于把球面看成平面（或把地球的曲率半径看成 $r\to\infty$），<span class="mk-green">曲率项在运动方程中不再出现</span>。于是略去薄层球坐标方程组中的曲率项，得（第 45-46 页；绝热无摩擦形式）：
 
-$$\boxed{\begin{aligned}
+$$
+\boxed{\begin{aligned}
 \frac{du}{dt}&=-\frac{1}{\rho}\frac{\partial p}{\partial x}+fv\\[1ex]
 \frac{dv}{dt}&=-\frac{1}{\rho}\frac{\partial p}{\partial y}-fu\\[1ex]
 \frac{dw}{dt}&=-\frac{1}{\rho}\frac{\partial p}{\partial z}-g
 \end{aligned}\qquad
 \frac{d\rho}{dt}+\rho\left(\frac{\partial u}{\partial x}+\frac{\partial v}{\partial y}+\frac{\partial w}{\partial z}\right)=0,\qquad
-\frac{d\ln\theta}{dt}=0,\quad p=\rho RT}$$
+\frac{d\ln\theta}{dt}=0,\quad p=\rho RT}
+$$
 
 <span class="mk-orange">课件评注（第 46 页绿框）：局地直角坐标系是球坐标系的简化形式，它保持了球坐标系的标架，但忽略了球面曲率的影响。</span>
 
@@ -289,8 +333,10 @@ $$\boxed{\begin{aligned}
 
 对连续可微的场变量，在局地直角坐标系中求混合微商时，**交换次序结果不等**：
 
-$$\frac{\partial^{2}f}{\partial x\,\partial y}=\frac{1}{a^{2}\cos\varphi}\frac{\partial^{2}f}{\partial\lambda\,\partial\varphi},\qquad
-\frac{\partial^{2}f}{\partial y\,\partial x}=\frac{1}{a^{2}\cos\varphi}\frac{\partial^{2}f}{\partial\lambda\,\partial\varphi}+\frac{\tan\varphi}{a^{2}\cos\varphi}\frac{\partial f}{\partial\lambda}$$
+$$
+\frac{\partial^{2}f}{\partial x\,\partial y}=\frac{1}{a^{2}\cos\varphi}\frac{\partial^{2}f}{\partial\lambda\,\partial\varphi},\qquad
+\frac{\partial^{2}f}{\partial y\,\partial x}=\frac{1}{a^{2}\cos\varphi}\frac{\partial^{2}f}{\partial\lambda\,\partial\varphi}+\frac{\tan\varphi}{a^{2}\cos\varphi}\frac{\partial f}{\partial\lambda}
+$$
 
 两者的差与保留项之比约为 $\tan\varphi\cdot\dfrac{L}{a}$（$L$ 为运动水平尺度）。<span class="mk-blue">一般在中低纬度这一差值可略去不计，即 $x$ 和 $y$ 可视为独立自变量；**靠近极区这一差值很大，不宜采用局地直角坐标系**——这就是"局地"二字的准确含义：中低纬、水平范围远小于地球半径的问题。课件由此引出思考：除全球问题必须用球坐标外，包含极地但水平范围不大的问题怎么办（第 41 页）——这是后续投影/区域模式的话题。</span>
 

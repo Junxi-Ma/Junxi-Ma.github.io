@@ -10,9 +10,12 @@ import {
 // NavBar Configuration - Dynamically generate navigation bar links based on order
 //
 // 本站结构（2026-11 迁移后）：
-//   首页 / 文章（归档·分类·标签·系列）/ 工具 / 分支 / 相册 / 动态 / 友链 / 关于
+//   顶栏一级：主页 / 文章 / 工具 / 分支 / 关于我 / 更多
+//   文章下拉：归档 · 分类 · 标签 · 系列
+//   更多下拉：相册 · 动态 · 友链 · GitHub · 站点仓库
 // 「工具」与「分支」是本站在博客骨架之外自建的两个板块，
 // 页面在 src/pages/tools/ 与 src/pages/branches/。
+// 一级项从 9 个收到 6 个：1024–1280px 窗口下原方案会把链接压到换行。
 // ============================================================================
 const getDynamicNavBarConfig = (): NavBarConfig => {
 	// 基础导航栏链接
@@ -55,25 +58,19 @@ const getDynamicNavBarConfig = (): NavBarConfig => {
 		icon: "material-symbols:account-tree",
 	});
 
-	// 相册
-	links.push(LinkPresets.Gallery);
-
-	// 动态
-	links.push(LinkPresets.Dynamic);
-
-	// 友链
-	links.push(LinkPresets.Friends);
-
 	// 关于
 	links.push(LinkPresets.About);
 
-	// 自定义导航栏链接
+	// 「更多」：收纳低频页面与站外链接。
+	// 相册/动态/友链属于偶尔一逛的内容页，放一级会挤掉常用入口的宽度。
 	links.push({
-		name: "链接",
+		name: "更多",
 		url: "#",
-		icon: "material-symbols:link",
-		// 子菜单
+		icon: "material-symbols:more-horiz",
 		children: [
+			LinkPresets.Gallery,
+			LinkPresets.Dynamic,
+			LinkPresets.Friends,
 			{
 				name: "GitHub",
 				url: "https://github.com/Junxi-Ma",
