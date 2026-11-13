@@ -17,9 +17,31 @@
 
 /* Tailwind v4 配置 - 从 tailwind.config.cjs 迁移 */
 @theme {
+  /* 界面文字：导航、按钮、标签、表单、卡片元信息。
+     去掉原来那个被引号包住的 'sans-serif'——它会被当成一个字面字体名而不是通用族。 */
   --font-sans:
-    'Roboto', 'sans-serif', ui-sans-serif, system-ui, sans-serif,
+    -apple-system, 'Segoe UI Variable Text', 'Segoe UI', 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans SC',
+    ui-sans-serif, system-ui, sans-serif,
     'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  /* 阅读文字：西文在前、中文在后，这样英文走 Times/Charter，汉字才落到宋体。
+     反过来的话华文中宋会连英文一起吃掉。 */
+  --font-serif:
+    'Tiempos Text', 'Source Serif 4', 'Iowan Old Style', 'Charter', Georgia,
+    'Times New Roman',
+    'STZhongsong', '华文中宋', 'Noto Serif SC', 'Source Han Serif SC',
+    'Songti SC', 'SimSun',
+    ui-serif, serif;
+  --font-mono:
+    'JetBrains Mono', ui-monospace, 'SF Mono', SFMono-Regular, 'Cascadia Code',
+    Consolas, Menlo, 'Liberation Mono', 'Courier New', monospace;
+}
+
+/* 语义化别名，供各页样式引用 */
+:root {
+  --font-ui: var(--font-sans);
+  --font-prose: var(--font-serif);
+  --font-display: var(--font-serif);
 }
 
 /* 自定义工具类 - Tailwind v4 使用 @utility 定义 */
@@ -680,4 +702,66 @@ html {
 /* 分页信息样式 */
 .pagination-info {
   @apply text-sm text-(--text-secondary) text-center mb-2;
+}
+
+/* ===== 排版层次：阅读用衬线，界面用无衬线 =====
+   衬线只作用在「读的东西」上——大标题、文章标题、正文；
+   导航、按钮、标签、元信息继续用无衬线，免得整页发软。 */
+.banner-title,
+.banner-subtitle,
+.banner-post-title,
+.post-card-title {
+  font-family: var(--font-prose);
+  letter-spacing: -0.01em;
+}
+
+.custom-md {
+  font-family: var(--font-prose);
+}
+
+/* 正文里的代码仍是等宽，别被衬线吃掉 */
+.custom-md code,
+.custom-md pre,
+.custom-md kbd,
+.custom-md samp {
+  font-family: var(--font-mono);
+}
+
+/* 宋体字面比黑体小一圈，正文给一点补偿；表格数字对齐用等宽数字 */
+.custom-md {
+  font-size: 1.03rem;
+  line-height: 1.9;
+}
+.custom-md table {
+  font-variant-numeric: tabular-nums;
+}
+
+/* 归档 / 列表页里的文章标题同样交给衬线，日期与分类标签保持界面字体 */
+.archive-post .truncate {
+  font-family: var(--font-prose);
+}
+
+/* 华文中宋只有 Regular 一个字重，font-weight 一旦到 600 以上，浏览器会合成
+   伪粗体，横画被均匀加粗，宋体那种粗细对比就没了。所以衬线标题统一压在 500，
+   层级改用字号和留白来拉。 */
+.banner-title,
+.banner-subtitle,
+.banner-post-title,
+.post-card-title,
+.archive-post .truncate,
+.custom-md h1,
+.custom-md h2,
+.custom-md h3,
+.custom-md h4,
+.custom-md h5,
+.custom-md h6 {
+  font-weight: 500;
+}
+
+/* 宋体正文里的强调改用黑体——这是中文排版的老办法（宋黑对比），
+   比让浏览器给宋体伪造粗体干净得多。 */
+.custom-md strong,
+.custom-md b {
+  font-family: var(--font-ui);
+  font-weight: 600;
 }
