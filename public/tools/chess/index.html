@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>棋乐馆 — Michael</title>
-  <meta name="description" content="四棋合一：国际象棋（chess.js 规则 + Stockfish 引擎四档 AI）、中国象棋、五子棋、围棋。全部支持人机 / 双人同屏 / 联机房间与棋力排行榜。全屏棋盘、完整规则判定（易位、吃过路兵、升变、将杀、逼和、五十回合、三次重复、提子、禁自杀、劫争）。">
+  <meta name="description" content="五棋合一：国际象棋（chess.js 规则 + Stockfish 引擎四档 AI）、中国象棋、五子棋、围棋、三维四子棋。前四棋支持人机 / 双人同屏 / 联机房间与棋力排行榜，全屏棋盘、完整规则判定（易位、吃过路兵、升变、将杀、逼和、五十回合、三次重复、提子、禁自杀、劫争）；三维四子棋是立体棋盘双人同屏。">
   <meta name="theme-color" content="#0a0a0b">
   <meta name="color-scheme" content="dark light">
   <link rel="icon" type="image/svg+xml" href="../../assets/img/favicon.svg">
@@ -69,7 +69,7 @@
       <div class="tool__head">
         <p class="mono-label">Tool <span>/</span> 09</p>
         <h1>棋乐馆</h1>
-        <p>选择棋类 × 模式 × 难度 / 执子进入全屏棋盘：国际象棋（chess.js + Stockfish 引擎）、中国象棋、五子棋、围棋。四棋均支持人机 / 双人同屏 / 联机房间，房间码即邀请函，走子实时同步，并有跨设备的棋力排行榜。</p>
+        <p>选择棋类 × 模式 × 难度 / 执子进入全屏棋盘：国际象棋（chess.js + Stockfish 引擎）、中国象棋、五子棋、围棋、三维四子棋。前四棋支持人机 / 双人同屏 / 联机房间，房间码即邀请函，走子实时同步，并有跨设备的棋力排行榜；三维四子棋是立体棋盘，双人同屏直接开玩。</p>
       </div>
 
       <!-- 启动器：选择模式 -->
@@ -82,8 +82,9 @@
             <button type="button" class="ch-chip" data-v="xiangqi">中国象棋</button>
             <button type="button" class="ch-chip" data-v="gomoku">五子棋</button>
             <button type="button" class="ch-chip" data-v="go">围棋</button>
+            <button type="button" class="ch-chip" data-v="c4">三维四子棋</button>
           </div>
-          <p class="ch-tip" style="margin:12px 0 18px"><a href="../connect4/">三维四子棋 ↗</a> · 纸感棋盘，两人直接开玩</p>
+          <p class="ch-tip" id="c4-tip" hidden style="margin:12px 0 18px">立体棋盘：棋子沿杆落下，拖动转角度，横竖斜线连成四子。双人同屏，暂无人机与联机。</p>
           <p class="ch-label">对局模式</p>
           <div class="ch-chips big" id="sel-mode">
             <button type="button" class="ch-chip on" data-v="ai">人机对弈</button>
@@ -112,7 +113,7 @@
           <button type="button" class="ch-btn wide" id="ch-lb-btn" style="margin-top:10px">🏆 棋力排行榜</button>
         </div>
       </div>
-        <p class="ch-tip">国际象棋由 chess.js 判定全部规则、Stockfish 引擎执子（王车易位可直接「王吃到车」）｜中国象棋、五子棋、围棋同样四棋可选执子、三至四档 AI、全部支持联机房间｜对局内可悔棋、认输、停一手、翻转、真全屏</p>
+        <p class="ch-tip">国际象棋由 chess.js 判定全部规则、Stockfish 引擎执子（王车易位可直接「王吃到车」）｜中国象棋、五子棋、围棋同样可选执子、三至四档 AI、支持联机房间｜三维四子棋为立体棋盘，双人同屏｜对局内可悔棋、认输、停一手、翻转、真全屏</p>
       </div>
     </div>
   </main>
@@ -139,6 +140,10 @@
       <div class="ch-board" id="ch-board" role="grid" aria-label="棋局棋盘"></div>
     </div>
     <div class="ch-capstrip" id="ch-cap-bottom" aria-label="白方被吃子"></div>
+    <!-- 三维四子棋：三维棋盘 + WebGL 是独立一套渲染，直接内嵌它的页面 -->
+    <div class="ch-embed" id="ch-embed" hidden>
+      <iframe id="ch-embed-frame" title="三维四子棋" src="about:blank"></iframe>
+    </div>
   </div>
 
   <!-- 升变选择 -->

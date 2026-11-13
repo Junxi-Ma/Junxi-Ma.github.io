@@ -28,6 +28,9 @@ _ykt/
 # Playwright MCP 自动产物（页面快照 / 控制台日志）
 .playwright-mcp/
 
+# 本地个人软件（Anki 等），与本仓库无关
+anki-*/
+
 # ===== Astro 工程（2026-11 前端迁移引入）=====
 # 依赖与构建产物：体积大且可重建，绝不入库
 node_modules/

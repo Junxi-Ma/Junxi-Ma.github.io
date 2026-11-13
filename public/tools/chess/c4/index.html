@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>三维四子棋 — Michael</title>
+  <meta name="description" content="现代三维四子棋：入门到专家四档唯一解棋盘，铅笔笔记、提示、撤销与三次失误上限；成绩自动署名上云，英雄榜每人只计最快。">
+  <meta name="theme-color" content="#0a0a0b">
+  <meta name="color-scheme" content="dark light">
+  <link rel="icon" type="image/svg+xml" href="../../../assets/img/favicon.svg">
+  <script>
+    /* 首帧前定下主题，避免闪烁。
+       与主站共用 localStorage 的 theme / hue 两个键：
+       theme ∈ {light, dark, system}；hue 是 0-360 的主题色相。
+       同时写 data-theme（部分工具的自有 CSS 仍在用）和 .dark（tool-shell 用）。 */
+    (function () {
+      var DARK = 'dark', LIGHT = 'light', SYS = 'system';
+      var t = null, hue = null;
+      try {
+        t = localStorage.getItem('theme');
+        hue = localStorage.getItem('hue');
+      } catch (e) {}
+      if (t !== DARK && t !== LIGHT) t = SYS;
+      var sysDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      var dark = t === DARK || (t === SYS && sysDark);
+      document.documentElement.classList.toggle('dark', dark);
+      document.documentElement.dataset.theme = dark ? DARK : LIGHT;
+      document.documentElement.classList.add('js');
+      if (hue) document.documentElement.style.setProperty('--hue', hue);
+      var m = document.querySelector('meta[name="theme-color"]');
+      if (m) m.content = dark ? '#12181a' : '#f2f5f4';
+    })();
+  </script>
+  <script>
+    /* 被棋乐馆内嵌时（/tools/chess/ 的 iframe 带 ?embed=1），
+       隐藏站点出口与标题，只留棋盘。写在 head 里是为了首帧就不闪。 */
+    if (/[?&]embed=1(?:&|$)/.test(location.search)) {
+      document.documentElement.dataset.embed = '1';
+    }
+  </script>
+  <link rel="stylesheet" href="../../../assets/css/tool-shell.css">
+  <link rel="stylesheet" href="../../sudoku/style.css?v=3">
+  <link rel="stylesheet" href="style.css?v=2">
+  <script type="importmap">{"imports":{"three":"./vendor/three.module.js"}}</script>
+  <style>
+    /* ---- 页面骨架：与 json-formatter 逐字一致，顶距内联提供 ---- */
+    .tool {
+      padding-top: calc(var(--nav-h) + clamp(40px, 7vw, 72px));
+      padding-bottom: var(--section-y);
+    }
+    /* 被棋乐馆以 ?embed=1 内嵌时：去掉站点出口、深色按钮和页面标题，
+       只留棋盘本身，交给外层棋乐馆的顶栏控制。 */
+    html[data-embed] .tool {
+      padding-top: 0;
+      padding-bottom: 0;
+      max-width: none;
+    }
+    html[data-embed] .tool-back,
+    html[data-embed] .tool-theme,
+    html[data-embed] .tool__head,
+    html[data-embed] .c4-tip {
+      display: none !important;
+    }
+    html[data-embed] body {
+      background: transparent;
+    }
+    /* 撑满 iframe：整页不滚动，棋盘吃掉除头尾之外的全部高度。
+       高度变化由 c4/app.js 的 ResizeObserver 同步给 WebGL canvas。 */
+    html[data-embed],
+    html[data-embed] body {
+      height: 100%;
+      overflow: hidden;
+    }
+    html[data-embed] #main,
+    html[data-embed] .tool {
+      height: 100%;
+    }
+    html[data-embed] .c4-stage {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+    html[data-embed] .c4-sheet {
+      flex: 1 1 auto;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+    html[data-embed] .c4-viewport {
+      flex: 1 1 auto;
+      height: auto;
+      min-height: 200px;
+    }
+    .tool__head {
+      max-width: 720px;
+      margin-bottom: 32px;
+    }
+    .tool__head h1 {
+      font-size: var(--fs-h1);
+      letter-spacing: -0.02em;
+      margin-top: 22px;
+    }
+    .tool__head p {
+      margin-top: 14px;
+      color: var(--text-2);
+      line-height: 1.7;
+    }
+    @media (max-width: 640px) {
+      .tool__head h1 {
+        font-size: clamp(28px, 8vw, 36px);
+      }
+    }
+  </style>
+  <link rel="stylesheet" href="../../../assets/css/site-gate.css">
+  <script>document.documentElement.dataset.gateCheck = "1";</script>
+</head>
+<body class="sk-page">
+
+  <a class="tool-back" href="/tools/">
+    <span class="tool-back__arrow" aria-hidden="true">&larr;</span>
+    <span>全部工具</span>
+  </a>
+  <button class="tool-theme" id="tool-theme" type="button" aria-label="切换深浅色" title="切换深浅色">
+    <svg class="tool-theme__sun" viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="12" cy="12" r="4"/>
+      <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+    </svg>
+    <svg class="tool-theme__moon" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+    </svg>
+  </button>
+
+  <main id="main">
+    <div class="container tool">
+      <div class="tool__head">
+        <p class="mono-label">Tool <span>/</span> 12</p>
+        <h1>三维四子棋</h1>
+        <p>两个人，一张棋盘。点立柱落子，拖动转个角度；任意方向四子相连就获胜。</p>
+      </div>
+
+      <div class="sk-stage c4-stage" id="c4-stage">
+        <section class="sk-sheet c4-sheet" aria-label="三维四子棋双人棋盘">
+          <header class="c4-head">
+            <div class="c4-players" aria-label="当前回合"><span class="c4-player active" id="player-1"><i class="black"></i>黑方<span>先手</span></span><span class="c4-versus">/</span><span class="c4-player" id="player-2"><i class="white"></i>白方<span>后手</span></span></div>
+            <span class="c4-count" id="c4-count">00 <span>/ 64</span></span>
+          </header>
+          <div class="c4-viewport" id="c4-viewport" tabindex="0" role="application" aria-label="三维四子棋。点击立柱直接落子；拖动旋转。方向键选列，Enter 落子。">
+            <div class="c4-loading" id="c4-loading" role="status">正在摆好棋盘…</div>
+            <div class="c4-viewbar" aria-label="视角"><button class="c4-view on" data-view="angle" type="button" aria-pressed="true">立体</button><button class="c4-view" data-view="top" type="button" aria-pressed="false">俯视</button><button class="c4-reset" id="c4-reset" type="button" aria-label="复位视角" title="复位视角">↺</button></div>
+            <span class="c4-gesture">拖动旋转 · 点按落子</span>
+          </div>
+          <div class="c4-statusline"><p id="c4-status" aria-live="polite">黑方先行，点一根立柱开始。</p><span id="c4-position"></span></div>
+          <div class="sk-tools c4-tools">
+            <button type="button" class="sk-btn" id="c4-undo" disabled>↶ 悔棋</button>
+            <button type="button" class="sk-btn" id="c4-hint">✧ 提示</button>
+            <button type="button" class="sk-btn" id="c4-new">↻ 重开</button>
+            <button type="button" class="sk-btn" id="c4-fs">⛶ 全屏</button>
+          </div>
+        </section>
+        <p class="sk-tip c4-tip">4 × 4 × 4 · 棋子沿杆落下，横、竖或空间斜线连成四子获胜。<br>看不清落点时，转动棋盘，或切到俯视。</p>
+      </div>
+    </div>
+  </main>
+  <script type="module" src="app.js?v=2"></script>
+  <script type="module" src="../../../assets/js/site-gate.js"></script>
+  <script>
+    /* 主题切换：写回主站同一套 localStorage 键，回到主站后主题保持一致 */
+    (function () {
+      var btn = document.getElementById('tool-theme');
+      if (!btn) return;
+      function apply(dark) {
+        var root = document.documentElement;
+        root.classList.toggle('dark', dark);
+        root.dataset.theme = dark ? 'dark' : 'light';
+        var m = document.querySelector('meta[name="theme-color"]');
+        if (m) m.content = dark ? '#12181a' : '#f2f5f4';
+        try { localStorage.setItem('theme', dark ? 'dark' : 'light'); } catch (e) {}
+      }
+      btn.addEventListener('click', function () {
+        apply(!document.documentElement.classList.contains('dark'));
+      });
+    })();
+  </script>
+</body>
+</html>

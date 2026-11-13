@@ -57,6 +57,12 @@ body.ch-page [hidden] { display: none !important; }
   transition: background var(--dur-fast) ease, color var(--dur-fast) ease, border-color var(--dur-fast) ease;
 }
 .ch-chip:hover { color: var(--text-1); border-color: var(--border-hover); }
+/* 三维四子棋下，人机 / 联机不可用，灰掉但保留可见 */
+.ch-chip:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
+}
 .ch-chip.on {
   background: var(--accent, #3DD9A0);
   border-color: var(--accent, #3DD9A0);
@@ -210,6 +216,26 @@ body.ch-page [hidden] { display: none !important; }
   align-items: center;
   overflow: auto;
 }
+
+/* 三维四子棋内嵌：它自带 WebGL 棋盘和一套按钮，直接铺满剩下的空间即可，
+   不再受 fitBoard() 的网格尺寸约束。 */
+.ch-embed {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 0;
+  display: flex;
+  justify-content: center;
+  padding: 4px 0 8px;
+}
+.ch-embed iframe {
+  width: min(1100px, 100%);
+  height: 100%;
+  border: 0;
+  border-radius: 14px;
+  background: transparent;
+  color-scheme: normal;
+}
+
 /* 棋盘尺寸由 app.js 的 fitBoard() 按可用宽高算好写成内联宽高，
    这里只兜底，避免未执行 JS 时塌成 0。 */
 .ch-board { flex: none; max-width: 100%; }

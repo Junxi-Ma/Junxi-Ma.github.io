@@ -43,7 +43,10 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
 
   /* ---------- 全局 ---------- */
   const KINDS = ['chess', 'xiangqi', 'gomoku', 'go'];
-  const KIND_LABEL = { chess: '国际象棋', xiangqi: '中国象棋', gomoku: '五子棋', go: '围棋' };
+  const KIND_LABEL = { chess: '国际象棋', xiangqi: '中国象棋', gomoku: '五子棋', go: '围棋', c4: '三维四子棋' };
+  /* 三维四子棋是三维 WebGL 棋盘，自成一套交互（拖动转视角、点立柱落子），
+     所以它只支持双人同屏，不进排行榜，对局视图里换成内嵌页面。 */
+  const EMBED_KINDS = ['c4'];
   const SIDE_NAME = {
     chess: { w: '白', b: '黑' },
     xiangqi: { r: '红', b: '黑' },
@@ -169,14 +172,26 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     launcherEl.hidden = true;
     gameEl.hidden = false;
     startClock();
-    fitBoard();
-    requestAnimationFrame(fitBoard);
+    if (!EMBED_KINDS.includes(kind)) {
+      fitBoard();
+      requestAnimationFrame(fitBoard);
+    }
     render();
   }
   function showLauncher() {
     gameEl.hidden = true;
     launcherEl.hidden = false;
     stopClock();
+    // 内嵌棋盘卸载，否则 WebGL 渲染循环会在后台一直跑
+    const emb = $('#ch-embed');
+    const frame = $('#ch-embed-frame');
+    if (emb) emb.hidden = true;
+    if (frame && frame.src !== 'about:blank') frame.src = 'about:blank';
+    boardEl.hidden = false;
+    const boardFrame = document.querySelector('.ch-boardframe');
+    if (boardFrame) boardFrame.hidden = false;
+    capTopEl.hidden = false;
+    capBottomEl.hidden = false;
   }
 
   /* ---------- 计时 / 对话框 ---------- */
@@ -945,7 +960,26 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
       goNew({ vsAI: GO.vsAI, level: GO.level, me: GO.me });
       showGame(modeChipText());
       if (GO.vsAI && GO.me === 2) goAiMove();
+    } else if (kind === 'c4') {
+      showC4();
     }
+  }
+
+  /* 三维四子棋：把独立页面以 ?embed=1 内嵌进来，隐藏它自己的站点出口和标题 */
+  function showC4() {
+    boardEl.hidden = true;
+    // 连棋盘外框一起收掉，否则它继续用 flex:1 抢走高度，iframe 只剩半屏
+    const boardFrame = document.querySelector('.ch-boardframe');
+    if (boardFrame) boardFrame.hidden = true;
+    capTopEl.hidden = true;
+    capBottomEl.hidden = true;
+    const emb = $('#ch-embed');
+    const frame = $('#ch-embed-frame');
+    if (frame.src !== new URL('c4/index.html?embed=1', location.href).href) {
+      frame.src = 'c4/index.html?embed=1';
+    }
+    emb.hidden = false;
+    showGame(KIND_LABEL.c4 + ' · 双人同屏');
   }
 
   function modeChipText() {
@@ -1013,6 +1047,7 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
   }
 
   function render() {
+    if (EMBED_KINDS.includes(kind)) { updateButtons(); return; }
     if (kind === 'chess') chessRender();
     else if (kind === 'gomoku') gomokuRender();
     else if (kind === 'xiangqi') xiangqiRender();
@@ -1026,6 +1061,15 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     const restartBtn = $('#ch-restart');
     const undoBtn = $('#ch-undo');
     const resignBtn = $('#ch-resign');
+    // 内嵌棋种自己带一整套操作按钮（悔棋/提示/重开/全屏），顶栏只留退出与日夜
+    if (EMBED_KINDS.includes(kind)) {
+      flipBtn.hidden = true;
+      restartBtn.hidden = true;
+      undoBtn.hidden = true;
+      resignBtn.hidden = true;
+      $('#ch-pass').hidden = true;
+      return;
+    }
     const spectating = mode === 'online' && (!online || !online.seat);
     flipBtn.hidden = kind !== 'chess';
     restartBtn.hidden = mode === 'online';
@@ -1626,18 +1670,28 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
   const joinBtn = $('#ch-join');
 
   function renderSel() {
+    const isC4 = sel.kind === 'c4';
+    // 三维四子棋只做双人同屏：选它时把模式拉回来，并把另外两项置灰
+    if (isC4 && sel.mode !== 'local') sel.mode = 'local';
     for (const b of document.querySelectorAll('#sel-kind .ch-chip')) b.classList.toggle('on', b.dataset.v === sel.kind);
-    for (const b of document.querySelectorAll('#sel-mode .ch-chip')) b.classList.toggle('on', b.dataset.v === sel.mode);
+    for (const b of document.querySelectorAll('#sel-mode .ch-chip')) {
+      b.classList.toggle('on', b.dataset.v === sel.mode);
+      const locked = isC4 && b.dataset.v !== 'local';
+      b.disabled = locked;
+      b.title = locked ? '三维四子棋暂不支持该模式' : '';
+    }
     const isAi = sel.mode === 'ai';
     const isOnline = sel.mode === 'online';
+    const c4Tip = $('#c4-tip');
+    if (c4Tip) c4Tip.hidden = !isC4;
     // 难度只对人机有意义；双人同屏不需要执子（两边同一个屏幕）；联机的「我执」= 我的座位
     diffWrapBox.hidden = !isAi;
     sideWrap.hidden = sel.mode === 'local';
     onlineWrap.hidden = !isOnline;
     startBtn.hidden = isOnline;
-    startBtn.textContent = sel.mode === 'local' ? '开始双人同屏 →' : '开始对弈 →';
+    startBtn.textContent = isC4 ? '开始对弈 →' : sel.mode === 'local' ? '开始双人同屏 →' : '开始对弈 →';
     sideLabel.textContent = isOnline ? '我执（对方执另一边）' : '我执';
-    if (createBtn) {
+    if (createBtn && SIDE_NAME[sel.kind]) {
       const sideName = SIDE_NAME[sel.kind][sel.side[sel.kind]];
       createBtn.textContent = '✚ 创建房间（我执' + sideName + '）';
     }
@@ -1645,7 +1699,7 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     // 执子 chips（四棋都有）
     const sideDiv = $('#sel-side');
     sideDiv.textContent = '';
-    for (const [v, label] of Object.entries(SIDE_LABELS[sel.kind])) {
+    for (const [v, label] of Object.entries(SIDE_LABELS[sel.kind] || {})) {
       const b = document.createElement('button');
       b.type = 'button';
       b.className = 'ch-chip' + (String(sel.side[sel.kind]) === v ? ' on' : '');
@@ -1660,7 +1714,7 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     }
     // 难度 chips
     diffWrap.textContent = '';
-    for (const [v, label] of DIFF_CHIPS[sel.kind]) {
+    for (const [v, label] of DIFF_CHIPS[sel.kind] || []) {
       const b = document.createElement('button');
       b.type = 'button';
       b.className = 'ch-chip' + (String(sel.level[sel.kind]) === v ? ' on' : '');
@@ -1807,6 +1861,15 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     } catch { /* 静默 */ }
     finally { cloudReadyResolve(); }
   }
+  /* 深链接：/tools/chess/?kind=c4 直接选中对应棋类（旧 connect4 地址跳转过来用） */
+  (function applyKindParam() {
+    const want = new URLSearchParams(location.search).get('kind');
+    if (!want || !KIND_LABEL[want]) return;
+    sel.kind = want;
+    if (EMBED_KINDS.includes(want)) sel.mode = 'local';
+    store.set('ch-sel-v2', sel);
+  })();
+
   renderSel();
   initCloud();
 })();
