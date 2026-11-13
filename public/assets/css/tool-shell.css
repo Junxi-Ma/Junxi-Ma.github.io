@@ -38,13 +38,13 @@
 	/* ---------- 旧变量名映射（工具页读的就是这些） ---------- */
 	--bg: var(--page-bg);
 	--surface-1: var(--card-bg);
-	--surface-2: oklch(0.98 0.008 var(--hue));
-	--surface-3: oklch(0.96 0.012 var(--hue));
+	--surface-2: oklch(0.97 0.015 var(--hue));
+	--surface-3: oklch(0.94 0.02 var(--hue));
 
-	--text-1: oklch(0.25 0.02 var(--hue));
-	--text-2: oklch(0.45 0.02 var(--hue));
-	--text-3: oklch(0.6 0.015 var(--hue));
-	--text-read: oklch(0.32 0.02 var(--hue));
+	--text-1: oklch(0.22 0.035 var(--hue));
+	--text-2: oklch(0.4 0.04 var(--hue));
+	--text-3: oklch(0.5 0.04 var(--hue));
+	--text-read: oklch(0.28 0.035 var(--hue));
 
 	--border: var(--line-divider);
 	--border-hover: var(--line-color);
@@ -158,13 +158,14 @@
 	--btn-regular-bg-hover: oklch(0.38 0.04 var(--hue));
 	--btn-content: oklch(0.75 0.1 var(--hue));
 
-	--surface-2: oklch(0.2 0.016 var(--hue));
-	--surface-3: oklch(0.26 0.018 var(--hue));
+	--surface-1: oklch(0.27 0.03 var(--hue));
+	--surface-2: oklch(0.22 0.03 var(--hue));
+	--surface-3: oklch(0.3 0.035 var(--hue));
 
-	--text-1: oklch(0.93 0.01 var(--hue));
-	--text-2: oklch(0.72 0.015 var(--hue));
-	--text-3: oklch(0.55 0.015 var(--hue));
-	--text-read: oklch(0.88 0.012 var(--hue));
+	--text-1: oklch(0.95 0.02 var(--hue));
+	--text-2: oklch(0.78 0.04 var(--hue));
+	--text-3: oklch(0.68 0.045 var(--hue));
+	--text-read: oklch(0.9 0.025 var(--hue));
 
 	--border-strong: rgba(255, 255, 255, 0.2);
 
