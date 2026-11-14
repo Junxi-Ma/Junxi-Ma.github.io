@@ -11,9 +11,9 @@ const USAGE_KEY = 'stardy-ai-usage-v1';
 
 export function loadAiConfig() {
   try {
-    return { endpoint: '', key: '', model: '', mock: true, ...JSON.parse(localStorage.getItem(CFG_KEY) || '{}') };
+    return { endpoint: '', key: '', model: '', mock: true, proxy: false, ...JSON.parse(localStorage.getItem(CFG_KEY) || '{}') };
   } catch {
-    return { endpoint: '', key: '', model: '', mock: true };
+    return { endpoint: '', key: '', model: '', mock: true, proxy: false };
   }
 }
 
@@ -93,10 +93,35 @@ function parseLoose(text) {
 /* ============ 基础对话 ============ */
 
 /**
+ * 经本站 Supabase Edge Function（ai-proxy）转发请求，
+ * 用于访问不支持浏览器 CORS 的 OpenAI 兼容端点（如 opencode Zen）。
+ * 需要用户先登录主站（代理只服务登录用户）并在 Supabase 部署该函数。
+ */
+async function proxyFetch(payload) {
+  const sbMod = await import('../../../assets/js/supabase.js');
+  if (!sbMod.isConfigured()) throw new Error('Supabase 未配置，无法使用代理转发');
+  const sb = await sbMod.getSupabase();
+  const { data: sess } = await sb.auth.getSession();
+  if (!sess?.session?.user) throw new Error('代理转发需要先登录本站账号（在设置页开启前请先登录）');
+  const token = sess.session.access_token;
+  const res = await fetch((sb.supabaseUrl || '') + '/functions/v1/ai-proxy', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: 'Bearer ' + token,
+      apikey: sb.headers?.apikey || token,
+    },
+    body: JSON.stringify(payload),
+  });
+  if (res.status === 401) throw new Error('代理拒绝：登录态无效或函数未部署（见设置页部署指引）');
+  return res;
+}
+
+/**
  * 调一次 chat/completions。
  * @returns {Promise<{content: string, tokens: number}>}
  */
-export async function chat(messages, { task = 'chat', temperature = 0.3, maxTokens = 8192, jsonMode = false, system = null } = {}) {
+export async function chat(messages, { task = 'chat', temperature = 0.3, maxTokens = null, jsonMode = false, system = null } = {}) {
   const cfg = loadAiConfig();
 
   if (cfg.mock) {
@@ -104,27 +129,26 @@ export async function chat(messages, { task = 'chat', temperature = 0.3, maxToke
     return { content, tokens: 0 };
   }
 
+  const maxOut = maxTokens ?? (cfg.maxOut ? Number(cfg.maxOut) : null);
   const body = {
     model: cfg.model || 'gpt-4o-mini',
     messages: system ? [{ role: 'system', content: system }, ...messages] : messages,
     temperature,
-    max_tokens: maxTokens,
     stream: false,
   };
+  if (maxOut) body.max_tokens = maxOut;
   if (jsonMode) body.response_format = { type: 'json_object' };
 
   let res;
+  const payload = { url: endpointUrl(cfg.endpoint), body, headers: cfg.key ? { Authorization: 'Bearer ' + cfg.key } : {} };
   try {
-    res = await fetch(endpointUrl(cfg.endpoint), {
+    res = cfg.proxy ? await proxyFetch(payload) : await fetch(endpointUrl(cfg.endpoint), {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(cfg.key ? { Authorization: 'Bearer ' + cfg.key } : {}),
-      },
+      headers: { 'Content-Type': 'application/json', ...(payload.headers) },
       body: JSON.stringify(body),
     });
   } catch (e) {
-    throw new Error('网络请求失败（可能是端点跨域限制或地址写错）：' + e.message);
+    throw new Error('网络请求失败（可能是端点跨域限制或地址写错；若端点不支持浏览器直连，可在设置里开启「经 Supabase 代理转发」）：' + e.message);
   }
 
   if (!res.ok) {
@@ -238,7 +262,7 @@ export async function aiOcrPage(imageDataUrl, { pageNo, total }, onToken = null)
         { type: 'image_url', image_url: { url: imageDataUrl } },
       ],
     }],
-    { task: 'ocr', temperature: 0.1, maxTokens: 8192, system: SYS_OCR },
+    { task: 'ocr', temperature: 0.1, system: SYS_OCR },
   );
   if (onToken) onToken(tokens);
   return String(content || '').trim();
