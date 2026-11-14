@@ -498,14 +498,78 @@
 .sdy-review__prog { flex: 1; max-width: 420px; height: 6px; border-radius: 999px; background: var(--tint-hover); overflow: hidden; }
 .sdy-review__prog i { display: block; height: 100%; background: var(--accent-fill); border-radius: 999px; transition: width 300ms var(--ease); }
 .sdy-review__count { font-family: var(--font-mono); font-size: var(--fs-sm); color: var(--text-2); white-space: nowrap; }
-.sdy-review__body {
+
+/* ---------- 复习主体：桌面三栏（左数据 · 中卡片 · 右卡信息），窄屏收拢 ---------- */
+.sdy-review__main {
   flex: 1;
-  overflow-y: auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 232px minmax(0, 1fr) 248px;
+  gap: clamp(14px, 2vw, 26px);
+  padding: clamp(14px, 3vh, 28px) clamp(16px, 4vw, 44px) 8px;
+  /* 桌面不再"一片空白"：淡点阵纹理 + 顶部主题色晕 */
+  background-image:
+    radial-gradient(900px 420px at 72% -8%, var(--accent-soft), transparent 70%),
+    radial-gradient(circle, var(--tint-hover) 1px, transparent 1.4px);
+  background-size: auto, 24px 24px;
+}
+@media (max-width: 1020px) {
+  .sdy-review__main { grid-template-columns: minmax(0, 1fr); padding-inline: 12px; background-size: auto, 20px 20px; }
+  .sdy-side { display: none; }
+}
+
+/* 侧栏 */
+.sdy-side {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-self: start;
+  background: color-mix(in oklch, var(--card-bg) 78%, transparent);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  padding: 14px 16px;
+  backdrop-filter: blur(6px);
+  box-shadow: var(--shadow-card);
+}
+.sdy-side__title {
+  margin: 0;
+  font-size: var(--fs-xs);
+  letter-spacing: 0.08em;
+  color: var(--text-3);
+  font-weight: 600;
+}
+.sdy-side__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+}
+.sdy-side__row b { font-family: var(--font-mono); font-weight: 600; color: var(--text-1); font-variant-numeric: tabular-nums; }
+.sdy-side__big { display: flex; align-items: baseline; gap: 8px; margin: 2px 0 4px; }
+.sdy-side__big b {
+  font-family: var(--font-mono);
+  font-size: 34px;
+  line-height: 1;
+  color: var(--accent-strong);
+  font-variant-numeric: tabular-nums;
+}
+.sdy-side__big span { font-size: var(--fs-xs); color: var(--text-3); }
+.sdy-side__bar { height: 5px; border-radius: 999px; background: var(--tint-hover); overflow: hidden; margin-top: 4px; }
+.sdy-side__bar i { display: block; height: 100%; background: var(--accent-fill); border-radius: 999px; transition: width 300ms var(--ease); }
+.sdy-side__divider { height: 1px; background: var(--border); margin: 4px 0; }
+
+/* 卡片中央区 */
+.sdy-center {
+  min-width: 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
-  padding: clamp(16px, 4vh, 40px) 16px 20px;
+  overflow-y: auto;
+  padding-bottom: 6px;
 }
 
 /* ---------- 卡片舞台：3D 翻面 + 牌堆拟真 ----------
@@ -548,7 +612,7 @@
   -webkit-backface-visibility: hidden;
   display: flex;
   flex-direction: column;
-  min-height: clamp(300px, 46vh, 480px);
+  height: clamp(340px, 52vh, 540px);
   border-radius: var(--radius-large);
   background: linear-gradient(
     180deg,
@@ -595,18 +659,26 @@
 }
 .sdy-face__grow { flex: 1; }
 
+/* 卡身：正文用宋体系（华文中宋/宋体），JS 自适应字号占满卡片 */
 .sdy-face__body {
   flex: 1;
-  overflow-y: auto;
-  padding: clamp(18px, 3.5vw, 30px) clamp(20px, 4vw, 36px);
+  min-height: 0;
+  overflow: hidden auto;
+  padding: clamp(16px, 3vw, 30px) clamp(20px, 4vw, 40px);
   display: flex;
   flex-direction: column;
   justify-content: center;
+  font-family: "STZhongsong", "华文中宋", "Songti SC", "SimSun", "宋体", "Noto Serif SC", serif;
+  font-weight: 500;
+  line-height: 1.9;
+  letter-spacing: 0.02em;
 }
 .sdy-face__body .sdy-md {
   font-size: clamp(17px, 2.2vw, 21px);
-  line-height: 1.78;
+  line-height: 1.85;
+  width: 100%;
 }
+.sdy-face__body .katex { font-size: 1.05em; }
 .sdy-face--front .sdy-face__body { cursor: pointer; }
 
 .sdy-review__hint { text-align: center; color: var(--text-3); font-size: var(--fs-xs); margin-top: 16px; }

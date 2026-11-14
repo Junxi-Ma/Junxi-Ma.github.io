@@ -3,22 +3,22 @@
  * （测验标签在阶段三开放）
  */
 
-import db from '../db.js?v=2';
-import * as S from '../scheduler.js?v=2';
+import db from '../db.js?v=3';
+import * as S from '../scheduler.js?v=3';
 import {
   escapeHtml, renderMarkdown, renderCloze, parseCloze, clozeOrds, suggestClozes,
   newCard, newNode, newLink, fmtInterval, STATE_INFO, uid,
-} from '../models.js?v=2';
-import { toast, openModal, confirmBox, promptBox } from '../ui.js?v=2';
+} from '../models.js?v=3';
+import { toast, openModal, confirmBox, promptBox } from '../ui.js?v=3';
 import {
   exportSubjectFile, exportAllFile, readJsonFile, importPayload,
   cloudReady, cloudUser, cloudMeta, cloudUpload, cloudRestore, makeRestorePoint,
-} from '../backup.js?v=2';
-import { startReview } from './review.js?v=2';
-import { cascadeDeleteSubject } from './home.js?v=2';
-import { openAiBuildTree, openAiGenCards, renderReviewConsole } from './ai.js?v=2';
-import { parseFile, kindLabel } from '../parse.js?v=2';
-import { loadAiConfig, saveAiConfig, chat, aiUsage } from '../ai.js?v=2';
+} from '../backup.js?v=3';
+import { startReview } from './review.js?v=3';
+import { cascadeDeleteSubject } from './home.js?v=3';
+import { openAiBuildTree, openAiGenCards, renderReviewConsole } from './ai.js?v=3';
+import { parseFile, kindLabel } from '../parse.js?v=3';
+import { loadAiConfig, saveAiConfig, chat, aiUsage } from '../ai.js?v=3';
 
 const TABS = [
   { id: 'overview', label: '总览' },

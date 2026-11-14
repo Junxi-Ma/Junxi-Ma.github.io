@@ -7,15 +7,15 @@
  * 扫描件（PDF 页面无文字层）记录 pagesInfo，OCR 转写在阶段三接入视觉模型。
  */
 
-import { unzipSync, strFromU8 } from '../libs/fflate.mjs?v=2';
+import { unzipSync, strFromU8 } from '../libs/fflate.mjs?v=3';
 
 /* ============ PDF（pdf.js vendored @5.7.284） ============ */
 
 let _pdfjs = null;
 async function getPdfjs() {
   if (_pdfjs) return _pdfjs;
-  const lib = await import('../libs/pdf/pdf.min.mjs?v=2');
-  lib.GlobalWorkerOptions.workerSrc = new URL('../libs/pdf/pdf.worker.min.mjs?v=2', import.meta.url).href;
+  const lib = await import('../libs/pdf/pdf.min.mjs?v=3');
+  lib.GlobalWorkerOptions.workerSrc = new URL('../libs/pdf/pdf.worker.min.mjs?v=3', import.meta.url).href;
   _pdfjs = lib;
   return lib;
 }
