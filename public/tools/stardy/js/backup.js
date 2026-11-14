@@ -234,18 +234,12 @@ export function subjectTemplate() {
     docs: [],
     nodes: [
       { id: 'n1', subjectId: sid, pid: null, title: '第一章 示例章', detail: '章/节节点：作为分组容器', formula: '', order: 1 },
-      { id: 'n2', subjectId: sid, pid: 'n1', title: '示例知识点', detail: '记忆要点：把会考的定义、数值、条件写在这里。', formula: '$E = mc^2$', order: 2 },
+      { id: 'n2', subjectId: sid, pid: 'n1', title: '示例知识点', detail: '记忆要点：把会考的定义、数值、条件写在这里。', formula: '$$E = mc^2$$', order: 2 },
     ],
     links: [{ id: 'l1', subjectId: sid, from: 'n2', to: 'n1', label: '前置' }],
     cards: [
       { id: 'c1', subjectId: sid, nid: 'n2', noteId: null, ord: 0, kind: 'qa',
-        front: '这是正面问题（具体、可 30 秒作答）', back: '这是背面答案，支持 **Markdown** 与 $公式
-export async function makeRestorePoint() {
-  const payload = await collectAll();
-  await db.put('settings', { key: 'restore-point', at: Date.now(), payload });
-  return payload;
-}
-, clozeText: '' },
+        front: '这是正面问题（具体、可 30 秒作答）', back: '这是背面答案，支持 **Markdown** 与 $公式$', clozeText: '' },
       { id: 'c2', subjectId: sid, nid: 'n2', noteId: 'note-c2', ord: 1, kind: 'cloze',
         front: '', back: '', clozeText: '把关键句里的 {{c1::要背的词}} 挖空' },
     ],
