@@ -180,24 +180,40 @@ export async function chat(messages, { task = 'chat', temperature = 0.3, maxToke
 
 /* ============ 高层任务 ============ */
 
-export const SYS_STRUCT = `你是严谨的教材知识整理助手。把给定的教材片段整理成"链式知识结构"，规则：
-1. 层级不超过四层：章 → 节 → 知识点 → 细节。每个节点有自拟短 id，pid 指向父节点 id，顶层节点 pid 给 null。
-2. title 不超过 20 字；detail 用一两句话讲清该点（不超过 120 字）；formula 仅在确有公式时给 LaTeX（用 $...$ 或 $$...$$ 包裹），没有则给空字符串。
-3. 每个节点必须附 quote：从原文逐字摘出一句支撑该节点的话（不超过 50 字）。原文没有的内容一律不要编造。
-4. links 给出节点间关系，label 只能是"前置""拓展""易混"之一，没有关系就给空数组。
-5. 只输出 JSON，不要任何解释：{"nodes":[{"id","pid","title","detail","formula","quote"}],"links":[{"from","to","label"}]}`;
+export const SYS_STRUCT = `你是严谨的教材知识整理助手。章/节骨架已由系统按原文标题生成，你只负责把片段内容整理成【可背诵的知识点】挂到骨架下。
 
-export const SYS_CARDS = `你是闪卡出题助手。根据给定的知识点，出 2-4 张卡片，规则：
-- kind 为 "qa"：front 是一个具体、可短答的问题（禁止"简述XX""谈谈XX"这类空泛问法），back 是简洁完整的答案，可用 Markdown 与 $公式$。
-- kind 为 "cloze"：clozeText 取知识点里的关键句，用 {{c1::要背的词}} 标记挖空（可多个序号 c1、c2）。
-- 每张卡应能在 30 秒内作答；内容只来自给定知识点，不要编造。
+【输出规则】
+1. 只输出"知识点"节点（不输出章/节），pid 填【章节映射】里对应章/节的 id。
+2. title ≤18 字，沿用原文措辞（如"三族十属二十九类""堡状层积云""悬球状云底"），禁止自创概括标题。
+3. detail 是记忆要点，用短句/分号列出：定义、数值阈值、条件、分类、对比、成因、影响——原文里会考的数字与限定词（如 "<2500m""2-3km""由内向外生长""33°""8级以上"）必须全部保留。
+4. formula 仅在原文有公式时给 LaTeX（$...$ 或 $...$）；quote 从原文逐字摘录支撑句（≤50字）。原文没有的内容一律不要编造。
+5. links 给知识点之间的关系，label 只能是"前置""拓展""易混"。
+6. 只输出 JSON：{"nodes":[{"id","pid","title","detail","formula","quote"}],"links":[{"from","to","label"}]}`;
+
+export const SYS_CARDS = `你是闪卡出题助手。目标：把知识点做成【可直接背诵的记忆卡】，覆盖全部会考的细节。
+
+【必须覆盖】该知识点的：定义 / 数值与阈值 / 分类枚举 / 条件与成因 / 公式及其参数含义 / 易混对比——有什么考什么，出 3-5 张，宁多勿漏。
+
+【好卡示例·照此风格】
+✓ front:"雨层云和积雨云的降水性质有何不同？" back:"雨层云产生**连续性**降水；积雨云产生**阵性**降水（有时有冰雹和龙卷风）。"
+✓ front:"低云、中云、高云按云底高度如何划分？" back:"低云 <2500m；中云 2500-6000m；高云 >6000m。"
+✓ front:"热滞系数 λ 由哪些因素决定？" back:"λ=CM/(hs)：元件热容量 MC 越大、散热面积 s 越小则 λ 越大；热交换系数 h 取决于介质性质与通风量。"
+
+【禁止】
+✗ "这个单元/章节讲了什么"（章节概述题）
+✗ "简述XX""谈谈XX""XX有什么意义"（空泛问法）
+✗ 答案里出现原文没有的编造内容
+
+【格式】
+- kind "qa"：front 指向一个具体、唯一、可 30 秒作答的记忆点；back 完整给出（保留原文数字、限定词、并列项），可用 Markdown 与 $公式$。
+- kind "cloze"：clozeText 取原文关键句用 {{c1::要背的词}} 挖空（适合背原文表述）。
 - 只输出 JSON：{"cards":[{"kind","front","back","clozeText"}]}（qa 的 clozeText 为空串；cloze 的 front/back 为空串）`;
 
-export const SYS_QUIZ = `你是测验出题助手。根据给定的知识点出一道测验题，规则：
-- type 为 "choice"：单选四项。q 是题干（禁止"下列说法正确的是"这类空泛问法）；opts 恰好 4 个选项；answer 是正确选项下标 0-3；explain 是一句话解析。
-- type 为 "fill"：q 的题干中用 ____ 标出空位；answer 是简短的参考答案；explain 是解析。
-- type 为 "essay"：q 是简答/论述题；answer 是参考答案要点（分点、每点一行）；explain 是给阅卷的判分提示（要点与分值建议）。
-- 题目必须能从给定知识点推出，不要编造；难度适中，30-90 秒可作答。
+export const SYS_QUIZ = `你是测验出题助手。目标：出一道考【具体记忆点】的题，禁止章节概述题。规则：
+- type "choice"：单选四项。q 题干针对一个具体考点（数值阈值/分类归属/条件成因/仪器原理要点）；干扰项应来自同类知识的常见混淆点；answer 是正确选项下标 0-3；explain 一句话解析。
+- type "fill"：q 用 ____ 标出空位（挖掉的必须是关键词：数字、名称、参数）；answer 是简短参考答案。
+- type "essay"：q 是针对具体知识点的简答题；answer 是参考要点（分点、每点一行，保留原文数字与限定词）；explain 给判分要点。
+- 禁止："下列说法正确的是"这类空泛题干；"概述本章内容"；原文没有的编造内容。
 - 只输出 JSON：{"quiz":{"type","q","opts","answer","explain"}}（fill/essay 的 opts 为空数组）`;
 
 export const SYS_GRADE = `你是严格的阅卷老师。给定题目、参考答案要点和学生答案：
@@ -331,6 +347,7 @@ function mockChat(task, messages) {
         (cur || (cur = ['要点'], chunks.push(cur))).push(l);
       }
     }
+    const skelId = (userMsg.match(/【(skd+)】/) || [])[1] || null;
     const groups = (chunks.length ? chunks : [['要点', ...lines.slice(0, 4)]]).slice(0, 3);
     const nodes = [];
     const links = [];

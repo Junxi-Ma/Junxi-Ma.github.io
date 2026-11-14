@@ -90,42 +90,86 @@ export function openAiBuildTree(subject, docs, onDone) {
 
     const bar = box.querySelector('#bt-bar');
     const line = box.querySelector('#bt-line');
-    let nodeN = 0, linkN = 0, mergedN = 0;
-    // 跨片段同章合并：标题相同的根节点不重复建，其子树挂到已有章下
-    const normTitle = (s) => String(s || '').replace(/[\s第章章节：:、·．.\-—~～()（）]/g, '').slice(0, 10);
-    const seenRoots = new Map(); // normTitle -> tempId（已入库的根）
+    let nodeN = 0, linkN = 0, skelN = 0;
 
+    // ===== 章骨架：从解析标题中严格提取「第X章/节」结构（不花 token，结构准确） =====
+    // 跨资料同章共用骨架节点；日期/英文/正文残留行全部过滤
+    const normTitle = (s) => String(s || '').replace(/[\s第章章节：:、·．.\-—~～()（）]/g, '').slice(0, 10);
+    const CH_RE = /第\s*[一二三四五六七八九十百\d]+\s*[章节讲部分][\s　]*([\u4e00-\u9fa5\w\s]{0,20})?/;
+    const isGarbage = (s) => {
+      const str = String(s || '');
+      if (str.length > 34 || str.length < 4) return true;
+      if (/\d{4}\s*年|january|february|march|april|june|july|august|september|october|november|december/i.test(str)) return true;
+      const cn = (str.match(/[\u4e00-\u9fa5]/g) || []).length;
+      if (cn < 4) return true;
+      return false;
+    };
+    const skeleton = new Map(); // normTitle -> { tempId, title, docName }
+    const skOrder = [];
+    for (const d of chosen) {
+      const candidates = [
+        ...(d.outline || []).filter((o) => o.level <= 2).map((o) => o.title),
+        ...(d.text || '').split('\n').filter((l) => /^\s*第\s*[一二三四五六七八九十百\d]+\s*[章节讲部分]/.test(l)),
+      ];
+      for (const raw of candidates) {
+        const m = CH_RE.exec(String(raw));
+        if (!m) continue; // 只收「第X章/节」形态（顺带抢救跨行误并行里的章标题）
+        const title = m[0].replace(/[\s　]+/g, ' ').trim().slice(0, 40);
+        if (isGarbage(title)) continue;
+        const key = normTitle(title);
+        if (!key || key.length < 2 || skeleton.has(key)) continue;
+        const tempId = 'sk' + (skeleton.size + 1);
+        skeleton.set(key, { tempId, title, docName: d.name });
+        skOrder.push(skeleton.get(key));
+      }
+    }
+    // 骨架入 pending（同批次，审核台可见可删）
+    for (const sk of skOrder) {
+      await db.put('pending', {
+        id: uid(), subjectId: subject.id, batchId, kind: 'node', createdAt: Date.now(),
+        data: {
+          tempId: sk.tempId, pidTemp: null, title: sk.title,
+          detail: '', formula: '', quote: '章节标题（原文）',
+          sourceRef: { docId: null, docName: sk.docName, chunkIdx: null, quote: sk.title },
+        },
+      });
+      skelN++;
+    }
+    // 目录注入文本：让 AI 知道全书结构并引用骨架 id
+    const toc = skOrder.map((sk) => `【${sk.tempId}】${sk.title}`).join('\n');
+    const findSkel = (heading) => {
+      const k = normTitle(heading);
+      return (k && skeleton.get(k)) || null;
+    };
+
+    let lastHeading = '';
     for (let i = 0; i < chunks.length; i++) {
       if (stopFlag) break;
       const { doc, chunk } = chunks[i];
+      const heading = chunk.heading || lastHeading; // 片段无标题行时延续上一片段所属章
+      lastHeading = heading;
       bar.style.width = `${(i / chunks.length) * 100}%`;
-      line.textContent = `片段 ${i + 1}/${chunks.length}：${chunk.heading || doc.name}…`;
+      line.textContent = `片段 ${i + 1}/${chunks.length}：${heading || doc.name}…`;
       try {
-        const { nodes: rawNodes, links } = await aiStructFromChunk(chunk.text, { docName: doc.name, idx: i, total: chunks.length });
-        // —— 同章合并：重复根丢弃，引用它的子节点改挂已有根 ——
-        const dropMap = new Map(); // 被丢弃的根 tempId -> 已有根 tempId
-        const nodes = [];
-        for (const n of rawNodes.slice(0, 14)) {
-          const tempId = String(n.id || uid()).slice(0, 12);
-          const pidTemp = n.pid ? String(n.pid).slice(0, 12) : null;
-          const key = normTitle(n.title);
-          if (!pidTemp && key && seenRoots.has(key)) {
-            dropMap.set(tempId, seenRoots.get(key));
-            mergedN++;
-            continue;
-          }
-          nodes.push({ ...n, id: tempId, pid: pidTemp });
-          if (!pidTemp && key) seenRoots.set(key, tempId);
-        }
-        // 重映射：pid 指向被丢弃根的节点 → 改挂已有根
-        const remap = (pid) => (pid && dropMap.has(pid) ? dropMap.get(pid) : pid);
+        const { nodes: rawNodes, links } = await aiStructFromChunk(chunk.text, {
+          docName: doc.name, idx: i, total: chunks.length, toc, heading,
+        });
+        const curSkel = findSkel(heading);
         const srcRef = { docId: doc.id, docName: doc.name, chunkIdx: chunk.idx, quote: chunk.heading || '' };
-        for (const n of nodes) {
-          const pidTemp = remap(String(n.pid || '')) || null;
+        // pid 兜底：AI 忘填/填错时，挂到当前片段所属章的骨架
+        const resolvePid = (pidTemp) => {
+          const p = pidTemp ? String(pidTemp).slice(0, 12) : null;
+          if (p && (skeleton.get(normTitle(p))?.tempId === p || p.startsWith('sk'))) return p;
+          if (p) return p; // chunk 内部层级引用照旧
+          return curSkel?.tempId || null;
+        };
+        for (const n of rawNodes.slice(0, 14)) {
+          const pidTemp = resolvePid(n.pid);
+          if (!pidTemp && !curSkel) continue; // 全书无骨架时丢弃 AI 根节点（不该发生）
           await db.put('pending', {
             id: uid(), subjectId: subject.id, batchId, kind: 'node', createdAt: Date.now(),
             data: {
-              tempId: n.id,
+              tempId: String(n.id || uid()).slice(0, 12),
               pidTemp: pidTemp ? String(pidTemp).slice(0, 12) : null,
               title: String(n.title).slice(0, 40),
               detail: String(n.detail || '').slice(0, 400),
@@ -139,7 +183,7 @@ export function openAiBuildTree(subject, docs, onDone) {
         for (const l of links.slice(0, 12)) {
           await db.put('pending', {
             id: uid(), subjectId: subject.id, batchId, kind: 'link', createdAt: Date.now(),
-            data: { fromTemp: remap(String(l.from)), toTemp: remap(String(l.to)), label: l.label, sourceRef: srcRef },
+            data: { fromTemp: String(l.from), toTemp: String(l.to), label: l.label, sourceRef: srcRef },
           });
           linkN++;
         }
@@ -151,11 +195,11 @@ export function openAiBuildTree(subject, docs, onDone) {
     bar.style.width = '100%';
     box.querySelector('[data-a="stop"]').hidden = true;
     line.textContent = stopFlag
-      ? `已停止：本批收集 ${nodeN} 个节点、${linkN} 条关系（合并重复章 ${mergedN} 处），去审核台确认入库`
-      : `完成：收集 ${nodeN} 个节点、${linkN} 条关系（合并重复章 ${mergedN} 处），去审核台确认入库`;
-    if (nodeN + linkN === 0) { toast('没有产出可审核的内容', true); return; }
+      ? `已停止：骨架 ${skelN} 章 + ${nodeN} 个知识点、${linkN} 条关系，去审核台确认入库`
+      : `完成：骨架 ${skelN} 章 + ${nodeN} 个知识点、${linkN} 条关系，去审核台确认入库`;
+    if (skelN + nodeN === 0) { toast('没有产出可审核的内容', true); return; }
     close();
-    toast(`AI 完成：${nodeN} 节点 / ${linkN} 关系待审核（合并重复章 ${mergedN} 处）`);
+    toast(`AI 完成：骨架 ${skelN} 章 + ${nodeN} 知识点待审核`);
     if (onDone) onDone();
   };
 }
