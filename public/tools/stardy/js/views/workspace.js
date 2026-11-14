@@ -1,27 +1,27 @@
 /**
  * Stardy — 科目工作台：总览 / 知识树 / 资料 / 卡片 / 设置
- * （测验标签在阶段三开放）
+
  */
 
-import db from '../db.js?v=4';
-import * as S from '../scheduler.js?v=4';
+import db from '../db.js?v=5';
+import * as S from '../scheduler.js?v=5';
 import {
   escapeHtml, renderMarkdown, renderCloze, parseCloze, clozeOrds, suggestClozes,
   newCard, newNode, newLink, fmtInterval, STATE_INFO, uid,
-} from '../models.js?v=4';
-import { toast, openModal, confirmBox, promptBox } from '../ui.js?v=4';
+} from '../models.js?v=5';
+import { toast, openModal, confirmBox, promptBox } from '../ui.js?v=5';
 import {
   exportSubjectFile, exportAllFile, readJsonFile, importPayload,
   cloudReady, cloudUser, cloudMeta, cloudUpload, cloudRestore, makeRestorePoint,
-} from '../backup.js?v=4';
-import { startReview } from './review.js?v=4';
-import { cascadeDeleteSubject } from './home.js?v=4';
-import { openAiBuildTree, openAiGenCards, renderReviewConsole } from './ai.js?v=4';
-import { parseFile, kindLabel, ocrPdfPages } from '../parse.js?v=4';
-import { aiOcrPage } from '../ai.js?v=4';
-import { renderQuiz } from './quiz.js?v=4';
-import { renderRadialGraph } from './graph.js?v=4';
-import { loadAiConfig, saveAiConfig, chat, aiUsage } from '../ai.js?v=4';
+} from '../backup.js?v=5';
+import { startReview } from './review.js?v=5';
+import { cascadeDeleteSubject } from './home.js?v=5';
+import { openAiBuildTree, openAiGenCards, renderReviewConsole } from './ai.js?v=5';
+import { parseFile, kindLabel, ocrPdfPages } from '../parse.js?v=5';
+import { aiOcrPage } from '../ai.js?v=5';
+import { renderQuiz } from './quiz.js?v=5';
+import { renderRadialGraph } from './graph.js?v=5';
+import { loadAiConfig, saveAiConfig, chat, aiUsage } from '../ai.js?v=5';
 
 const TABS = [
   { id: 'overview', label: '总览' },
@@ -68,7 +68,7 @@ export async function renderWorkspace(root, subjectId, tab = 'overview') {
       <nav class="sdy-tabs" id="ws-tabs">
         ${tabs.map((t) => `
           <button class="sdy-tab${t.id === tab ? ' on' : ''}" data-tab="${t.id}" ${t.disabled ? 'data-disabled="1"' : ''}
-            title="${t.disabled ? '阶段三开放' : ''}">
+            title="${t.disabled ? '该板块暂未开放' : ''}">
             ${t.label}${!t.disabled && t.id === 'tree' && nodes.length ? `<span class="sdy-tab__n">${nodes.length}</span>` : ''}
             ${!t.disabled && t.id === 'cards' ? `<span class="sdy-tab__n">${cards.length}</span>` : ''}
             ${!t.disabled && t.id === 'docs' && docs.length ? `<span class="sdy-tab__n">${docs.length}</span>` : ''}
@@ -624,7 +624,7 @@ async function renderDocs(panel, subject, root) {
       <div id="dc-dropzone" class="sdy-dropzone" tabindex="0">
         <div style="font-size:30px">📄</div>
         <p style="margin:6px 0 2px;font-weight:600;color:var(--text-1)">点击选择 或 拖拽文件到这里</p>
-        <p class="sdy-field__hint">支持 PDF / PPTX / DOCX / MD / TXT，可多选；PDF 按字号自动重建章节结构，扫描件（无文字层）会在列表中标注，OCR 阶段三开放。旧版 .ppt / .doc 请先另存为新格式。</p>
+        <p class="sdy-field__hint">支持 PDF / PPTX / DOCX / MD / TXT，可多选；PDF 按字号自动重建章节结构，扫描件（无文字层）会提示用 AI 视觉模型逐页转写。旧版 .ppt / .doc 请先另存为新格式。</p>
         <input type="file" id="dc-file" multiple accept=".pdf,.pptx,.ppsx,.docx,.md,.markdown,.txt,.text" hidden>
       </div>
       <div id="dc-status" class="sdy-field__hint" style="margin-top:8px" hidden></div>
@@ -849,7 +849,7 @@ async function renderCards(panel, subject, root) {
             还没有卡片。<br>
             点「✚ 新卡片」手动创建问答卡或挖空卡；<br>
             也可以先去「知识树」搭结构，再从节点上一键出卡；<br>
-            阶段二开放后可由 AI 从课件批量生成卡片（经审核入库）。`}
+            也可以用 🤖 AI 从课件批量生成卡片（经审核入库）。`}
         </div>`}
     </div>`;
 

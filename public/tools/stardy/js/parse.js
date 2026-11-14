@@ -4,18 +4,18 @@
  * 设计取舍（承自前身 Vue 版）：只做文本提取，不做版面还原。
  * PDF 用字号聚类重建章节大纲；docx/pptx 读 OOXML 标题样式；
  * Markdown 读 # 层级。分块用中文标题正则 + 字数上限。
- * 扫描件（PDF 页面无文字层）记录 pagesInfo，OCR 转写在阶段三接入视觉模型。
+ * 扫描件（PDF 页面无文字层）记录 pagesInfo，OCR 转写用视觉模型逐页完成。
  */
 
-import { unzipSync, strFromU8 } from '../libs/fflate.mjs?v=4';
+import { unzipSync, strFromU8 } from '../libs/fflate.mjs?v=5';
 
 /* ============ PDF（pdf.js vendored @5.7.284） ============ */
 
 let _pdfjs = null;
 async function getPdfjs() {
   if (_pdfjs) return _pdfjs;
-  const lib = await import('../libs/pdf/pdf.min.mjs?v=4');
-  lib.GlobalWorkerOptions.workerSrc = new URL('../libs/pdf/pdf.worker.min.mjs?v=4', import.meta.url).href;
+  const lib = await import('../libs/pdf/pdf.min.mjs?v=5');
+  lib.GlobalWorkerOptions.workerSrc = new URL('../libs/pdf/pdf.worker.min.mjs?v=5', import.meta.url).href;
   _pdfjs = lib;
   return lib;
 }
@@ -262,7 +262,7 @@ export async function parseFile(file, onProgress = null) {
   if (name.endsWith('.docx')) return parseDocx(file);
   if (name.endsWith('.md') || name.endsWith('.markdown')) return parseMarkdownText(file.name, await file.text());
   if (name.endsWith('.txt') || name.endsWith('.text')) return { kind: 'txt', text: await file.text(), outline: null };
-  throw new Error('暂不支持的格式：' + file.name + '（当前支持 PDF / PPTX / DOCX / MD / TXT；旧版 .ppt/.doc 请先另存为新格式，扫描件 OCR 在阶段三开放）');
+  throw new Error('暂不支持的格式：' + file.name + '（当前支持 PDF / PPTX / DOCX / MD / TXT；旧版 .ppt/.doc 请先另存为新格式。扫描件 PDF 的无文字页会在解析后提示用视觉模型转写）');
 }
 
 /* ============ 扫描件 OCR（视觉模型逐页转写） ============ */

@@ -2,7 +2,7 @@
  * Stardy — 共享 UI 工具：轻提示 / 模态 / 确认框
  */
 
-import { escapeHtml } from './models.js?v=4';
+import { escapeHtml } from './models.js?v=5';
 
 let toastTimer = null;
 export function toast(msg, isErr = false, ms = 2600) {

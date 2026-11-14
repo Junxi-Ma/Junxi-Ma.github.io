@@ -6,13 +6,13 @@
  * 「错题卡」进 FSRS 队列（按"重来"推进，当天到期重练）——错题回流闭环。
  */
 
-import db from '../db.js?v=4';
-import * as S from '../scheduler.js?v=4';
-import { escapeHtml, renderMarkdown, newCard, newQuiz, normalizeAnswer, STATE_INFO } from '../models.js?v=4';
-import { toast, openModal, confirmBox } from '../ui.js?v=4';
-import { aiGradeEssay, aiQuizForNode, loadAiConfig } from '../ai.js?v=4';
-import { openAiGenQuiz } from './ai.js?v=4';
-import { gotoTab } from './workspace.js?v=4';
+import db from '../db.js?v=5';
+import * as S from '../scheduler.js?v=5';
+import { escapeHtml, renderMarkdown, newCard, newQuiz, normalizeAnswer, STATE_INFO } from '../models.js?v=5';
+import { toast, openModal, confirmBox } from '../ui.js?v=5';
+import { aiGradeEssay, aiQuizForNode, loadAiConfig } from '../ai.js?v=5';
+import { openAiGenQuiz } from './ai.js?v=5';
+import { gotoTab } from './workspace.js?v=5';
 
 // 进行中的测验会话（跨 rerender 保留）
 let quizSession = null;

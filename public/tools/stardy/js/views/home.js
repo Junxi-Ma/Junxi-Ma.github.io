@@ -2,12 +2,12 @@
  * Stardy — 首页：科目列表 + 全局统计
  */
 
-import db from '../db.js?v=4';
-import { dueCounts, streak } from '../scheduler.js?v=4';
-import { escapeHtml as _e, dayStr, newSubject } from '../models.js?v=4';
-import { toast, confirmBox, openModal } from '../ui.js?v=4';
-import { exportSubjectFile } from '../backup.js?v=4';
-import { startReview } from './review.js?v=4';
+import db from '../db.js?v=5';
+import { dueCounts, streak } from '../scheduler.js?v=5';
+import { escapeHtml as _e, dayStr, newSubject } from '../models.js?v=5';
+import { toast, confirmBox, openModal } from '../ui.js?v=5';
+import { exportSubjectFile } from '../backup.js?v=5';
+import { startReview } from './review.js?v=5';
 
 export async function renderHome(root) {
   document.title = 'Stardy · 学习系统 — Michael';
@@ -63,7 +63,7 @@ function renderSubjectGrid(area, subjects, dueBySubject) {
       <div class="sdy-empty">
         还没有科目。<br>
         点右上角「✚ 新建科目」开始；建好后可以在「卡片」页手动建卡，<br>
-        也可以把课件 PDF / PPT / Word 上传进来，让 AI 帮你整理（阶段二开放）。
+        也可以把课件 PDF / PPT / Word 上传进来，让 AI 帮你整理知识树与卡片。
       </div>`;
     return;
   }
