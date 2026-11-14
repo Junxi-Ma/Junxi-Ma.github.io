@@ -51,7 +51,7 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding: 18px;
+  padding: 16px 50px 16px 18px;
   background: var(--card-bg);
   border: 1px solid var(--border);
   border-radius: var(--radius-card);
@@ -128,16 +128,35 @@
 }
 .sdy-backhome:hover { color: var(--accent-strong); text-decoration: none; }
 
-/* 科目卡底部：due 徽标 + 操作按钮（右侧，不挡名称） */
-.sdy-subject__foot {
+/* 科目卡右侧操作列：悬停滑入，竖排不挡字 */
+.sdy-subject__side {
+  position: absolute;
+  top: 50%;
+  right: 8px;
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 6px;
-  margin-top: auto;
-  padding-top: 4px;
+  opacity: 0;
+  transform: translateY(-50%) translateX(8px);
+  pointer-events: none;
+  transition: opacity var(--dur-hover) var(--ease), transform var(--dur-hover) var(--ease);
 }
-.sdy-subject__foot .btn { opacity: 0.85; }
-.sdy-subject__foot .btn:hover { opacity: 1; }
+.sdy-subject:hover .sdy-subject__side,
+.sdy-subject:focus-within .sdy-subject__side {
+  opacity: 1;
+  transform: translateY(-50%);
+  pointer-events: auto;
+}
+@media (hover: none) {
+  .sdy-subject__side { opacity: 1; transform: translateY(-50%); pointer-events: auto; }
+}
+.sdy-subject__side .btn {
+  min-height: 0;
+  padding: 6px 9px;
+  font-size: 12px;
+  box-shadow: var(--shadow-card);
+}
+.sdy-subject__side .btn:last-child { color: var(--danger-fg); }
 
 /* ---------- 科目工作台 ---------- */
 .sdy-ws-head {

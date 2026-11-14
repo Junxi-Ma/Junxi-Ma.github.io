@@ -84,9 +84,8 @@ function renderSubjectGrid(area, subjects, dueBySubject) {
           <span>新卡 <b>${due.new}</b></span>
           <span>复习 <b>${due.review + due.learn}</b></span>
         </div>
-        <div class="sdy-subject__foot">
-          <span class="sdy-subject__due">${due.total > 0 ? `今日待学 ${due.total}` : '今日已清'}</span>
-          <span class="sdy-grow"></span>
+        <span class="sdy-subject__due">${due.total > 0 ? `今日待学 ${due.total}` : '今日已清'}</span>
+        <div class="sdy-subject__side">
           <button class="btn btn--sm" data-act="review" data-id="${s.id}" title="开始复习">▶ 复习</button>
           <button class="btn btn--sm" data-act="export" data-id="${s.id}" title="导出本科目 JSON">导出</button>
           <button class="btn btn--sm" data-act="delete" data-id="${s.id}" title="删除科目">删除</button>
