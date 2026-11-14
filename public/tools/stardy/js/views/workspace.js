@@ -393,7 +393,29 @@ async function renderTree(panel, subject, root) {
         <button class="btn btn--sm" data-nlink>＋ 关系</button>
         <button class="btn btn--sm btn--ghost" data-ndel style="color:var(--danger-fg)">删除</button>
       </div>
+      ${nodeCardsHtml(n)}
       ${links.length ? `<p class="sdy-panel__title" style="margin-top:16px">关系标注</p>${linkRows}` : ''}`;
+  }
+
+  // 节点关联的卡片列表（含子级卡片聚合）
+  function nodeCardsHtml(n) {
+    const own = cards.filter((c) => c.nid === n.id);
+    const kidIds = collectDescendants(n.id).filter((id) => id !== n.id);
+    const kidCards = cards.filter((c) => kidIds.includes(c.nid));
+    if (!own.length && !kidCards.length) return '';
+    const rowOf = (c, fromChild) => {
+      const st = c.suspended ? { name: '已暂停', cls: 'muted' } : STATE_INFO[c.fsrs?.state ?? 0];
+      return `
+        <div class="sdy-node-card" data-neditcard="${c.id}">
+          <span class="sdy-chip sdy-chip--${st.cls}">${st.name}</span>
+          <span class="sdy-node-card__front">${escapeHtml(String(c.kind === 'cloze' ? c.clozeText.replace(/\{\{c\d+::([^:{}]*)(?:::[^{}]*)?\}\}/g, '＿＿') : c.front).slice(0, 46))}</span>
+          ${fromChild ? `<span class="sdy-chip sdy-chip--muted">子级</span>` : ''}
+        </div>`;
+    };
+    return `
+      <p class="sdy-panel__title" style="margin-top:16px">关联卡片（${own.length + kidCards.length} 张，点击编辑）</p>
+      ${own.map((c) => rowOf(c, false)).join('')}
+      ${kidCards.length ? `<div style="margin-top:6px">${kidCards.map((c) => rowOf(c, true)).join('')}</div>` : ''}`;
   }
 
   const rerender = () => renderTree(panel, subject, root);
@@ -627,6 +649,12 @@ async function renderTree(panel, subject, root) {
       bindDetail('[data-naddchild]', () => openNodeEditor(subject, { pid: sel.id, onDone: rerender }));
       bindDetail('[data-nedit]', () => openNodeEditor(subject, { node: sel, onDone: rerender }));
       bindDetail('[data-ncard]', (e) => openCardEditor(subject, { nid: sel.id, kind: e.currentTarget.dataset.ncard, onDone: () => gotoTab(root, subject.id, 'tree') }));
+      for (const b of treeview.querySelectorAll('[data-neditcard]')) {
+        b.addEventListener('click', () => {
+          const card = cards.find((x) => x.id === b.dataset.neditcard);
+          if (card) openCardEditor(subject, { card, onDone: () => gotoTab(root, subject.id, 'tree') });
+        });
+      }
     bindDetail('[data-ndel]', async () => {
       const nKids = countDescendants(sel.id);
       const ok = await confirmBox({
@@ -927,6 +955,18 @@ async function renderCards(panel, subject, root) {
   }
 
   let list = cards;
+  if (cardFilters.chapter !== 'all') {
+    const chId = cardFilters.chapter;
+    const sub = new Set([chId]);
+    let grew = true;
+    while (grew) {
+      grew = false;
+      for (const n of nodes) {
+        if (n.pid && sub.has(n.pid) && !sub.has(n.id)) { sub.add(n.id); grew = true; }
+      }
+    }
+    list = list.filter((c) => c.nid && sub.has(c.nid));
+  }
   if (cardFilters.q) {
     const q = cardFilters.q.toLowerCase();
     list = list.filter((c) => (c.front || '').toLowerCase().includes(q) || (c.back || '').toLowerCase().includes(q) || (c.clozeText || '').toLowerCase().includes(q));
@@ -937,9 +977,15 @@ async function renderCards(panel, subject, root) {
       : list.filter((c) => !c.suspended && c.fsrs?.state === Number(cardFilters.state));
   }
   if (cardFilters.kind !== 'all') list = list.filter((c) => c.kind === cardFilters.kind);
-  list = [...list].sort((a, b) => cardFilters.sort === 'due'
-    ? new Date(a.fsrs?.dueAt || 0) - new Date(b.fsrs?.dueAt || 0)
-    : (b.createdAt || 0) - (a.createdAt || 0));
+  list = [...list].sort((a, b) => {
+    if (cardFilters.sort === 'due') return new Date(a.fsrs?.dueAt || 0) - new Date(b.fsrs?.dueAt || 0);
+    if (cardFilters.sort === 'chapter') {
+      const pa = (a.nid && nodePath.get(a.nid)) || '～未关联';
+      const pb = (b.nid && nodePath.get(b.nid)) || '～未关联';
+      return pa.localeCompare(pb, 'zh') || (a.kind === 'cloze' ? a.ord : 0) - (b.kind === 'cloze' ? b.ord : 0);
+    }
+    return (b.createdAt || 0) - (a.createdAt || 0);
+  });
 
   const previewText = (c) => c.kind === 'cloze'
     ? c.clozeText.replace(/\{\{c\d+::([^:{}]*)(?:::[^{}]*)?\}\}/g, '＿＿')
@@ -962,9 +1008,14 @@ async function renderCards(panel, subject, root) {
         <option value="qa" ${cardFilters.kind === 'qa' ? 'selected' : ''}>问答</option>
         <option value="cloze" ${cardFilters.kind === 'cloze' ? 'selected' : ''}>挖空</option>
       </select>
+      <select class="sdy-select" id="cf-chapter">
+        <option value="all">全部章节</option>
+        ${nodes.filter((n) => !n.pid).map((n) => `<option value="${n.id}" ${cardFilters.chapter === n.id ? 'selected' : ''}>${escapeHtml(n.title.slice(0, 20))}</option>`).join('')}
+      </select>
       <select class="sdy-select" id="cf-sort">
         <option value="created" ${cardFilters.sort === 'created' ? 'selected' : ''}>按创建时间</option>
         <option value="due" ${cardFilters.sort === 'due' ? 'selected' : ''}>按到期时间</option>
+        <option value="chapter" ${cardFilters.sort === 'chapter' ? 'selected' : ''}>按章节排序</option>
       </select>
       <span class="sdy-grow"></span>
       <button class="btn btn--sm" id="cf-aigen">🤖 AI 出卡</button>
@@ -1010,7 +1061,7 @@ async function renderCards(panel, subject, root) {
     clearTimeout(debounce);
     debounce = setTimeout(() => { cardFilters.q = e.target.value.trim(); rerender(); }, 240);
   });
-  for (const [sel, key] of [['#cf-state', 'state'], ['#cf-kind', 'kind'], ['#cf-sort', 'sort']]) {
+  for (const [sel, key] of [['#cf-state', 'state'], ['#cf-kind', 'kind'], ['#cf-sort', 'sort'], ['#cf-chapter', 'chapter']]) {
     panel.querySelector(sel).addEventListener('change', (e) => { cardFilters[key] = e.target.value; rerender(); });
   }
   panel.querySelector('#cf-new').addEventListener('click', () => openCardEditor(subject, { onDone: () => gotoTab(root, subject.id, 'cards') }));
@@ -1220,6 +1271,7 @@ async function renderSettings(panel, subject) {
   const usage = aiUsage();
   panel.innerHTML = `
     <div class="sdy-panel">
+      <p class="sdy-field__hint" style="margin:0 0 14px">AI 配置 / 云备份 / 数据导入在<a href="#/settings" style="color:var(--accent-strong)">⚙ 全局设置</a>（首页右上角也可进入）。</p>
       <p class="sdy-panel__title">复习参数（FSRS-6）</p>
       <div class="sdy-field">
         <label class="sdy-field__label">目标保持率：<b id="set-dr-label">${st.desiredRetention.toFixed(2)}</b></label>
@@ -1263,71 +1315,11 @@ async function renderSettings(panel, subject) {
       </div>
     </div>
 
-    <div class="sdy-panel">
-      <p class="sdy-panel__title">AI 配置 <span class="sdy-chip ${aiCfg.mock ? 'sdy-chip--muted' : 'sdy-chip--review'}" id="aic-mode">${aiCfg.mock ? 'Mock 演示模式' : '已接入真实 API'}</span></p>
-      <p class="sdy-field__hint" style="margin-bottom:10px">
-        填 OpenAI 兼容端点（中转站 / 自建均可）+ Key + 模型名；端点会自动补 /v1/chat/completions。
-        密钥只存在本机 localStorage，不参与云备份与导出。未配置时可勾选 Mock 模式走通全流程（输出为演示数据）。
-      </p>
-      <div class="sdy-row">
-        <div class="sdy-field sdy-grow" style="min-width:220px">
-          <label class="sdy-field__label">API 端点</label>
-          <input class="sdy-input" id="aic-endpoint" placeholder="https://xxx.example.com/v4" value="${escapeHtml(aiCfg.endpoint)}">
-        </div>
-        <div class="sdy-field sdy-grow" style="min-width:180px">
-          <label class="sdy-field__label">API Key</label>
-          <input class="sdy-input" id="aic-key" type="password" placeholder="sk-…" value="${escapeHtml(aiCfg.key)}" autocomplete="off">
-        </div>
-        <div class="sdy-field" style="min-width:160px">
-          <label class="sdy-field__label">模型</label>
-          <input class="sdy-input" id="aic-model" placeholder="例如 glm-4.6 / deepseek-chat" value="${escapeHtml(aiCfg.model)}">
-        </div>
-        <div class="sdy-field" style="min-width:150px">
-          <label class="sdy-field__label">最大输出 tokens</label>
-          <input class="sdy-input" id="aic-maxout" placeholder="留空=由服务端决定" value="${escapeHtml(String(aiCfg.maxOut ?? 384000))}">
-        </div>
-      </div>
-      <div class="sdy-field" style="margin-top:2px">
-        <label class="sdy-checkrow"><input type="checkbox" id="aic-proxy" ${aiCfg.proxy ? 'checked' : ''}> 经 Supabase 代理转发（用于不支持浏览器跨域的端点，如 opencode Zen 网关）</label>
-        <button class="btn btn--sm" id="aic-proxyhelp" style="align-self:flex-start">📋 代理函数部署指引</button>
-      </div>
-      <div class="sdy-row" style="margin-top:4px">
-        <label class="sdy-checkrow"><input type="checkbox" id="aic-mock" ${aiCfg.mock ? 'checked' : ''}> Mock 演示模式（不调用真实 API）</label>
-        <span class="sdy-grow"></span>
-        <button class="btn" id="aic-test">测试连接</button>
-        <button class="btn btn--primary" id="aic-save">保存 AI 配置</button>
-        <span class="sdy-field__hint" id="aic-saved" hidden>已保存 ✓</span>
-      </div>
-      <p class="sdy-field__hint" style="margin-top:8px">用量：${usage.calls} 次调用 · ${usage.totalTokens} tokens（累计本机）<button class="btn btn--sm btn--ghost" id="aic-resetusage" style="margin-left:8px">清零</button></p>
-    </div>
-
-    <div class="sdy-panel">
-      <p class="sdy-panel__title">云备份 <span class="sdy-chip sdy-chip--muted" id="cb-status">检查中…</span></p>
-      <p class="sdy-field__hint" style="margin-bottom:10px">
-        把全部科目（卡片 + 复习进度 + 知识树）手动备份到你的 Supabase 账号，换设备 / 清缓存前先上传。
-        每个账号保留最近一份，上传会覆盖；恢复前会先在本机留恢复点。AI 密钥不参与备份。
-      </p>
-      <div class="sdy-row">
-        <button class="btn btn--primary" id="cb-upload">☁ 立即上传备份</button>
-        <button class="btn" id="cb-restore">⬇ 从云端恢复…</button>
-        <span class="sdy-field__hint" id="cb-meta"></span>
-      </div>
-    </div>
-
-    <div class="sdy-panel">
-      <p class="sdy-panel__title">本地数据（分科目文件）</p>
-      <div class="sdy-row">
-        <button class="btn" id="ld-exp1">导出本科目 JSON</button>
-        <button class="btn" id="ld-expall">导出全部科目</button>
-        <button class="btn" id="ld-imp">导入科目 JSON…</button>
-        <button class="btn" id="ld-tpl">📋 科目文件格式说明</button>
-        <input type="file" id="ld-file" accept=".json,application/json" hidden>
-      </div>
-      <p class="sdy-field__hint" style="margin-top:8px">导入按科目文件进行，全部 id 会重新生成、不会覆盖现有数据；卡片复习进度随文件带走。AI 配置不参与导出。</p>
-    </div>
-
     <div class="sdy-panel" style="border-color:var(--danger-border)">
       <p class="sdy-panel__title" style="color:var(--danger-fg)">危险区</p>
+      <div class="sdy-row" style="margin-bottom:10px">
+        <button class="btn" id="dz-exp1">⬆ 导出本科目 JSON</button>
+      </div>
       <div class="sdy-row">
         <button class="btn" id="dz-clearlog">清空本科目复习记录</button>
         <button class="btn" id="dz-del" style="color:var(--danger-fg)">删除本科目…</button>
@@ -1356,164 +1348,11 @@ async function renderSettings(panel, subject) {
     toast('复习参数已保存');
   });
 
-  // —— AI 配置
-  panel.querySelector('#aic-save').addEventListener('click', () => {
-    saveAiConfig({
-      endpoint: panel.querySelector('#aic-endpoint').value.trim(),
-      key: panel.querySelector('#aic-key').value.trim(),
-      model: panel.querySelector('#aic-model').value.trim(),
-      mock: panel.querySelector('#aic-mock').checked,
-      proxy: panel.querySelector('#aic-proxy').checked,
-      maxOut: panel.querySelector('#aic-maxout').value.trim() || '',
-    });
-    const flag = panel.querySelector('#aic-saved');
-    flag.hidden = false;
-    setTimeout(() => { flag.hidden = true; }, 1600);
-    renderSettings(panel, subject);
-    toast('AI 配置已保存');
-  });
-  panel.querySelector('#aic-test').addEventListener('click', async () => {
-    // 先用表单当前值临时保存再测，避免"改了没存就测"的困惑
-    saveAiConfig({
-      endpoint: panel.querySelector('#aic-endpoint').value.trim(),
-      key: panel.querySelector('#aic-key').value.trim(),
-      model: panel.querySelector('#aic-model').value.trim(),
-      mock: panel.querySelector('#aic-mock').checked,
-      proxy: panel.querySelector('#aic-proxy').checked,
-      maxOut: panel.querySelector('#aic-maxout').value.trim() || '',
-    });
-    const btn = panel.querySelector('#aic-test');
-    btn.disabled = true;
-    btn.textContent = '测试中…';
-    const t0 = Date.now();
-    try {
-      const { content } = await chat([{ role: 'user', content: '请只回复两个字：正常' }], { task: 'chat', maxTokens: 8192 });
-      toast(`连接正常（${Date.now() - t0}ms）：${content.slice(0, 30)}`);
-    } catch (e) {
-      toast('连接失败：' + e.message, true, 5200);
-    }
-    btn.disabled = false;
-    btn.textContent = '测试连接';
-  });
-  panel.querySelector('#aic-resetusage').addEventListener('click', () => {
-    try { localStorage.removeItem('stardy-ai-usage-v1'); } catch {}
-    renderSettings(panel, subject);
-  });
-
-  // —— 云备份
-  const statusEl = panel.querySelector('#cb-status');
-  const metaEl = panel.querySelector('#cb-meta');
-  (async () => {
-    try {
-      if (!cloudReady()) {
-        statusEl.textContent = '云端未连接';
-        statusEl.className = 'sdy-chip sdy-chip--leech';
-        metaEl.textContent = 'Supabase 未配置或不可达，云备份不可用（本地数据不受影响）。';
-        return;
-      }
-      const user = await cloudUser();
-      if (!user) {
-        statusEl.textContent = '未登录';
-        statusEl.className = 'sdy-chip sdy-chip--leech';
-        metaEl.innerHTML = '请先<a href="/">去主站登录</a>，再回到这里上传备份。';
-        return;
-      }
-      statusEl.textContent = '已登录';
-      statusEl.className = 'sdy-chip sdy-chip--review';
-      const meta = await cloudMeta();
-      metaEl.textContent = meta
-        ? `上次备份：${new Date(meta.updated_at).toLocaleString('zh-CN')} · ${meta.subject_count} 个科目 · ${(meta.size_bytes / 1024).toFixed(0)} KB`
-        : '云端还没有备份。';
-    } catch {
-      statusEl.textContent = '云端异常';
-      statusEl.className = 'sdy-chip sdy-chip--leech';
-    }
-  })();
-
-  panel.querySelector('#cb-upload').addEventListener('click', async () => {
-    try {
-      const r = await cloudUpload();
-      toast(`已上传备份（${r.subjects} 个科目 · ${(r.size / 1024).toFixed(0)} KB）`);
-      renderSettings(panel, subject);
-    } catch (e) { toast(e.message, true); }
-  });
-  panel.querySelector('#cb-restore').addEventListener('click', async () => {
-    const ok = await confirmBox({
-      title: '从云端恢复？',
-      body: '将用云端备份<b>整体替换</b>本机当前的全部科目数据。恢复前会自动在本机留一份恢复点。确认继续？',
-      confirmText: '恢复', danger: true,
-    });
-    if (!ok) return;
-    try {
-      await makeRestorePoint();
-      await cloudRestore();
-      toast('已从云端恢复');
-      renderSettings(panel, subject);
-    } catch (e) { toast(e.message, true); }
-  });
-
-  // —— 本地数据
-  panel.querySelector('#ld-exp1').addEventListener('click', async () => {
+  // —— 危险区
+  panel.querySelector('#dz-exp1').addEventListener('click', async () => {
     const data = await exportSubjectFile(subject.id);
     toast(`已导出「${data.subjects[0].name}」`);
   });
-  panel.querySelector('#ld-expall').addEventListener('click', async () => {
-    await exportAllFile();
-    toast('已导出全部科目');
-  });
-  const fileEl = panel.querySelector('#ld-file');
-  panel.querySelector('#ld-imp').addEventListener('click', () => fileEl.click());
-  fileEl.addEventListener('change', async () => {
-    const f = fileEl.files[0];
-    fileEl.value = '';
-    if (!f) return;
-    try {
-      const payload = await readJsonFile(f);
-      const ok = await confirmBox({
-        title: `导入「${payload.subjects?.[0]?.name || f.name}」？`,
-        body: '将以新 id 合并进当前数据（不会覆盖现有科目），卡片复习进度随文件带走。',
-        confirmText: '导入',
-      });
-      if (!ok) return;
-      const r = await importPayload(payload);
-      toast(`已导入 ${r.subjects} 个科目、${r.cards} 张卡片`);
-    } catch (e) { toast(e.message, true); }
-  });
-
-  panel.querySelector('#ld-tpl').addEventListener('click', () => {
-    const tpl = JSON.stringify(subjectTemplate(), null, 2);
-    const tplModal = () => {
-      openModal({
-        title: '科目文件格式说明', wide: true,
-        bodyHtml: `
-          <p class="sdy-field__hint" style="margin-bottom:8px">
-            用任意工具（其他 AI、脚本）按下面模板生成 JSON，保存为 .json 文件后点「导入科目 JSON…」即可。
-            导入时全部 id 自动重新生成、不会覆盖现有数据；<b>缺的字段会自动补默认值</b>（settings / 卡片的 fsrs 调度状态都不用自己填）。
-          </p>
-          <table style="font-size:var(--fs-sm);color:var(--text-2);border-collapse:collapse;margin-bottom:10px">
-            <tr><td style="padding:2px 10px 2px 0"><b>subjects</b></td><td>科目元信息：name 科目名 / intro 简介 / settings 复习参数（可整段省略）</td></tr>
-            <tr><td style="padding:2px 10px 2px 0"><b>nodes</b></td><td>知识树：pid 指向父节点 id（null = 章）；title / detail 正文（支持 $公式$）/ formula 公式 / order 排序</td></tr>
-            <tr><td style="padding:2px 10px 2px 0"><b>cards</b></td><td>卡片：kind=qa 用 front+back；kind=cloze 用 clozeText（{{c1::挖空}}）+ noteId 同组一致；nid 关联知识点（可选）；fsrs 不用填（自动初始化）</td></tr>
-            <tr><td style="padding:2px 10px 2px 0"><b>quiz</b></td><td>题目：type=choice/fill/essay；choice 的 answer 是下标 0-3，fill/essay 是参考答案文本</td></tr>
-            <tr><td style="padding:2px 10px 2px 0"><b>links</b></td><td>知识点关系：from/to 指向节点 id，label ∈ 前置/拓展/易混（可选）</td></tr>
-            <tr><td style="padding:2px 10px 2px 0"><b>docs / revlog</b></td><td>资料原文 / 复习记录（通常留空数组）</td></tr>
-          </table>
-          <textarea class="sdy-textarea" id="tpl-code" style="min-height:260px;font-family:var(--font-mono);font-size:11px" readonly>${escapeHtml(tpl)}</textarea>
-          <div class="sdy-modal__acts">
-            <button class="btn" data-a="copy">复制模板</button>
-          </div>`,
-        onMount(box) {
-          box.querySelector('[data-a="copy"]').addEventListener('click', async () => {
-            try { await navigator.clipboard.writeText(tpl); toast('模板已复制'); }
-            catch { box.querySelector('#tpl-code').select(); document.execCommand('copy'); toast('已复制'); }
-          });
-        },
-      });
-    };
-    tplModal();
-  });
-
-  // —— 危险区
   panel.querySelector('#dz-clearlog').addEventListener('click', async () => {
     const ok = await confirmBox({
       title: '清空本科目复习记录？',

@@ -7,10 +7,10 @@
  * 同笔记 sibling 埋没）。键盘：Space 翻面，1-4 打分，Esc 退出。
  */
 
-import db from '../db.js?v=6';
-import * as S from '../scheduler.js?v=6';
-import { renderMarkdown, renderCloze, escapeHtml, fmtInterval, STATE_INFO, GRADES, uid } from '../models.js?v=6';
-import { toast } from '../ui.js?v=6';
+import db from '../db.js?v=10';
+import * as S from '../scheduler.js?v=10';
+import { renderMarkdown, renderCloze, escapeHtml, fmtInterval, STATE_INFO, GRADES, uid } from '../models.js?v=10';
+import { toast, openModal } from '../ui.js?v=10';
 
 const overlay = () => document.getElementById('sdy-review');
 
@@ -20,11 +20,122 @@ export function isOpen() {
   return !!session && !overlay().hidden;
 }
 
-/** 供按钮调用：切到复习路由，由 app.js 触发 open */
+/** 供按钮调用：打开复习配置（选章节 / 模式 / 数量），确认后进入全屏复习 */
 export function startReview(subjectId) {
   if (!subjectId) return;
-  location.hash = `#/review/${subjectId}`;
+  openReviewSetup(subjectId);
 }
+
+/** 复习配置弹窗：章节多选 + 模式 + 数量 */
+async function openReviewSetup(subjectId) {
+  const subject = await db.get('subjects', subjectId);
+  if (!subject) { toast('科目不存在', true); return; }
+  const [nodes, cards] = await Promise.all([
+    db.byIndex('nodes', 'subjectId', subjectId),
+    db.byIndex('cards', 'subjectId', subjectId),
+  ]);
+  // 顶层章 + 每章的子树 nid 集合（卡片 nid 可指向任意层级节点）
+  const chapters = nodes.filter((n) => !n.pid).sort((a, b) => (a.order || 0) - (b.order || 0));
+  const subtreeOf = (nid) => {
+    const set = new Set([nid]);
+    let grew = true;
+    while (grew) {
+      grew = false;
+      for (const n of nodes) {
+        if (n.pid && set.has(n.pid) && !set.has(n.id)) { set.add(n.id); grew = true; }
+      }
+    }
+    return set;
+  };
+  const subtreeIds = new Map(chapters.map((c) => [c.id, subtreeOf(c.id)]));
+  const countsOf = (set) => cards.filter((c) => !c.suspended && c.nid && set.has(c.nid)).length;
+
+  const box = openModal({
+    title: '▶ 开始复习',
+    wide: true,
+    bodyHtml: `
+      <div class="sdy-field">
+        <label class="sdy-field__label">复习范围（默认全部章节）</label>
+        <div style="max-height:200px;overflow-y:auto" id="rv-chapters">
+          ${chapters.map((c, i) => {
+            const n = countsOf(subtreeIds.get(c.id));
+            return `<label class="sdy-checkrow" style="margin-bottom:5px">
+              <input type="checkbox" value="${c.id}" checked>
+              <span>${escapeHtml(c.title)}</span>
+              <span class="sdy-grow"></span>
+              <span class="sdy-chip sdy-chip--muted">${n} 张</span>
+            </label>`;
+          }).join('')}
+        </div>
+      </div>
+      <div class="sdy-field">
+        <label class="sdy-field__label">复习内容</label>
+        <div class="sdy-row" id="rv-mode">
+          <button class="btn btn--sm btn--primary" data-m="mixed">常规（新 + 到期）</button>
+          <button class="btn btn--sm" data-m="due">只复习已学的</button>
+          <button class="btn btn--sm" data-m="new">只学新卡</button>
+        </div>
+      </div>
+      <div class="sdy-field">
+        <label class="sdy-field__label">数量上限</label>
+        <div class="sdy-row" id="rv-count">
+          ${[10, 20, 30].map((n) => `<button class="btn btn--sm${n === 20 ? ' btn--primary' : ''}" data-n="${n}">${n} 张</button>`).join('')}
+          <button class="btn btn--sm" data-n="9999">全部</button>
+          <label class="sdy-checkrow" style="margin-left:10px"><input type="checkbox" id="rv-shuffle" checked> 随机顺序</label>
+        </div>
+      </div>
+      <p class="sdy-field__hint" id="rv-pool"></p>
+      <div class="sdy-modal__acts">
+        <button class="btn" data-a="cancel">取消</button>
+        <button class="btn btn--primary" data-a="go">开始复习 →</button>
+      </div>`,
+    onMount(box2, close) {
+      let mode = 'mixed', limit = 20;
+      const chapterCks = () => [...box2.querySelectorAll('#rv-chapters input:checked')].map((c) => c.value);
+      const updatePool = () => {
+        const set = new Set();
+        for (const cid of chapterCks()) for (const nid of subtreeIds.get(cid)) set.add(nid);
+        let pool = cards.filter((c) => !c.suspended && c.fsrs && c.nid && set.has(c.nid));
+        if (mode === 'new') pool = pool.filter((c) => c.fsrs.state === 0);
+        if (mode === 'due') pool = pool.filter((c) => c.fsrs.state !== 0);
+        box2.querySelector('#rv-pool').textContent = pool.length
+          ? `当前范围内有 ${pool.length} 张卡，本次将学习 ${Math.min(limit, pool.length)} 张。`
+          : '当前范围内没有可学的卡。';
+      };
+      for (const b of box2.querySelectorAll('#rv-mode [data-m]')) {
+        b.addEventListener('click', () => {
+          mode = b.dataset.m;
+          box2.querySelectorAll('#rv-mode [data-m]').forEach((x) => x.classList.toggle('btn--primary', x === b));
+          updatePool();
+        });
+      }
+      for (const b of box2.querySelectorAll('#rv-count [data-n]')) {
+        b.addEventListener('click', () => {
+          limit = Number(b.dataset.n);
+          box2.querySelectorAll('#rv-count [data-n]').forEach((x) => x.classList.toggle('btn--primary', x === b));
+          updatePool();
+        });
+      }
+      for (const ck of box2.querySelectorAll('#rv-chapters input')) ck.addEventListener('change', updatePool);
+      updatePool();
+
+      box2.querySelector('[data-a="cancel"]').addEventListener('click', close);
+      box2.querySelector('[data-a="go"]').addEventListener('click', () => {
+        const cids = chapterCks();
+        if (!cids.length) { toast('至少选一个章节', true); return; }
+        const chapterNids = new Set();
+        for (const cid of cids) for (const nid of subtreeIds.get(cid)) chapterNids.add(nid);
+        close();
+        location.hash = `#/review/${subjectId}`;
+        pendingOpts.set(subjectId, { chapterNids, mode, limit, shuffle: box2.querySelector('#rv-shuffle').checked });
+      });
+    },
+  });
+  void box;
+}
+
+// 配置弹窗确认后暂存的选项（open 从路由触发时读取）
+const pendingOpts = new Map();
 
 export async function open(subjectId) {
   if (isOpen() && session.subjectId === subjectId) return;
@@ -34,12 +145,15 @@ export async function open(subjectId) {
 
   const cards = await db.byIndex('cards', 'subjectId', subjectId);
   const revlogToday = todayOnly(await db.byIndex('revlog', 'subjectId', subjectId));
-  const queue = S.buildQueue(subject, cards, revlogToday);
+  const opts = pendingOpts.get(subjectId) || null;
+  pendingOpts.delete(subjectId);
+  const queue = S.buildQueue(subject, cards, revlogToday, new Date(), opts || {});
   if (!queue.length) {
-    toast('今天没有到期卡片，休息一下 ☕');
+    toast(opts ? '所选范围内没有可学的卡片' : '今天没有到期卡片，休息一下 ☕');
     history.back();
     return;
   }
+  const scopeLabel = opts?.chapterNids ? `范围 · ${opts.mode === 'new' ? '只新卡' : opts.mode === 'due' ? '只复习' : '常规'}` : '今日计划';
 
   const nodes = await db.byIndex('nodes', 'subjectId', subjectId);
   const byId = new Map(nodes.map((n) => [n.id, n]));
@@ -56,6 +170,8 @@ export async function open(subjectId) {
     subject,
     cards,
     queue,
+    opts: opts || {},
+    scopeLabel,
     todayLog: [...revlogToday],
     idx: 0,
     answered: 0,
@@ -119,7 +235,7 @@ function renderChrome(el) {
       <div class="sdy-review__prog"><i id="rv-prog" style="width:0%"></i></div>
       <span class="sdy-review__count" id="rv-count"></span>
       <span class="sdy-grow"></span>
-      <span class="sdy-chip sdy-chip--muted">${escapeHtml(session.subject.name)}</span>
+      <span class="sdy-chip sdy-chip--muted">${escapeHtml(session.subject.name)}${session.scopeLabel ? ' · ' + escapeHtml(session.scopeLabel) : ''}</span>
     </div>
     <div class="sdy-review__main">
       <aside class="sdy-side" id="rv-left"></aside>
@@ -378,7 +494,7 @@ function renderDone(body) {
       db.byIndex('cards', 'subjectId', session.subjectId),
       db.byIndex('revlog', 'subjectId', session.subjectId),
     ]);
-    const queue = S.buildQueue(session.subject, cards, todayOnly(revlog));
+    const queue = S.buildQueue(session.subject, cards, todayOnly(revlog), new Date(), session.opts || {});
     if (!queue.length) { toast('已经全部完成了！'); exit(); return; }
     session.queue = queue;
     session.idx = 0;

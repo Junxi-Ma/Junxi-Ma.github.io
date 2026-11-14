@@ -1015,6 +1015,36 @@
   .sdy-radial .sdy-radial-anim { animation: none; }
 }
 
+
+/* 树详情里的节点卡片行 */
+.sdy-node-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  cursor: pointer;
+  transition: border-color var(--dur-fast) var(--ease);
+}
+.sdy-node-card:hover { border-color: var(--accent); }
+.sdy-node-card__front {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--fs-sm);
+  color: var(--text-1);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------- 宽屏：工作台容器放宽，减少两侧空白 ---------- */
+.sdy-page .container.tool { max-width: 96rem; }
+@media (min-width: 1600px) {
+  .sdy-page .container.tool { max-width: 104rem; }
+}
+
 @media (max-width: 640px) {
   .sdy-stats-strip { gap: 8px 18px; padding: 12px 14px; }
   .sdy-stat__n { font-size: 18px; }

@@ -44,6 +44,7 @@ export async function renderHome(root) {
         <div class="sdy-stat"><span class="sdy-stat__n">${totalCards}</span><span class="sdy-stat__label">卡片总数</span></div>
         <div class="sdy-stat"><span class="sdy-stat__n">${subjects.length}</span><span class="sdy-stat__label">科目</span></div>
         <div class="sdy-stat sdy-grow" style="justify-content:flex-end">
+          <button class="btn" id="hd-settings" title="AI / 云备份 / 数据导入">⚙ 设置</button>
           <button class="btn btn--primary" id="sdy-new-subject">✚ 新建科目</button>
         </div>
       </div>
@@ -55,6 +56,7 @@ export async function renderHome(root) {
   renderSubjectGrid(area, subjects, dueBySubject);
 
   root.querySelector('#sdy-new-subject').addEventListener('click', () => showNewSubjectModal(area, subjects, dueBySubject));
+  root.querySelector('#hd-settings').addEventListener('click', () => { location.hash = '#/settings'; });
 }
 
 function renderSubjectGrid(area, subjects, dueBySubject) {

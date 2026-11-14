@@ -7,7 +7,7 @@
  * 点击节点跳回大纲选中；关系虚线颜色区分前置/拓展/易混。
  */
 
-import { escapeHtml } from '../models.js?v=9';
+import { escapeHtml } from '../models.js?v=10';
 
 const LINK_COLOR = { 前置: '#d97706', 拓展: '#15803d', 易混: '#dc2626' };
 

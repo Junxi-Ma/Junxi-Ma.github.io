@@ -7,11 +7,12 @@
  *   #/review/<id>       全屏复习层（hash 变走即关闭，浏览器后退可退出）
  */
 
-import db from './db.js?v=6';
-import { toast } from './ui.js?v=6';
-import { renderHome } from './views/home.js?v=6';
-import { renderWorkspace } from './views/workspace.js?v=6';
-import { open as reviewOpen, close as reviewClose, isOpen } from './views/review.js?v=6';
+import db from './db.js?v=10';
+import { toast } from './ui.js?v=10';
+import { renderHome } from './views/home.js?v=10';
+import { renderWorkspace } from './views/workspace.js?v=10';
+import { renderGlobalSettings } from './views/settings.js?v=10';
+import { open as reviewOpen, close as reviewClose, isOpen } from './views/review.js?v=10';
 
 async function route() {
   const main = document.getElementById('main');
@@ -30,6 +31,10 @@ async function route() {
   }
   if (isOpen()) reviewClose(); // hash 已离开复习页（后退 / 退出按钮改 hash）
 
+  if (h === '#/settings') {
+    await renderGlobalSettings(main);
+    return;
+  }
   const mWs = h.match(/^#\/s\/([A-Za-z0-9-]+)(?:\/([a-z]+))?/);
   try {
     if (mWs) {

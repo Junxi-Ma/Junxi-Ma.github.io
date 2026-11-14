@@ -161,11 +161,21 @@ function intersperse(list1, list2) {
  * @param todayLog 今日已答 revlog 行（用于配额扣减）
  * @returns 排好队的卡片数组
  */
-export function buildQueue(subject, cards, todayLog = [], now = new Date()) {
+/**
+ * @param opts { chapterNids?: Set|null（允许出现的知识点 id 集合，null=全部）,
+ *               mode?: 'mixed'|'new'|'due', limit?: number|null, shuffle?: boolean }
+ */
+export function buildQueue(subject, cards, todayLog = [], now = new Date(), opts = {}) {
   const st = subject.settings;
   const end = endOfToday();
 
-  const usable = cards.filter((c) => !c.suspended && c.fsrs);
+  let usable = cards.filter((c) => !c.suspended && c.fsrs);
+  if (opts.chapterNids) {
+    const allowed = opts.chapterNids;
+    usable = usable.filter((c) => c.nid && allowed.has(c.nid));
+  }
+  if (opts.mode === 'new') usable = usable.filter((c) => c.fsrs.state === 0);
+  if (opts.mode === 'due') usable = usable.filter((c) => c.fsrs.state !== 0);
 
   // 到点的学习/重学卡（分钟级）排最前
   const learn = usable
@@ -190,6 +200,13 @@ export function buildQueue(subject, cards, todayLog = [], now = new Date()) {
 
   const limited = intersperse(newPool.slice(0, newQuota), revPool.slice(0, revQuota));
 
+  if (opts.limit != null && opts.shuffle) {
+    for (let i = usable.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [usable[i], usable[j]] = [usable[j], usable[i]];
+    }
+  }
+
   // sibling 埋没：同 noteId 的多张卡同一天只出现一张
   const seenNotes = new Set();
   const queue = [];
@@ -204,8 +221,9 @@ export function buildQueue(subject, cards, todayLog = [], now = new Date()) {
     if (c.noteId) seenNotes.add(c.noteId);
     queue.push(c);
   }
-  // 队列见底才补埋没的同组卡（宁可少见，不空转）
-  return [...queue, ...deferred];
+  let final = [...queue, ...deferred];
+  if (opts.limit != null) final = final.slice(0, Math.max(0, opts.limit));
+  return final;
 }
 
 /** 首页 / 总览用的到期计数（不受配额限制，反映真实待办） */
