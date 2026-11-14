@@ -148,6 +148,33 @@ export function newRevlogEntry(card, grade, preState, next) {
   };
 }
 
+/** 测验题。choice 的 answer 为下标；fill/essay 为参考答案文本 */
+export function newQuiz(subjectId, { nid = null, type, q, opts = [], answer = '', explain = '', sourceRef = null }) {
+  return {
+    id: uid(),
+    subjectId,
+    nid,
+    type, // 'choice' | 'fill' | 'essay'
+    q,
+    opts,
+    answer,
+    explain,
+    wrongCount: 0,
+    resolved: false,
+    lastAt: null,
+    sourceRef,
+  };
+}
+
+/** 填空答案比对：忽略空白与全半角差异 */
+export function normalizeAnswer(s) {
+  return String(s || '')
+    .replace(/\s+/g, '')
+    .replace(/[，,]/g, ',').replace(/[：:]/g, ':').replace(/[（(]/g, '(').replace(/[）)]/g, ')')
+    .replace(/～|~|−|-|—/g, '-')
+    .toLowerCase();
+}
+
 /* ============ 挖空（Cloze）============ */
 
 const CLOZE_RE = /\{\{c(\d+)::([^:{}]*(?:::[^{}]*)?)\}\}/g;

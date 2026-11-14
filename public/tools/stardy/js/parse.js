@@ -265,6 +265,54 @@ export async function parseFile(file, onProgress = null) {
   throw new Error('暂不支持的格式：' + file.name + '（当前支持 PDF / PPTX / DOCX / MD / TXT；旧版 .ppt/.doc 请先另存为新格式，扫描件 OCR 在阶段三开放）');
 }
 
+/* ============ 扫描件 OCR（视觉模型逐页转写） ============ */
+
+/** 渲染 PDF 指定页为 JPEG dataURL（供视觉模型识别） */
+export async function renderPdfPageImage(file, pageNo, { maxW = 1600, quality = 0.82 } = {}) {
+  const pdfjs = await getPdfjs();
+  const doc = await pdfjs.getDocument({
+    data: new Uint8Array(await file.arrayBuffer()),
+    cMapUrl: new URL('../libs/pdf/cmaps/', import.meta.url).href,
+    cMapPacked: true,
+    standardFontDataUrl: new URL('../libs/pdf/standard_fonts/', import.meta.url).href,
+  }).promise;
+  const page = await doc.getPage(pageNo);
+  const v0 = page.getViewport({ scale: 1 });
+  const scale = Math.min(2, Math.max(1, maxW / v0.width));
+  const viewport = page.getViewport({ scale });
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.floor(viewport.width);
+  canvas.height = Math.floor(viewport.height);
+  await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+  const url = canvas.toDataURL('image/jpeg', quality);
+  page.cleanup();
+  try { await doc.destroy(); } catch {}
+  return url;
+}
+
+/**
+ * 对扫描页逐页 OCR。ocrFn(dataUrl, {pageNo,total}) 由调用方提供（接 AI 视觉模型）。
+ * @param pages [{page}] 需转写的页号列表（来自 parsePdf 的 pagesInfo 过滤）
+ * @returns [{page, text}]
+ */
+export async function ocrPdfPages(file, pages, ocrFn, onProgress = null, shouldStop = null) {
+  const out = [];
+  const total = pages.length;
+  for (let i = 0; i < total; i++) {
+    if (shouldStop && shouldStop()) break;
+    const p = pages[i].page;
+    if (onProgress) onProgress({ page: p, total, idx: i + 1 });
+    try {
+      const img = await renderPdfPageImage(file, p);
+      const text = await ocrFn(img, { pageNo: p, total });
+      out.push({ page: p, text });
+    } catch (e) {
+      out.push({ page: p, text: `（第 ${p} 页转写失败：${e.message}）` });
+    }
+  }
+  return out;
+}
+
 /* ============ 分块 ============ */
 
 const HEADING_RE = /^(第[一二三四五六七八九十百\d]+[章节讲部分]|[（(]?[一二三四五六七八九十]+[）)、.]|\d+(?:\.\d+)*[、.\s]|#{1,4}\s|—\s*第\s*\d+\s*页)/;

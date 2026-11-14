@@ -17,7 +17,10 @@ import {
 import { startReview } from './review.js?v=3';
 import { cascadeDeleteSubject } from './home.js?v=3';
 import { openAiBuildTree, openAiGenCards, renderReviewConsole } from './ai.js?v=3';
-import { parseFile, kindLabel } from '../parse.js?v=3';
+import { parseFile, kindLabel, ocrPdfPages } from '../parse.js?v=3';
+import { aiOcrPage } from '../ai.js?v=3';
+import { renderQuiz } from './quiz.js?v=3';
+import { renderRadialGraph } from './graph.js?v=3';
 import { loadAiConfig, saveAiConfig, chat, aiUsage } from '../ai.js?v=3';
 
 const TABS = [
@@ -25,7 +28,7 @@ const TABS = [
   { id: 'tree', label: '知识树' },
   { id: 'docs', label: '资料' },
   { id: 'cards', label: '卡片' },
-  { id: 'quiz', label: '测验', disabled: true },
+  { id: 'quiz', label: '测验' },
   { id: 'settings', label: '设置' },
 ];
 
@@ -41,9 +44,12 @@ export async function renderWorkspace(root, subjectId, tab = 'overview') {
     db.count('pending', 'subjectId', subjectId),
   ]);
   const due = S.dueCounts(cards);
+  const wrongN = (await db.byIndex('quiz', 'subjectId', subjectId)).filter((q) => q.wrongCount > 0 && !q.resolved).length;
   const tabs = pendingN > 0
     ? [...TABS.slice(0, 5), { id: 'ainote', label: '审核', badge: pendingN }, TABS[5]]
     : TABS;
+  const quizTab = tabs.find((t) => t.id === 'quiz');
+  if (quizTab && wrongN) quizTab.badge = wrongN;
   if (!tabs.some((t) => t.id === tab)) tab = 'overview';
 
   root.innerHTML = `
@@ -75,7 +81,6 @@ export async function renderWorkspace(root, subjectId, tab = 'overview') {
   root.querySelector('#ws-newcard').addEventListener('click', () => openCardEditor(subject, { onDone: () => gotoTab(root, subjectId, tab) }));
   for (const b of root.querySelectorAll('#ws-tabs .sdy-tab')) {
     b.addEventListener('click', () => {
-      if (b.dataset.disabled) { toast('阶段三开放，敬请期待'); return; }
       location.hash = `#/s/${subjectId}/${b.dataset.tab}`;
     });
   }
@@ -86,6 +91,7 @@ export async function renderWorkspace(root, subjectId, tab = 'overview') {
     tree: renderTree,
     docs: renderDocs,
     cards: renderCards,
+    quiz: renderQuiz,
     ainote: renderAinote,
     settings: renderSettings,
   }[tab] || renderOverview;
@@ -93,10 +99,10 @@ export async function renderWorkspace(root, subjectId, tab = 'overview') {
 }
 
 /** hash 一致的内部跳转（同 hash 时手动渲染，否则交给路由） */
-function gotoTab(root, subjectId, tab) {
+export function gotoTab(root, subjectId, tab) {
   const h = '#/s/' + subjectId + '/' + tab;
   if (location.hash === h || (tab === 'overview' && (location.hash === '#/' || location.hash === ''))) {
-    gotoTab(root, subjectId, tab);
+    renderWorkspace(root, subjectId, tab).catch((e) => console.error('[stardy] gotoTab 渲染失败：', e));
   } else {
     location.hash = h;
   }
@@ -197,7 +203,7 @@ async function renderTree(panel, subject, root) {
   const byId = new Map(nodes.map((n) => [n.id, n]));
   const kidsOf = new Map();
   for (const n of nodes) {
-    const k = n.pid || '__root__';
+    const k = n.pid && byId.has(n.pid) ? n.pid : '__root__'; // 悬空 pid 按根处理
     if (!kidsOf.has(k)) kidsOf.set(k, []);
     kidsOf.get(k).push(n);
   }
@@ -238,20 +244,40 @@ async function renderTree(panel, subject, root) {
     <div class="sdy-row" style="margin-bottom:12px">
       <button class="btn btn--sm" id="tr-addroot">✚ 章节点</button>
       <button class="btn btn--sm" id="tr-ai">🤖 AI 建树</button>
+      <button class="btn btn--sm" id="tr-graph">🔭 总览图</button>
       <span class="sdy-grow"></span>
       <span class="sdy-chip sdy-chip--muted">${nodes.length} 个节点 · ${links.length} 条关系</span>
     </div>
-    <div class="sdy-tree-wrap">
-      <div class="sdy-panel sdy-tree">
-        ${roots.length ? roots.map((n) => rowHtml(n, 0)).join('') : `
-          <div class="sdy-empty">
-            知识树还是空的。<br>
-            点「🤖 AI 建树」从已上传的课件 / 资料自动提取（产出先入审核台）；<br>
-            也可以「✚ 章节点」手动搭框架，再在节点上出卡。
-          </div>`}
-      </div>
-      <div class="sdy-panel sdy-node-detail" id="tr-detail">${sel ? nodeDetailHtml(sel) : '<p style="color:var(--text-3)">选择左侧节点查看详情</p>'}</div>
-    </div>`;
+    <div id="tr-treeview"></div>`;
+
+  // 子视图：大纲 / 径向总览图
+  const treeview = panel.querySelector('#tr-treeview');
+  const showTree = () => {
+    treeview.innerHTML = `
+      <div class="sdy-tree-wrap">
+        <div class="sdy-panel sdy-tree">
+          ${roots.length ? roots.map((n) => rowHtml(n, 0)).join('') : `
+            <div class="sdy-empty">
+              知识树还是空的。<br>
+              点「🤖 AI 建树」从已上传的课件 / 资料自动提取（产出先入审核台）；<br>
+              也可以「✚ 章节点」手动搭框架，再在节点上出卡。
+            </div>`}
+        </div>
+        <div class="sdy-panel sdy-node-detail" id="tr-detail">${sel ? nodeDetailHtml(sel) : '<p style="color:var(--text-3)">选择左侧节点查看详情</p>'}</div>
+      </div>`;
+    bindTreeEvents();
+  };
+  const showGraph = () => {
+    treeview.innerHTML = `<div id="tr-radial"></div>`;
+    renderRadialGraph(treeview.querySelector('#tr-radial'), subject, nodes, links, {
+      onPick: (id) => {
+        panel.dataset.sel = id;
+        expandedMap.get(subject.id)?.add(id);
+        renderTree(panel, subject, root);
+      },
+    });
+  };
+  showTree();
 
   function nodeDetailHtml(n) {
     const linkRows = links.filter((l) => l.from === n.id || l.to === n.id).map((l) => {
@@ -280,37 +306,42 @@ async function renderTree(panel, subject, root) {
       ${links.length ? `<p class="sdy-panel__title" style="margin-top:16px">关系标注</p>${linkRows}` : ''}`;
   }
 
-  const rerender = () => renderTree(panel, subject);
+  const rerender = () => renderTree(panel, subject, root);
 
-  // 选择 / 折叠
-  for (const row of panel.querySelectorAll('[data-sel]')) {
-    row.addEventListener('click', (e) => {
-      if (e.target.closest('[data-caret]')) return;
-      panel.dataset.sel = row.dataset.sel;
-      rerender();
-    });
-  }
-  for (const caret of panel.querySelectorAll('[data-caret]')) {
-    caret.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const set = expandedMap.get(subject.id);
-      const id = caret.dataset.caret;
-      if (set.has(id)) set.delete(id); else set.add(id);
-      rerender();
-    });
-  }
-
-  // 节点操作
+  // 顶部按钮（面板级，绑定一次）
   panel.querySelector('#tr-addroot')?.addEventListener('click', () => openNodeEditor(subject, { pid: null, onDone: rerender }));
   panel.querySelector('#tr-ai')?.addEventListener('click', () => {
     openAiBuildTree(subject, docs, () => gotoTab(root, subject.id, 'ainote'));
   });
-  const bindDetail = (sel2, fn) => panel.querySelector(sel2)?.addEventListener('click', fn);
+  panel.querySelector('#tr-graph')?.addEventListener('click', () => {
+    if (treeview.querySelector('.sdy-radial')) showTree(); else showGraph();
+  });
 
-  if (sel) {
-    bindDetail('[data-naddchild]', () => openNodeEditor(subject, { pid: sel.id, onDone: rerender }));
-    bindDetail('[data-nedit]', () => openNodeEditor(subject, { node: sel, onDone: rerender }));
-    bindDetail('[data-ncard]', (e) => openCardEditor(subject, { nid: sel.id, kind: e.currentTarget.dataset.ncard, onDone: () => gotoTab(root, subject.id, 'tree') }));
+  // 树内事件（每次 showTree 重绑）
+  function bindTreeEvents() {
+    for (const row of treeview.querySelectorAll('[data-sel]')) {
+      row.addEventListener('click', (e) => {
+        if (e.target.closest('[data-caret]')) return;
+        panel.dataset.sel = row.dataset.sel;
+        rerender();
+      });
+    }
+    for (const caret of treeview.querySelectorAll('[data-caret]')) {
+      caret.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const set = expandedMap.get(subject.id);
+        const id = caret.dataset.caret;
+        if (set.has(id)) set.delete(id); else set.add(id);
+        rerender();
+      });
+    }
+
+    const bindDetail = (sel2, fn) => treeview.querySelector(sel2)?.addEventListener('click', fn);
+
+    if (sel) {
+      bindDetail('[data-naddchild]', () => openNodeEditor(subject, { pid: sel.id, onDone: rerender }));
+      bindDetail('[data-nedit]', () => openNodeEditor(subject, { node: sel, onDone: rerender }));
+      bindDetail('[data-ncard]', (e) => openCardEditor(subject, { nid: sel.id, kind: e.currentTarget.dataset.ncard, onDone: () => gotoTab(root, subject.id, 'tree') }));
     bindDetail('[data-ndel]', async () => {
       const nKids = countDescendants(sel.id);
       const ok = await confirmBox({
@@ -362,11 +393,12 @@ async function renderTree(panel, subject, root) {
         close(); toast('已添加关系'); rerender();
       };
     });
-    for (const btn of panel.querySelectorAll('[data-dellink]')) {
+    for (const btn of treeview.querySelectorAll('[data-dellink]')) {
       btn.addEventListener('click', async () => {
         await db.del('links', btn.dataset.dellink);
         rerender();
       });
+    }
     }
   }
 
@@ -526,8 +558,32 @@ async function renderDocs(panel, subject, root) {
         const r = await parseFile(f, (p) => {
           if (p && p.total) showStatus(`解析中：${f.name}（第 ${p.page}/${p.total} 页）…`);
         });
-        const scanned = r.pagesInfo ? r.pagesInfo.every((pg) => pg.chars < 20) : false;
-        await db.put('docs', newDoc(subject.id, f.name, r.kind, r.text, r.outline, scanned));
+        let text = r.text;
+        // 扫描页检测 → 询问是否用视觉模型转写
+        let scannedPages = (r.pagesInfo || []).filter((pg) => pg.chars < 20);
+        if (r.pagesInfo && scannedPages.length > 0) {
+          const allScanned = scannedPages.length >= r.pagesInfo.length * 0.5;
+          const go = await confirmBox({
+            title: allScanned ? '检测到扫描版 PDF' : `检测到 ${scannedPages.length} 页无文字层`,
+            body: allScanned
+              ? `这份 PDF 共 ${r.pagesInfo.length} 页几乎没有文字层（扫描/图片版）。是否用 AI 视觉模型逐页转写？${loadAiConfig().mock ? '（当前 Mock 模式将输出演示文本）' : '按页调用视觉模型，页数多时耗时较长。'}`
+              : `其中 ${scannedPages.length} 页无文字层，是否用 AI 视觉转写这些页？`,
+            confirmText: '转写',
+          });
+          if (go) {
+            const ocrRows = await ocrPdfPages(f, scannedPages, aiOcrPage, (p) => {
+              showStatus(`OCR 转写中：第 ${p.idx}/${p.total} 页…`);
+            });
+            if (ocrRows.length) {
+              const ocrText = ocrRows.map((o) => `— 第 ${o.page} 页 —\n${o.text}`).join('\n\n');
+              text = text.trim() ? text + '\n\n' + ocrText : ocrText;
+              scannedPages = [];
+            }
+          }
+        }
+        const doc = newDoc(subject.id, f.name, r.kind, text, r.outline, scannedPages.length > 0);
+        doc.pagesInfo = r.pagesInfo || null;
+        await db.put('docs', doc);
         ok++;
       } catch (e) {
         fail++;

@@ -842,6 +842,57 @@
   color: var(--text-2);
 }
 
+/* ---------- 测验答题选项 ---------- */
+.sdy-quiz-opt {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  padding: 11px 16px;
+  margin-bottom: 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-btn);
+  background: var(--card-bg);
+  color: var(--text-1);
+  font: inherit;
+  font-size: var(--fs-note);
+  line-height: 1.6;
+  cursor: pointer;
+  transition: border-color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
+}
+.sdy-quiz-opt:hover { border-color: var(--accent); transform: translateX(2px); }
+.sdy-quiz-opt__letter {
+  flex: none;
+  width: 26px; height: 26px;
+  display: grid; place-items: center;
+  border-radius: 8px;
+  background: var(--btn-regular-bg);
+  color: var(--btn-content);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+}
+.sdy-quiz-opt.locked { cursor: default; transform: none !important; }
+.sdy-quiz-opt.locked:hover { border-color: var(--border-strong); }
+.sdy-quiz-opt.correct {
+  border-color: color-mix(in oklch, var(--ok) 55%, transparent);
+  background: color-mix(in oklch, var(--ok) 8%, var(--card-bg));
+}
+.sdy-quiz-opt.correct .sdy-quiz-opt__letter { background: color-mix(in oklch, var(--ok) 18%, transparent); color: var(--ok); }
+.sdy-quiz-opt.wrong {
+  border-color: var(--danger-border);
+  background: color-mix(in oklch, var(--danger-fg) 7%, var(--card-bg));
+}
+.sdy-quiz-opt.wrong .sdy-quiz-opt__letter { background: var(--danger-soft); color: var(--danger-fg); }
+
+/* ---------- 径向总览图 ---------- */
+.sdy-radial .sdy-radial-node { cursor: pointer; transition: r var(--dur-fast) var(--ease); }
+.sdy-radial .sdy-radial-node:hover { r: 10; }
+.sdy-radial .sdy-radial-label { cursor: pointer; }
+.sdy-radial .sdy-radial-label:hover { fill: var(--accent-strong); font-weight: 600; }
+
 @media (max-width: 640px) {
   .sdy-stats-strip { gap: 8px 18px; padding: 12px 14px; }
   .sdy-stat__n { font-size: 18px; }

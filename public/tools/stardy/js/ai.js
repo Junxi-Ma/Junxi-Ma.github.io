@@ -96,7 +96,7 @@ function parseLoose(text) {
  * 调一次 chat/completions。
  * @returns {Promise<{content: string, tokens: number}>}
  */
-export async function chat(messages, { task = 'chat', temperature = 0.3, maxTokens = 4096, jsonMode = false } = {}) {
+export async function chat(messages, { task = 'chat', temperature = 0.3, maxTokens = 4096, jsonMode = false, system = null } = {}) {
   const cfg = loadAiConfig();
 
   if (cfg.mock) {
@@ -106,7 +106,7 @@ export async function chat(messages, { task = 'chat', temperature = 0.3, maxToke
 
   const body = {
     model: cfg.model || 'gpt-4o-mini',
-    messages,
+    messages: system ? [{ role: 'system', content: system }, ...messages] : messages,
     temperature,
     max_tokens: maxTokens,
     stream: false,
@@ -165,6 +165,81 @@ export const SYS_CARDS = `你是闪卡出题助手。根据给定的知识点，
 - kind 为 "cloze"：clozeText 取知识点里的关键句，用 {{c1::要背的词}} 标记挖空（可多个序号 c1、c2）。
 - 每张卡应能在 30 秒内作答；内容只来自给定知识点，不要编造。
 - 只输出 JSON：{"cards":[{"kind","front","back","clozeText"}]}（qa 的 clozeText 为空串；cloze 的 front/back 为空串）`;
+
+export const SYS_QUIZ = `你是测验出题助手。根据给定的知识点出一道测验题，规则：
+- type 为 "choice"：单选四项。q 是题干（禁止"下列说法正确的是"这类空泛问法）；opts 恰好 4 个选项；answer 是正确选项下标 0-3；explain 是一句话解析。
+- type 为 "fill"：q 的题干中用 ____ 标出空位；answer 是简短的参考答案；explain 是解析。
+- type 为 "essay"：q 是简答/论述题；answer 是参考答案要点（分点、每点一行）；explain 是给阅卷的判分提示（要点与分值建议）。
+- 题目必须能从给定知识点推出，不要编造；难度适中，30-90 秒可作答。
+- 只输出 JSON：{"quiz":{"type","q","opts","answer","explain"}}（fill/essay 的 opts 为空数组）`;
+
+export const SYS_GRADE = `你是严格的阅卷老师。给定题目、参考答案要点和学生答案：
+1. 按要点给分，满分 100。学生答案方向正确即可给分，关键要点缺失按比例扣分。
+2. comment 用一两句话指出答对了什么、漏了哪些要点（引用参考要点中的关键词）。
+只输出 JSON：{"score":85,"comment":"..."}`;
+
+export const SYS_OCR = `你是课件转写助手。把图片中的全部文字转写为纯文本 Markdown：
+- 公式用 LaTeX（行内 $...$，独立公式 $$...$$）；表格转 Markdown 表格；按原图阅读顺序转写。
+- 图中是课件页时，先输出页面主标题一行。只输出转写内容，不要任何解释。`;;
+
+/** 知识点 → 一道测验题（type 指定题型） */
+export async function aiQuizForNode(node, type, onToken = null) {
+  const user = `【题型】${type}\n【知识点】${node.title}\n【正文】${(node.detail || '').slice(0, 1500)}${node.formula ? '\n【公式】' + node.formula : ''}`;
+  const { content, tokens } = await chat(
+    [{ role: 'system', content: SYS_QUIZ }, { role: 'user', content: user }],
+    { task: 'quiz', temperature: 0.5, jsonMode: true },
+  );
+  if (onToken) onToken(tokens);
+  const parsed = parseLoose(content);
+  const z = parsed.quiz || parsed;
+  if (!z || !z.q || !['choice', 'fill', 'essay'].includes(z.type)) throw new Error('AI 返回的题目不完整');
+  const out = {
+    type: z.type,
+    q: String(z.q).slice(0, 600),
+    opts: Array.isArray(z.opts) ? z.opts.map((o) => String(o).slice(0, 120)) : [],
+    explain: String(z.explain || '').slice(0, 400),
+  };
+  if (out.type === 'choice') {
+    if (out.opts.length !== 4) throw new Error('选择题选项数量不对');
+    const idx = Number(z.answer);
+    if (!Number.isInteger(idx) || idx < 0 || idx > 3) throw new Error('选择题答案下标无效');
+    out.answer = idx;
+  } else {
+    out.answer = String(z.answer || '').slice(0, 600);
+  }
+  return out;
+}
+
+/** 简答题 AI 批改 → {score, comment} */
+export async function aiGradeEssay(q, reference, answer, onToken = null) {
+  const { content, tokens } = await chat(
+    [{
+      role: 'user',
+      content: `【题目】${q}\n【参考答案要点】${reference}\n【学生答案】${answer || '（空白）'}`,
+    }],
+    { task: 'grade', temperature: 0.2, jsonMode: true, system: SYS_GRADE },
+  );
+  if (onToken) onToken(tokens);
+  const parsed = parseLoose(content);
+  const score = Math.max(0, Math.min(100, Math.round(Number(parsed.score) || 0)));
+  return { score, comment: String(parsed.comment || '').slice(0, 400) };
+}
+
+/** 单页图片 OCR（视觉模型）。imageDataUrl 为 data:image/jpeg;base64,… */
+export async function aiOcrPage(imageDataUrl, { pageNo, total }, onToken = null) {
+  const { content, tokens } = await chat(
+    [{
+      role: 'user',
+      content: [
+        { type: 'text', text: `转写这一页课件的文字（第 ${pageNo}/${total} 页）。` },
+        { type: 'image_url', image_url: { url: imageDataUrl } },
+      ],
+    }],
+    { task: 'ocr', temperature: 0.1, maxTokens: 3000, system: SYS_OCR },
+  );
+  if (onToken) onToken(tokens);
+  return String(content || '').trim();
+}
 
 /** 片段 → 结构化节点（含溯源 quote）。返回 {nodes, links}，id 为 AI 自拟临时 id */
 export async function aiStructFromChunk(chunkText, meta, onToken = null) {
@@ -262,6 +337,33 @@ function mockChat(task, messages) {
         { kind: 'cloze', front: '', back: '', clozeText: `${detail.slice(0, 24)}是{{c1::${title}}}的关键。` },
       ],
     });
+  }
+
+  if (task === 'quiz') {
+    const type = (userMsg.match(/【题型】(\w+)/) || [, 'choice'])[1];
+    const title = (userMsg.match(/【知识点】(.+)/) || [, '该知识点'])[1].split('\n')[0].slice(0, 20);
+    const detail = (userMsg.match(/【正文】([\s\S]*?)(\n【公式】|$)/) || [, '相关内容'])[1].slice(0, 120);
+    if (type === 'choice') {
+      return JSON.stringify({
+        quiz: { type: 'choice', q: `（mock）关于${title}，下列说法正确的是哪一项？`, opts: [detail.slice(0, 40) || title, '说法甲', '说法乙', '说法丙'], answer: 0, explain: '（mock）正确说法即知识点原文表述。' },
+      });
+    }
+    if (type === 'fill') {
+      return JSON.stringify({
+        quiz: { type: 'fill', q: `（mock）${detail.slice(0, 18)}是____的核心内容。`, answer: title, explain: '（mock）参考知识点原文。' },
+      });
+    }
+    return JSON.stringify({
+      quiz: { type: 'essay', q: `（mock）请简述${title}的要点。`, answer: '1. 要点一\n2. 要点二\n3. 要点三', explain: '（mock）按点给分，每点约 33 分。' },
+    });
+  }
+
+  if (task === 'grade') {
+    return JSON.stringify({ score: 66, comment: '（mock）方向正确，但漏掉了"要点二"，表述可以更完整。' });
+  }
+
+  if (task === 'ocr') {
+    return '（mock OCR）本页课件文字转写示例。\n\n$$T = t_0 + k\\,\\Delta x$$\n\n- 要点一：温度测量\n- 要点二：热平衡';
   }
 
   return '（mock）收到。';

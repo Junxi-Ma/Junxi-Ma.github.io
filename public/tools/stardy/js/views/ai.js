@@ -1,14 +1,14 @@
 /**
- * Stardy — AI 流程：建知识树 / 批量出卡 / 审核台
+ * Stardy — AI 流程：建知识树 / 批量出卡 / 批量出题 / 审核台
  *
  * AI 产出先入 pending（待审核），经人工审核通过才写入正式表。
- * 节点/关系按批次重映射 id；卡片直接挂真实节点。
+ * 节点/关系按批次重映射 id；卡片与题目直接挂真实节点。
  */
 
 import db from '../db.js?v=3';
-import { uid, escapeHtml, newCard, newNode, newLink, clozeOrds } from '../models.js?v=3';
+import { uid, escapeHtml, newCard, newNode, newLink, newQuiz, clozeOrds } from '../models.js?v=3';
 import { openModal, toast, confirmBox } from '../ui.js?v=3';
-import { aiStructFromChunk, aiCardsForNode, loadAiConfig } from '../ai.js?v=3';
+import { aiStructFromChunk, aiCardsForNode, aiQuizForNode, loadAiConfig } from '../ai.js?v=3';
 import { roughSections } from '../parse.js?v=3';
 import * as S from '../scheduler.js?v=3';
 
@@ -223,6 +223,97 @@ export function openAiGenCards(subject, nodes, onDone) {
 }
 
 /* ============================================================
+   AI 批量出题（测验）
+   ============================================================ */
+
+/** 选知识点 + 题型 → 每个知识点每种题型出一题 → 入 pending 等审核 */
+export function openAiGenQuiz(subject, nodes, onDone) {
+  if (!nodes.length) { toast('先建一些知识点再出题', true); return; }
+  const cfg = loadAiConfig();
+  const { box, close } = openModal({
+    title: 'AI 批量出题',
+    wide: true,
+    bodyHtml: `
+      <p class="sdy-field__hint" style="margin-bottom:10px">
+        ${cfg.mock
+          ? '⚠ 当前为 <b>Mock 演示模式</b>（设置页可填真实 API）。'
+          : `模型：<b>${escapeHtml(cfg.model || '默认')}</b>，每个知识点每种题型一次调用，可中断。`}
+      </p>
+      <div class="sdy-field">
+        <label class="sdy-field__label">题型（可多选）</label>
+        <div class="sdy-row">
+          <label class="sdy-checkrow qz-type"><input type="checkbox" value="choice" checked> 选择题</label>
+          <label class="sdy-checkrow qz-type"><input type="checkbox" value="fill" checked> 填空题</label>
+          <label class="sdy-checkrow qz-type"><input type="checkbox" value="essay" checked> 简答题（AI 批改）</label>
+        </div>
+      </div>
+      <div class="sdy-field">
+        <label class="sdy-field__label">范围（默认全选未出过题的知识点）</label>
+        <div style="max-height:220px;overflow-y:auto" id="qz-nodes">
+          ${nodes.map((n) => `
+            <label class="sdy-checkrow" style="margin-bottom:5px">
+              <input type="checkbox" value="${n.id}" ${n._hasQuiz ? '' : 'checked'}>
+              <span>${escapeHtml(n.title)}</span>
+            </label>`).join('')}
+        </div>
+      </div>
+      <div id="qz-progress" hidden>
+        <div class="sdy-review__prog" style="max-width:100%;margin-bottom:8px"><i id="qz-bar" style="width:0%"></i></div>
+        <p class="sdy-field__hint" id="qz-line"></p>
+      </div>
+      <div class="sdy-modal__acts">
+        <button class="btn" data-a="cancel">取消</button>
+        <button class="btn btn--primary" data-a="start">开始出题</button>
+      </div>`,
+  });
+
+  let stopFlag = false;
+  box.querySelector('[data-a="cancel"]').onclick = () => { stopFlag = true; close(); };
+  box.querySelector('[data-a="start"]').onclick = async () => {
+    const types = [...box.querySelectorAll('.qz-type input:checked')].map((c) => c.value);
+    const chosen = [...box.querySelectorAll('#qz-nodes input:checked')].map((c) => nodes.find((n) => n.id === c.value));
+    if (!types.length || !chosen.length) { toast('至少选一种题型和一个知识点', true); return; }
+    const batchId = uid();
+    box.querySelector('[data-a="start"]').hidden = true;
+    box.querySelector('#qz-progress').hidden = false;
+    box.querySelector('[data-a="cancel"]').textContent = '关闭';
+
+    const bar = box.querySelector('#qz-bar');
+    const line = box.querySelector('#qz-line');
+    const total = chosen.length * types.length;
+    let done = 0, quizN = 0;
+    const typeName = { choice: '选择', fill: '填空', essay: '简答' };
+
+    for (const n of chosen) {
+      if (stopFlag) break;
+      for (const type of types) {
+        if (stopFlag) break;
+        bar.style.width = `${(done / total) * 100}%`;
+        line.textContent = `出题 ${done + 1}/${total}：${n.title}（${typeName[type]}）…`;
+        try {
+          const z = await aiQuizForNode(n, type);
+          await db.put('pending', {
+            id: uid(), subjectId: subject.id, batchId, kind: 'quiz', createdAt: Date.now(),
+            data: { ...z, nid: n.id, sourceRef: { docId: null, docName: '知识点：' + n.title, chunkIdx: null, quote: (n.detail || '').slice(0, 60) } },
+          });
+          quizN++;
+        } catch (e) {
+          line.textContent = `「${n.title}」${typeName[type]}题失败：${e.message}（继续）`;
+          await new Promise((r) => setTimeout(r, 700));
+        }
+        done++;
+      }
+    }
+    bar.style.width = '100%';
+    line.textContent = `完成：收集 ${quizN} 道题待审核`;
+    if (!quizN) { toast('没有产出题目', true); return; }
+    close();
+    toast(`AI 出题 ${quizN} 道，待审核`);
+    if (onDone) onDone();
+  };
+}
+
+/* ============================================================
    审核台
    ============================================================ */
 
@@ -262,14 +353,14 @@ export async function renderReviewConsole(container, subject, onDone) {
     ${batchList.map(([bid, list]) => batchHtml(bid, list)).join('')}`;
 
   function batchHtml(bid, list) {
-    const counts = { node: 0, link: 0, card: 0 };
+    const counts = { node: 0, link: 0, card: 0, quiz: 0 };
     for (const it of list) counts[it.kind]++;
     const docNames = [...new Set(list.map((it) => it.data.sourceRef?.docName).filter(Boolean))].slice(0, 3);
     return `
       <div class="sdy-panel" data-batch="${bid}">
         <p class="sdy-panel__title">
           <span>批次 ${escapeHtml(bid.slice(0, 6))} · ${new Date(list[0].createdAt).toLocaleString('zh-CN')}
-            <span class="sdy-chip sdy-chip--muted" style="margin-left:6px">节点 ${counts.node} · 关系 ${counts.link} · 卡片 ${counts.card}</span>
+            <span class="sdy-chip sdy-chip--muted" style="margin-left:6px">节点 ${counts.node} · 关系 ${counts.link} · 卡片 ${counts.card} · 题目 ${counts.quiz}</span>
           </span>
           <span class="sdy-row">
             <button class="btn btn--sm btn--primary" data-ok="${bid}">✓ 通过所选</button>
@@ -316,6 +407,28 @@ export async function renderReviewConsole(container, subject, onDone) {
             <span style="font-size:var(--fs-sm);color:var(--text-2)">
               ${escapeHtml(nodeTitle(it.data.fromTemp))} → ${escapeHtml(nodeTitle(it.data.toTemp))}
             </span>
+          </div>
+        </div>`;
+    }
+    if (it.kind === 'quiz') {
+      const typeLabel = { choice: '选择', fill: '填空', essay: '简答' }[it.data.type] || it.data.type;
+      const optsHtml = it.data.type === 'choice'
+        ? `<div class="sdy-row" style="margin-top:4px">${(it.data.opts || []).map((o, i) =>
+            `<label class="sdy-checkrow" style="gap:4px"><input type="radio" name="qz-${it.id}" data-f="answer" value="${i}" ${Number(it.data.answer) === i ? 'checked' : ''}><span>${String.fromCharCode(65 + i)}. ${escapeHtml(o)}</span></label>`).join('')}</div>`
+        : it.data.type === 'fill'
+          ? `<input class="sdy-input" data-f="answer" value="${escapeHtml(it.data.answer)}" placeholder="参考答案" style="margin-top:4px">`
+          : `<textarea class="sdy-textarea" data-f="answer" style="min-height:64px" placeholder="参考答案要点（每点一行）">${escapeHtml(it.data.answer)}</textarea>`;
+      return `
+        <div class="sdy-cardrow" data-item="${it.id}">
+          <input type="checkbox" checked data-ck style="flex:none">
+          <div class="sdy-cardrow__main" style="display:flex;flex-direction:column;gap:6px">
+            <div class="sdy-row">
+              <span class="sdy-chip sdy-chip--learn">${typeLabel}题</span>
+              <span class="sdy-field__hint">${escapeHtml(it.data.sourceRef?.docName || '')}</span>
+            </div>
+            <textarea class="sdy-textarea" data-f="q" style="min-height:48px">${escapeHtml(it.data.q)}</textarea>
+            ${optsHtml}
+            <textarea class="sdy-textarea" data-f="explain" style="min-height:36px" placeholder="解析">${escapeHtml(it.data.explain)}</textarea>
           </div>
         </div>`;
     }
@@ -393,7 +506,7 @@ export async function renderReviewConsole(container, subject, onDone) {
     const nodeItems = picked.filter((it) => it.kind === 'node');
     for (const it of nodeItems) idMap.set(it.data.tempId, uid());
 
-    let nNode = 0, nLink = 0, nCard = 0, skipped = 0;
+    let nNode = 0, nLink = 0, nCard = 0, nQuiz = 0, skipped = 0;
     for (const it of nodeItems) {
       const title = (fieldOf(it, 'title') || it.data.title).trim() || '未命名知识点';
       const n = newNode(subject.id, idMap.get(it.data.pidTemp) || null, title,
@@ -428,11 +541,34 @@ export async function renderReviewConsole(container, subject, onDone) {
       await db.put('cards', c);
       nCard++;
     }
+    // 4) 测验题入库
+    for (const it of picked.filter((x) => x.kind === 'quiz')) {
+      if (it.data.nid && !(await nodeExists(it.data.nid))) { skipped++; continue; }
+      const type = it.data.type;
+      let answer = it.data.answer;
+      if (type === 'choice') {
+        const sel = container.querySelector(`[data-item="${it.id}"] [data-f="answer"]:checked`);
+        answer = sel ? Number(sel.value) : (Number(it.data.answer) || 0);
+      } else {
+        answer = (fieldOf(it, 'answer') ?? it.data.answer) || '';
+      }
+      const z = newQuiz(subject.id, {
+        nid: it.data.nid || null,
+        type,
+        q: (fieldOf(it, 'q') ?? it.data.q) || '',
+        opts: it.data.opts || [],
+        answer,
+        explain: (fieldOf(it, 'explain') ?? it.data.explain) || '',
+        sourceRef: it.data.sourceRef,
+      });
+      await db.put('quiz', z);
+      nQuiz++;
+    }
     // 清掉整批已处理的条目（未勾选的也一并清掉——同批一次审完）
     for (const it of list) await db.del('pending', it.id);
     subject.updatedAt = Date.now();
     await db.put('subjects', subject);
-    toast(`入库：${nNode} 节点 / ${nLink} 关系 / ${nCard} 卡片${skipped ? `；跳过 ${skipped} 条（引用了未通过的节点）` : ''}`);
+    toast(`入库：${nNode} 节点 / ${nLink} 关系 / ${nCard} 卡片 / ${nQuiz} 题目${skipped ? `；跳过 ${skipped} 条（引用了未通过的节点）` : ''}`);
     rerender();
     if (onDone) onDone('refresh');
   }
