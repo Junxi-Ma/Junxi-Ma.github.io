@@ -106,7 +106,8 @@
 .sdy-subject__nums b { color: var(--text-2); font-family: var(--font-mono); font-weight: 600; }
 .sdy-subject__due {
   display: inline-flex; align-items: center; gap: 6px;
-  align-self: flex-start;
+  flex: none;
+  white-space: nowrap;
   padding: 3px 10px;
   border-radius: 999px;
   font-size: var(--fs-xs);
@@ -115,25 +116,28 @@
   color: var(--accent-strong);
 }
 .sdy-subject__due:empty { display: none; }
-.sdy-subject__menu {
-  position: absolute;
-  top: 10px; right: 10px;
-  display: flex; gap: 4px;
-  opacity: 0;
-  transition: opacity var(--dur-fast) var(--ease);
-}
-.sdy-subject:hover .sdy-subject__menu, .sdy-subject__menu:focus-within { opacity: 1; }
-@media (hover: none) { .sdy-subject__menu { opacity: 1; } }
 
-.sdy-empty {
-  text-align: center;
+/* 返回学习系统链接（科目工作台头部） */
+.sdy-backhome {
+  display: inline-block;
+  font-size: var(--fs-xs);
   color: var(--text-3);
-  padding: 48px 20px;
-  border: 1px dashed var(--border-strong);
-  border-radius: var(--radius-card);
-  font-size: var(--fs-note);
-  line-height: 1.8;
+  text-decoration: none;
+  margin-bottom: 6px;
+  transition: color var(--dur-fast) var(--ease);
 }
+.sdy-backhome:hover { color: var(--accent-strong); text-decoration: none; }
+
+/* 科目卡底部：due 徽标 + 操作按钮（右侧，不挡名称） */
+.sdy-subject__foot {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: auto;
+  padding-top: 4px;
+}
+.sdy-subject__foot .btn { opacity: 0.85; }
+.sdy-subject__foot .btn:hover { opacity: 1; }
 
 /* ---------- 科目工作台 ---------- */
 .sdy-ws-head {

@@ -3,25 +3,25 @@
  * （测验标签在阶段三开放）
  */
 
-import db from '../db.js?v=3';
-import * as S from '../scheduler.js?v=3';
+import db from '../db.js?v=4';
+import * as S from '../scheduler.js?v=4';
 import {
   escapeHtml, renderMarkdown, renderCloze, parseCloze, clozeOrds, suggestClozes,
   newCard, newNode, newLink, fmtInterval, STATE_INFO, uid,
-} from '../models.js?v=3';
-import { toast, openModal, confirmBox, promptBox } from '../ui.js?v=3';
+} from '../models.js?v=4';
+import { toast, openModal, confirmBox, promptBox } from '../ui.js?v=4';
 import {
   exportSubjectFile, exportAllFile, readJsonFile, importPayload,
   cloudReady, cloudUser, cloudMeta, cloudUpload, cloudRestore, makeRestorePoint,
-} from '../backup.js?v=3';
-import { startReview } from './review.js?v=3';
-import { cascadeDeleteSubject } from './home.js?v=3';
-import { openAiBuildTree, openAiGenCards, renderReviewConsole } from './ai.js?v=3';
-import { parseFile, kindLabel, ocrPdfPages } from '../parse.js?v=3';
-import { aiOcrPage } from '../ai.js?v=3';
-import { renderQuiz } from './quiz.js?v=3';
-import { renderRadialGraph } from './graph.js?v=3';
-import { loadAiConfig, saveAiConfig, chat, aiUsage } from '../ai.js?v=3';
+} from '../backup.js?v=4';
+import { startReview } from './review.js?v=4';
+import { cascadeDeleteSubject } from './home.js?v=4';
+import { openAiBuildTree, openAiGenCards, renderReviewConsole } from './ai.js?v=4';
+import { parseFile, kindLabel, ocrPdfPages } from '../parse.js?v=4';
+import { aiOcrPage } from '../ai.js?v=4';
+import { renderQuiz } from './quiz.js?v=4';
+import { renderRadialGraph } from './graph.js?v=4';
+import { loadAiConfig, saveAiConfig, chat, aiUsage } from '../ai.js?v=4';
 
 const TABS = [
   { id: 'overview', label: '总览' },
@@ -56,6 +56,7 @@ export async function renderWorkspace(root, subjectId, tab = 'overview') {
     <div class="container tool sdy-view">
       <div class="sdy-ws-head">
         <div>
+          <a class="sdy-backhome" href="#/">← 返回学习系统</a>
           <h2 class="sdy-ws-title">${escapeHtml(subject.name)}</h2>
           <p class="sdy-ws-intro">${escapeHtml(subject.intro || '')}</p>
         </div>

@@ -9,8 +9,8 @@
  *   - 遗忘次数 ≥ 阈值打"陷阱卡"标记（review.rs leech_threshold）
  */
 
-import { DefaultScheduler, Rating } from '../libs/ts-fsrs/index.mjs?v=3';
-import { parseSteps, startOfToday, endOfToday } from './models.js?v=3';
+import { DefaultScheduler, Rating } from '../libs/ts-fsrs/index.mjs?v=4';
+import { parseSteps, startOfToday, endOfToday } from './models.js?v=4';
 
 export const GRADE = { AGAIN: 1, HARD: 2, GOOD: 3, EASY: 4 };
 const RATING_BY_GRADE = { 1: Rating.Again, 2: Rating.Hard, 3: Rating.Good, 4: Rating.Easy };

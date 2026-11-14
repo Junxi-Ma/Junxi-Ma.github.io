@@ -5,12 +5,12 @@
  * 节点/关系按批次重映射 id；卡片与题目直接挂真实节点。
  */
 
-import db from '../db.js?v=3';
-import { uid, escapeHtml, newCard, newNode, newLink, newQuiz, clozeOrds } from '../models.js?v=3';
-import { openModal, toast, confirmBox } from '../ui.js?v=3';
-import { aiStructFromChunk, aiCardsForNode, aiQuizForNode, loadAiConfig } from '../ai.js?v=3';
-import { roughSections } from '../parse.js?v=3';
-import * as S from '../scheduler.js?v=3';
+import db from '../db.js?v=4';
+import { uid, escapeHtml, newCard, newNode, newLink, newQuiz, clozeOrds } from '../models.js?v=4';
+import { openModal, toast, confirmBox } from '../ui.js?v=4';
+import { aiStructFromChunk, aiCardsForNode, aiQuizForNode, loadAiConfig } from '../ai.js?v=4';
+import { roughSections } from '../parse.js?v=4';
+import * as S from '../scheduler.js?v=4';
 
 /* ============================================================
    AI 建树
@@ -90,7 +90,10 @@ export function openAiBuildTree(subject, docs, onDone) {
 
     const bar = box.querySelector('#bt-bar');
     const line = box.querySelector('#bt-line');
-    let nodeN = 0, linkN = 0;
+    let nodeN = 0, linkN = 0, mergedN = 0;
+    // 跨片段同章合并：标题相同的根节点不重复建，其子树挂到已有章下
+    const normTitle = (s) => String(s || '').replace(/[\s第章章节：:、·．.\-—~～()（）]/g, '').slice(0, 10);
+    const seenRoots = new Map(); // normTitle -> tempId（已入库的根）
 
     for (let i = 0; i < chunks.length; i++) {
       if (stopFlag) break;
@@ -98,14 +101,32 @@ export function openAiBuildTree(subject, docs, onDone) {
       bar.style.width = `${(i / chunks.length) * 100}%`;
       line.textContent = `片段 ${i + 1}/${chunks.length}：${chunk.heading || doc.name}…`;
       try {
-        const { nodes, links } = await aiStructFromChunk(chunk.text, { docName: doc.name, idx: i, total: chunks.length });
+        const { nodes: rawNodes, links } = await aiStructFromChunk(chunk.text, { docName: doc.name, idx: i, total: chunks.length });
+        // —— 同章合并：重复根丢弃，引用它的子节点改挂已有根 ——
+        const dropMap = new Map(); // 被丢弃的根 tempId -> 已有根 tempId
+        const nodes = [];
+        for (const n of rawNodes.slice(0, 14)) {
+          const tempId = String(n.id || uid()).slice(0, 12);
+          const pidTemp = n.pid ? String(n.pid).slice(0, 12) : null;
+          const key = normTitle(n.title);
+          if (!pidTemp && key && seenRoots.has(key)) {
+            dropMap.set(tempId, seenRoots.get(key));
+            mergedN++;
+            continue;
+          }
+          nodes.push({ ...n, id: tempId, pid: pidTemp });
+          if (!pidTemp && key) seenRoots.set(key, tempId);
+        }
+        // 重映射：pid 指向被丢弃根的节点 → 改挂已有根
+        const remap = (pid) => (pid && dropMap.has(pid) ? dropMap.get(pid) : pid);
         const srcRef = { docId: doc.id, docName: doc.name, chunkIdx: chunk.idx, quote: chunk.heading || '' };
-        for (const n of nodes.slice(0, 14)) {
+        for (const n of nodes) {
+          const pidTemp = remap(String(n.pid || '')) || null;
           await db.put('pending', {
             id: uid(), subjectId: subject.id, batchId, kind: 'node', createdAt: Date.now(),
             data: {
-              tempId: String(n.id || uid()).slice(0, 12),
-              pidTemp: n.pid ? String(n.pid).slice(0, 12) : null,
+              tempId: n.id,
+              pidTemp: pidTemp ? String(pidTemp).slice(0, 12) : null,
               title: String(n.title).slice(0, 40),
               detail: String(n.detail || '').slice(0, 400),
               formula: String(n.formula || '').slice(0, 300),
@@ -118,7 +139,7 @@ export function openAiBuildTree(subject, docs, onDone) {
         for (const l of links.slice(0, 12)) {
           await db.put('pending', {
             id: uid(), subjectId: subject.id, batchId, kind: 'link', createdAt: Date.now(),
-            data: { fromTemp: l.from, toTemp: l.to, label: l.label, sourceRef: srcRef },
+            data: { fromTemp: remap(String(l.from)), toTemp: remap(String(l.to)), label: l.label, sourceRef: srcRef },
           });
           linkN++;
         }
@@ -130,11 +151,11 @@ export function openAiBuildTree(subject, docs, onDone) {
     bar.style.width = '100%';
     box.querySelector('[data-a="stop"]').hidden = true;
     line.textContent = stopFlag
-      ? `已停止：本批收集 ${nodeN} 个节点、${linkN} 条关系，去审核台确认入库`
-      : `完成：收集 ${nodeN} 个节点、${linkN} 条关系，去审核台确认入库`;
+      ? `已停止：本批收集 ${nodeN} 个节点、${linkN} 条关系（合并重复章 ${mergedN} 处），去审核台确认入库`
+      : `完成：收集 ${nodeN} 个节点、${linkN} 条关系（合并重复章 ${mergedN} 处），去审核台确认入库`;
     if (nodeN + linkN === 0) { toast('没有产出可审核的内容', true); return; }
     close();
-    toast(`AI 完成：${nodeN} 节点 / ${linkN} 关系待审核`);
+    toast(`AI 完成：${nodeN} 节点 / ${linkN} 关系待审核（合并重复章 ${mergedN} 处）`);
     if (onDone) onDone();
   };
 }

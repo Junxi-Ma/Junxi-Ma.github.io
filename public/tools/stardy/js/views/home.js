@@ -2,12 +2,12 @@
  * Stardy — 首页：科目列表 + 全局统计
  */
 
-import db from '../db.js?v=3';
-import { dueCounts, streak } from '../scheduler.js?v=3';
-import { escapeHtml as _e, dayStr, newSubject } from '../models.js?v=3';
-import { toast, confirmBox, openModal } from '../ui.js?v=3';
-import { exportSubjectFile } from '../backup.js?v=3';
-import { startReview } from './review.js?v=3';
+import db from '../db.js?v=4';
+import { dueCounts, streak } from '../scheduler.js?v=4';
+import { escapeHtml as _e, dayStr, newSubject } from '../models.js?v=4';
+import { toast, confirmBox, openModal } from '../ui.js?v=4';
+import { exportSubjectFile } from '../backup.js?v=4';
+import { startReview } from './review.js?v=4';
 
 export async function renderHome(root) {
   document.title = 'Stardy · 学习系统 — Michael';
@@ -84,8 +84,9 @@ function renderSubjectGrid(area, subjects, dueBySubject) {
           <span>新卡 <b>${due.new}</b></span>
           <span>复习 <b>${due.review + due.learn}</b></span>
         </div>
-        <span class="sdy-subject__due">${due.total > 0 ? `今日待学 ${due.total}` : '今日已清'}</span>
-        <div class="sdy-subject__menu">
+        <div class="sdy-subject__foot">
+          <span class="sdy-subject__due">${due.total > 0 ? `今日待学 ${due.total}` : '今日已清'}</span>
+          <span class="sdy-grow"></span>
           <button class="btn btn--sm" data-act="review" data-id="${s.id}" title="开始复习">▶ 复习</button>
           <button class="btn btn--sm" data-act="export" data-id="${s.id}" title="导出本科目 JSON">导出</button>
           <button class="btn btn--sm" data-act="delete" data-id="${s.id}" title="删除科目">删除</button>
