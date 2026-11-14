@@ -964,6 +964,37 @@
 .sdy-tree__rowbtn--del:hover { border-color: var(--danger-border); color: var(--danger-fg); }
 .sdy-tree__rowbtns .sdy-tree__rowbtn:first-child { margin-left: 0; }
 
+
+/* ---------- 审核台按章分组 ---------- */
+.sdy-chapter-group {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  margin-bottom: 12px;
+  overflow: hidden;
+  background: color-mix(in oklch, var(--card-bg) 70%, transparent);
+}
+.sdy-chapter-group__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px;
+  background: var(--accent-soft);
+  border-bottom: 1px solid var(--border);
+}
+.sdy-chapter-group__head--loose { background: var(--surface-2); }
+.sdy-chapter-group__title {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-1);
+}
+.sdy-chapter-group__body {
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
 @media (max-width: 640px) {
   .sdy-stats-strip { gap: 8px 18px; padding: 12px 14px; }
   .sdy-stat__n { font-size: 18px; }

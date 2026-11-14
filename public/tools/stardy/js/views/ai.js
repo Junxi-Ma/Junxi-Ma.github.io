@@ -421,6 +421,68 @@ export async function renderReviewConsole(container, subject, onDone) {
     const counts = { node: 0, link: 0, card: 0, quiz: 0 };
     for (const it of list) counts[it.kind]++;
     const docNames = [...new Set(list.map((it) => it.data.sourceRef?.docName).filter(Boolean))].slice(0, 3);
+    const nodeById = new Map(list.filter((x) => x.kind === 'node').map((x) => [x.data.tempId, x]));
+
+    // 节点沿 pidTemp 链找顶层祖先（骨架章 / 自拟根）→ 按章分组 + 树形缩进
+    const topOf = (it) => {
+      let cur = it;
+      const seen = new Set();
+      while (cur?.data?.pidTemp && nodeById.has(cur.data.pidTemp) && !seen.has(cur.data.pidTemp)) {
+        seen.add(cur.data.pidTemp);
+        cur = nodeById.get(cur.data.pidTemp);
+      }
+      return cur;
+    };
+    const depthOf = (it) => {
+      let d = 0;
+      let cur = it;
+      const seen = new Set();
+      while (cur?.data?.pidTemp && nodeById.has(cur.data.pidTemp) && !seen.has(cur.data.pidTemp)) {
+        seen.add(cur.data.pidTemp);
+        cur = nodeById.get(cur.data.pidTemp);
+        d++;
+        if (d > 8) break;
+      }
+      return d;
+    };
+
+    const nodeItems = list.filter((x) => x.kind === 'node');
+    const otherItems = list.filter((x) => x.kind !== 'node');
+    const groups = new Map(); // 顶层 id -> { head, children:[{it,depth}] }
+    for (const it of nodeItems) {
+      const top = topOf(it);
+      if (!groups.has(top.id)) groups.set(top.id, { head: top, children: [] });
+      if (it.id !== top.id) groups.get(top.id).children.push({ it, depth: depthOf(it) });
+    }
+    const isSkel = (it) => it.data.tempId?.startsWith('sk');
+    const groupList = [...groups.values()].sort((a, b) => {
+      const sa = isSkel(a.head) ? Number(a.head.data.tempId.slice(2)) : 9999;
+      const sb = isSkel(b.head) ? Number(b.head.data.tempId.slice(2)) : 9999;
+      return sa - sb || (a.head.createdAt || 0) - (b.head.createdAt || 0);
+    });
+
+    const groupHtml = (g) => {
+      const head = g.head;
+      const cn = g.children.length;
+      const isSkelHead = isSkel(head);
+      return `
+        <div class="sdy-chapter-group" data-group="${head.id}">
+          <div class="sdy-chapter-group__head${isSkelHead ? '' : ' sdy-chapter-group__head--loose'}">
+            <span class="sdy-chapter-group__title">${escapeHtml(head.data.title)}</span>
+            <span class="sdy-chip sdy-chip--muted">${cn + 1} 条</span>
+            <span class="sdy-grow"></span>
+            <button class="btn btn--sm" data-gsel="${head.id}" data-gval="1">全选本组</button>
+            <button class="btn btn--sm" data-gsel="${head.id}" data-gval="0">全不选</button>
+          </div>
+          <div class="sdy-chapter-group__body">
+            ${nodeHtml(head, 0)}
+            ${g.children.map(({ it, depth }) => nodeHtml(it, depth)).join('')}
+          </div>
+        </div>`;
+    };
+
+    const nodeHtml = (it, depth) => itemHtml(it, list, depth);
+
     return `
       <div class="sdy-panel" data-batch="${bid}">
         <p class="sdy-panel__title">
@@ -434,24 +496,34 @@ export async function renderReviewConsole(container, subject, onDone) {
           </span>
         </p>
         ${docNames.length ? `<p class="sdy-field__hint" style="margin-bottom:8px">来源：${escapeHtml(docNames.join(' / '))}</p>` : ''}
-        <div class="sdy-cardlist" style="max-height:480px;overflow-y:auto">
-          ${list.map((it) => itemHtml(it, list)).join('')}
+        <div class="sdy-cardlist" style="max-height:560px;overflow-y:auto">
+          ${groupList.map(groupHtml).join('')}
+          ${otherItems.length ? `
+            <div class="sdy-chapter-group">
+              <div class="sdy-chapter-group__head sdy-chapter-group__head--loose">
+                <span class="sdy-chapter-group__title">卡片 / 关系 / 题目</span>
+                <span class="sdy-chip sdy-chip--muted">${otherItems.length} 条</span>
+              </div>
+              <div class="sdy-chapter-group__body">
+                ${otherItems.map((it) => itemHtml(it, list, 0)).join('')}
+              </div>
+            </div>` : ''}
         </div>
       </div>`;
   }
 
-  function itemHtml(it, list) {
+  function itemHtml(it, list, depth = 0) {
     const nodeTitle = (tempId) => {
       const src = list.find((x) => x.kind === 'node' && x.data.tempId === tempId);
       return src ? src.data.title : '(未知节点)';
     };
     if (it.kind === 'node') {
       return `
-        <div class="sdy-cardrow" data-item="${it.id}">
+        <div class="sdy-cardrow" data-item="${it.id}" style="margin-left:${depth * 20}px">
           <input type="checkbox" checked data-ck style="flex:none">
           <div class="sdy-cardrow__main" style="display:flex;flex-direction:column;gap:6px">
             <div class="sdy-row">
-              <span class="sdy-chip sdy-chip--new">节点</span>
+              <span class="sdy-chip sdy-chip--new">${depth === 0 ? '节点' : '└ 知识点'}</span>
               <input class="sdy-input" data-f="title" value="${escapeHtml(it.data.title)}" style="max-width:280px" maxlength="40">
               <input class="sdy-input" data-f="formula" value="${escapeHtml(it.data.formula)}" placeholder="公式（可选）" style="max-width:220px;font-family:var(--font-mono);font-size:12px">
             </div>
@@ -552,6 +624,16 @@ export async function renderReviewConsole(container, subject, onDone) {
     btn.addEventListener('click', async () => {
       const bid = btn.dataset.ok;
       await approveBatch(bid);
+    });
+  }
+
+  // 组级全选 / 全不选
+  for (const b of container.querySelectorAll('[data-gsel]')) {
+    b.addEventListener('click', () => {
+      const group = container.querySelector(`[data-group="${b.dataset.gsel}"]`);
+      if (!group) return;
+      const val = b.dataset.gval === '1';
+      group.querySelectorAll('[data-ck]').forEach((ck) => { ck.checked = val; });
     });
   }
 
