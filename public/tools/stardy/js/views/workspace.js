@@ -7,7 +7,7 @@ import db from '../db.js?v=8';
 import * as S from '../scheduler.js?v=8';
 import {
   escapeHtml, renderMarkdown, renderCloze, parseCloze, clozeOrds, suggestClozes,
-  newCard, newNode, newLink, fmtInterval, STATE_INFO, uid,
+  newCard, newDoc, newNode, newLink, fmtInterval, STATE_INFO, uid,
 } from '../models.js?v=8';
 import { toast, openModal, confirmBox, promptBox } from '../ui.js?v=8';
 import {
