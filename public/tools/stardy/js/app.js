@@ -7,11 +7,11 @@
  *   #/review/<id>       全屏复习层（hash 变走即关闭，浏览器后退可退出）
  */
 
-import db from './db.js?v=1';
-import { toast } from './ui.js?v=1';
-import { renderHome } from './views/home.js?v=1';
-import { renderWorkspace } from './views/workspace.js?v=1';
-import { open as reviewOpen, close as reviewClose, isOpen } from './views/review.js?v=1';
+import db from './db.js?v=2';
+import { toast } from './ui.js?v=2';
+import { renderHome } from './views/home.js?v=2';
+import { renderWorkspace } from './views/workspace.js?v=2';
+import { open as reviewOpen, close as reviewClose, isOpen } from './views/review.js?v=2';
 
 async function route() {
   const main = document.getElementById('main');

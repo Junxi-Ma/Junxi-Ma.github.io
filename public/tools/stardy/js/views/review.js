@@ -6,10 +6,10 @@
  * 路由：#/review/<subjectId>；hash 变走（含浏览器后退）自动关闭。
  */
 
-import db from '../db.js?v=1';
-import * as S from '../scheduler.js?v=1';
-import { renderMarkdown, renderCloze, escapeHtml, fmtInterval, STATE_INFO, GRADES, uid } from '../models.js?v=1';
-import { toast } from '../ui.js?v=1';
+import db from '../db.js?v=2';
+import * as S from '../scheduler.js?v=2';
+import { renderMarkdown, renderCloze, escapeHtml, fmtInterval, STATE_INFO, GRADES, uid } from '../models.js?v=2';
+import { toast } from '../ui.js?v=2';
 
 const overlay = () => document.getElementById('sdy-review');
 
@@ -128,37 +128,47 @@ async function showCurrent() {
   const crumb = card.nid ? session.pathOf(card.nid) : (card.kind === 'cloze' ? `挖空卡 c${card.ord}` : '问答卡');
   const r = await S.retrievability(session.subject.settings, card.fsrs);
   const st = STATE_INFO[card.fsrs?.state ?? 0];
+  const isCloze = card.kind === 'cloze';
 
   body.innerHTML = `
-    <div class="sdy-review__crumb">${escapeHtml(crumb)}</div>
-    <div class="sdy-review__card" id="rv-card">
-      <div class="sdy-review__q sdy-md">${
-        card.kind === 'cloze' ? renderCloze(card.clozeText, card.ord) : renderMarkdown(card.front)
-      }</div>
-      <div class="sdy-review__divider"></div>
-      <div class="sdy-review__a sdy-md">${
-        card.kind === 'cloze' ? renderCloze(card.clozeText, card.ord, ' revealed') : renderMarkdown(card.back)
-      }</div>
+    <div class="sdy-stage">
+      <div class="sdy-flip" id="rv-flip">
+        <div class="sdy-face sdy-face--front">
+          <div class="sdy-face__head">
+            <span class="sdy-face__crumb">${escapeHtml(crumb)}</span>
+            <span class="sdy-face__grow"></span>
+            <span class="sdy-chip sdy-chip--${st.cls}">${st.name}${isCloze ? ` · c${card.ord}` : ''}</span>
+          </div>
+          <div class="sdy-face__body sdy-md">${isCloze ? renderCloze(card.clozeText, card.ord) : renderMarkdown(card.front)}</div>
+        </div>
+        <div class="sdy-face sdy-face--back">
+          <div class="sdy-face__head">
+            <span class="sdy-face__crumb">${escapeHtml(crumb)}</span>
+            <span class="sdy-face__grow"></span>
+            <span class="sdy-chip sdy-chip--muted">答案</span>
+          </div>
+          <div class="sdy-face__body sdy-md">${isCloze ? renderCloze(card.clozeText, card.ord, ' revealed') : renderMarkdown(card.back)}</div>
+        </div>
+      </div>
     </div>
-    <div class="sdy-review__meta">
-      <span class="sdy-chip sdy-chip--${st.cls}">${st.name}${card.kind === 'cloze' ? ` · c${card.ord}` : ''}</span>
-      ${r != null ? `<span class="sdy-chip sdy-chip--muted">当前可提取性 ${(r * 100).toFixed(0)}%</span>` : ''}
+    <div class="sdy-review__meta" id="rv-meta">
+      ${r != null ? `<span class="sdy-chip sdy-chip--muted">当前保持率 ${(r * 100).toFixed(0)}%</span>` : ''}
       ${card.fsrs?.lapses ? `<span class="sdy-chip sdy-chip--muted">已遗忘 ${card.fsrs.lapses} 次</span>` : ''}
       ${card.flags & 1 ? '<span class="sdy-chip sdy-chip--leech">陷阱卡</span>' : ''}
     </div>
     <div class="sdy-review__hint">空格 / 点击卡片 显示答案 · 1-4 打分 · Esc 退出</div>`;
 
-  // 挖空卡：正面隐藏 active 空格可点击揭示提示；答案面已带 revealed 直接展示
-  bindClozeReveal(body.querySelector('.sdy-review__q'));
-
-  const cardEl = body.querySelector('#rv-card');
-  cardEl.addEventListener('click', (e) => {
+  // 挖空正面：空格可点击提示式揭示；点卡身任意处翻面
+  const frontBody = body.querySelector('.sdy-face--front .sdy-face__body');
+  bindClozeReveal(frontBody);
+  frontBody.addEventListener('click', (e) => {
     if (e.target.closest('.sdy-cz__blank')) return;
     if (!session.flipped) flip();
   });
   flipwrap.hidden = false;
   flipwrap.querySelector('#rv-flip').onclick = flip;
   grades.hidden = true;
+  grades.innerHTML = '';
 }
 
 function bindClozeReveal(qEl) {
@@ -178,21 +188,28 @@ async function flip() {
   if (session.flipped) return;
   session.flipped = true;
   const el = overlay();
-  el.querySelector('#rv-card').classList.add('flipped');
+  el.querySelector('#rv-flip').classList.add('flipped');
   el.querySelector('#rv-flipwrap').hidden = true;
 
-  // 答案面挖空卡：把 active 空格直接揭示并高亮
-  const aEl = el.querySelector('.sdy-review__a');
-  if (session.queue[session.idx].kind === 'cloze') {
-    aEl.querySelectorAll('.sdy-cz--active').forEach((h) => {
+  // 答案面挖空卡：直接揭示并高亮
+  const backBody = el.querySelector('.sdy-face--back .sdy-face__body');
+  if (backBody) {
+    backBody.querySelectorAll('.sdy-cz--active').forEach((h) => {
       h.classList.add('revealed');
       const ans = h.querySelector('.sdy-cz__ans');
       if (ans) ans.hidden = false;
     });
   }
 
-  // 四键预览间隔
+  // 记忆状态补充进 meta 行
   const card = session.queue[session.idx];
+  const meta = el.querySelector('#rv-meta');
+  if (meta && card.fsrs) {
+    meta.insertAdjacentHTML('afterbegin',
+      `<span class="sdy-chip sdy-chip--muted">S ${Number(card.fsrs.stability || 0).toFixed(1)} 天 · D ${Number(card.fsrs.difficulty || 0).toFixed(1)}</span>`);
+  }
+
+  // 四键预览间隔
   const previews = await S.preview(session.subject.settings, card.fsrs);
   const grades = el.querySelector('#rv-grades');
   grades.hidden = false;
