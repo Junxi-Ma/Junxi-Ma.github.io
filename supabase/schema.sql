@@ -923,4 +923,43 @@ begin
 exception when duplicate_object then null;
 end $$;
 
+-- ############################################################
+-- 十四、Stardy 学习系统云备份（/tools/stardy/）
+--   每用户一行（user_id 唯一）：payload 为全量工作区 JSON
+--   （subjects/docs/nodes/links/cards/quiz/revlog）。
+--   手动上传 / 恢复，不做自动同步；AI 密钥永不入此表。
+-- ############################################################
+
+create table if not exists public.stardy_backups (
+  id            uuid primary key default gen_random_uuid(),
+  user_id       uuid not null default auth.uid() references auth.users (id) on delete cascade,
+  payload       jsonb not null,
+  version       int  not null default 1,
+  size_bytes    int  not null default 0,
+  subject_count int  not null default 0,
+  created_at    timestamptz not null default now(),
+  updated_at    timestamptz not null default now(),
+  constraint stardy_backups_user_unique unique (user_id)
+);
+create index if not exists stardy_backups_updated_idx on public.stardy_backups (updated_at desc);
+
+alter table public.stardy_backups enable row level security;
+
+drop policy if exists "stardy backups owner select" on public.stardy_backups;
+create policy "stardy backups owner select" on public.stardy_backups
+  for select to authenticated using (user_id = auth.uid());
+drop policy if exists "stardy backups owner insert" on public.stardy_backups;
+create policy "stardy backups owner insert" on public.stardy_backups
+  for insert to authenticated with check (
+    user_id = auth.uid()
+    and not coalesce(public.is_banned(), false)
+  );
+drop policy if exists "stardy backups owner update" on public.stardy_backups;
+create policy "stardy backups owner update" on public.stardy_backups
+  for update to authenticated using (user_id = auth.uid())
+  with check (user_id = auth.uid());
+drop policy if exists "stardy backups owner delete" on public.stardy_backups;
+create policy "stardy backups owner delete" on public.stardy_backups
+  for delete to authenticated using (user_id = auth.uid());
+
 notify pgrst, 'reload schema';
