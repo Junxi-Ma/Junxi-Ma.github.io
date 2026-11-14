@@ -7,10 +7,10 @@
  * 同笔记 sibling 埋没）。键盘：Space 翻面，1-4 打分，Esc 退出。
  */
 
-import db from '../db.js?v=5';
-import * as S from '../scheduler.js?v=5';
-import { renderMarkdown, renderCloze, escapeHtml, fmtInterval, STATE_INFO, GRADES, uid } from '../models.js?v=5';
-import { toast } from '../ui.js?v=5';
+import db from '../db.js?v=6';
+import * as S from '../scheduler.js?v=6';
+import { renderMarkdown, renderCloze, escapeHtml, fmtInterval, STATE_INFO, GRADES, uid } from '../models.js?v=6';
+import { toast } from '../ui.js?v=6';
 
 const overlay = () => document.getElementById('sdy-review');
 

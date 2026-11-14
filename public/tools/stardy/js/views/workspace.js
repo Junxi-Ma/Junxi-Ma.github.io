@@ -3,25 +3,25 @@
 
  */
 
-import db from '../db.js?v=5';
-import * as S from '../scheduler.js?v=5';
+import db from '../db.js?v=6';
+import * as S from '../scheduler.js?v=6';
 import {
   escapeHtml, renderMarkdown, renderCloze, parseCloze, clozeOrds, suggestClozes,
   newCard, newNode, newLink, fmtInterval, STATE_INFO, uid,
-} from '../models.js?v=5';
-import { toast, openModal, confirmBox, promptBox } from '../ui.js?v=5';
+} from '../models.js?v=6';
+import { toast, openModal, confirmBox, promptBox } from '../ui.js?v=6';
 import {
   exportSubjectFile, exportAllFile, readJsonFile, importPayload,
   cloudReady, cloudUser, cloudMeta, cloudUpload, cloudRestore, makeRestorePoint,
-} from '../backup.js?v=5';
-import { startReview } from './review.js?v=5';
-import { cascadeDeleteSubject } from './home.js?v=5';
-import { openAiBuildTree, openAiGenCards, renderReviewConsole } from './ai.js?v=5';
-import { parseFile, kindLabel, ocrPdfPages } from '../parse.js?v=5';
-import { aiOcrPage } from '../ai.js?v=5';
-import { renderQuiz } from './quiz.js?v=5';
-import { renderRadialGraph } from './graph.js?v=5';
-import { loadAiConfig, saveAiConfig, chat, aiUsage } from '../ai.js?v=5';
+} from '../backup.js?v=6';
+import { startReview } from './review.js?v=6';
+import { cascadeDeleteSubject } from './home.js?v=6';
+import { openAiBuildTree, openAiGenCards, renderReviewConsole } from './ai.js?v=6';
+import { parseFile, kindLabel, ocrPdfPages } from '../parse.js?v=6';
+import { aiOcrPage } from '../ai.js?v=6';
+import { renderQuiz } from './quiz.js?v=6';
+import { renderRadialGraph } from './graph.js?v=6';
+import { loadAiConfig, saveAiConfig, chat, aiUsage } from '../ai.js?v=6';
 
 const TABS = [
   { id: 'overview', label: '总览' },
@@ -1223,7 +1223,7 @@ async function renderSettings(panel, subject) {
     btn.textContent = '测试中…';
     const t0 = Date.now();
     try {
-      const { content } = await chat([{ role: 'user', content: '请只回复两个字：正常' }], { task: 'chat', maxTokens: 20 });
+      const { content } = await chat([{ role: 'user', content: '请只回复两个字：正常' }], { task: 'chat', maxTokens: 768 });
       toast(`连接正常（${Date.now() - t0}ms）：${content.slice(0, 30)}`);
     } catch (e) {
       toast('连接失败：' + e.message, true, 5200);

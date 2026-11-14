@@ -143,9 +143,12 @@ export async function chat(messages, { task = 'chat', temperature = 0.3, maxToke
   const msg = data.choices?.[0]?.message || {};
   const content = msg.content || msg.reasoning_content || '';
   if (data.choices?.[0]?.finish_reason === 'length') {
-    throw new Error('AI 输出被 max_tokens 截断，请减小每次的处理量');
+    // 截断：正文为空 → 多半是推理模型把 max_tokens 花在了思考上；有内容 → 交给上层解析（JSON 有截断修复）
+    if (!content.trim()) {
+      throw new Error('AI 输出为空：max_tokens 被模型的推理过程消耗完。请在设置里把每次处理量调大，或换用非推理（不深度思考）的模型');
+    }
   }
-  if (!content) throw new Error('AI 返回了空内容');
+  if (!content) throw new Error('AI 返回了空内容' + (msg.reasoning_content ? '（模型只输出了推理过程，请换用非推理模型）' : ''));
   const tokens = data.usage?.total_tokens || 0;
   addUsage(tokens);
   return { content, tokens };

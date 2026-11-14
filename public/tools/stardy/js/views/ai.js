@@ -5,12 +5,12 @@
  * 节点/关系按批次重映射 id；卡片与题目直接挂真实节点。
  */
 
-import db from '../db.js?v=5';
-import { uid, escapeHtml, newCard, newNode, newLink, newQuiz, clozeOrds } from '../models.js?v=5';
-import { openModal, toast, confirmBox } from '../ui.js?v=5';
-import { aiStructFromChunk, aiCardsForNode, aiQuizForNode, loadAiConfig } from '../ai.js?v=5';
-import { roughSections } from '../parse.js?v=5';
-import * as S from '../scheduler.js?v=5';
+import db from '../db.js?v=6';
+import { uid, escapeHtml, newCard, newNode, newLink, newQuiz, clozeOrds } from '../models.js?v=6';
+import { openModal, toast, confirmBox } from '../ui.js?v=6';
+import { aiStructFromChunk, aiCardsForNode, aiQuizForNode, loadAiConfig } from '../ai.js?v=6';
+import { roughSections } from '../parse.js?v=6';
+import * as S from '../scheduler.js?v=6';
 
 /* ============================================================
    AI 建树

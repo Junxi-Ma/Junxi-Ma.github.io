@@ -7,7 +7,7 @@
  * 点击节点跳回大纲并选中。
  */
 
-import { escapeHtml } from '../models.js?v=5';
+import { escapeHtml } from '../models.js?v=6';
 
 const LINK_COLOR = { 前置: '#d97706', 拓展: '#15803d', 易混: '#dc2626' };
 
