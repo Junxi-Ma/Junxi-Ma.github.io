@@ -20,7 +20,7 @@ import { openAiBuildTree, openAiGenCards, renderReviewConsole } from './ai.js?v=
 import { parseFile, kindLabel, ocrPdfPages } from '../parse.js?v=8';
 import { aiOcrPage } from '../ai.js?v=8';
 import { renderQuiz } from './quiz.js?v=8';
-import { renderRadialGraph } from './graph.js?v=8';
+import { renderRadialGraph } from './graph.js?v=11';
 import { loadAiConfig, saveAiConfig, chat, aiUsage } from '../ai.js?v=8';
 
 // ai-proxy Edge Function 源码（与 supabase/functions/ai-proxy/index.ts 同步，部署指引弹窗展示用）
