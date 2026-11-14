@@ -16,6 +16,9 @@ import {
 } from '../backup.js?v=2';
 import { startReview } from './review.js?v=2';
 import { cascadeDeleteSubject } from './home.js?v=2';
+import { openAiBuildTree, openAiGenCards, renderReviewConsole } from './ai.js?v=2';
+import { parseFile, kindLabel } from '../parse.js?v=2';
+import { loadAiConfig, saveAiConfig, chat, aiUsage } from '../ai.js?v=2';
 
 const TABS = [
   { id: 'overview', label: '总览' },
@@ -31,13 +34,17 @@ export async function renderWorkspace(root, subjectId, tab = 'overview') {
   if (!subject) { toast('科目不存在', true); location.hash = '#/'; return; }
   document.title = `${subject.name} · Stardy 学习系统`;
 
-  const [cards, nodes, docs] = await Promise.all([
+  const [cards, nodes, docs, pendingN] = await Promise.all([
     db.byIndex('cards', 'subjectId', subjectId),
     db.byIndex('nodes', 'subjectId', subjectId),
     db.byIndex('docs', 'subjectId', subjectId),
+    db.count('pending', 'subjectId', subjectId),
   ]);
   const due = S.dueCounts(cards);
-  if (!TABS.some((t) => t.id === tab)) tab = 'overview';
+  const tabs = pendingN > 0
+    ? [...TABS.slice(0, 5), { id: 'ainote', label: '审核', badge: pendingN }, TABS[5]]
+    : TABS;
+  if (!tabs.some((t) => t.id === tab)) tab = 'overview';
 
   root.innerHTML = `
     <div class="container tool sdy-view">
@@ -52,19 +59,20 @@ export async function renderWorkspace(root, subjectId, tab = 'overview') {
         </div>
       </div>
       <nav class="sdy-tabs" id="ws-tabs">
-        ${TABS.map((t) => `
+        ${tabs.map((t) => `
           <button class="sdy-tab${t.id === tab ? ' on' : ''}" data-tab="${t.id}" ${t.disabled ? 'data-disabled="1"' : ''}
             title="${t.disabled ? '阶段三开放' : ''}">
             ${t.label}${!t.disabled && t.id === 'tree' && nodes.length ? `<span class="sdy-tab__n">${nodes.length}</span>` : ''}
             ${!t.disabled && t.id === 'cards' ? `<span class="sdy-tab__n">${cards.length}</span>` : ''}
             ${!t.disabled && t.id === 'docs' && docs.length ? `<span class="sdy-tab__n">${docs.length}</span>` : ''}
+            ${t.badge ? `<span class="sdy-tab__n">${t.badge}</span>` : ''}
           </button>`).join('')}
       </nav>
       <div id="ws-panel"></div>
     </div>`;
 
   root.querySelector('#ws-review').addEventListener('click', () => startReview(subjectId));
-  root.querySelector('#ws-newcard').addEventListener('click', () => openCardEditor(subject));
+  root.querySelector('#ws-newcard').addEventListener('click', () => openCardEditor(subject, { onDone: () => gotoTab(root, subjectId, tab) }));
   for (const b of root.querySelectorAll('#ws-tabs .sdy-tab')) {
     b.addEventListener('click', () => {
       if (b.dataset.disabled) { toast('阶段三开放，敬请期待'); return; }
@@ -78,9 +86,27 @@ export async function renderWorkspace(root, subjectId, tab = 'overview') {
     tree: renderTree,
     docs: renderDocs,
     cards: renderCards,
+    ainote: renderAinote,
     settings: renderSettings,
   }[tab] || renderOverview;
-  await render(panel, subject);
+  await render(panel, subject, root);
+}
+
+/** hash 一致的内部跳转（同 hash 时手动渲染，否则交给路由） */
+function gotoTab(root, subjectId, tab) {
+  const h = '#/s/' + subjectId + '/' + tab;
+  if (location.hash === h || (tab === 'overview' && (location.hash === '#/' || location.hash === ''))) {
+    gotoTab(root, subjectId, tab);
+  } else {
+    location.hash = h;
+  }
+}
+
+/** 审核台标签页 */
+async function renderAinote(panel, subject, root) {
+  await renderReviewConsole(panel, subject, (mode) => {
+    gotoTab(root, subject.id, mode === 'tree' ? 'tree' : 'overview');
+  });
 }
 
 /* ============================================================
@@ -161,11 +187,12 @@ function todayLocal() {
 // 展开状态按科目记忆（session 内）
 const expandedMap = new Map();
 
-async function renderTree(panel, subject) {
-  const [nodes, links, cards] = await Promise.all([
+async function renderTree(panel, subject, root) {
+  const [nodes, links, cards, docs] = await Promise.all([
     db.byIndex('nodes', 'subjectId', subject.id),
     db.byIndex('links', 'subjectId', subject.id),
     db.byIndex('cards', 'subjectId', subject.id),
+    db.byIndex('docs', 'subjectId', subject.id),
   ]);
   const byId = new Map(nodes.map((n) => [n.id, n]));
   const kidsOf = new Map();
@@ -210,7 +237,7 @@ async function renderTree(panel, subject) {
   panel.innerHTML = `
     <div class="sdy-row" style="margin-bottom:12px">
       <button class="btn btn--sm" id="tr-addroot">✚ 章节点</button>
-      <button class="btn btn--sm btn--ghost" id="tr-ai" disabled title="阶段二开放：上传课件后由 AI 提取知识树">🤖 AI 建树（阶段二）</button>
+      <button class="btn btn--sm" id="tr-ai">🤖 AI 建树</button>
       <span class="sdy-grow"></span>
       <span class="sdy-chip sdy-chip--muted">${nodes.length} 个节点 · ${links.length} 条关系</span>
     </div>
@@ -219,8 +246,8 @@ async function renderTree(panel, subject) {
         ${roots.length ? roots.map((n) => rowHtml(n, 0)).join('') : `
           <div class="sdy-empty">
             知识树还是空的。<br>
-            可以先手动添加章节点把框架搭起来；<br>
-            阶段二开放后，上传课件 PDF / PPT 即可让 AI 自动生成整棵树并进审核台确认。
+            点「🤖 AI 建树」从已上传的课件 / 资料自动提取（产出先入审核台）；<br>
+            也可以「✚ 章节点」手动搭框架，再在节点上出卡。
           </div>`}
       </div>
       <div class="sdy-panel sdy-node-detail" id="tr-detail">${sel ? nodeDetailHtml(sel) : '<p style="color:var(--text-3)">选择左侧节点查看详情</p>'}</div>
@@ -275,12 +302,15 @@ async function renderTree(panel, subject) {
 
   // 节点操作
   panel.querySelector('#tr-addroot')?.addEventListener('click', () => openNodeEditor(subject, { pid: null, onDone: rerender }));
+  panel.querySelector('#tr-ai')?.addEventListener('click', () => {
+    openAiBuildTree(subject, docs, () => gotoTab(root, subject.id, 'ainote'));
+  });
   const bindDetail = (sel2, fn) => panel.querySelector(sel2)?.addEventListener('click', fn);
 
   if (sel) {
     bindDetail('[data-naddchild]', () => openNodeEditor(subject, { pid: sel.id, onDone: rerender }));
     bindDetail('[data-nedit]', () => openNodeEditor(subject, { node: sel, onDone: rerender }));
-    bindDetail('[data-ncard]', (e) => openCardEditor(subject, { nid: sel.id, kind: e.currentTarget.dataset.ncard, onDone: rerender }));
+    bindDetail('[data-ncard]', (e) => openCardEditor(subject, { nid: sel.id, kind: e.currentTarget.dataset.ncard, onDone: () => gotoTab(root, subject.id, 'tree') }));
     bindDetail('[data-ndel]', async () => {
       const nKids = countDescendants(sel.id);
       const ok = await confirmBox({
@@ -420,9 +450,19 @@ function isDescendant(rootId, maybeChildId, nodes) {
    资料
    ============================================================ */
 
-async function renderDocs(panel, subject) {
+async function renderDocs(panel, subject, root) {
   const docs = await db.byIndex('docs', 'subjectId', subject.id);
   panel.innerHTML = `
+    <div class="sdy-panel">
+      <p class="sdy-panel__title">上传资料</p>
+      <div id="dc-dropzone" class="sdy-dropzone" tabindex="0">
+        <div style="font-size:30px">📄</div>
+        <p style="margin:6px 0 2px;font-weight:600;color:var(--text-1)">点击选择 或 拖拽文件到这里</p>
+        <p class="sdy-field__hint">支持 PDF / PPTX / DOCX / MD / TXT，可多选；PDF 按字号自动重建章节结构，扫描件（无文字层）会在列表中标注，OCR 阶段三开放。旧版 .ppt / .doc 请先另存为新格式。</p>
+        <input type="file" id="dc-file" multiple accept=".pdf,.pptx,.ppsx,.docx,.md,.markdown,.txt,.text" hidden>
+      </div>
+      <div id="dc-status" class="sdy-field__hint" style="margin-top:8px" hidden></div>
+    </div>
     <div class="sdy-panel">
       <p class="sdy-panel__title">已上传资料（${docs.length}）</p>
       ${docs.length ? `<div class="sdy-cardlist">${docs.map((d) => `
@@ -430,22 +470,74 @@ async function renderDocs(panel, subject) {
           <div class="sdy-cardrow__main" data-view="${d.id}">
             <div class="sdy-cardrow__front">${escapeHtml(d.name)}</div>
             <div class="sdy-cardrow__meta">
-              <span class="sdy-chip sdy-chip--muted">${escapeHtml(d.kind)}</span>
+              <span class="sdy-chip sdy-chip--muted">${escapeHtml(kindLabel(d.kind))}</span>
               <span>${d.chars} 字</span>
+              ${d.outline ? `<span>${d.outline.length} 个标题</span>` : ''}
+              ${d.scanned ? '<span class="sdy-chip sdy-chip--leech">疑似扫描件</span>' : ''}
               <span>${new Date(d.addedAt).toLocaleString('zh-CN')}</span>
             </div>
           </div>
           <div class="sdy-cardrow__acts">
+            ${d.outline ? `<button class="btn btn--sm" data-tree="${d.id}">🤖 建树</button>` : ''}
             <button class="btn btn--sm btn--ghost" data-del="${d.id}" style="color:var(--danger-fg)">删除</button>
           </div>
         </div>`).join('')}</div>` : `
         <div class="sdy-soon">
-          <div class="ic">📄</div>
-          <p>阶段二开放：上传课件 PDF / PPT / Word、整理好的 md / txt，<br>
-          文本自动提取并分块，交给 AI 构建知识树与卡片，全部经审核台确认后入库。</p>
-          <p style="font-size:var(--fs-xs)">扫描件（无文字层的 PDF / 拍照）将由视觉模型逐页转写。</p>
+          <div class="ic">🗂️</div>
+          <p>还没有资料。上传后即可「AI 建树」提取知识体系（产出先进审核台，你确认后才入库）。</p>
         </div>`}
     </div>`;
+
+  // 上传区样式
+  const style = document.createElement('style');
+  if (!document.getElementById('sdy-dropzone-style')) {
+    style.id = 'sdy-dropzone-style';
+    style.textContent = `
+      .sdy-dropzone { border: 1.5px dashed var(--border-strong); border-radius: var(--radius-card); padding: 22px; text-align: center; cursor: pointer; transition: border-color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease); }
+      .sdy-dropzone:hover, .sdy-dropzone.dragover { border-color: var(--accent); background: var(--accent-soft); }`;
+    document.head.appendChild(style);
+  }
+
+  const fileEl = panel.querySelector('#dc-file');
+  const zone = panel.querySelector('#dc-dropzone');
+  const statusEl = panel.querySelector('#dc-status');
+  const showStatus = (t, hide = false) => { statusEl.textContent = t; statusEl.hidden = hide; };
+
+  zone.addEventListener('click', () => fileEl.click());
+  zone.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') fileEl.click(); });
+  zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('dragover'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+  zone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    zone.classList.remove('dragover');
+    handleFiles([...e.dataTransfer.files]);
+  });
+  fileEl.addEventListener('change', () => {
+    handleFiles([...fileEl.files]);
+    fileEl.value = '';
+  });
+
+  async function handleFiles(files) {
+    if (!files.length) return;
+    let ok = 0, fail = 0;
+    for (const f of files) {
+      showStatus(`解析中：${f.name}…`);
+      try {
+        const r = await parseFile(f, (p) => {
+          if (p && p.total) showStatus(`解析中：${f.name}（第 ${p.page}/${p.total} 页）…`);
+        });
+        const scanned = r.pagesInfo ? r.pagesInfo.every((pg) => pg.chars < 20) : false;
+        await db.put('docs', newDoc(subject.id, f.name, r.kind, r.text, r.outline, scanned));
+        ok++;
+      } catch (e) {
+        fail++;
+        toast(`${f.name}：${e.message}`, true, 4200);
+      }
+    }
+    showStatus('', true);
+    if (ok) toast(`已导入 ${ok} 份资料${fail ? `，${fail} 份失败` : ''}`);
+    renderDocs(panel, subject, root);
+  }
 
   for (const b of panel.querySelectorAll('[data-view]')) {
     b.addEventListener('click', () => {
@@ -456,11 +548,17 @@ async function renderDocs(panel, subject) {
       });
     });
   }
+  for (const b of panel.querySelectorAll('[data-tree]')) {
+    b.addEventListener('click', () => {
+      const d = docs.find((x) => x.id === b.dataset.tree);
+      openAiBuildTree(subject, [d], () => gotoTab(root, subject.id, 'ainote'));
+    });
+  }
   for (const b of panel.querySelectorAll('[data-del]')) {
     b.addEventListener('click', async () => {
       if (!(await confirmBox({ title: '删除这份资料？', body: '只删除资料文本，已生成的节点与卡片不受影响。', confirmText: '删除', danger: true }))) return;
       await db.del('docs', b.dataset.del);
-      renderDocs(panel, subject);
+      renderDocs(panel, subject, root);
     });
   }
 }
@@ -471,11 +569,13 @@ async function renderDocs(panel, subject) {
 
 const cardFilters = { q: '', state: 'all', kind: 'all', sort: 'created' };
 
-async function renderCards(panel, subject) {
+async function renderCards(panel, subject, root) {
   const [cards, nodes] = await Promise.all([
     db.byIndex('cards', 'subjectId', subject.id),
     db.byIndex('nodes', 'subjectId', subject.id),
   ]);
+  // 给 AI 出卡用：标记已有卡片的节点
+  const nodesForAi = nodes.map((n) => ({ ...n, _hasCards: cards.some((c) => c.nid === n.id) }));
   const nodePath = new Map();
   const byId = new Map(nodes.map((n) => [n.id, n]));
   for (const n of nodes) {
@@ -526,6 +626,7 @@ async function renderCards(panel, subject) {
         <option value="due" ${cardFilters.sort === 'due' ? 'selected' : ''}>按到期时间</option>
       </select>
       <span class="sdy-grow"></span>
+      <button class="btn btn--sm" id="cf-aigen">🤖 AI 出卡</button>
       <button class="btn btn--primary btn--sm" id="cf-new">✚ 新卡片</button>
     </div>
     <div class="sdy-cardlist">
@@ -562,7 +663,7 @@ async function renderCards(panel, subject) {
         </div>`}
     </div>`;
 
-  const rerender = () => renderCards(panel, subject);
+  const rerender = () => renderCards(panel, subject, root);
   let debounce = null;
   panel.querySelector('#cf-q').addEventListener('input', (e) => {
     clearTimeout(debounce);
@@ -571,7 +672,10 @@ async function renderCards(panel, subject) {
   for (const [sel, key] of [['#cf-state', 'state'], ['#cf-kind', 'kind'], ['#cf-sort', 'sort']]) {
     panel.querySelector(sel).addEventListener('change', (e) => { cardFilters[key] = e.target.value; rerender(); });
   }
-  panel.querySelector('#cf-new').addEventListener('click', () => openCardEditor(subject, { onDone: rerender }));
+  panel.querySelector('#cf-new').addEventListener('click', () => openCardEditor(subject, { onDone: () => gotoTab(root, subject.id, 'cards') }));
+  panel.querySelector('#cf-aigen').addEventListener('click', () => {
+    openAiGenCards(subject, nodesForAi, () => gotoTab(root, subject.id, 'ainote'));
+  });
   for (const el of panel.querySelectorAll('[data-edit]')) {
     el.addEventListener('click', () => openCardEditor(subject, { card: cards.find((c) => c.id === el.dataset.edit), onDone: rerender }));
   }
@@ -771,6 +875,8 @@ export function openCardEditor(subject, { card = null, nid = null, kind = 'qa', 
 
 async function renderSettings(panel, subject) {
   const st = subject.settings;
+  const aiCfg = loadAiConfig();
+  const usage = aiUsage();
   panel.innerHTML = `
     <div class="sdy-panel">
       <p class="sdy-panel__title">复习参数（FSRS-6）</p>
@@ -814,6 +920,36 @@ async function renderSettings(panel, subject) {
         <button class="btn btn--primary" id="set-save">保存参数</button>
         <span class="sdy-field__hint" id="set-saved" hidden>已保存 ✓</span>
       </div>
+    </div>
+
+    <div class="sdy-panel">
+      <p class="sdy-panel__title">AI 配置 <span class="sdy-chip ${aiCfg.mock ? 'sdy-chip--muted' : 'sdy-chip--review'}" id="aic-mode">${aiCfg.mock ? 'Mock 演示模式' : '已接入真实 API'}</span></p>
+      <p class="sdy-field__hint" style="margin-bottom:10px">
+        填 OpenAI 兼容端点（中转站 / 自建均可）+ Key + 模型名；端点会自动补 /v1/chat/completions。
+        密钥只存在本机 localStorage，不参与云备份与导出。未配置时可勾选 Mock 模式走通全流程（输出为演示数据）。
+      </p>
+      <div class="sdy-row">
+        <div class="sdy-field sdy-grow" style="min-width:220px">
+          <label class="sdy-field__label">API 端点</label>
+          <input class="sdy-input" id="aic-endpoint" placeholder="https://xxx.example.com/v4" value="${escapeHtml(aiCfg.endpoint)}">
+        </div>
+        <div class="sdy-field sdy-grow" style="min-width:180px">
+          <label class="sdy-field__label">API Key</label>
+          <input class="sdy-input" id="aic-key" type="password" placeholder="sk-…" value="${escapeHtml(aiCfg.key)}" autocomplete="off">
+        </div>
+        <div class="sdy-field" style="min-width:160px">
+          <label class="sdy-field__label">模型</label>
+          <input class="sdy-input" id="aic-model" placeholder="例如 glm-4.6 / deepseek-chat" value="${escapeHtml(aiCfg.model)}">
+        </div>
+      </div>
+      <div class="sdy-row" style="margin-top:4px">
+        <label class="sdy-checkrow"><input type="checkbox" id="aic-mock" ${aiCfg.mock ? 'checked' : ''}> Mock 演示模式（不调用真实 API）</label>
+        <span class="sdy-grow"></span>
+        <button class="btn" id="aic-test">测试连接</button>
+        <button class="btn btn--primary" id="aic-save">保存 AI 配置</button>
+        <span class="sdy-field__hint" id="aic-saved" hidden>已保存 ✓</span>
+      </div>
+      <p class="sdy-field__hint" style="margin-top:8px">用量：${usage.calls} 次调用 · ${usage.totalTokens} tokens（累计本机）<button class="btn btn--sm btn--ghost" id="aic-resetusage" style="margin-left:8px">清零</button></p>
     </div>
 
     <div class="sdy-panel">
@@ -868,6 +1004,46 @@ async function renderSettings(panel, subject) {
     flag.hidden = false;
     setTimeout(() => { flag.hidden = true; }, 1600);
     toast('复习参数已保存');
+  });
+
+  // —— AI 配置
+  panel.querySelector('#aic-save').addEventListener('click', () => {
+    saveAiConfig({
+      endpoint: panel.querySelector('#aic-endpoint').value.trim(),
+      key: panel.querySelector('#aic-key').value.trim(),
+      model: panel.querySelector('#aic-model').value.trim(),
+      mock: panel.querySelector('#aic-mock').checked,
+    });
+    const flag = panel.querySelector('#aic-saved');
+    flag.hidden = false;
+    setTimeout(() => { flag.hidden = true; }, 1600);
+    renderSettings(panel, subject);
+    toast('AI 配置已保存');
+  });
+  panel.querySelector('#aic-test').addEventListener('click', async () => {
+    // 先用表单当前值临时保存再测，避免"改了没存就测"的困惑
+    saveAiConfig({
+      endpoint: panel.querySelector('#aic-endpoint').value.trim(),
+      key: panel.querySelector('#aic-key').value.trim(),
+      model: panel.querySelector('#aic-model').value.trim(),
+      mock: panel.querySelector('#aic-mock').checked,
+    });
+    const btn = panel.querySelector('#aic-test');
+    btn.disabled = true;
+    btn.textContent = '测试中…';
+    const t0 = Date.now();
+    try {
+      const { content } = await chat([{ role: 'user', content: '请只回复两个字：正常' }], { task: 'chat', maxTokens: 20 });
+      toast(`连接正常（${Date.now() - t0}ms）：${content.slice(0, 30)}`);
+    } catch (e) {
+      toast('连接失败：' + e.message, true, 5200);
+    }
+    btn.disabled = false;
+    btn.textContent = '测试连接';
+  });
+  panel.querySelector('#aic-resetusage').addEventListener('click', () => {
+    try { localStorage.removeItem('stardy-ai-usage-v1'); } catch {}
+    renderSettings(panel, subject);
   });
 
   // —— 云备份

@@ -7,7 +7,7 @@
  */
 
 const DB_NAME = 'stardy';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 const STORES = [
   { name: 'subjects', keyPath: 'id', indexes: [] },
@@ -18,6 +18,8 @@ const STORES = [
   { name: 'quiz', keyPath: 'id', indexes: ['subjectId'] },
   // revlog：每答一次写一行；day 是本地日期字符串，供热图 / 连击 / 配额统计
   { name: 'revlog', keyPath: 'id', indexes: ['cardId', 'subjectId', 'day'] },
+  // pending：AI 产出的待审核条目（节点/关系/卡片），审核通过才入正式表
+  { name: 'pending', keyPath: 'id', indexes: ['subjectId', 'batchId'] },
   { name: 'settings', keyPath: 'key', indexes: [] },
   { name: 'meta', keyPath: 'key', indexes: [] },
 ];

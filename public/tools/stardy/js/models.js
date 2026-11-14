@@ -79,7 +79,7 @@ export function newSubject(name, intro = '') {
   };
 }
 
-export function newDoc(subjectId, name, kind, text, outline = null) {
+export function newDoc(subjectId, name, kind, text, outline = null, scanned = false) {
   return {
     id: uid(),
     subjectId,
@@ -88,6 +88,7 @@ export function newDoc(subjectId, name, kind, text, outline = null) {
     text,
     chars: text.length,
     outline, // [{ level, title, pos }] 或 null
+    scanned, // PDF 无文字层（疑似扫描件），OCR 阶段三处理
     addedAt: Date.now(),
   };
 }
