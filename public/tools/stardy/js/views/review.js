@@ -7,10 +7,10 @@
  * 同笔记 sibling 埋没）。键盘：Space 翻面，1-4 打分，Esc 退出。
  */
 
-import db from '../db.js?v=99';
-import * as S from '../scheduler.js?v=99';
-import { renderMarkdown, renderCloze, escapeHtml, fmtInterval, STATE_INFO, GRADES, uid } from '../models.js?v=99';
-import { toast, openModal } from '../ui.js?v=99';
+import db from '../db.js?v=100';
+import * as S from '../scheduler.js?v=100';
+import { renderMarkdown, renderCloze, escapeHtml, fmtInterval, STATE_INFO, GRADES, uid } from '../models.js?v=100';
+import { toast, openModal } from '../ui.js?v=100';
 
 const overlay = () => document.getElementById('sdy-review');
 
@@ -190,8 +190,11 @@ export async function open(subjectId) {
   renderLeftStats();
   await showCurrent();
   session.timer = setInterval(() => {
-    const t = document.getElementById('rv-n-time');
-    if (t) t.textContent = elapsedMin() + ' 分';
+    const txt = elapsedMin() + ' 分';
+    for (const id of ['rv-n-time', 'rv-s-time']) {
+      const t = document.getElementById(id);
+      if (t) t.textContent = txt;
+    }
   }, 20000);
   document.addEventListener('keydown', onKey);
 }
@@ -237,6 +240,7 @@ function renderChrome(el) {
       <span class="sdy-grow"></span>
       <span class="sdy-chip sdy-chip--muted">${escapeHtml(session.subject.name)}${session.scopeLabel ? ' · ' + escapeHtml(session.scopeLabel) : ''}</span>
     </div>
+    <div class="sdy-review__strip" id="rv-strip"></div>
     <div class="sdy-review__main">
       <aside class="sdy-side" id="rv-left"></aside>
       <div class="sdy-center" id="rv-body"></div>
@@ -271,6 +275,26 @@ function renderLeftStats() {
     <div class="sdy-side__bar"><i style="width:${Math.min(100, (newUsed / Math.max(1, cap.newPerDay)) * 100)}%"></i></div>
     <div class="sdy-side__row" style="margin-top:8px"><span>复习</span><b>${revUsed} / ${cap.revPerDay}</b></div>
     <div class="sdy-side__bar"><i style="width:${Math.min(100, (revUsed / Math.max(1, cap.revPerDay)) * 100)}%"></i></div>`;
+  renderStrip();
+}
+
+/** 手机端精简信息条（桌面隐藏）：左栏数据横向压缩成一行，学习时长/配额手机也能看到 */
+function renderStrip() {
+  const strip = overlay().querySelector('#rv-strip');
+  if (!strip) return;
+  const s = session;
+  const cap = s.subject.settings;
+  const newUsed = s.todayLog.filter((r) => r.preState === 0).length;
+  const revUsed = s.todayLog.filter((r) => r.preState === 2).length;
+  strip.innerHTML = `
+    <span class="sdy-strip__item">已答 <b>${s.answered}</b></span>
+    <span class="sdy-strip__item">剩余 <b>${Math.max(0, s.queue.length - s.idx)}</b></span>
+    <span class="sdy-strip__item">记住 <b>${s.answered - s.againCount}</b></span>
+    <span class="sdy-strip__item">重练 <b>${s.againCount}</b></span>
+    <span class="sdy-strip__item">用时 <b id="rv-s-time">${elapsedMin()} 分</b></span>
+    <span class="sdy-strip__sep"></span>
+    <span class="sdy-strip__item">新卡 <b>${newUsed}/${cap.newPerDay}</b></span>
+    <span class="sdy-strip__item">复习 <b>${revUsed}/${cap.revPerDay}</b></span>`;
 }
 
 /** 右栏：当前卡片的信息 */
@@ -300,7 +324,7 @@ function renderCardInfo(card, r, flipped) {
  * 字号自适应：二分找到能占满卡片又不溢出的最大字号（14-34px）。
  * 短文本自动放大，长文本自动缩小，放不下时兜底滚动。
  */
-function fitText(el, max = 34, min = 14) {
+function fitText(el, max = 34, min = 12) {
   const probe = el.querySelector('.sdy-md') || el;
   probe.style.fontSize = '';
   let lo = min, hi = max, best = min;

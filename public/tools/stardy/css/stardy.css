@@ -536,9 +536,28 @@
     radial-gradient(circle, var(--tint-hover) 1px, transparent 1.4px);
   background-size: auto, 24px 24px;
 }
+/* 手机端精简信息条：桌面隐藏，窄屏顶在 topbar 下方一行横排 */
+.sdy-review__strip { display: none; }
 @media (max-width: 1020px) {
   .sdy-review__main { grid-template-columns: minmax(0, 1fr); padding-inline: 12px; background-size: auto, 20px 20px; }
-  .sdy-side { display: none; }
+  /* 特异性高于下方 .sdy-side 基础规则（display:flex），否则窄屏侧栏压不住 */
+  .sdy-review__main .sdy-side { display: none; }
+  .sdy-review__strip {
+    display: flex;
+    align-items: center;
+    gap: 4px 12px;
+    flex-wrap: wrap;
+    padding: 8px 14px;
+    border-bottom: 1px solid var(--border);
+    flex: none;
+    font-size: var(--fs-sm);
+    color: var(--text-2);
+    background: color-mix(in oklch, var(--card-bg) 55%, transparent);
+  }
+  .sdy-review__strip b { font-family: var(--font-mono); color: var(--text-1); font-weight: 600; }
+  .sdy-strip__sep { width: 1px; height: 14px; background: var(--border-strong); margin-inline: 2px; }
+  /* 手机竖屏：卡面吃掉更多纵向空间，长内容少滚动 */
+  .sdy-face { height: clamp(300px, 64vh, 720px); }
 }
 
 /* 侧栏 */
@@ -686,7 +705,10 @@
 .sdy-face__body {
   flex: 1;
   min-height: 0;
-  overflow: hidden auto;
+  /* 拆开写：iOS Safari 对双值 overflow 简写支持不稳，曾致内容被整体裁掉 */
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   padding: clamp(16px, 3vw, 30px) clamp(20px, 4vw, 40px);
   display: flex;
   flex-direction: column;

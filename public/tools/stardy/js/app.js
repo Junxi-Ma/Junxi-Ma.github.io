@@ -7,14 +7,16 @@
  *   #/review/<id>       全屏复习层（hash 变走即关闭，浏览器后退可退出）
  */
 
-import db from './db.js?v=99';
-import { toast } from './ui.js?v=99';
-import { renderHome } from './views/home.js?v=99';
-import { renderWorkspace } from './views/workspace.js?v=99';
-import { renderGlobalSettings } from './views/settings.js?v=99';
-import { open as reviewOpen, close as reviewClose, isOpen } from './views/review.js?v=99';
+import db from './db.js?v=100';
+import { toast } from './ui.js?v=100';
+import { renderHome } from './views/home.js?v=100';
+import { renderWorkspace } from './views/workspace.js?v=100';
+import { renderGlobalSettings } from './views/settings.js?v=100';
+import { open as reviewOpen, close as reviewClose, isOpen } from './views/review.js?v=100';
 
 async function route() {
+  // 路由切换清掉残留模态（goto 同文档不清 body 层弹窗）
+  document.querySelectorAll('.sdy-modal').forEach((m) => m.remove());
   const main = document.getElementById('main');
   const h = location.hash || '#/';
 

@@ -2,12 +2,12 @@
  * Stardy — 首页：科目列表 + 全局统计
  */
 
-import db from '../db.js?v=99';
-import { dueCounts, streak } from '../scheduler.js?v=99';
-import { escapeHtml as _e, dayStr, newSubject } from '../models.js?v=99';
-import { toast, confirmBox, openModal } from '../ui.js?v=99';
-import { exportSubjectFile } from '../backup.js?v=99';
-import { startReview } from './review.js?v=99';
+import db from '../db.js?v=100';
+import { dueCounts, streak } from '../scheduler.js?v=100';
+import { escapeHtml as _e, dayStr, newSubject } from '../models.js?v=100';
+import { toast, confirmBox, openModal } from '../ui.js?v=100';
+import { exportSubjectFile } from '../backup.js?v=100';
+import { startReview } from './review.js?v=100';
 
 export async function renderHome(root) {
   document.title = 'Stardy · 学习系统 — Michael';

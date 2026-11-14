@@ -3,25 +3,25 @@
 
  */
 
-import db from '../db.js?v=99';
-import * as S from '../scheduler.js?v=99';
+import db from '../db.js?v=100';
+import * as S from '../scheduler.js?v=100';
 import {
   escapeHtml, renderMarkdown, renderCloze, parseCloze, clozeOrds, suggestClozes,
   newCard, newDoc, newNode, newLink, fmtInterval, STATE_INFO, uid,
-} from '../models.js?v=99';
-import { toast, openModal, confirmBox, promptBox } from '../ui.js?v=99';
+} from '../models.js?v=100';
+import { toast, openModal, confirmBox, promptBox } from '../ui.js?v=100';
 import {
   exportSubjectFile, exportAllFile, readJsonFile, importPayload, subjectTemplate,
   cloudReady, cloudUser, cloudMeta, cloudUpload, cloudRestore, makeRestorePoint,
-} from '../backup.js?v=99';
-import { startReview } from './review.js?v=99';
-import { cascadeDeleteSubject } from './home.js?v=99';
-import { openAiBuildTree, openAiGenCards, renderReviewConsole } from './ai.js?v=99';
-import { parseFile, kindLabel, ocrPdfPages } from '../parse.js?v=99';
-import { aiOcrPage } from '../ai.js?v=99';
-import { renderQuiz } from './quiz.js?v=99';
-import { renderRadialGraph } from './graph.js?v=99';
-import { loadAiConfig, saveAiConfig, chat, aiUsage } from '../ai.js?v=99';
+} from '../backup.js?v=100';
+import { startReview } from './review.js?v=100';
+import { cascadeDeleteSubject } from './home.js?v=100';
+import { openAiBuildTree, openAiGenCards, renderReviewConsole } from './ai.js?v=100';
+import { parseFile, kindLabel, ocrPdfPages } from '../parse.js?v=100';
+import { aiOcrPage } from '../ai.js?v=100';
+import { renderQuiz } from './quiz.js?v=100';
+import { renderRadialGraph } from './graph.js?v=100';
+import { loadAiConfig, saveAiConfig, chat, aiUsage } from '../ai.js?v=100';
 
 // ai-proxy Edge Function 源码（与 supabase/functions/ai-proxy/index.ts 同步，部署指引弹窗展示用）
 const FS_CODE = `// ============================================================
@@ -936,7 +936,7 @@ async function renderDocs(panel, subject, root) {
    卡片浏览 + 编辑器
    ============================================================ */
 
-const cardFilters = { q: '', state: 'all', kind: 'all', sort: 'created' };
+const cardFilters = { q: '', state: 'all', kind: 'all', chapter: 'all', sort: 'created' };
 
 async function renderCards(panel, subject, root) {
   const [cards, nodes] = await Promise.all([
