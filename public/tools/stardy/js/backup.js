@@ -166,7 +166,22 @@ export async function importPayload(payload) {
     return idMap.get(id);
   };
 
-  const subjects = payload.subjects.map((s) => ({ ...s, id: remap(s.id) }));
+  const defaultSettings = () => ({
+    desiredRetention: 0.9, newPerDay: 20, revPerDay: 200,
+    learnSteps: '1m, 10m', relearnSteps: '10m', maxInterval: 36500,
+    enableFuzz: true, leechThreshold: 8,
+  });
+  const defaultFsrs = () => ({
+    stability: 0, difficulty: 0, dueAt: new Date().toISOString(), lastReviewAt: null,
+    state: 0, scheduleStatus: 'new', cardId: uid(), reps: 0, lapses: 0, scheduledDays: 0, learningStep: 0,
+  });
+  const subjects = payload.subjects.map((s) => ({
+    ...s,
+    id: remap(s.id),
+    settings: { ...defaultSettings(), ...(s.settings || {}) },
+    createdAt: s.createdAt || Date.now(),
+    updatedAt: s.updatedAt || Date.now(),
+  }));
   const mk = (rows) => (rows || []).map((r) => {
     const n = { ...r, id: remap(r.id), subjectId: remap(r.subjectId) };
     if (r.pid !== undefined) n.pid = r.pid ? remap(r.pid) : null;
@@ -181,8 +196,16 @@ export async function importPayload(payload) {
   const docs = mk(payload.docs);
   const nodes = mk(payload.nodes);
   const links = mk(payload.links);
-  const cards = mk(payload.cards);
-  const quiz = mk(payload.quiz);
+  const cards = mk(payload.cards).map((c) => ({
+    flags: 0, suspended: false, ord: 0, noteId: null, nid: null,
+    createdAt: Date.now(), updatedAt: Date.now(),
+    ...c,
+    fsrs: c.fsrs && c.fsrs.state != null ? c.fsrs : defaultFsrs(),
+  }));
+  const quiz = mk(payload.quiz).map((z) => ({
+    wrongCount: 0, resolved: false, lastAt: null, opts: [],
+    ...z,
+  }));
   const revlog = mk(payload.revlog);
 
   await db.bulkPut('subjects', subjects);
@@ -193,6 +216,44 @@ export async function importPayload(payload) {
   await db.bulkPut('quiz', quiz);
   await db.bulkPut('revlog', revlog);
   return { subjects: subjects.length, cards: cards.length };
+}
+
+/** 最小可用科目模板（格式说明弹窗展示用；导入时缺的字段自动补默认值） */
+export function subjectTemplate() {
+  const now = Date.now();
+  const sid = 'SUB-' + uid().slice(0, 8);
+  return {
+    app: 'stardy',
+    version: 2,
+    exportedAt: new Date().toISOString(),
+    subjects: [{
+      id: sid, name: '在这里填科目名', intro: '一句话简介（可选）',
+      createdAt: now, updatedAt: now,
+      settings: { desiredRetention: 0.9, newPerDay: 20, revPerDay: 200, learnSteps: '1m, 10m', relearnSteps: '10m', maxInterval: 36500, enableFuzz: true, leechThreshold: 8 },
+    }],
+    docs: [],
+    nodes: [
+      { id: 'n1', subjectId: sid, pid: null, title: '第一章 示例章', detail: '章/节节点：作为分组容器', formula: '', order: 1 },
+      { id: 'n2', subjectId: sid, pid: 'n1', title: '示例知识点', detail: '记忆要点：把会考的定义、数值、条件写在这里。', formula: '$E = mc^2$', order: 2 },
+    ],
+    links: [{ id: 'l1', subjectId: sid, from: 'n2', to: 'n1', label: '前置' }],
+    cards: [
+      { id: 'c1', subjectId: sid, nid: 'n2', noteId: null, ord: 0, kind: 'qa',
+        front: '这是正面问题（具体、可 30 秒作答）', back: '这是背面答案，支持 **Markdown** 与 $公式
+export async function makeRestorePoint() {
+  const payload = await collectAll();
+  await db.put('settings', { key: 'restore-point', at: Date.now(), payload });
+  return payload;
+}
+, clozeText: '' },
+      { id: 'c2', subjectId: sid, nid: 'n2', noteId: 'note-c2', ord: 1, kind: 'cloze',
+        front: '', back: '', clozeText: '把关键句里的 {{c1::要背的词}} 挖空' },
+    ],
+    quiz: [
+      { id: 'q1', subjectId: sid, nid: 'n2', type: 'choice', q: '题干', opts: ['A 选项', 'B', 'C', 'D'], answer: 0, explain: '解析', wrongCount: 0, resolved: false },
+    ],
+    revlog: [],
+  };
 }
 
 /** 恢复前自动快照到设置表（key = restore-point），失败可找回 */

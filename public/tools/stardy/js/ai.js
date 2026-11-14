@@ -412,3 +412,28 @@ function mockChat(task, messages) {
 
   return '（mock）收到。';
 }
+
+/* ============ 课程问答（基于知识树的简单对话） ============ */
+
+export const SYS_ASK = `你是课程助教。根据给定的【课程知识点】回答学生问题：
+- 优先依据知识点内容作答，条理清晰，重点加粗；可用 Markdown 与 $公式$。
+- 知识点里没有的内容可以补充通识，但要注明「（课程资料外）」。
+- 回答控制在 300 字以内，学生追问时再展开。`;
+
+/** 组装知识树要点上下文 */
+export function courseContext(nodes) {
+  const lines = nodes.map((n) => '· ' + (n._path || n.title) + (n.detail ? '：' + String(n.detail).replace(/\s+/g, ' ').slice(0, 160) : ''));
+  const text = lines.join('\n');
+  return text.length > 24000 ? text.slice(0, 24000) + '\n…（知识点过多已截断）' : text;
+}
+
+/** 课程问答（messages 为本会话历史，调用方裁剪） */
+export async function aiCourseChat(context, messages, onToken = null) {
+  const { content, tokens } = await chat(messages, {
+    task: 'ask',
+    temperature: 0.5,
+    system: SYS_ASK + '\n\n【课程知识点】\n' + context,
+  });
+  if (onToken) onToken(tokens);
+  return content;
+}
