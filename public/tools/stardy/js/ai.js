@@ -96,7 +96,7 @@ function parseLoose(text) {
  * 调一次 chat/completions。
  * @returns {Promise<{content: string, tokens: number}>}
  */
-export async function chat(messages, { task = 'chat', temperature = 0.3, maxTokens = 4096, jsonMode = false, system = null } = {}) {
+export async function chat(messages, { task = 'chat', temperature = 0.3, maxTokens = 8192, jsonMode = false, system = null } = {}) {
   const cfg = loadAiConfig();
 
   if (cfg.mock) {
@@ -238,7 +238,7 @@ export async function aiOcrPage(imageDataUrl, { pageNo, total }, onToken = null)
         { type: 'image_url', image_url: { url: imageDataUrl } },
       ],
     }],
-    { task: 'ocr', temperature: 0.1, maxTokens: 3000, system: SYS_OCR },
+    { task: 'ocr', temperature: 0.1, maxTokens: 8192, system: SYS_OCR },
   );
   if (onToken) onToken(tokens);
   return String(content || '').trim();
