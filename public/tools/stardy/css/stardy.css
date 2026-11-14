@@ -995,6 +995,26 @@
   gap: 6px;
 }
 
+
+/* 径向总览图：入场动画 + hover */
+.sdy-radial .sdy-radial-anim {
+  animation: sdy-radial-in 480ms var(--ease) both;
+}
+@keyframes sdy-radial-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.sdy-radial .sdy-radial-node,
+.sdy-radial .sdy-radial-label {
+  transition: r var(--dur-fast) var(--ease), font-weight var(--dur-fast) var(--ease);
+}
+.sdy-radial text {
+  paint-order: stroke;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sdy-radial .sdy-radial-anim { animation: none; }
+}
+
 @media (max-width: 640px) {
   .sdy-stats-strip { gap: 8px 18px; padding: 12px 14px; }
   .sdy-stat__n { font-size: 18px; }
