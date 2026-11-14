@@ -227,11 +227,16 @@ async function renderTree(panel, subject, root) {
     const cardsN = cardCountOf(n.id);
     return `
       <div class="sdy-tree__item" data-node="${n.id}">
-        <div class="sdy-tree__row${n.id === selectedId ? ' on' : ''}" data-sel="${n.id}">
+        <div class="sdy-tree__row${n.id === selectedId ? ' on' : ''}" data-sel="${n.id}" draggable="true">
           <span class="sdy-tree__caret${kids.length ? (expanded ? '' : ' closed') : ' ghost'}" data-caret="${n.id}">${kids.length ? '▼' : ''}</span>
-          <span class="sdy-tree__title${depth === 0 ? ' is-root' : ''}">${escapeHtml(n.title)}</span>
+          <span class="sdy-tree__title${depth === 0 ? ' is-root' : ''}" data-title="${n.id}">${escapeHtml(n.title)}</span>
           <span class="sdy-tree__badges">
             ${cardsN ? `<span class="sdy-chip sdy-chip--muted">${cardsN} 卡</span>` : ''}
+            <span class="sdy-tree__rowbtns">
+              <button class="sdy-tree__rowbtn" data-rowadd="${n.id}" title="添加子节点" tabindex="-1">＋</button>
+              <button class="sdy-tree__rowbtn" data-rowcard="${n.id}" title="出问答卡" tabindex="-1">卡</button>
+              <button class="sdy-tree__rowbtn sdy-tree__rowbtn--del" data-rowdel="${n.id}" title="删除" tabindex="-1">✕</button>
+            </span>
           </span>
         </div>
         ${kids.length && expanded ? `<div class="sdy-tree__kids">${kids.map((k) => rowHtml(k, depth + 1)).join('')}</div>` : ''}
@@ -322,7 +327,7 @@ async function renderTree(panel, subject, root) {
   function bindTreeEvents() {
     for (const row of treeview.querySelectorAll('[data-sel]')) {
       row.addEventListener('click', (e) => {
-        if (e.target.closest('[data-caret]')) return;
+        if (e.target.closest('[data-caret]') || e.target.closest('.sdy-tree__rowbtn') || e.target.closest('[data-title] input')) return;
         panel.dataset.sel = row.dataset.sel;
         rerender();
       });
@@ -333,6 +338,134 @@ async function renderTree(panel, subject, root) {
         const set = expandedMap.get(subject.id);
         const id = caret.dataset.caret;
         if (set.has(id)) set.delete(id); else set.add(id);
+        rerender();
+      });
+    }
+
+    /* —— 拖拽重排 / 重新挂载（HTML5 DnD，触摸设备仍可用编辑器换父节点） —— */
+    let dragId = null;
+    const isDescendant = (maybeChild, rootId) => {
+      let cur = byId.get(maybeChild);
+      while (cur) { if (cur.id === rootId) return true; cur = cur.pid ? byId.get(cur.pid) : null; }
+      return false;
+    };
+    const clearMarks = () => treeview.querySelectorAll('.drag-before,.drag-child,.drag-after')
+      .forEach((r) => r.classList.remove('drag-before', 'drag-child', 'drag-after'));
+
+    for (const row of treeview.querySelectorAll('[data-sel][draggable]')) {
+      row.addEventListener('dragstart', (e) => {
+        dragId = row.dataset.sel;
+        row.classList.add('dragging');
+        try { e.dataTransfer.setData('text/plain', dragId); } catch {}
+        e.dataTransfer.effectAllowed = 'move';
+      });
+      row.addEventListener('dragend', () => { row.classList.remove('dragging'); clearMarks(); dragId = null; });
+      row.addEventListener('dragover', (e) => {
+        if (!dragId || dragId === row.dataset.sel) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        const rect = row.getBoundingClientRect();
+        const rel = (e.clientY - rect.top) / rect.height;
+        clearMarks();
+        if (rel < 0.28) row.classList.add('drag-before');
+        else if (rel > 0.72) row.classList.add('drag-after');
+        else row.classList.add('drag-child');
+      });
+      row.addEventListener('drop', async (e) => {
+        e.preventDefault();
+        const targetId = row.dataset.sel;
+        const mode = row.classList.contains('drag-before') ? 'before'
+          : row.classList.contains('drag-after') ? 'after' : 'child';
+        clearMarks();
+        if (!dragId || dragId === targetId) return;
+        // 防成环：不能把节点挂到自己的后代下
+        if (isDescendant(targetId, dragId)) { toast('不能移动到自己的后代下', true); return; }
+        const node = byId.get(dragId);
+        const target = byId.get(targetId);
+        if (!node || !target) return;
+        if (mode === 'child') {
+          if (node.pid === target.id) return;
+          node.pid = target.id;
+          const kids = nodes.filter((n) => n.pid === target.id && n.id !== dragId);
+          node.order = (kids.reduce((m, k) => Math.max(m, k.order || 0), 0) || 0) + 100;
+          expandedMap.get(subject.id)?.add(target.id); // 拖进去自动展开
+        } else {
+          node.pid = target.pid || null;
+          const siblings = nodes.filter((n) => (n.pid || null) === node.pid && n.id !== dragId)
+            .sort((a, b) => (a.order || 0) - (b.order || 0));
+          const idx = siblings.findIndex((s2) => s2.id === targetId);
+          // 重建同父兄弟的 order 序列，把 node 插到目标前/后
+          siblings.splice(mode === 'before' ? idx : idx + 1, 0, node);
+          siblings.forEach((s2, i) => { s2.order = (i + 1) * 100; if (s2.id !== dragId) db.put('nodes', s2); });
+        }
+        node.updatedAt = Date.now();
+        await db.put('nodes', node);
+        subject.updatedAt = Date.now();
+        await db.put('subjects', subject);
+        toast('已调整');
+        rerender();
+      });
+    }
+
+    /* —— 双击标题行内重命名 —— */
+    for (const titleEl of treeview.querySelectorAll('[data-title]')) {
+      titleEl.addEventListener('dblclick', (e) => {
+        e.stopPropagation();
+        if (titleEl.querySelector('input')) return;
+        const id = titleEl.dataset.title;
+        const node = byId.get(id);
+        if (!node) return;
+        const old = node.title;
+        titleEl.innerHTML = `<input class="sdy-tree__rename" value="${escapeHtml(old)}" maxlength="40">`;
+        const input = titleEl.querySelector('input');
+        input.focus();
+        input.select();
+        const save = async () => {
+          const v = input.value.trim();
+          titleEl.textContent = escapeHtml(node.title);
+          if (!v || v === old) return;
+          node.title = v;
+          node.updatedAt = Date.now();
+          await db.put('nodes', node);
+          toast('已重命名');
+          rerender();
+        };
+        input.addEventListener('keydown', (ev) => {
+          if (ev.key === 'Enter') { ev.preventDefault(); save(); }
+          if (ev.key === 'Escape') { titleEl.textContent = escapeHtml(old); }
+          ev.stopPropagation();
+        });
+        input.addEventListener('blur', save);
+        input.addEventListener('click', (ev) => ev.stopPropagation());
+      });
+    }
+
+    /* —— 行内快捷按钮 —— */
+    for (const b of treeview.querySelectorAll('[data-rowadd]')) {
+      b.addEventListener('click', (e) => { e.stopPropagation(); openNodeEditor(subject, { pid: b.dataset.rowadd, onDone: rerender }); });
+    }
+    for (const b of treeview.querySelectorAll('[data-rowcard]')) {
+      b.addEventListener('click', (e) => { e.stopPropagation(); openCardEditor(subject, { nid: b.dataset.rowcard, kind: 'qa', onDone: rerender }); });
+    }
+    for (const b of treeview.querySelectorAll('[data-rowdel]')) {
+      b.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const id = b.dataset.rowdel;
+        const node = byId.get(id);
+        const ok = await confirmBox({
+          title: `删除节点「${node.title}」？`,
+          body: `将连同其 ${countDescendants(id) - 1} 个子节点、关联卡片与关系一起删除。`,
+          confirmText: '删除', danger: true,
+        });
+        if (!ok) return;
+        const doomed = collectDescendants(id);
+        for (const nid of doomed) {
+          for (const c of cards.filter((x) => x.nid === nid)) await db.del('cards', c.id);
+          await db.del('nodes', nid);
+        }
+        for (const l of links.filter((l2) => doomed.includes(l2.from) || doomed.includes(l2.to))) await db.del('links', l.id);
+        if (panel.dataset.sel && doomed.includes(panel.dataset.sel)) panel.dataset.sel = '';
+        toast('已删除');
         rerender();
       });
     }

@@ -897,6 +897,54 @@
 .sdy-radial .sdy-radial-label { cursor: pointer; }
 .sdy-radial .sdy-radial-label:hover { fill: var(--accent-strong); font-weight: 600; }
 
+
+/* ---------- 知识树拖拽与行内编辑 ---------- */
+.sdy-tree__row[draggable="true"] { cursor: grab; }
+.sdy-tree__row.dragging { opacity: 0.35; }
+.sdy-tree__row.drag-before { box-shadow: inset 0 2.5px 0 var(--accent-fill); }
+.sdy-tree__row.drag-after { box-shadow: inset 0 -2.5px 0 var(--accent-fill); }
+.sdy-tree__row.drag-child {
+  outline: 2px dashed var(--accent);
+  outline-offset: -2px;
+  background: var(--accent-soft);
+}
+.sdy-tree__rename {
+  width: 100%;
+  font: inherit;
+  font-weight: 600;
+  padding: 2px 6px;
+  border: 1.5px solid var(--accent);
+  border-radius: 6px;
+  background: var(--page-bg);
+  color: var(--text-1);
+  outline: none;
+}
+.sdy-tree__rowbtns {
+  display: inline-flex;
+  gap: 3px;
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease);
+}
+.sdy-tree__row:hover .sdy-tree__rowbtns,
+.sdy-tree__row.on .sdy-tree__rowbtns { opacity: 1; }
+@media (hover: none) { .sdy-tree__rowbtns { opacity: 1; } }
+.sdy-tree__rowbtn {
+  appearance: none;
+  width: 22px; height: 22px;
+  display: grid; place-items: center;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  background: var(--card-bg);
+  color: var(--text-2);
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  transition: all var(--dur-fast) var(--ease);
+}
+.sdy-tree__rowbtn:hover { border-color: var(--accent); color: var(--accent-strong); transform: translateY(-1px); }
+.sdy-tree__rowbtn--del:hover { border-color: var(--danger-border); color: var(--danger-fg); }
+.sdy-tree__rowbtns .sdy-tree__rowbtn:first-child { margin-left: 0; }
+
 @media (max-width: 640px) {
   .sdy-stats-strip { gap: 8px 18px; padding: 12px 14px; }
   .sdy-stat__n { font-size: 18px; }
