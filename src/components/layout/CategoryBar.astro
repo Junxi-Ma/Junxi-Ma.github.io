@@ -3,22 +3,46 @@ import I18nKey from "@i18n/i18nKey";
 import { i18n } from "@i18n/translation";
 import { Icon } from "astro-icon/components";
 import { getCategoryList, getSortedPostsList } from "@/utils/content-utils";
-import { getToolTagList, getAllTools } from "@/utils/tools-utils";
+import { getToolTagList, getAllTools, getBranchTagList, getAllBranches } from "@/utils/tools-utils";
 import { url } from "@/utils/url-utils";
 
 interface Props {
 	currentPostCategory?: string;
-	/** posts（默认）：文章分类；tools：工具页用工具 meta.json 的 tags */
-	mode?: "posts" | "tools";
 }
 
-const { currentPostCategory, mode = "posts" } = Astro.props as Props;
+const { currentPostCategory } = Astro.props as Props;
+
+// 内容类型按构建期路径自动判断：文章（首页/文章/归档/分类）、工具、分支。
+// 三种类型各有自己的分类体系；分类条不在 swup containers 里，跨类型
+// 导航必须整页刷新（类型 pill 带 data-no-swup），由 SSR 渲染对应分类区。
+const pathname0 = Astro.url.pathname.replace(/\/$/, "");
+const contentType: "posts" | "tools" | "branches" =
+	pathname0.startsWith("/tools") ? "tools"
+	: pathname0.startsWith("/branches") ? "branches"
+	: "posts";
+
+const postCategories = contentType === "posts" ? await getCategoryList() : [];
+const toolTags = contentType === "tools" ? getToolTagList() : [];
+const branchTags = contentType === "branches" ? getBranchTagList() : [];
+const postsTotal = await getSortedPostsList();
+const postCount = postsTotal.length;
+const toolCount = (await getAllTools()).length;
+const branchCount = (await getAllBranches()).length;
+
+const contentTypes = [
+	{ key: "posts", label: "文章", href: url("/archive/"), count: postCount, active: contentType === "posts" },
+	{ key: "tools", label: "工具", href: url("/tools/"), count: toolCount, active: contentType === "tools" },
+	{ key: "branches", label: "分支", href: url("/branches/"), count: branchCount, active: contentType === "branches" },
+] as const;
 
 const categories =
-	mode === "tools"
-		? getToolTagList()
-		: await getCategoryList();
-const totalPosts = mode === "tools" ? (await getAllTools()).length : (await getSortedPostsList()).length;
+	contentType === "posts" ? postCategories.map((c) => ({ name: c.name, count: c.count, url: c.url }))
+	: contentType === "tools" ? toolTags.map((t) => ({ name: t.name, count: t.count, url: `${url("/tools/")}?tag=${encodeURIComponent(t.name)}` }))
+	: branchTags.map((t) => ({ name: t.name, count: t.count, url: `${url("/branches/")}?tag=${encodeURIComponent(t.name)}` }));
+const allHref = contentType === "posts" ? url("/archive/") : contentType === "tools" ? url("/tools/") : url("/branches/");
+const totalCount = contentType === "posts" ? postCount : contentType === "tools" ? toolCount : branchCount;
+const totalLabel = contentType === "posts" ? i18n(I18nKey.archive) : "全部";
+
 const homeUrl = url("/");
 const archiveUrl = url("/archive/");
 
@@ -38,9 +62,12 @@ function initialActive(categoryName: string): {
 	active?: boolean;
 	soft?: boolean;
 } {
-	if (mode === "tools") {
-		// 工具页：SSR 构建期未知 ?tag=，默认高亮「全部」，客户端脚本按 query 校正
-		return categoryName === "__tools-all__" ? { active: true } : {};
+	if (contentType === "tools") {
+		// 构建期未知 ?tag=，默认高亮「全部」，客户端脚本按 query 校正
+		return categoryName === "__all__" ? { active: true } : {};
+	}
+	if (contentType === "branches") {
+		return categoryName === "__all__" ? { active: true } : {};
 	}
 	if (isHome) return categoryName === "" ? { active: true } : {};
 	if (isCategories)
@@ -50,16 +77,14 @@ function initialActive(categoryName: string): {
 	return {};
 }
 
-const toolsBaseUrl = url("/tools/");
 ---
 
 <div
   class="card-base category-bar p-3 onload-animation"
   id="category-bar"
-  data-mode={mode}
+  data-content-type={contentType}
   data-home-path={homeUrl}
   data-archive-path={archiveUrl}
-  data-tools-base-path={toolsBaseUrl}
   data-current-post-category={currentPostCategory || ""}
 >
   <div class="category-bar-inner flex gap-2">
@@ -68,49 +93,51 @@ const toolsBaseUrl = url("/tools/");
       class="category-pill focus-ring-inset text-sm px-3 py-1.5 shrink-0
              transition-colors duration-150 ease-out flex items-center justify-center"
       data-category-name=""
-      data-active={initialActive("").active ? "" : undefined}
       aria-label={i18n(I18nKey.home)}
     >
       <Icon name="material-symbols:home" class="text-lg" />
     </a>
     {
-      mode === "tools" ? (
+      contentTypes.map((t) => (
         <a
-          href={toolsBaseUrl}
+          href={t.href}
           data-no-swup
+          data-type={t.key}
+          data-active={t.active ? "" : undefined}
           class="category-pill focus-ring-inset text-sm px-4 py-1.5 whitespace-nowrap shrink-0
                  transition-colors duration-150 ease-out flex items-center justify-center"
-          data-category-name="__tools-all__"
-          data-active={initialActive("__tools-all__").active ? "" : undefined}
         >
-          全部
-          <span class="pill-count">{totalPosts}</span>
+          {t.label}
+          <span class="pill-count">{t.count}</span>
         </a>
-      ) : (
-        <a
-          href={archiveUrl}
-          class="category-pill focus-ring-inset text-sm px-4 py-1.5 whitespace-nowrap shrink-0
-                 transition-colors duration-150 ease-out flex items-center justify-center"
-          data-category-name="__archive__"
-          data-active={initialActive("__archive__").active ? "" : undefined}
-        >
-          {i18n(I18nKey.archive)}
-          <span class="pill-count">{totalPosts}</span>
-        </a>
-      )
+      ))
     }
     <div class="category-divider shrink-0"></div>
     <div class="scroll-area relative">
       <div class="scroll-fade scroll-fade-left" aria-hidden="true"></div>
       <div class="category-scroll flex gap-2 overflow-x-auto">
         {
+          contentType !== "posts" && (
+            <a
+              href={allHref}
+              data-no-swup
+              class="category-pill focus-ring-inset text-sm px-4 py-1.5 whitespace-nowrap
+                     transition-colors duration-150 ease-out flex items-center justify-center"
+              data-category-name="__all__"
+              data-active={initialActive("__all__").active ? "" : undefined}
+            >
+              {totalLabel}
+              <span class="pill-count">{totalCount}</span>
+            </a>
+          )
+        }
+        {
           categories.map((cat) => {
             const active = initialActive(cat.name);
-            const href = mode === "tools" ? `${toolsBaseUrl}?tag=${encodeURIComponent(cat.name)}` : cat.url;
             return (
             <a
-              href={href}
-              data-no-swup={mode === "tools" ? "" : undefined}
+              href={cat.url}
+              data-no-swup={contentType !== "posts" ? "" : undefined}
               class="category-pill focus-ring-inset text-sm px-4 py-1.5 whitespace-nowrap
                      transition-colors duration-150 ease-out flex items-center justify-center"
               data-category-name={cat.name}
@@ -127,7 +154,7 @@ const toolsBaseUrl = url("/tools/");
       <div class="scroll-fade scroll-fade-right" aria-hidden="true"></div>
     </div>
     {
-      mode !== "tools" && (
+      contentType === "posts" && (
         <>
           <div class="category-divider shrink-0 more-divider" aria-hidden="true" />
           <a
@@ -227,10 +254,13 @@ const toolsBaseUrl = url("/tools/");
   }
 
   function setActiveCategory(bar: HTMLElement, currentUrl: URL) {
-    const { isHome, isArchive, isCategories, activeCategory, hasTag, hasUncategorized } =
-      getCategoryBarState(bar, currentUrl);
+    const { isCategories, activeCategory } = getCategoryBarState(bar, currentUrl);
     const postCategory = (bar.getAttribute("data-current-post-category") || "").trim();
-    const isTools = bar.getAttribute("data-mode") === "tools";
+    const pathname = currentUrl.pathname.replace(/\/$/, "");
+    const contentType =
+      pathname.startsWith("/tools") ? "tools"
+        : pathname.startsWith("/branches") ? "branches"
+          : "posts";
 
     const pills = bar.querySelectorAll<HTMLAnchorElement>(".category-pill");
     pills.forEach((pill) => {
@@ -238,8 +268,12 @@ const toolsBaseUrl = url("/tools/");
       pill.removeAttribute("data-soft-active");
     });
 
-    if (isTools) {
-      // 工具页：?tag= 高亮对应标签；无参（全部）高亮「全部」pill
+    // 类型 pill 高亮（文章/工具/分支），全页面都成立
+    bar.querySelector<HTMLAnchorElement>(`.category-pill[data-type="${contentType}"]`)
+      ?.setAttribute("data-active", "");
+
+    if (contentType === "tools" || contentType === "branches") {
+      // ?tag= 高亮对应标签；无参高亮「全部」
       const activeTag = currentUrl.searchParams.get("tag") || "";
       if (activeTag) {
         pills.forEach((pill) => {
@@ -248,18 +282,13 @@ const toolsBaseUrl = url("/tools/");
           }
         });
       } else {
-        bar.querySelector<HTMLAnchorElement>('.category-pill[data-category-name="__tools-all__"]')
+        bar.querySelector<HTMLAnchorElement>('.category-pill[data-category-name="__all__"]')
           ?.setAttribute("data-active", "");
       }
       return;
     }
 
-    if (isHome) {
-      bar.querySelector<HTMLAnchorElement>('.category-pill[data-category-name=""]')
-        ?.setAttribute("data-active", "");
-      return;
-    }
-
+    // 文章区：分类页高亮「更多」；?category= 高亮对应分类；文章页软高亮所属分类
     if (isCategories) {
       bar.querySelector<HTMLAnchorElement>('.category-pill[data-category-name="__categories__"]')
         ?.setAttribute("data-active", "");
@@ -272,12 +301,6 @@ const toolsBaseUrl = url("/tools/");
           pill.setAttribute("data-active", "");
         }
       });
-      return;
-    }
-
-    if (isArchive && !hasTag && !hasUncategorized) {
-      bar.querySelector<HTMLAnchorElement>('.category-pill[data-category-name="__archive__"]')
-        ?.setAttribute("data-active", "");
       return;
     }
 

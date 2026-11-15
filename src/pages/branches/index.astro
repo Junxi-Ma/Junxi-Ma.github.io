@@ -119,12 +119,13 @@ const description = "独立成篇的小网页：和主站同源部署，但各�
 				branches.length === 0 ? (
 					<p class="text-sm opacity-70">还没有分支页。</p>
 				) : (
-					<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+					<div id="branches-grid" class="grid grid-cols-1 gap-4 md:grid-cols-2">
 						{branches.map((branch) => (
 							<a
 								href={branch.url}
 								data-no-swup
-								class="group relative flex gap-4 rounded-(--radius-large) border border-(--line-divider) bg-(--card-bg) p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-(--primary) hover:shadow-lg"
+								data-tags={branch.tags.join("\t")}
+								class="branch-card group relative flex gap-4 rounded-(--radius-large) border border-(--line-divider) bg-(--card-bg) p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-(--primary) hover:shadow-lg"
 							>
 								<div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-(--btn-regular-bg) text-2xl">
 									{branch.icon}
@@ -154,3 +155,24 @@ const description = "独立成篇的小网页：和主站同源部署，但各�
 		</div>
 	</div>
 </MainGridLayout>
+
+<script>
+	// ?tag= 分类筛选：按 index.json 登记的 tags 过滤卡片；无参显示全部。
+	function applyBranchTagFilter() {
+		const grid = document.getElementById("branches-grid");
+		if (!grid) return;
+		const tag = new URL(window.location.href).searchParams.get("tag") || "";
+		let shown = 0;
+		grid.querySelectorAll<HTMLElement>(".branch-card").forEach((card) => {
+			const tags = (card.dataset.tags || "").split("\t").filter(Boolean);
+			const match = !tag || tags.includes(tag);
+			card.classList.toggle("hidden", !match);
+			if (match) shown++;
+		});
+	}
+
+	applyBranchTagFilter();
+	document.addEventListener("astro:page-load", applyBranchTagFilter);
+	document.addEventListener("swup:contentReplaced", applyBranchTagFilter);
+	window.addEventListener("popstate", applyBranchTagFilter);
+</script>

@@ -54,3 +54,35 @@ export function getToolTagList(): { name: string; count: number }[] {
 		.map(([name, count]) => ({ name, count }))
 		.sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, "zh"));
 }
+
+/**
+ * 分支数据源：public/branches/index.json 的 branches 数组（登记清单）。
+ * 与 branches 列表页的登记部分同口径；未登记的兜底目录不参与分类计数。
+ */
+export function getAllBranches(): { title: string; tags: string[] }[] {
+	const jsonPath = path.join(process.cwd(), "public", "branches", "index.json");
+	if (!fs.existsSync(jsonPath)) return [];
+	try {
+		const raw = JSON.parse(fs.readFileSync(jsonPath, "utf8"));
+		const list = Array.isArray(raw?.branches) ? raw.branches : [];
+		return list.map((b: any) => ({
+			title: String(b.title ?? b.folder ?? ""),
+			tags: Array.isArray(b.tags) ? b.tags : [],
+		}));
+	} catch {
+		return [];
+	}
+}
+
+/** 分支标签聚合：按出现次数降序 */
+export function getBranchTagList(): { name: string; count: number }[] {
+	const counter = new Map<string, number>();
+	for (const branch of getAllBranches()) {
+		for (const tag of branch.tags) {
+			counter.set(tag, (counter.get(tag) || 0) + 1);
+		}
+	}
+	return [...counter.entries()]
+		.map(([name, count]) => ({ name, count }))
+		.sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, "zh"));
+}

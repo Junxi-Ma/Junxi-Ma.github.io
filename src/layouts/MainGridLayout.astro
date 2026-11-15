@@ -62,7 +62,6 @@ const {
 	ogImageHeight,
 	ogImageAlt,
 	postCategory,
-	categoryBarMode,
 	headings = [],
 	encrypted = false,
 	bannerPostMeta,
@@ -128,7 +127,7 @@ const {
             {/* 主内容区包装器 - 包含静态栏位和swup容器，作为单个grid item */}
             <div id="content-column" class={staticBarClass}>
                 {/* 分类导航栏 - 全站渲染并显示 */}
-                {shouldRenderCategoryBar && <div id="category-bar-wrapper"><CategoryBar currentPostCategory={postCategory} mode={categoryBarMode} /></div>}
+                {shouldRenderCategoryBar && <div id="category-bar-wrapper"><CategoryBar currentPostCategory={postCategory} /></div>}
                 {/* 主内容区 - 始终渲染，确保 Swup 容器存在 */}
                 <main
                     id="swup-container"
