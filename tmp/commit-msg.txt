@@ -1,0 +1,10 @@
+fix(nav): 导航栏「文章」点击直达 + swup 换页时分类条同步跟随类型
+
+用户澄清两点：①点导航栏「文章」应直接进文章列表，悬停才展开下拉进子内容；②点文章/工具/分支进入时，分类条（白色方框）必须换成对应类型的分类，不能残留上一区的分类。
+
+- navBarConfig: 「文章」url '#'→'/archive/'（此前点击只展开下拉不导航）
+- DropdownMenu: 主链接 url 非 '#' 时渲染 <a> 触发器——点击直达板块、悬停仍展开下拉（CSS hover）；'#' 保持 button 纯下拉（「更多」）；hasChildren 分支包 Fragment 修并列兄弟编译错误
+- astro.config swup containers 加入 category-bar-wrapper——根因：分类条不在 swup 替换范围，导航栏切换文章/工具/分支时分类条 DOM 残留上一区（用户截图：分支页显示文章分类）；加入后每次换页 SSR 分类条随容器同步替换
+- CategoryBar 脚本：astro:page-load / swup:contentReplaced 补 initCategoryBarInteractions+initScrollFeatures（新 DOM 重绑点击/滚动）
+
+浏览器全链路验证后才发布（用户叮嘱）：悬停下拉 4 项可见、点文章直达 /archive/、导航栏切工具/分支后分类条同步（全部11/工具/游戏/学习 与 全部4/大气探测学/生活/天气学原理/学习）、分类条类型 pill 回归、文章页软高亮正常。
