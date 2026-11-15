@@ -3,25 +3,25 @@
 
  */
 
-import db from '../db.js?v=100';
-import * as S from '../scheduler.js?v=100';
+import db from '../db.js?v=101';
+import * as S from '../scheduler.js?v=101';
 import {
   escapeHtml, renderMarkdown, renderCloze, parseCloze, clozeOrds, suggestClozes,
   newCard, newDoc, newNode, newLink, fmtInterval, STATE_INFO, uid,
-} from '../models.js?v=100';
-import { toast, openModal, confirmBox, promptBox } from '../ui.js?v=100';
+} from '../models.js?v=101';
+import { toast, openModal, confirmBox, promptBox } from '../ui.js?v=101';
 import {
   exportSubjectFile, exportAllFile, readJsonFile, importPayload, subjectTemplate,
   cloudReady, cloudUser, cloudMeta, cloudUpload, cloudRestore, makeRestorePoint,
-} from '../backup.js?v=100';
-import { startReview } from './review.js?v=100';
-import { cascadeDeleteSubject } from './home.js?v=100';
-import { openAiBuildTree, openAiGenCards, renderReviewConsole } from './ai.js?v=100';
-import { parseFile, kindLabel, ocrPdfPages } from '../parse.js?v=100';
-import { aiOcrPage } from '../ai.js?v=100';
-import { renderQuiz } from './quiz.js?v=100';
-import { renderRadialGraph } from './graph.js?v=100';
-import { loadAiConfig, saveAiConfig, chat, aiUsage } from '../ai.js?v=100';
+} from '../backup.js?v=101';
+import { startReview } from './review.js?v=101';
+import { cascadeDeleteSubject } from './home.js?v=101';
+import { openAiBuildTree, openAiGenCards, renderReviewConsole } from './ai.js?v=101';
+import { parseFile, kindLabel, ocrPdfPages } from '../parse.js?v=101';
+import { aiOcrPage } from '../ai.js?v=101';
+import { renderQuiz } from './quiz.js?v=101';
+import { renderRadialGraph } from './graph.js?v=101';
+import { loadAiConfig, saveAiConfig, chat, aiUsage } from '../ai.js?v=101';
 
 // ai-proxy Edge Function 源码（与 supabase/functions/ai-proxy/index.ts 同步，部署指引弹窗展示用）
 const FS_CODE = `// ============================================================

@@ -213,6 +213,12 @@
   color: var(--btn-content);
 }
 .sdy-tab.on .sdy-tab__n { background: var(--accent-soft); color: var(--accent-strong); }
+/* 手机端 tab 换行全部可见（横滑 + 隐藏滚动条曾让"测验/设置"完全在屏幕外无提示） */
+@media (max-width: 520px) {
+  .sdy-tabs { flex-wrap: wrap; gap: 2px; margin: 10px 0 16px; }
+  .sdy-tab { padding: 7px 10px; font-size: 13px; }
+  .sdy-tab__n { padding: 1px 5px; margin-left: 4px; }
+}
 
 /* ---------- 卡片组块（通用） ---------- */
 .sdy-panel {
@@ -832,6 +838,11 @@
   animation: sdy-in 200ms var(--ease) both;
 }
 .sdy-modal__box h3 { margin: 0 0 16px; font-family: var(--font-serif); font-size: 18px; }
+/* 手机端弹窗收紧：padding 更小 + dvh（地址栏收缩时不再被裁） */
+@media (max-width: 520px) {
+  .sdy-modal { padding: 12px; }
+  .sdy-modal__box { padding: 16px 14px; max-height: calc(100dvh - 24px); }
+}
 .sdy-modal__acts { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; flex-wrap: wrap; }
 .sdy-modal__preview {
   border: 1px dashed var(--border-strong);

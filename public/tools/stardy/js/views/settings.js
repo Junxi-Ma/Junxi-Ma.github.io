@@ -5,15 +5,15 @@
  * 科目专属的复习参数与科目操作在科目工作台的设置 tab。
  */
 
-import db from '../db.js?v=100';
-import { escapeHtml } from '../models.js?v=100';
-import { toast, openModal, confirmBox } from '../ui.js?v=100';
+import db from '../db.js?v=101';
+import { escapeHtml } from '../models.js?v=101';
+import { toast, openModal, confirmBox } from '../ui.js?v=101';
 import {
   exportAllFile, readJsonFile, importPayload, subjectTemplate,
   cloudReady, cloudUser, cloudMeta, cloudUpload, cloudRestore, makeRestorePoint,
-} from '../backup.js?v=100';
-import { loadAiConfig, saveAiConfig, chat, aiUsage } from '../ai.js?v=100';
-import { gotoTab } from './workspace.js?v=100';
+} from '../backup.js?v=101';
+import { loadAiConfig, saveAiConfig, chat, aiUsage } from '../ai.js?v=101';
+import { gotoTab } from './workspace.js?v=101';
 
 export async function renderGlobalSettings(root) {
   document.title = '全局设置 · Stardy 学习系统';

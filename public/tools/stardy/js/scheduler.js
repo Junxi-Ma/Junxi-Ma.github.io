@@ -9,8 +9,8 @@
  *   - 遗忘次数 ≥ 阈值打"陷阱卡"标记（review.rs leech_threshold）
  */
 
-import { DefaultScheduler, Rating } from '../libs/ts-fsrs/index.mjs?v=100';
-import { parseSteps, startOfToday, endOfToday } from './models.js?v=100';
+import { DefaultScheduler, Rating } from '../libs/ts-fsrs/index.mjs?v=101';
+import { parseSteps, startOfToday, endOfToday } from './models.js?v=101';
 
 export const GRADE = { AGAIN: 1, HARD: 2, GOOD: 3, EASY: 4 };
 const RATING_BY_GRADE = { 1: Rating.Again, 2: Rating.Hard, 3: Rating.Good, 4: Rating.Easy };
@@ -154,6 +154,15 @@ function intersperse(list1, list2) {
   return out;
 }
 
+/** Fisher-Yates 原地打乱（随机顺序模式用） */
+function shuffleInPlace(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
 /**
  * 构建今日复习队列。
  * @param subject 科目（读 settings 配额）
@@ -184,13 +193,14 @@ export function buildQueue(subject, cards, todayLog = [], now = new Date(), opts
 
   // 今日到期的复习卡
   const revPool = usable
-    .filter((c) => c.fsrs.state === 2 && new Date(c.fsrs.dueAt) <= end)
-    .sort((a, b) => new Date(a.fsrs.dueAt) - new Date(b.fsrs.dueAt) || (a.id < b.id ? -1 : 1));
+    .filter((c) => c.fsrs.state === 2 && new Date(c.fsrs.dueAt) <= end);
+  if (opts.shuffle) shuffleInPlace(revPool);
+  else revPool.sort((a, b) => new Date(a.fsrs.dueAt) - new Date(b.fsrs.dueAt) || (a.id < b.id ? -1 : 1));
 
-  // 新卡（按创建顺序）
-  const newPool = usable
-    .filter((c) => c.fsrs.state === 0)
-    .sort((a, b) => a.createdAt - b.createdAt);
+  // 新卡（按创建顺序；随机模式则打乱）
+  const newPool = usable.filter((c) => c.fsrs.state === 0);
+  if (opts.shuffle) shuffleInPlace(newPool);
+  else newPool.sort((a, b) => a.createdAt - b.createdAt);
 
   // 配额扣减：今日已答的新卡数 / 复习卡数
   const answeredNew = todayLog.filter((r) => r.preState === 0).length;
@@ -199,13 +209,6 @@ export function buildQueue(subject, cards, todayLog = [], now = new Date(), opts
   const revQuota = Math.max(0, (st.revPerDay ?? 200) - answeredRev);
 
   const limited = intersperse(newPool.slice(0, newQuota), revPool.slice(0, revQuota));
-
-  if (opts.limit != null && opts.shuffle) {
-    for (let i = usable.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [usable[i], usable[j]] = [usable[j], usable[i]];
-    }
-  }
 
   // sibling 埋没：同 noteId 的多张卡同一天只出现一张
   const seenNotes = new Set();
