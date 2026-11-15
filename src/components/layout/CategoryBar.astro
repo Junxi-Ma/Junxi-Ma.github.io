@@ -3,16 +3,22 @@ import I18nKey from "@i18n/i18nKey";
 import { i18n } from "@i18n/translation";
 import { Icon } from "astro-icon/components";
 import { getCategoryList, getSortedPostsList } from "@/utils/content-utils";
+import { getToolTagList, getAllTools } from "@/utils/tools-utils";
 import { url } from "@/utils/url-utils";
 
 interface Props {
 	currentPostCategory?: string;
+	/** posts（默认）：文章分类；tools：工具页用工具 meta.json 的 tags */
+	mode?: "posts" | "tools";
 }
 
-const { currentPostCategory } = Astro.props as Props;
+const { currentPostCategory, mode = "posts" } = Astro.props as Props;
 
-const categories = await getCategoryList();
-const totalPosts = (await getSortedPostsList()).length;
+const categories =
+	mode === "tools"
+		? getToolTagList()
+		: await getCategoryList();
+const totalPosts = mode === "tools" ? (await getAllTools()).length : (await getSortedPostsList()).length;
 const homeUrl = url("/");
 const archiveUrl = url("/archive/");
 
@@ -32,6 +38,10 @@ function initialActive(categoryName: string): {
 	active?: boolean;
 	soft?: boolean;
 } {
+	if (mode === "tools") {
+		// 工具页：SSR 构建期未知 ?tag=，默认高亮「全部」，客户端脚本按 query 校正
+		return categoryName === "__tools-all__" ? { active: true } : {};
+	}
 	if (isHome) return categoryName === "" ? { active: true } : {};
 	if (isCategories)
 		return categoryName === "__categories__" ? { active: true } : {};
@@ -39,13 +49,17 @@ function initialActive(categoryName: string): {
 	if (postCategory && categoryName === postCategory) return { soft: true };
 	return {};
 }
+
+const toolsBaseUrl = url("/tools/");
 ---
 
 <div
   class="card-base category-bar p-3 onload-animation"
   id="category-bar"
+  data-mode={mode}
   data-home-path={homeUrl}
   data-archive-path={archiveUrl}
+  data-tools-base-path={toolsBaseUrl}
   data-current-post-category={currentPostCategory || ""}
 >
   <div class="category-bar-inner flex gap-2">
@@ -59,16 +73,32 @@ function initialActive(categoryName: string): {
     >
       <Icon name="material-symbols:home" class="text-lg" />
     </a>
-    <a
-      href={archiveUrl}
-      class="category-pill focus-ring-inset text-sm px-4 py-1.5 whitespace-nowrap shrink-0
-             transition-colors duration-150 ease-out flex items-center justify-center"
-      data-category-name="__archive__"
-      data-active={initialActive("__archive__").active ? "" : undefined}
-    >
-      {i18n(I18nKey.archive)}
-      <span class="pill-count">{totalPosts}</span>
-    </a>
+    {
+      mode === "tools" ? (
+        <a
+          href={toolsBaseUrl}
+          data-no-swup
+          class="category-pill focus-ring-inset text-sm px-4 py-1.5 whitespace-nowrap shrink-0
+                 transition-colors duration-150 ease-out flex items-center justify-center"
+          data-category-name="__tools-all__"
+          data-active={initialActive("__tools-all__").active ? "" : undefined}
+        >
+          全部
+          <span class="pill-count">{totalPosts}</span>
+        </a>
+      ) : (
+        <a
+          href={archiveUrl}
+          class="category-pill focus-ring-inset text-sm px-4 py-1.5 whitespace-nowrap shrink-0
+                 transition-colors duration-150 ease-out flex items-center justify-center"
+          data-category-name="__archive__"
+          data-active={initialActive("__archive__").active ? "" : undefined}
+        >
+          {i18n(I18nKey.archive)}
+          <span class="pill-count">{totalPosts}</span>
+        </a>
+      )
+    }
     <div class="category-divider shrink-0"></div>
     <div class="scroll-area relative">
       <div class="scroll-fade scroll-fade-left" aria-hidden="true"></div>
@@ -76,9 +106,11 @@ function initialActive(categoryName: string): {
         {
           categories.map((cat) => {
             const active = initialActive(cat.name);
+            const href = mode === "tools" ? `${toolsBaseUrl}?tag=${encodeURIComponent(cat.name)}` : cat.url;
             return (
             <a
-              href={cat.url}
+              href={href}
+              data-no-swup={mode === "tools" ? "" : undefined}
               class="category-pill focus-ring-inset text-sm px-4 py-1.5 whitespace-nowrap
                      transition-colors duration-150 ease-out flex items-center justify-center"
               data-category-name={cat.name}
@@ -94,18 +126,24 @@ function initialActive(categoryName: string): {
       </div>
       <div class="scroll-fade scroll-fade-right" aria-hidden="true"></div>
     </div>
-    <div class="category-divider shrink-0 more-divider" aria-hidden="true"></div>
-    <a
-      href={url("/categories/")}
-      class="category-pill focus-ring-inset text-sm px-3 py-1.5 shrink-0
-             transition-colors duration-150 ease-out flex items-center justify-center gap-1"
-      data-category-name="__categories__"
-      data-active={initialActive("__categories__").active ? "" : undefined}
-      aria-label={i18n(I18nKey.more)}
-    >
-      <span>{i18n(I18nKey.more)}</span>
-      <Icon name="fa7-solid:chevron-right" class="text-sm" />
-    </a>
+    {
+      mode !== "tools" && (
+        <>
+          <div class="category-divider shrink-0 more-divider" aria-hidden="true" />
+          <a
+            href={url("/categories/")}
+            class="category-pill focus-ring-inset text-sm px-3 py-1.5 shrink-0
+                   transition-colors duration-150 ease-out flex items-center justify-center gap-1"
+            data-category-name="__categories__"
+            data-active={initialActive("__categories__").active ? "" : undefined}
+            aria-label={i18n(I18nKey.more)}
+          >
+            <span>{i18n(I18nKey.more)}</span>
+            <Icon name="fa7-solid:chevron-right" class="text-sm" />
+          </a>
+        </>
+      )
+    }
   </div>
 </div>
 
@@ -192,12 +230,29 @@ function initialActive(categoryName: string): {
     const { isHome, isArchive, isCategories, activeCategory, hasTag, hasUncategorized } =
       getCategoryBarState(bar, currentUrl);
     const postCategory = (bar.getAttribute("data-current-post-category") || "").trim();
+    const isTools = bar.getAttribute("data-mode") === "tools";
 
     const pills = bar.querySelectorAll<HTMLAnchorElement>(".category-pill");
     pills.forEach((pill) => {
       pill.removeAttribute("data-active");
       pill.removeAttribute("data-soft-active");
     });
+
+    if (isTools) {
+      // 工具页：?tag= 高亮对应标签；无参（全部）高亮「全部」pill
+      const activeTag = currentUrl.searchParams.get("tag") || "";
+      if (activeTag) {
+        pills.forEach((pill) => {
+          if (pill.getAttribute("data-category-name") === activeTag) {
+            pill.setAttribute("data-active", "");
+          }
+        });
+      } else {
+        bar.querySelector<HTMLAnchorElement>('.category-pill[data-category-name="__tools-all__"]')
+          ?.setAttribute("data-active", "");
+      }
+      return;
+    }
 
     if (isHome) {
       bar.querySelector<HTMLAnchorElement>('.category-pill[data-category-name=""]')

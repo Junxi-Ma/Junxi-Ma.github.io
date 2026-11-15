@@ -2,58 +2,22 @@
 /**
  * 工具列表页
  *
- * 数据源：public/tools/<folder>/meta.json
- *   { title, description, tags: string[], icon: string, order: number }
- *
- * 工具本身是独立的 HTML 应用，原样放在 public/tools/<folder>/index.html，
- * 这里只负责列表展示与入口链接。构建时读取，不依赖运行时 fetch。
+ * 数据源：public/tools/<folder>/meta.json（经 src/utils/tools-utils.ts 读取，
+ * 与顶部分类条共用同一口径）。工具本身是独立的 HTML 应用，原样放在
+ * public/tools/<folder>/index.html，这里只负责列表展示、入口链接与 ?tag= 筛选。
  */
-import fs from "node:fs";
-import path from "node:path";
 import { Icon } from "astro-icon/components";
 import MainGridLayout from "@/layouts/MainGridLayout.astro";
+import { getAllTools, getToolTagList } from "@/utils/tools-utils";
 
-interface ToolMeta {
-	folder: string;
-	title: string;
-	description: string;
-	tags: string[];
-	icon: string;
-	order: number;
-}
-
-const toolsRoot = path.join(process.cwd(), "public", "tools");
-
-const tools: ToolMeta[] = fs.existsSync(toolsRoot)
-	? fs
-			.readdirSync(toolsRoot, { withFileTypes: true })
-			.filter((d) => d.isDirectory())
-			.map((d) => {
-				const metaPath = path.join(toolsRoot, d.name, "meta.json");
-				if (!fs.existsSync(metaPath)) return null;
-				try {
-					const raw = JSON.parse(fs.readFileSync(metaPath, "utf8"));
-					return {
-						folder: d.name,
-						title: raw.title ?? d.name,
-						description: raw.description ?? "",
-						tags: Array.isArray(raw.tags) ? raw.tags : [],
-						icon: raw.icon ?? "🧩",
-						order: typeof raw.order === "number" ? raw.order : 100,
-					} satisfies ToolMeta;
-				} catch {
-					return null;
-				}
-			})
-			.filter((t): t is ToolMeta => t !== null)
-			.sort((a, b) => a.order - b.order)
-	: [];
+const tools = getAllTools();
 
 const title = "工具";
 const description = "日常开发与学习中打磨的效率小工具，全部在浏览器本地运行，无需上传任何数据。";
+const tags = getToolTagList();
 ---
 
-<MainGridLayout title={title} description={description}>
+<MainGridLayout title={title} description={description} categoryBarMode="tools">
 	<div class="flex w-full rounded-(--radius-large) overflow-hidden relative min-h-32">
 		<div class="card-base z-10 px-9 py-6 relative w-full">
 			<div class="mb-6">
@@ -72,12 +36,13 @@ const description = "日常开发与学习中打磨的效率小工具，全部�
 				tools.length === 0 ? (
 					<p class="text-sm opacity-70">还没有工具。</p>
 				) : (
-					<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+					<div id="tools-grid" class="grid grid-cols-1 gap-4 md:grid-cols-2">
 						{tools.map((tool) => (
 							<a
 								href={`/tools/${tool.folder}/`}
 								data-no-swup
-								class="group relative flex gap-4 rounded-(--radius-large) border border-(--line-divider) bg-(--card-bg) p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-(--primary) hover:shadow-lg"
+								data-tags={tool.tags.join("\t")}
+								class="tool-card group relative flex gap-4 rounded-(--radius-large) border border-(--line-divider) bg-(--card-bg) p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-(--primary) hover:shadow-lg"
 							>
 								<div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-(--btn-regular-bg) text-2xl">
 									{tool.icon}
@@ -104,6 +69,30 @@ const description = "日常开发与学习中打磨的效率小工具，全部�
 					</div>
 				)
 			}
+			<p id="tools-empty" class="hidden text-sm opacity-70">这个分类下还没有工具。</p>
 		</div>
 	</div>
 </MainGridLayout>
+
+<script>
+	// ?tag= 分类筛选：按 meta.json 的 tags 过滤卡片；无参显示全部。
+	// Swup 导航（分类条点击）与浏览器前进后退都要同步。
+	function applyToolTagFilter() {
+		const grid = document.getElementById("tools-grid");
+		if (!grid) return;
+		const tag = new URL(window.location.href).searchParams.get("tag") || "";
+		let shown = 0;
+		grid.querySelectorAll<HTMLElement>(".tool-card").forEach((card) => {
+			const tags = (card.dataset.tags || "").split("\t").filter(Boolean);
+			const match = !tag || tags.includes(tag);
+			card.classList.toggle("hidden", !match);
+			if (match) shown++;
+		});
+		document.getElementById("tools-empty")?.classList.toggle("hidden", shown > 0);
+	}
+
+	applyToolTagFilter();
+	document.addEventListener("astro:page-load", applyToolTagFilter);
+	document.addEventListener("swup:contentReplaced", applyToolTagFilter);
+	window.addEventListener("popstate", applyToolTagFilter);
+</script>
