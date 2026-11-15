@@ -24,16 +24,9 @@ const contentType: "posts" | "tools" | "branches" =
 const postCategories = contentType === "posts" ? await getCategoryList() : [];
 const toolTags = contentType === "tools" ? getToolTagList() : [];
 const branchTags = contentType === "branches" ? getBranchTagList() : [];
-const postsTotal = await getSortedPostsList();
-const postCount = postsTotal.length;
+const postCount = (await getSortedPostsList()).length;
 const toolCount = (await getAllTools()).length;
 const branchCount = (await getAllBranches()).length;
-
-const contentTypes = [
-	{ key: "posts", label: "文章", href: url("/archive/"), count: postCount, active: contentType === "posts" },
-	{ key: "tools", label: "工具", href: url("/tools/"), count: toolCount, active: contentType === "tools" },
-	{ key: "branches", label: "分支", href: url("/branches/"), count: branchCount, active: contentType === "branches" },
-] as const;
 
 const categories =
 	contentType === "posts" ? postCategories.map((c) => ({ name: c.name, count: c.count, url: c.url }))
@@ -82,7 +75,6 @@ function initialActive(categoryName: string): {
 <div
   class="card-base category-bar p-3 onload-animation"
   id="category-bar"
-  data-content-type={contentType}
   data-home-path={homeUrl}
   data-archive-path={archiveUrl}
   data-current-post-category={currentPostCategory || ""}
@@ -93,44 +85,41 @@ function initialActive(categoryName: string): {
       class="category-pill focus-ring-inset text-sm px-3 py-1.5 shrink-0
              transition-colors duration-150 ease-out flex items-center justify-center"
       data-category-name=""
+      data-active={initialActive("").active ? "" : undefined}
       aria-label={i18n(I18nKey.home)}
     >
       <Icon name="material-symbols:home" class="text-lg" />
     </a>
     {
-      contentTypes.map((t) => (
+      contentType === "posts" ? (
         <a
-          href={t.href}
-          data-no-swup
-          data-type={t.key}
-          data-active={t.active ? "" : undefined}
+          href={archiveUrl}
           class="category-pill focus-ring-inset text-sm px-4 py-1.5 whitespace-nowrap shrink-0
                  transition-colors duration-150 ease-out flex items-center justify-center"
+          data-category-name="__archive__"
+          data-active={initialActive("__archive__").active ? "" : undefined}
         >
-          {t.label}
-          <span class="pill-count">{t.count}</span>
+          {i18n(I18nKey.archive)}
+          <span class="pill-count">{postCount}</span>
         </a>
-      ))
+      ) : (
+        <a
+          href={allHref}
+          data-no-swup
+          class="category-pill focus-ring-inset text-sm px-4 py-1.5 whitespace-nowrap shrink-0
+                 transition-colors duration-150 ease-out flex items-center justify-center"
+          data-category-name="__all__"
+          data-active={initialActive("__all__").active ? "" : undefined}
+        >
+          {totalLabel}
+          <span class="pill-count">{totalCount}</span>
+        </a>
+      )
     }
     <div class="category-divider shrink-0"></div>
     <div class="scroll-area relative">
       <div class="scroll-fade scroll-fade-left" aria-hidden="true"></div>
       <div class="category-scroll flex gap-2 overflow-x-auto">
-        {
-          contentType !== "posts" && (
-            <a
-              href={allHref}
-              data-no-swup
-              class="category-pill focus-ring-inset text-sm px-4 py-1.5 whitespace-nowrap
-                     transition-colors duration-150 ease-out flex items-center justify-center"
-              data-category-name="__all__"
-              data-active={initialActive("__all__").active ? "" : undefined}
-            >
-              {totalLabel}
-              <span class="pill-count">{totalCount}</span>
-            </a>
-          )
-        }
         {
           categories.map((cat) => {
             const active = initialActive(cat.name);
@@ -254,7 +243,8 @@ function initialActive(categoryName: string): {
   }
 
   function setActiveCategory(bar: HTMLElement, currentUrl: URL) {
-    const { isCategories, activeCategory } = getCategoryBarState(bar, currentUrl);
+    const { isHome, isArchive, isCategories, activeCategory, hasTag, hasUncategorized } =
+      getCategoryBarState(bar, currentUrl);
     const postCategory = (bar.getAttribute("data-current-post-category") || "").trim();
     const pathname = currentUrl.pathname.replace(/\/$/, "");
     const contentType =
@@ -268,12 +258,8 @@ function initialActive(categoryName: string): {
       pill.removeAttribute("data-soft-active");
     });
 
-    // 类型 pill 高亮（文章/工具/分支），全页面都成立
-    bar.querySelector<HTMLAnchorElement>(`.category-pill[data-type="${contentType}"]`)
-      ?.setAttribute("data-active", "");
-
     if (contentType === "tools" || contentType === "branches") {
-      // ?tag= 高亮对应标签；无参高亮「全部」
+      // 工具/分支页：?tag= 高亮对应标签；无参高亮「全部」
       const activeTag = currentUrl.searchParams.get("tag") || "";
       if (activeTag) {
         pills.forEach((pill) => {
@@ -288,7 +274,13 @@ function initialActive(categoryName: string): {
       return;
     }
 
-    // 文章区：分类页高亮「更多」；?category= 高亮对应分类；文章页软高亮所属分类
+    // 文章区：原版高亮逻辑
+    if (isHome) {
+      bar.querySelector<HTMLAnchorElement>('.category-pill[data-category-name=""]')
+        ?.setAttribute("data-active", "");
+      return;
+    }
+
     if (isCategories) {
       bar.querySelector<HTMLAnchorElement>('.category-pill[data-category-name="__categories__"]')
         ?.setAttribute("data-active", "");
@@ -301,6 +293,12 @@ function initialActive(categoryName: string): {
           pill.setAttribute("data-active", "");
         }
       });
+      return;
+    }
+
+    if (isArchive && !hasTag && !hasUncategorized) {
+      bar.querySelector<HTMLAnchorElement>('.category-pill[data-category-name="__archive__"]')
+        ?.setAttribute("data-active", "");
       return;
     }
 
