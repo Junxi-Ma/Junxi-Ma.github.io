@@ -7,8 +7,8 @@
  * AI 配置（端点 / 密钥）只存本机 localStorage，永不进入云备份。
  */
 
-import db from './db.js?v=101';
-import { uid } from './models.js?v=101';
+import db from './db.js?v=102';
+import { uid } from './models.js?v=102';
 import { getSupabase, isConfigured } from '../../../assets/js/supabase.js';
 
 const BACKUP_VERSION = 2;

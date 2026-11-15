@@ -2,7 +2,7 @@
  * Stardy — 共享 UI 工具：轻提示 / 模态 / 确认框
  */
 
-import { escapeHtml } from './models.js?v=101';
+import { escapeHtml } from './models.js?v=102';
 
 let toastTimer = null;
 export function toast(msg, isErr = false, ms = 2600) {
@@ -19,6 +19,8 @@ export function toast(msg, isErr = false, ms = 2600) {
  * 返回 { box, close }。
  */
 export function openModal({ title, bodyHtml = '', onMount = null, wide = false }) {
+  // 单例化：重复触发（双击/多入口）时新弹窗顶掉旧弹窗，绝不叠加
+  document.querySelectorAll('.sdy-modal').forEach((m) => m.remove());
   const wrap = document.createElement('div');
   wrap.className = 'sdy-modal';
   wrap.innerHTML = `

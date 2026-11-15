@@ -7,10 +7,10 @@
  * 同笔记 sibling 埋没）。键盘：Space 翻面，1-4 打分，Esc 退出。
  */
 
-import db from '../db.js?v=101';
-import * as S from '../scheduler.js?v=101';
-import { renderMarkdown, renderCloze, escapeHtml, fmtInterval, STATE_INFO, GRADES, uid } from '../models.js?v=101';
-import { toast, openModal } from '../ui.js?v=101';
+import db from '../db.js?v=102';
+import * as S from '../scheduler.js?v=102';
+import { renderMarkdown, renderCloze, escapeHtml, fmtInterval, STATE_INFO, GRADES, uid } from '../models.js?v=102';
+import { toast, openModal } from '../ui.js?v=102';
 
 const overlay = () => document.getElementById('sdy-review');
 
@@ -27,7 +27,11 @@ export function startReview(subjectId) {
 }
 
 /** 复习配置弹窗：章节多选 + 模式 + 数量 */
-async function openReviewSetup(subjectId) {
+/**
+ * 复习配置弹窗。
+ * @param presetCids 可选：预选的顶层章 id 数组（卡片页「学此章」等快捷入口），非空时忽略记忆的选择
+ */
+export async function openReviewSetup(subjectId, presetCids = null) {
   const subject = await db.get('subjects', subjectId);
   if (!subject) { toast('科目不存在', true); return; }
   const [nodes, cards] = await Promise.all([
@@ -50,17 +54,34 @@ async function openReviewSetup(subjectId) {
   const subtreeIds = new Map(chapters.map((c) => [c.id, subtreeOf(c.id)]));
   const countsOf = (set) => cards.filter((c) => !c.suspended && c.nid && set.has(c.nid)).length;
 
+  // 记住上次的范围/模式（按科目存 localStorage）；快捷入口的 preset 优先
+  const memKey = 'stardy-scope-' + subjectId;
+  let mem = null;
+  try { mem = JSON.parse(localStorage.getItem(memKey) || 'null'); } catch { /* 忽略脏数据 */ }
+  if (mem && Array.isArray(mem.cids)) mem.cids = mem.cids.filter((id) => chapters.some((c) => c.id === id));
+  const initialCids = presetCids?.length ? presetCids
+    : mem?.cids?.length ? mem.cids
+    : chapters.map((c) => c.id);
+  const initialMode = presetCids?.length ? 'mixed' : (mem?.mode || 'mixed');
+  const initialLimit = presetCids?.length ? 20 : (mem?.limit || 20);
+  const initialShuffle = presetCids?.length ? true : (mem?.shuffle !== false);
+
   const box = openModal({
     title: '▶ 开始复习',
     wide: true,
     bodyHtml: `
       <div class="sdy-field">
-        <label class="sdy-field__label">复习范围（默认全部章节）</label>
+        <label class="sdy-field__label">复习范围
+          <span class="sdy-grow"></span>
+          <button class="btn btn--sm btn--ghost" data-a="all" style="padding:2px 10px">全选</button>
+          <button class="btn btn--sm btn--ghost" data-a="none" style="padding:2px 10px">清空</button>
+        </label>
         <div style="max-height:200px;overflow-y:auto" id="rv-chapters">
           ${chapters.map((c, i) => {
             const n = countsOf(subtreeIds.get(c.id));
+            const on = initialCids.includes(c.id);
             return `<label class="sdy-checkrow" style="margin-bottom:5px">
-              <input type="checkbox" value="${c.id}" checked>
+              <input type="checkbox" value="${c.id}"${on ? ' checked' : ''}>
               <span>${escapeHtml(c.title)}</span>
               <span class="sdy-grow"></span>
               <span class="sdy-chip sdy-chip--muted">${n} 张</span>
@@ -71,17 +92,18 @@ async function openReviewSetup(subjectId) {
       <div class="sdy-field">
         <label class="sdy-field__label">复习内容</label>
         <div class="sdy-row" id="rv-mode">
-          <button class="btn btn--sm btn--primary" data-m="mixed">常规（新 + 到期）</button>
-          <button class="btn btn--sm" data-m="due">只复习已学的</button>
-          <button class="btn btn--sm" data-m="new">只学新卡</button>
+          <button class="btn btn--sm${initialMode === 'mixed' ? ' btn--primary' : ''}" data-m="mixed">常规（新 + 到期）</button>
+          <button class="btn btn--sm${initialMode === 'due' ? ' btn--primary' : ''}" data-m="due">只复习已学的</button>
+          <button class="btn btn--sm${initialMode === 'new' ? ' btn--primary' : ''}" data-m="new">只学新卡</button>
+          <button class="btn btn--sm${initialMode === 'cram' ? ' btn--primary' : ''}" data-m="cram">📖 顺序学习</button>
         </div>
       </div>
-      <div class="sdy-field">
+      <div class="sdy-field" id="rv-count-field">
         <label class="sdy-field__label">数量上限</label>
         <div class="sdy-row" id="rv-count">
-          ${[10, 20, 30].map((n) => `<button class="btn btn--sm${n === 20 ? ' btn--primary' : ''}" data-n="${n}">${n} 张</button>`).join('')}
-          <button class="btn btn--sm" data-n="9999">全部</button>
-          <label class="sdy-checkrow" style="margin-left:10px"><input type="checkbox" id="rv-shuffle" checked> 随机顺序</label>
+          ${[10, 20, 30].map((n) => `<button class="btn btn--sm${n === initialLimit ? ' btn--primary' : ''}" data-n="${n}">${n} 张</button>`).join('')}
+          <button class="btn btn--sm${initialLimit === 9999 ? ' btn--primary' : ''}" data-n="9999">全部</button>
+          <label class="sdy-checkrow" style="margin-left:10px"><input type="checkbox" id="rv-shuffle"${initialShuffle ? ' checked' : ''}> 随机顺序</label>
         </div>
       </div>
       <p class="sdy-field__hint" id="rv-pool"></p>
@@ -90,17 +112,29 @@ async function openReviewSetup(subjectId) {
         <button class="btn btn--primary" data-a="go">开始复习 →</button>
       </div>`,
     onMount(box2, close) {
-      let mode = 'mixed', limit = 20;
+      let mode = initialMode, limit = initialLimit;
       const chapterCks = () => [...box2.querySelectorAll('#rv-chapters input:checked')].map((c) => c.value);
+      const countField = box2.querySelector('#rv-count-field');
       const updatePool = () => {
         const set = new Set();
         for (const cid of chapterCks()) for (const nid of subtreeIds.get(cid)) set.add(nid);
         let pool = cards.filter((c) => !c.suspended && c.fsrs && c.nid && set.has(c.nid));
         if (mode === 'new') pool = pool.filter((c) => c.fsrs.state === 0);
         if (mode === 'due') pool = pool.filter((c) => c.fsrs.state !== 0);
-        box2.querySelector('#rv-pool').textContent = pool.length
-          ? `当前范围内有 ${pool.length} 张卡，本次将学习 ${Math.min(limit, pool.length)} 张。`
-          : '当前范围内没有可学的卡。';
+        const hint = box2.querySelector('#rv-pool');
+        if (mode === 'cram') {
+          countField.style.opacity = '0.45';
+          countField.style.pointerEvents = 'none';
+          hint.textContent = pool.length
+            ? `将按章节顺序学完整章（${pool.length} 张，新卡 + 已学都含，不计入调度与配额）。`
+            : '当前范围内没有可学的卡。';
+        } else {
+          countField.style.opacity = '';
+          countField.style.pointerEvents = '';
+          hint.textContent = pool.length
+            ? `当前范围内有 ${pool.length} 张卡，本次将学习 ${Math.min(limit, pool.length)} 张。`
+            : '当前范围内没有可学的卡。';
+        }
       };
       for (const b of box2.querySelectorAll('#rv-mode [data-m]')) {
         b.addEventListener('click', () => {
@@ -117,6 +151,15 @@ async function openReviewSetup(subjectId) {
         });
       }
       for (const ck of box2.querySelectorAll('#rv-chapters input')) ck.addEventListener('change', updatePool);
+      // 全选 / 清空：学一章是常态，清空后点一个就是单章
+      box2.querySelector('[data-a="all"]').addEventListener('click', () => {
+        box2.querySelectorAll('#rv-chapters input').forEach((c) => { c.checked = true; });
+        updatePool();
+      });
+      box2.querySelector('[data-a="none"]').addEventListener('click', () => {
+        box2.querySelectorAll('#rv-chapters input').forEach((c) => { c.checked = false; });
+        updatePool();
+      });
       updatePool();
 
       box2.querySelector('[data-a="cancel"]').addEventListener('click', close);
@@ -125,9 +168,17 @@ async function openReviewSetup(subjectId) {
         if (!cids.length) { toast('至少选一个章节', true); return; }
         const chapterNids = new Set();
         for (const cid of cids) for (const nid of subtreeIds.get(cid)) chapterNids.add(nid);
+        try {
+          localStorage.setItem(memKey, JSON.stringify({ cids, mode, limit, shuffle: box2.querySelector('#rv-shuffle').checked }));
+        } catch { /* 隐私模式等场景静默 */ }
         close();
         location.hash = `#/review/${subjectId}`;
-        pendingOpts.set(subjectId, { chapterNids, mode, limit, shuffle: box2.querySelector('#rv-shuffle').checked });
+        pendingOpts.set(subjectId, {
+          chapterNids,
+          mode,
+          limit: mode === 'cram' ? null : limit,
+          shuffle: mode === 'cram' ? true : box2.querySelector('#rv-shuffle').checked,
+        });
       });
     },
   });
@@ -136,6 +187,13 @@ async function openReviewSetup(subjectId) {
 
 // 配置弹窗确认后暂存的选项（open 从路由触发时读取）
 const pendingOpts = new Map();
+
+/** 快捷入口：指定节点子树直接开始复习（不经配置弹窗，知识树「学此节点」用） */
+export function startScopedReview(subjectId, chapterNids) {
+  if (!chapterNids || !chapterNids.size) { toast('该节点下没有可学的卡片', true); return; }
+  pendingOpts.set(subjectId, { chapterNids, mode: 'mixed', limit: null, shuffle: true });
+  location.hash = `#/review/${subjectId}`;
+}
 
 export async function open(subjectId) {
   if (isOpen() && session.subjectId === subjectId) return;
@@ -147,14 +205,8 @@ export async function open(subjectId) {
   const revlogToday = todayOnly(await db.byIndex('revlog', 'subjectId', subjectId));
   const opts = pendingOpts.get(subjectId) || null;
   pendingOpts.delete(subjectId);
-  const queue = S.buildQueue(subject, cards, revlogToday, new Date(), opts || {});
-  if (!queue.length) {
-    toast(opts ? '所选范围内没有可学的卡片' : '今天没有到期卡片，休息一下 ☕');
-    history.back();
-    return;
-  }
-  const scopeLabel = opts?.chapterNids ? `范围 · ${opts.mode === 'new' ? '只新卡' : opts.mode === 'due' ? '只复习' : '常规'}` : '今日计划';
 
+  // 先加载节点（路径排序 / cram 顺序都要用）
   const nodes = await db.byIndex('nodes', 'subjectId', subjectId);
   const byId = new Map(nodes.map((n) => [n.id, n]));
   const pathOf = (nid) => {
@@ -165,6 +217,22 @@ export async function open(subjectId) {
     return parts.join(' › ');
   };
 
+  let queue;
+  if (opts?.mode === 'cram') {
+    // 顺序学习：整章顺序过一遍，不看状态/配额/调度，按知识树路径排序
+    queue = cards.filter((c) => !c.suspended && c.fsrs && (!opts.chapterNids || (c.nid && opts.chapterNids.has(c.nid))))
+      .sort((a, b) => pathOf(a.nid).localeCompare(pathOf(b.nid), 'zh') || (a.kind === 'cloze' ? a.ord : 0) - (b.kind === 'cloze' ? b.ord : 0));
+  } else {
+    queue = S.buildQueue(subject, cards, revlogToday, new Date(), opts || {});
+  }
+  if (!queue.length) {
+    toast(opts ? '所选范围内没有可学的卡片' : '今天没有到期卡片，休息一下 ☕');
+    history.back();
+    return;
+  }
+  const scopeLabel = opts?.mode === 'cram' ? '📖 顺序学习'
+    : opts?.chapterNids ? `范围 · ${opts.mode === 'new' ? '只新卡' : opts.mode === 'due' ? '只复习' : '常规'}` : '今日计划';
+
   session = {
     subjectId,
     subject,
@@ -172,6 +240,9 @@ export async function open(subjectId) {
     queue,
     opts: opts || {},
     scopeLabel,
+    cram: opts?.mode === 'cram',
+    cramMiss: new Set(),
+    cramQueue0: [...queue],
     todayLog: [...revlogToday],
     idx: 0,
     answered: 0,
@@ -270,11 +341,15 @@ function renderLeftStats() {
     <div class="sdy-side__row"><span>需重练</span><b>${s.againCount}</b></div>
     <div class="sdy-side__row"><span>用时</span><b id="rv-n-time">${elapsedMin()} 分</b></div>
     <div class="sdy-side__divider"></div>
-    <p class="sdy-side__title">今日配额</p>
-    <div class="sdy-side__row"><span>新卡</span><b>${newUsed} / ${cap.newPerDay}</b></div>
-    <div class="sdy-side__bar"><i style="width:${Math.min(100, (newUsed / Math.max(1, cap.newPerDay)) * 100)}%"></i></div>
-    <div class="sdy-side__row" style="margin-top:8px"><span>复习</span><b>${revUsed} / ${cap.revPerDay}</b></div>
-    <div class="sdy-side__bar"><i style="width:${Math.min(100, (revUsed / Math.max(1, cap.revPerDay)) * 100)}%"></i></div>`;
+    ${s.cram
+      ? `<p class="sdy-side__title">顺序学习</p>
+         <div class="sdy-side__row"><span>没记住</span><b>${s.cramMiss.size}</b></div>
+         <p class="sdy-side__hint">📖 不计入调度与配额，放心过卡。</p>`
+      : `<p class="sdy-side__title">今日配额</p>
+         <div class="sdy-side__row"><span>新卡</span><b>${newUsed} / ${cap.newPerDay}</b></div>
+         <div class="sdy-side__bar"><i style="width:${Math.min(100, (newUsed / Math.max(1, cap.newPerDay)) * 100)}%"></i></div>
+         <div class="sdy-side__row" style="margin-top:8px"><span>复习</span><b>${revUsed} / ${cap.revPerDay}</b></div>
+         <div class="sdy-side__bar"><i style="width:${Math.min(100, (revUsed / Math.max(1, cap.revPerDay)) * 100)}%"></i></div>`}`;
   renderStrip();
 }
 
@@ -292,9 +367,11 @@ function renderStrip() {
     <span class="sdy-strip__item">记住 <b>${s.answered - s.againCount}</b></span>
     <span class="sdy-strip__item">重练 <b>${s.againCount}</b></span>
     <span class="sdy-strip__item">用时 <b id="rv-s-time">${elapsedMin()} 分</b></span>
-    <span class="sdy-strip__sep"></span>
-    <span class="sdy-strip__item">新卡 <b>${newUsed}/${cap.newPerDay}</b></span>
-    <span class="sdy-strip__item">复习 <b>${revUsed}/${cap.revPerDay}</b></span>`;
+    ${s.cram
+      ? '<span class="sdy-strip__sep"></span><span class="sdy-strip__item">📖 顺序学习 · 不计入调度</span>'
+      : `<span class="sdy-strip__sep"></span>
+         <span class="sdy-strip__item">新卡 <b>${newUsed}/${cap.newPerDay}</b></span>
+         <span class="sdy-strip__item">复习 <b>${revUsed}/${cap.revPerDay}</b></span>`}`;
 }
 
 /** 右栏：当前卡片的信息 */
@@ -360,7 +437,7 @@ async function showCurrent() {
 
   body.innerHTML = `
     <div class="sdy-stage">
-      <div class="sdy-flip" id="rv-flip">
+      <div class="sdy-flip" id="rv-flipcard">
         <div class="sdy-face sdy-face--front">
           <div class="sdy-face__head">
             <span class="sdy-face__crumb">${escapeHtml(crumb)}</span>
@@ -383,7 +460,7 @@ async function showCurrent() {
       ${r != null ? `<span class="sdy-chip sdy-chip--muted">当前保持率 ${(r * 100).toFixed(0)}%</span>` : ''}
       ${card.fsrs?.lapses ? `<span class="sdy-chip sdy-chip--muted">已遗忘 ${card.fsrs.lapses} 次</span>` : ''}
     </div>
-    <div class="sdy-review__hint">空格 / 点击卡片 显示答案 · 1-4 打分 · Esc 退出</div>`;
+    <div class="sdy-review__hint">${session.cram ? '空格 / 点击卡片 显示答案 · 1 没记住 · 2 记住了 · Esc 退出' : '空格 / 点击卡片 显示答案 · 1-4 打分 · Esc 退出'}</div>`;
 
   // 挖空正面：空格可点击提示式揭示；点卡身任意处翻面
   const frontBody = body.querySelector('.sdy-face--front .sdy-face__body');
@@ -418,7 +495,7 @@ async function flip() {
   if (session.flipped) return;
   session.flipped = true;
   const el = overlay();
-  el.querySelector('#rv-flip').classList.add('flipped');
+  el.querySelector('#rv-flipcard').classList.add('flipped');
   el.querySelector('#rv-flipwrap').hidden = true;
 
   // 答案面挖空卡：直接揭示并高亮，再重新自适应字号
@@ -441,9 +518,25 @@ async function flip() {
   }
   renderCardInfo(card, null, true);
 
+  // 顺序学习：两键（没记住 → 排到本轮末尾重练），不显示调度预览
+  const grades = el.querySelector('#rv-grades');
+  if (session.cram) {
+    grades.hidden = false;
+    grades.innerHTML = `
+      <button class="sdy-grade sdy-grade--again" data-g="1" title="快捷键 1">
+        <span>没记住</span><small>排到本轮末尾重练</small>
+      </button>
+      <button class="sdy-grade sdy-grade--good" data-g="2" title="快捷键 2">
+        <span>记住了</span><small>继续下一张</small>
+      </button>`;
+    for (const b of grades.querySelectorAll('[data-g]')) {
+      b.addEventListener('click', () => answerCard(Number(b.dataset.g)));
+    }
+    return;
+  }
+
   // 四键预览间隔
   const previews = await S.preview(session.subject.settings, card.fsrs);
-  const grades = el.querySelector('#rv-grades');
   grades.hidden = false;
   grades.innerHTML = GRADES.map((g) => {
     const p = previews.find((x) => x.grade === g.v);
@@ -460,6 +553,23 @@ async function flip() {
 async function answerCard(grade) {
   if (!session || !session.flipped) return;
   const card = session.queue[session.idx];
+
+  // 顺序学习：不写调度/记录，「没记住」把卡排到本轮末尾再来一遍
+  if (session.cram) {
+    if (grade === 1) {
+      session.againCount++;
+      session.cramMiss.add(card.id);
+      session.queue.push(card);
+    } else {
+      session.cramMiss.delete(card.id);
+    }
+    session.answered++;
+    session.idx++;
+    renderLeftStats();
+    await showCurrent();
+    return;
+  }
+
   const takenMs = Date.now() - session.shownAt;
   const preState = card.fsrs?.state ?? 0;
 
@@ -502,6 +612,33 @@ function renderDone(body) {
   el.querySelector('#rv-grades').hidden = true;
   const mins = elapsedMin();
   const good = session.answered - session.againCount;
+
+  if (session.cram) {
+    // 顺序学习结算：没记住的卡已在过程中排尾重练到记住，无需再单列
+    body.innerHTML = `
+      <div class="sdy-review__done">
+        <div class="big">${session.againCount === 0 ? '🎉' : '📖'}</div>
+        <h2>本章学完</h2>
+        <p>过卡 ${session.answered} 次 · 记住了 ${good} · 没记住 ${session.againCount} · 用时 ${mins} 分钟</p>
+        <p class="sdy-field__hint">顺序学习不影响复习调度——这章的卡会按原计划出现在复习队列里。</p>
+        <div class="sdy-row" style="justify-content:center;margin-top:18px">
+          <button class="btn" id="rv-done-back">返回</button>
+          <button class="btn btn--primary" id="rv-done-more">再学一遍</button>
+        </div>
+      </div>`;
+    el.querySelector('#rv-done-back').onclick = exit;
+    el.querySelector('#rv-done-more').onclick = () => {
+      session.queue = [...session.cramQueue0];
+      session.cramMiss = new Set();
+      session.idx = 0;
+      session.answered = 0;
+      session.againCount = 0;
+      renderLeftStats();
+      showCurrent();
+    };
+    return;
+  }
+
   body.innerHTML = `
     <div class="sdy-review__done">
       <div class="big">${session.againCount === 0 ? '🎉' : session.againCount <= session.answered / 3 ? '👍' : '💪'}</div>
@@ -546,8 +683,11 @@ function onKey(e) {
     flip();
     return;
   }
-  if (session.flipped && ['1', '2', '3', '4'].includes(e.key)) {
-    e.preventDefault();
-    answerCard(Number(e.key));
+  if (session.flipped) {
+    const keys = session.cram ? ['1', '2'] : ['1', '2', '3', '4'];
+    if (keys.includes(e.key)) {
+      e.preventDefault();
+      answerCard(Number(e.key));
+    }
   }
 }

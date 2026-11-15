@@ -607,6 +607,7 @@
 .sdy-side__big span { font-size: var(--fs-xs); color: var(--text-3); }
 .sdy-side__bar { height: 5px; border-radius: 999px; background: var(--tint-hover); overflow: hidden; margin-top: 4px; }
 .sdy-side__bar i { display: block; height: 100%; background: var(--accent-fill); border-radius: 999px; transition: width 300ms var(--ease); }
+.sdy-side__hint { margin: 0; font-size: var(--fs-xs); color: var(--text-3); line-height: 1.6; }
 .sdy-side__divider { height: 1px; background: var(--border); margin: 4px 0; }
 
 /* 卡片中央区 */

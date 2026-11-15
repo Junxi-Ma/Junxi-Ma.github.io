@@ -7,12 +7,12 @@
  *   #/review/<id>       全屏复习层（hash 变走即关闭，浏览器后退可退出）
  */
 
-import db from './db.js?v=101';
-import { toast } from './ui.js?v=101';
-import { renderHome } from './views/home.js?v=101';
-import { renderWorkspace } from './views/workspace.js?v=101';
-import { renderGlobalSettings } from './views/settings.js?v=101';
-import { open as reviewOpen, close as reviewClose, isOpen } from './views/review.js?v=101';
+import db from './db.js?v=102';
+import { toast } from './ui.js?v=102';
+import { renderHome } from './views/home.js?v=102';
+import { renderWorkspace } from './views/workspace.js?v=102';
+import { renderGlobalSettings } from './views/settings.js?v=102';
+import { open as reviewOpen, close as reviewClose, isOpen } from './views/review.js?v=102';
 
 async function route() {
   // 路由切换清掉残留模态（goto 同文档不清 body 层弹窗）

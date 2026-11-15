@@ -3,25 +3,25 @@
 
  */
 
-import db from '../db.js?v=101';
-import * as S from '../scheduler.js?v=101';
+import db from '../db.js?v=102';
+import * as S from '../scheduler.js?v=102';
 import {
   escapeHtml, renderMarkdown, renderCloze, parseCloze, clozeOrds, suggestClozes,
   newCard, newDoc, newNode, newLink, fmtInterval, STATE_INFO, uid,
-} from '../models.js?v=101';
-import { toast, openModal, confirmBox, promptBox } from '../ui.js?v=101';
+} from '../models.js?v=102';
+import { toast, openModal, confirmBox, promptBox } from '../ui.js?v=102';
 import {
   exportSubjectFile, exportAllFile, readJsonFile, importPayload, subjectTemplate,
   cloudReady, cloudUser, cloudMeta, cloudUpload, cloudRestore, makeRestorePoint,
-} from '../backup.js?v=101';
-import { startReview } from './review.js?v=101';
-import { cascadeDeleteSubject } from './home.js?v=101';
-import { openAiBuildTree, openAiGenCards, renderReviewConsole } from './ai.js?v=101';
-import { parseFile, kindLabel, ocrPdfPages } from '../parse.js?v=101';
-import { aiOcrPage } from '../ai.js?v=101';
-import { renderQuiz } from './quiz.js?v=101';
-import { renderRadialGraph } from './graph.js?v=101';
-import { loadAiConfig, saveAiConfig, chat, aiUsage } from '../ai.js?v=101';
+} from '../backup.js?v=102';
+import { startReview, openReviewSetup, startScopedReview } from './review.js?v=102';
+import { cascadeDeleteSubject } from './home.js?v=102';
+import { openAiBuildTree, openAiGenCards, renderReviewConsole } from './ai.js?v=102';
+import { parseFile, kindLabel, ocrPdfPages } from '../parse.js?v=102';
+import { aiOcrPage } from '../ai.js?v=102';
+import { renderQuiz } from './quiz.js?v=102';
+import { renderRadialGraph } from './graph.js?v=102';
+import { loadAiConfig, saveAiConfig, chat, aiUsage } from '../ai.js?v=102';
 
 // ai-proxy Edge Function 源码（与 supabase/functions/ai-proxy/index.ts 同步，部署指引弹窗展示用）
 const FS_CODE = `// ============================================================
@@ -386,6 +386,7 @@ async function renderTree(panel, subject, root) {
       <div class="sdy-md">${n.detail ? renderMarkdown(n.detail) : '<p style="color:var(--text-3)">暂无正文</p>'}</div>
       ${n.formula ? `<div class="sdy-md" style="margin-top:10px">${renderMarkdown(n.formula)}</div>` : ''}
       <div class="sdy-modal__acts" style="justify-content:flex-start;margin-top:16px">
+        <button class="btn btn--sm btn--primary" data-nstudy>▶ 学此节点</button>
         <button class="btn btn--sm btn--primary" data-ncard="qa">＋ 问答卡</button>
         <button class="btn btn--sm" data-ncard="cloze">＋ 挖空卡</button>
         <button class="btn btn--sm" data-nedit>编辑</button>
@@ -647,6 +648,10 @@ async function renderTree(panel, subject, root) {
 
     if (sel) {
       bindDetail('[data-naddchild]', () => openNodeEditor(subject, { pid: sel.id, onDone: rerender }));
+      bindDetail('[data-nstudy]', () => {
+        const sub = new Set(collectDescendants(sel.id));
+        startScopedReview(subject.id, sub);
+      });
       bindDetail('[data-nedit]', () => openNodeEditor(subject, { node: sel, onDone: rerender }));
       bindDetail('[data-ncard]', (e) => openCardEditor(subject, { nid: sel.id, kind: e.currentTarget.dataset.ncard, onDone: () => gotoTab(root, subject.id, 'tree') }));
       for (const b of treeview.querySelectorAll('[data-neditcard]')) {
@@ -1018,6 +1023,7 @@ async function renderCards(panel, subject, root) {
         <option value="chapter" ${cardFilters.sort === 'chapter' ? 'selected' : ''}>按章节排序</option>
       </select>
       <span class="sdy-grow"></span>
+      <button class="btn btn--sm" id="cf-study" ${cardFilters.chapter === 'all' ? 'disabled' : ''} title="以当前所选章节为范围打开复习配置">▶ 学此章</button>
       <button class="btn btn--sm" id="cf-aigen">🤖 AI 出卡</button>
       <button class="btn btn--primary btn--sm" id="cf-new">✚ 新卡片</button>
     </div>
@@ -1065,6 +1071,10 @@ async function renderCards(panel, subject, root) {
     panel.querySelector(sel).addEventListener('change', (e) => { cardFilters[key] = e.target.value; rerender(); });
   }
   panel.querySelector('#cf-new').addEventListener('click', () => openCardEditor(subject, { onDone: () => gotoTab(root, subject.id, 'cards') }));
+  // 学此章：以当前章筛选为预选打开复习配置（未选章时禁用）
+  panel.querySelector('#cf-study').addEventListener('click', () => {
+    if (cardFilters.chapter !== 'all') openReviewSetup(subject.id, [cardFilters.chapter]);
+  });
   panel.querySelector('#cf-aigen').addEventListener('click', () => {
     openAiGenCards(subject, nodesForAi, () => gotoTab(root, subject.id, 'ainote'));
   });

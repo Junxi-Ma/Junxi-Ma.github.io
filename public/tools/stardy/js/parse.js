@@ -7,15 +7,15 @@
  * 扫描件（PDF 页面无文字层）记录 pagesInfo，OCR 转写用视觉模型逐页完成。
  */
 
-import { unzipSync, strFromU8 } from '../libs/fflate.mjs?v=101';
+import { unzipSync, strFromU8 } from '../libs/fflate.mjs?v=102';
 
 /* ============ PDF（pdf.js vendored @5.7.284） ============ */
 
 let _pdfjs = null;
 async function getPdfjs() {
   if (_pdfjs) return _pdfjs;
-  const lib = await import('../libs/pdf/pdf.min.mjs?v=101');
-  lib.GlobalWorkerOptions.workerSrc = new URL('../libs/pdf/pdf.worker.min.mjs?v=101', import.meta.url).href;
+  const lib = await import('../libs/pdf/pdf.min.mjs?v=102');
+  lib.GlobalWorkerOptions.workerSrc = new URL('../libs/pdf/pdf.worker.min.mjs?v=102', import.meta.url).href;
   _pdfjs = lib;
   return lib;
 }
