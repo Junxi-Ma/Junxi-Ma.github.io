@@ -10,6 +10,25 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
 (() => {
   'use strict';
 
+  /* 版本标记：排查时一眼确认浏览器跑的是哪一版脚本 */
+  const BUILD = 'v6 · 2026-11-16';
+  console.info('[数独] build', BUILD);
+
+  /* 未捕获错误在页面顶部亮一条红条：QR「点了没反应」时至少能看到原因 */
+  window.addEventListener('error', (ev) => {
+    try {
+      if (document.getElementById('sk-errbar')) return;
+      const bar = document.createElement('div');
+      bar.id = 'sk-errbar';
+      bar.style.cssText = 'position:fixed;left:0;right:0;top:0;z-index:9999;padding:10px 14px;'
+        + 'font:13px/1.6 system-ui,-apple-system,"Microsoft YaHei",sans-serif;'
+        + 'background:#b3261e;color:#fff;box-shadow:0 2px 10px rgba(0,0,0,.3)';
+      bar.textContent = '数独脚本出错（' + BUILD + '）：' + (ev.message || ev.error || '未知错误')
+        + ' —— 按 F12 看控制台，把这段发我';
+      document.body.appendChild(bar);
+    } catch { /* 提示本身失败就算了 */ }
+  });
+
   const $ = (s, el = document) => el.querySelector(s);
 
   /* ---------- 常量与本地存储 ---------- */
@@ -425,7 +444,7 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     over = false;
     started = false;
     paused = false;
-    pauseEl.hidden = true;
+    if (pauseEl) pauseEl.hidden = true;
     // 开新局就把上一局的暂停存档作废；启动时的第一局除外，那时还要拿它来问要不要续
     if (!opts.keepSave) clearSave();
     mistakes = 0;
@@ -474,8 +493,24 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     }
   }
 
+  /* ---------- 难度切换 ----------
+     事件委托绑在 document 上，位置提到其它绑定之前：
+     这样即便页面上某个元素缺失、或后面的初始化在某处抛错，
+     难度按钮也照常能切；newGame 真出错时给出可见反馈，而不是「点了没反应」。 */
+  document.addEventListener('click', (e) => {
+    const btn = e.target instanceof Element ? e.target.closest('.sk-diffbtn') : null;
+    if (!btn || btn.disabled) return;
+    for (const t of document.querySelectorAll('.sk-diffbtn')) t.classList.toggle('on', t === btn);
+    try {
+      newGame(btn.dataset.diff);
+    } catch (err) {
+      console.error('[数独] 切换难度失败：', err);
+      if (diffLabel) diffLabel.textContent = '出题失败，请刷新页面';
+    }
+  });
+
   /* ---------- 交互 ---------- */
-  gridEl.addEventListener('click', (e) => {
+  gridEl?.addEventListener('click', (e) => {
     const cell = e.target.closest('.sk-cell');
     if (cell) select(+cell.dataset.i);
   });
@@ -512,15 +547,15 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     }
   });
 
-  undoBtn.addEventListener('click', undo);
-  eraseBtn.addEventListener('click', eraseCell);
-  hintBtn.addEventListener('click', hint);
+  undoBtn?.addEventListener('click', undo);
+  eraseBtn?.addEventListener('click', eraseCell);
+  hintBtn?.addEventListener('click', hint);
 
   function setNoteMode(on) {
     noteMode = on;
     noteBtn.setAttribute('aria-pressed', String(on));
   }
-  noteBtn.addEventListener('click', () => setNoteMode(!noteMode));
+  noteBtn?.addEventListener('click', () => setNoteMode(!noteMode));
 
   /* ---------- 对话框 ---------- */
   function showDialog(title, build) {
@@ -530,7 +565,7 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     modal.hidden = false;
   }
   function closeDialog() { modal.hidden = true; cardBody.textContent = ''; }
-  modal.addEventListener('pointerdown', (e) => { if (e.target === modal) closeDialog(); });
+  modal?.addEventListener('pointerdown', (e) => { if (e.target === modal) closeDialog(); });
 
   /* ---------- 云端（Supabase） ---------- */
   async function initCloud() {
@@ -723,12 +758,12 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     diffLabel.textContent = DIFFS[diffKey].label;
     for (const b of document.querySelectorAll('.sk-diffbtn')) b.classList.toggle('on', b.dataset.diff === diffKey);
     store.set(KEYS.diff, diffKey);
-    pauseEl.hidden = true;
+    if (pauseEl) pauseEl.hidden = true;
     fitSudoku();
   }
 
   function pauseHint(text) {
-    pauseHintEl.textContent = text || '';
+    if (pauseHintEl) pauseHintEl.textContent = text || '';
   }
 
   /* 这局已经分出结果（完成或三振），暂停存档作废 */
@@ -776,19 +811,19 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     paused = true;
     stopTimer();
     select(-1);
-    pauseEl.hidden = false;
+    if (pauseEl) pauseEl.hidden = false;
     // 纸张可能有一半在视口外，先把整张滚到中间，免得看不到「继续」
     if (!fsActive()) {
       try { sheetEl.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch { /* 老浏览器忽略平滑 */ }
     }
     // 先落一份在本机，云端失败也不至于丢
     store.set(KEYS.save, makeSave());
-    pauseNoteEl.textContent = '计时已停，进度已存在这台设备。';
+    if (pauseNoteEl) pauseNoteEl.textContent = '计时已停，进度已存在这台设备。';
     pauseHint('正在同步到云端…');
     pushSave().then((r) => {
       if (r.ok) {
         pauseHint(`已同步到云端 · ${fmt(time)} · ${DIFFS[diffKey].label}`);
-        pauseNoteEl.textContent = '换设备登录同一账号即可接着下。';
+        if (pauseNoteEl) pauseNoteEl.textContent = '换设备登录同一账号即可接着下。';
       } else if (r.reason === 'anon') {
         pauseHint('未登录：进度只在这台设备上，登录后可以跨设备续下。');
         addLoginShortcut();
@@ -803,13 +838,13 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
   function resumeGame() {
     if (!paused) return;
     paused = false;
-    pauseEl.hidden = true;
+    if (pauseEl) pauseEl.hidden = true;
     if (started && !over) startTimer();
   }
 
   /* 未登录时在暂停遮罩里放一个「登录」入口 */
   function addLoginShortcut() {
-    if (pauseHintEl.querySelector('.sk-pause-login')) return;
+    if (!pauseHintEl || pauseHintEl.querySelector('.sk-pause-login')) return;
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'sk-abtn sk-pause-login';
@@ -869,7 +904,7 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
           pauseHint('');
           pushSave().then((r) => {
             if (r.ok) {
-              pauseNoteEl.textContent = '换设备登录同一账号即可接着下。';
+              if (pauseNoteEl) pauseNoteEl.textContent = '换设备登录同一账号即可接着下。';
               pauseHint(`已同步到云端 · ${fmt(time)} · ${DIFFS[diffKey].label}`);
             } else {
               pauseHint('登录成功，但存档没传上去，稍后再暂停一次试试。');
@@ -1068,11 +1103,11 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     }
   }
 
-  bestBtn.addEventListener('click', openBest);
+  bestBtn?.addEventListener('click', openBest);
 
   /* ---------- 暂停 / 继续的按钮 ---------- */
-  pauseBtn.addEventListener('click', pauseGame);
-  resumeBtn.addEventListener('click', resumeGame);
+  pauseBtn?.addEventListener('click', pauseGame);
+  resumeBtn?.addEventListener('click', resumeGame);
 
   /* 打开页面时如果查到暂停存档，问一句要不要接着下。
      先查云端（可跨设备），没有再退回本机副本。 */
@@ -1202,7 +1237,7 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     document.body.classList.remove('sk-fs-fake');
     renderFs();
   }
-  fsBtn.addEventListener('click', async () => {
+  fsBtn?.addEventListener('click', async () => {
     const api = stageEl.requestFullscreen || stageEl.webkitRequestFullscreen;
     // 假全屏（API 被拒/不可用）下再点按钮：直接撤掉 CSS 全屏，不要又去申请一次
     if (document.body.classList.contains('sk-fs-fake') &&
@@ -1268,14 +1303,6 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     gridEl.style.fontSize = (side / 9 * 0.52).toFixed(1) + 'px';
   }
   window.addEventListener('resize', fitSudoku);
-
-  /* ---------- 难度切换 ---------- */
-  for (const btn of document.querySelectorAll('.sk-diffbtn')) {
-    btn.addEventListener('click', () => {
-      for (const t of document.querySelectorAll('.sk-diffbtn')) t.classList.toggle('on', t === btn);
-      newGame(btn.dataset.diff);
-    });
-  }
 
   /* ---------- 启动 ---------- */
   buildNums();
