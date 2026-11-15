@@ -13,12 +13,19 @@ interface Props {
 const { currentPostCategory } = Astro.props as Props;
 
 // 内容类型按构建期路径自动判断：文章（首页/文章/归档/分类）、工具、分支。
-// 三种类型各有自己的分类体系；分类条不在 swup containers 里，跨类型
-// 导航必须整页刷新（类型 pill 带 data-no-swup），由 SSR 渲染对应分类区。
+// 独立页面（关于我/相册/动态/友链等）没有分类体系，不显示分类条。
 const pathname0 = Astro.url.pathname.replace(/\/$/, "");
-const contentType: "posts" | "tools" | "branches" =
+const STANDALONE_PREFIXES = [
+	"/about", "/friends", "/guestbook", "/dynamic", "/gallery", "/sponsor",
+	"/booknav", "/bilibili", "/bangumi", "/vndb", "/projects", "/search",
+];
+const isStandalonePage = STANDALONE_PREFIXES.some(
+	(p) => pathname0 === p || pathname0.startsWith(p + "/"),
+);
+const contentType: "posts" | "tools" | "branches" | "none" =
 	pathname0.startsWith("/tools") ? "tools"
 	: pathname0.startsWith("/branches") ? "branches"
+	: isStandalonePage ? "none"
 	: "posts";
 
 const postCategories = contentType === "posts" ? await getCategoryList() : [];
@@ -72,6 +79,7 @@ function initialActive(categoryName: string): {
 
 ---
 
+{contentType !== "none" && (
 <div
   class="card-base category-bar p-3 onload-animation"
   id="category-bar"
@@ -162,6 +170,7 @@ function initialActive(categoryName: string): {
     }
   </div>
 </div>
+)}
 
 <style>
   .category-bar .category-pill {
