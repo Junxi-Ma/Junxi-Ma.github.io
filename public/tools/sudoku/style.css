@@ -430,7 +430,7 @@ body.sk-fs-fake .sk-modal { z-index: 200; }
 }
 .sk-card-body .muted { color: #7a715c; font-size: 12.5px; }
 .sk-field { display: flex; align-items: center; gap: 10px; margin: 12px 0; }
-.sk-field label { width: 76px; flex: none; }
+.sk-field label { width: 76px; flex: none; white-space: nowrap; }
 .sk-input {
   flex: 1;
   border: 1px solid #cfc5ab;
@@ -470,3 +470,139 @@ body.sk-fs-fake .sk-modal { z-index: 200; }
 .sk-best-row .k { width: 44px; flex: none; font-weight: 700; }
 .sk-best-row b { min-width: 76px; font-variant-numeric: tabular-nums; }
 .sk-best-row .c { margin-left: auto; color: #7a715c; font-size: 12.5px; }
+
+/* ============================================================
+   暂停遮罩 / 收藏战绩
+   纸张是固定的米白色，不跟随深浅主题，所以这一套也用纸色。
+   ============================================================ */
+
+.sk-sheet { position: relative; }
+
+.sk-pause {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  border-radius: inherit;
+  background: rgba(253, 250, 242, 0.94);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.sk-pause[hidden] { display: none; }
+
+.sk-pause-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+  max-width: 300px;
+}
+.sk-pause-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #33302a;
+  letter-spacing: 0.04em;
+}
+.sk-pause-note {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.7;
+  color: #6f6552;
+}
+.sk-pause-hint {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #958a77;
+}
+.sk-pause-hint:empty { display: none; }
+.sk-pause .sk-abtn { min-width: 132px; }
+
+/* 收藏战绩列表 */
+.sk-fav {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-top: 1px solid #e6ddc9;
+}
+.sk-fav:first-of-type { border-top: 0; }
+.sk-fav-meta {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  text-align: left;
+  font-size: 12.5px;
+  color: #6f6552;
+}
+.sk-fav-meta b {
+  font-size: 14px;
+  color: #33302a;
+}
+.sk-fav-meta span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sk-fav-del {
+  flex: none;
+  border: 1px solid #e6ddc9;
+  background: transparent;
+  color: #958a77;
+  border-radius: 8px;
+  padding: 4px 9px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: color .15s, border-color .15s;
+}
+.sk-fav-del:hover { color: #a8543f; border-color: #d9b8a8; }
+
+/* 81 格缩略棋盘 */
+.sk-mini {
+  flex: none;
+  display: grid;
+  grid-template-columns: repeat(9, 1fr);
+  width: 62px;
+  height: 62px;
+  border: 1px solid #cfc4ab;
+  border-radius: 3px;
+  overflow: hidden;
+  background: #fffdf6;
+}
+.sk-mini i {
+  display: grid;
+  place-items: center;
+  font-size: 5px;
+  font-style: normal;
+  color: #958a77;
+  line-height: 1;
+}
+.sk-mini i.g { color: #33302a; font-weight: 600; }
+.sk-mini i.b2 { border-right: 1px solid #d9cfb8; }
+.sk-mini i.b3 { border-bottom: 1px solid #d9cfb8; }
+
+/* 战绩对话框的页签 */
+.sk-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.sk-tab {
+  flex: 1 1 0;
+  border: 1px solid #e0d7c3;
+  background: transparent;
+  color: #6f6552;
+  border-radius: 999px;
+  padding: 7px 10px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.sk-tab.on {
+  background: #f3ecd9;
+  border-color: #d8cfba;
+  color: #33302a;
+  font-weight: 600;
+}

@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>纸感数独 — Michael</title>
-  <meta name="description" content="现代纸感数独：入门到专家四档唯一解棋盘，铅笔笔记、提示、撤销与三次失误上限；成绩自动署名上云，英雄榜每人只计最快。">
+  <meta name="description" content="现代纸感数独：入门到专家四档唯一解棋盘，铅笔笔记、提示、撤销与三次失误上限；可以随时暂停、进度存到云端换设备接着下，下完还能把棋谱收进个人战绩；成绩自动署名上云，英雄榜每人只计最快。">
   <meta name="theme-color" content="#0a0a0b">
   <meta name="color-scheme" content="dark light">
   <link rel="icon" type="image/svg+xml" href="../../assets/img/favicon.svg">
@@ -32,7 +32,7 @@
     })();
   </script>
   <link rel="stylesheet" href="../../assets/css/tool-shell.css">
-  <link rel="stylesheet" href="style.css?v=3">
+  <link rel="stylesheet" href="style.css?v=4">
   <style>
     /* ---- 页面骨架：与 json-formatter 逐字一致，顶距内联提供 ---- */
     .tool {
@@ -83,7 +83,7 @@
       <div class="tool__head">
         <p class="mono-label">Tool <span>/</span> 08</p>
         <h1>纸感数独</h1>
-        <p>现代纸感设计的数独棋盘：四档难度全部唯一解，铅笔笔记、提示、撤销与三次失误上限。登录后成绩自动署名上云，右侧英雄榜收录全站四档的最快纪录；手机与平板点按即可作答。</p>
+        <p>现代纸感设计的数独棋盘：四档难度全部唯一解，铅笔笔记、提示、撤销与三次失误上限。玩到一半有别的事，点「暂停」把进度存到账号下，换台设备接着下；一局下完可以把棋谱收进「战绩」，连用时、剩余命数和提示次数一起留着。右侧英雄榜收录全站四档的最快纪录；手机与平板点按即可作答。</p>
       </div>
 
       <div class="sk-layout">
@@ -105,8 +105,19 @@
                 <button type="button" class="sk-btn" id="sk-erase" title="清除所选格">⌫ 擦除</button>
                 <button type="button" class="sk-btn" id="sk-note" aria-pressed="false" title="铅笔笔记开关（N）">✏ 笔记</button>
                 <button type="button" class="sk-btn" id="sk-hint" title="填入正确答案（每局 3 次）">💡 提示 ×3</button>
-                <button type="button" class="sk-btn" id="sk-best" title="我的最快纪录">🏆 记录</button>
+                <button type="button" class="sk-btn" id="sk-pause" title="暂停并把进度存到云端">⏸ 暂停</button>
+                <button type="button" class="sk-btn" id="sk-best" title="我的纪录与收藏">🏆 战绩</button>
                 <button type="button" class="sk-btn" id="sk-fs" title="全屏">⛶ 全屏</button>
+              </div>
+            </div>
+
+            <!-- 暂停遮罩：盖住棋盘，防止回来时被一眼看穿答案 -->
+            <div class="sk-pause" id="sk-pause-veil" hidden>
+              <div class="sk-pause-card">
+                <p class="sk-pause-title">已暂停</p>
+                <p class="sk-pause-note" id="sk-pause-note">计时已停，进度保存在这台设备上。</p>
+                <button type="button" class="sk-abtn primary" id="sk-resume">继续游戏</button>
+                <p class="sk-pause-hint" id="sk-pause-hint"></p>
               </div>
             </div>
           </div>
@@ -152,7 +163,7 @@
       </div>
     </div>
   </main>
-  <script type="module" src="app.js?v=4"></script>
+  <script type="module" src="app.js?v=5"></script>
   <script type="module" src="../../assets/js/site-gate.js"></script>
   <script>
     /* 主题切换：写回主站同一套 localStorage 键，回到主站后主题保持一致 */

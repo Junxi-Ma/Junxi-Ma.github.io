@@ -23,6 +23,7 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     best: 'sk-best-v1',     // { easy:{t,n,d}, ... }
     diff: 'sk-diff-v1',
     name: 'sk-name-v1',
+    save: 'sk-save-v1',     // 暂停存档（本机副本，跨设备靠云端）
   };
   const store = {
     get(k, d) {
@@ -55,6 +56,11 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
   const cardBody = $('#sk-card-body');
   const lbListEl = $('#sk-lb-list');
   const lbNoteEl = $('#sk-lb-note');
+  const pauseBtn = $('#sk-pause');
+  const pauseEl = $('#sk-pause-veil');
+  const pauseNoteEl = $('#sk-pause-note');
+  const pauseHintEl = $('#sk-pause-hint');
+  const resumeBtn = $('#sk-resume');
 
   /* ---------- 引擎：位运算 + MRV 求解/生成 ---------- */
   const ROW = new Uint8Array(81), COL = new Uint8Array(81), BOX = new Uint8Array(81);
@@ -376,12 +382,14 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     over = true;
     stopTimer();
     select(-1);
+    clearSave();
     maybeRecord();
   }
 
   function lose() {
     over = true;
     stopTimer();
+    clearSave();
     // 揭示答案
     for (let i = 0; i < 81; i++) {
       if (!given[i] && val[i] !== solution[i]) { val[i] = solution[i]; paint(i); cells[i].classList.add('reveal'); }
@@ -411,11 +419,15 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
   }
 
   /* ---------- 新局 ---------- */
-  function newGame(key) {
+  function newGame(key, opts = {}) {
     diffKey = key;
     store.set(KEYS.diff, key);
     over = false;
     started = false;
+    paused = false;
+    pauseEl.hidden = true;
+    // 开新局就把上一局的暂停存档作废；启动时的第一局除外，那时还要拿它来问要不要续
+    if (!opts.keepSave) clearSave();
     mistakes = 0;
     hints = 3;
     history = [];
@@ -569,14 +581,22 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     const best = store.get(KEYS.best, {});
     const old = best[diffKey];
     if (old && time >= old.t) {
+      // 没破纪录：成绩照旧自动上榜，弹窗留着做收藏入口
       submitRecord(time, mistakes, 3 - hints);
+      showDoneDialog(false);
       return;
     }
-    showDialog('🎉 完成！', (body) => {
-      const badge = document.createElement('div');
-      badge.className = 'badge';
-      badge.textContent = '🏆 新纪录';
-      body.appendChild(badge);
+    showDoneDialog(true);
+  }
+
+  function showDoneDialog(isNewBest) {
+    showDialog(isNewBest ? '🎉 完成！' : '本局完成', (body) => {
+      if (isNewBest) {
+        const badge = document.createElement('div');
+        badge.className = 'badge';
+        badge.textContent = '🏆 新纪录';
+        body.appendChild(badge);
+      }
       const big = document.createElement('div');
       big.className = 'big';
       big.textContent = fmt(time);
@@ -585,111 +605,516 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
       p.textContent = `${DIFFS[diffKey].label} · 失误 ${mistakes} 次 · 提示 ${3 - hints} 次`;
       body.appendChild(p);
       let nameInput = null;
-      if (cloudUser) {
-        const signed = document.createElement('p');
-        signed.className = 'muted';
-        signed.textContent = `署名：${cloudUser.name}（登录账号自动署名）`;
-        body.appendChild(signed);
-      } else {
-        const field = document.createElement('div');
-        field.className = 'sk-field';
-        const lab = document.createElement('label');
-        lab.textContent = '留下大名：';
-        lab.htmlFor = 'sk-rn';
-        nameInput = document.createElement('input');
-        nameInput.className = 'sk-input';
-        nameInput.id = 'sk-rn';
-        nameInput.maxLength = 16;
-        nameInput.value = store.get(KEYS.name, '匿名');
-        field.append(lab, nameInput);
-        body.appendChild(field);
+      if (isNewBest) {
+        if (cloudUser) {
+          const signed = document.createElement('p');
+          signed.className = 'muted';
+          signed.textContent = `署名：${cloudUser.name}（登录账号自动署名）`;
+          body.appendChild(signed);
+        } else {
+          const field = document.createElement('div');
+          field.className = 'sk-field';
+          const lab = document.createElement('label');
+          lab.textContent = '留下大名：';
+          lab.htmlFor = 'sk-rn';
+          nameInput = document.createElement('input');
+          nameInput.className = 'sk-input';
+          nameInput.id = 'sk-rn';
+          nameInput.maxLength = 16;
+          nameInput.value = store.get(KEYS.name, '匿名');
+          field.append(lab, nameInput);
+          body.appendChild(field);
+        }
       }
       const foot = document.createElement('div');
       foot.className = 'sk-actions';
+      const fav = document.createElement('button');
+      fav.className = 'sk-abtn';
+      fav.type = 'button';
+      fav.textContent = '收藏这局';
+      fav.addEventListener('click', async () => {
+        fav.disabled = true;
+        fav.textContent = '收藏中…';
+        const done = await collectGame();
+        if (done) {
+          fav.textContent = '已收藏 ✓';
+          return;
+        }
+        fav.disabled = false;
+        fav.textContent = '收藏这局';
+        if (!cloudUser || !cloudSb) openLogin();
+      });
       const ok = document.createElement('button');
       ok.className = 'sk-abtn primary';
       ok.type = 'button';
-      ok.textContent = '记入英雄榜';
+      ok.textContent = isNewBest ? '记入英雄榜' : '确定';
       const save = () => {
-        const name = cloudUser ? cloudUser.name : (nameInput.value.trim() || '匿名');
-        if (nameInput) store.set(KEYS.name, name);
-        best[diffKey] = { t: time, n: name, d: new Date().toISOString().slice(0, 10) };
-        store.set(KEYS.best, best);
-        submitRecord(time, mistakes, 3 - hints);
+        if (isNewBest) {
+          const name = cloudUser ? cloudUser.name : (nameInput.value.trim() || '匿名');
+          if (nameInput) store.set(KEYS.name, name);
+          best[diffKey] = { t: time, n: name, d: new Date().toISOString().slice(0, 10) };
+          store.set(KEYS.best, best);
+          submitRecord(time, mistakes, 3 - hints);
+        }
         closeDialog();
       };
       ok.addEventListener('click', save);
       if (nameInput) nameInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') save(); });
-      foot.appendChild(ok);
+      foot.append(fav, ok);
       body.appendChild(foot);
       if (nameInput) setTimeout(() => { nameInput.focus(); nameInput.select(); }, 0);
     });
   }
 
-  /* ---------- 我的纪录 ---------- */
-  function openBest() {
-    showDialog('我的纪录', (body) => {
-      const best = store.get(KEYS.best, {});
-      const cloudCells = {};
-      const head = document.createElement('div');
-      head.className = 'sk-best-row';
-      const h0 = document.createElement('span');
-      h0.className = 'k';
-      h0.textContent = '等级';
-      const h1 = document.createElement('b');
-      h1.textContent = '本机';
-      const h2 = document.createElement('span');
-      h2.className = 'c';
-      h2.textContent = '云端';
-      head.append(h0, h1, h2);
-      body.appendChild(head);
-      for (const k of Object.keys(DIFFS)) {
-        const row = document.createElement('div');
-        row.className = 'sk-best-row';
-        const kEl = document.createElement('span');
-        kEl.className = 'k';
-        kEl.textContent = DIFFS[k].label;
-        const tEl = document.createElement('b');
-        tEl.textContent = best[k] ? fmt(best[k].t) : '—';
-        const cEl = document.createElement('span');
-        cEl.className = 'c';
-        cEl.textContent = '…';
-        cloudCells[k] = cEl;
-        row.append(kEl, tEl, cEl);
-        body.appendChild(row);
-      }
-      if (cloudSb && cloudUser) {
-        cloudSb.from('sudoku_records')
-          .select('difficulty,seconds')
-          .eq('user_id', cloudUser.id)
-          .then(({ data, error }) => {
-            if (error) throw error;
-            const top = {};
-            for (const r of data || [])
-              if (!(r.difficulty in top) || r.seconds < top[r.difficulty]) top[r.difficulty] = r.seconds;
-            for (const k of Object.keys(DIFFS)) cloudCells[k].textContent = k in top ? fmt(top[k]) : '—';
-          })
-          .catch(() => { for (const k of Object.keys(DIFFS)) cloudCells[k].textContent = '—'; });
+  /* ============================================================
+     暂停 / 存档 / 收藏
+     存档要塞进定长字符串才能过数据库的正则约束：
+       givens   题意格（空格写 0）   ^[0-9]{81}$
+       solution 完整解（无空格）     ^[1-9]{81}$
+       board    当前填写（空格写 0） ^[0-9]{81}$
+       notes    每格 3 位十六进制位掩码，共 243 位  ^[0-9a-f]{243}$
+     ============================================================ */
+  let paused = false;
+
+  function makeSave() {
+    const g = [], s = [], b = [], n = [];
+    for (let i = 0; i < 81; i++) {
+      g.push(given[i] ? val[i] : 0);
+      s.push(solution[i]);
+      b.push(val[i]);
+      n.push(notes[i].toString(16).padStart(3, '0'));
+    }
+    return {
+      difficulty: diffKey,
+      givens: g.join(''),
+      solution: s.join(''),
+      board: b.join(''),
+      notes: n.join(''),
+      seconds: time,
+      mistakes,
+      hints_left: hints,
+    };
+  }
+
+  function applySave(sv) {
+    diffKey = DIFFS[sv.difficulty] ? sv.difficulty : 'easy';
+    solution = Int8Array.from(sv.solution, (c) => +c);
+    given = new Uint8Array(81);
+    val = new Int8Array(81);
+    notes = new Int16Array(81);
+    for (let i = 0; i < 81; i++) {
+      if (+sv.givens[i]) given[i] = 1;
+      val[i] = +sv.board[i] || 0;
+      notes[i] = parseInt(sv.notes.slice(i * 3, i * 3 + 3), 16) || 0;
+    }
+    mistakes = clamp(sv.mistakes | 0, 0, 2);
+    hints = clamp(sv.hints_left | 0, 0, 3);
+    time = clamp(sv.seconds | 0, 0, 35999);
+    history = [];
+    over = false;
+    started = time > 0;
+    sel = -1;
+    stopTimer();
+    buildBoard();
+    repaintAll();
+    updateLives();
+    updateHintBtn();
+    timerEl.textContent = fmt(time);
+    diffLabel.textContent = DIFFS[diffKey].label;
+    for (const b of document.querySelectorAll('.sk-diffbtn')) b.classList.toggle('on', b.dataset.diff === diffKey);
+    store.set(KEYS.diff, diffKey);
+    pauseEl.hidden = true;
+    fitSudoku();
+  }
+
+  function pauseHint(text) {
+    pauseHintEl.textContent = text || '';
+  }
+
+  /* 这局已经分出结果（完成或三振），暂停存档作废 */
+  function clearSave() {
+    store.set(KEYS.save, null);
+    if (cloudSb && cloudUser) {
+      cloudSb.from('sudoku_saves').delete().eq('user_id', cloudUser.id).catch(() => {});
+    }
+  }
+
+  async function pushSave() {
+    if (!cloudSb) return { ok: false, reason: 'offline' };
+    if (!cloudUser) return { ok: false, reason: 'anon' };
+    try {
+      const { error } = await cloudSb.from('sudoku_saves').upsert({
+        user_id: cloudUser.id,
+        ...makeSave(),
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'user_id' });
+      if (error) throw error;
+      return { ok: true };
+    } catch (e) {
+      console.warn('[数独] 存档上传失败：', e?.message || e);
+      return { ok: false, reason: 'error' };
+    }
+  }
+
+  async function pullSave() {
+    if (!cloudSb || !cloudUser) return null;
+    try {
+      const { data, error } = await cloudSb.from('sudoku_saves')
+        .select('*')
+        .eq('user_id', cloudUser.id)
+        .maybeSingle();
+      if (error) throw error;
+      return data || null;
+    } catch (e) {
+      console.warn('[数独] 存档读取失败：', e?.message || e);
+      return null;
+    }
+  }
+
+  function pauseGame() {
+    if (over || paused) return;
+    paused = true;
+    stopTimer();
+    select(-1);
+    pauseEl.hidden = false;
+    // 纸张可能有一半在视口外，先把整张滚到中间，免得看不到「继续」
+    if (!fsActive()) {
+      try { sheetEl.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch { /* 老浏览器忽略平滑 */ }
+    }
+    // 先落一份在本机，云端失败也不至于丢
+    store.set(KEYS.save, makeSave());
+    pauseNoteEl.textContent = '计时已停，进度已存在这台设备。';
+    pauseHint('正在同步到云端…');
+    pushSave().then((r) => {
+      if (r.ok) {
+        pauseHint(`已同步到云端 · ${fmt(time)} · ${DIFFS[diffKey].label}`);
+        pauseNoteEl.textContent = '换设备登录同一账号即可接着下。';
+      } else if (r.reason === 'anon') {
+        pauseHint('未登录：进度只在这台设备上，登录后可以跨设备续下。');
+        addLoginShortcut();
+      } else if (r.reason === 'offline') {
+        pauseHint('云端暂不可用：进度只在这台设备上。');
       } else {
-        for (const k of Object.keys(DIFFS)) cloudCells[k].textContent = '—';
+        pauseHint('上传失败：进度已存在这台设备，稍后可以再暂停一次重试。');
       }
-      const note = document.createElement('p');
-      note.className = 'muted';
-      note.style.marginTop = '10px';
-      note.textContent = '本机纪录存在这台设备；登录后云端全设备同步并参与英雄榜（每人只计最快）。';
-      body.appendChild(note);
+    });
+  }
+
+  function resumeGame() {
+    if (!paused) return;
+    paused = false;
+    pauseEl.hidden = true;
+    if (started && !over) startTimer();
+  }
+
+  /* 未登录时在暂停遮罩里放一个「登录」入口 */
+  function addLoginShortcut() {
+    if (pauseHintEl.querySelector('.sk-pause-login')) return;
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'sk-abtn sk-pause-login';
+    btn.textContent = '登录后同步';
+    btn.style.marginTop = '8px';
+    btn.addEventListener('click', openLogin);
+    pauseHintEl.appendChild(document.createElement('br'));
+    pauseHintEl.appendChild(btn);
+  }
+
+  function openLogin() {
+    showDialog('登录', (body) => {
+      const tip = document.createElement('p');
+      tip.className = 'muted';
+      tip.textContent = '登录后，暂停的进度会存到你的账号下，换设备也能接着下。';
+      body.appendChild(tip);
+      const mk = (labelText, type, id) => {
+        const field = document.createElement('div');
+        field.className = 'sk-field';
+        const lab = document.createElement('label');
+        lab.textContent = labelText;
+        lab.htmlFor = id;
+        const input = document.createElement('input');
+        input.className = 'sk-input';
+        input.id = id;
+        input.type = type;
+        input.autocomplete = type === 'password' ? 'current-password' : 'email';
+        field.append(lab, input);
+        body.appendChild(field);
+        return input;
+      };
+      const email = mk('邮箱：', 'email', 'sk-login-email');
+      const pass = mk('密码：', 'password', 'sk-login-pass');
+      const err = document.createElement('p');
+      err.className = 'muted';
+      err.style.minHeight = '18px';
+      body.appendChild(err);
       const foot = document.createElement('div');
       foot.className = 'sk-actions';
-      const ok = document.createElement('button');
-      ok.className = 'sk-abtn primary';
-      ok.type = 'button';
-      ok.textContent = '确定';
-      ok.addEventListener('click', closeDialog);
-      foot.appendChild(ok);
+      const go = document.createElement('button');
+      go.className = 'sk-abtn primary';
+      go.type = 'button';
+      go.textContent = '登录';
+      foot.appendChild(go);
+      body.appendChild(foot);
+      const submit = async () => {
+        const e = email.value.trim();
+        const p = pass.value;
+        if (!e || !p) { err.textContent = '邮箱和密码都要填。'; return; }
+        if (!cloudSb) { err.textContent = '云端暂不可用，稍后再试。'; return; }
+        go.disabled = true;
+        err.textContent = '登录中…';
+        try {
+          const { error } = await cloudSb.auth.signInWithPassword({ email: e, password: p });
+          if (error) throw error;
+          closeDialog();
+          pauseHint('');
+          pushSave().then((r) => {
+            if (r.ok) {
+              pauseNoteEl.textContent = '换设备登录同一账号即可接着下。';
+              pauseHint(`已同步到云端 · ${fmt(time)} · ${DIFFS[diffKey].label}`);
+            } else {
+              pauseHint('登录成功，但存档没传上去，稍后再暂停一次试试。');
+            }
+          });
+        } catch (ex) {
+          err.textContent = /Invalid login credentials/i.test(ex?.message || '')
+            ? '邮箱或密码不对。'
+            : (ex?.message || '登录失败');
+        } finally {
+          go.disabled = false;
+        }
+      };
+      go.addEventListener('click', submit);
+      pass.addEventListener('keydown', (e) => { if (e.key === 'Enter') submit(); });
+      setTimeout(() => email.focus(), 0);
+    });
+  }
+
+  /* ---------- 收藏 ---------- */
+  async function collectGame() {
+    if (!cloudUser || !cloudSb) { openLogin(); return; }
+    try {
+      const sv = makeSave();
+      const { error } = await cloudSb.from('sudoku_favorites').insert({
+        user_id: cloudUser.id,
+        difficulty: sv.difficulty,
+        givens: sv.givens,
+        solution: sv.solution,
+        seconds: time,
+        mistakes,
+        hints_used: 3 - hints,
+      });
+      if (error) throw error;
+      return true;
+    } catch (e) {
+      console.warn('[数独] 收藏失败：', e?.message || e);
+      return false;
+    }
+  }
+
+  function miniBoard(givens, solution) {
+    const box = document.createElement('div');
+    box.className = 'sk-mini';
+    for (let i = 0; i < 81; i++) {
+      const c = document.createElement('i');
+      const g = givens[i] !== '0';
+      c.textContent = g ? givens[i] : solution[i];
+      if (g) c.className = 'g';
+      if (i % 9 === 2 || i % 9 === 5) c.classList.add('b2');
+      if ((i / 9 | 0) === 2 || (i / 9 | 0) === 5) c.classList.add('b3');
+      box.appendChild(c);
+    }
+    return box;
+  }
+
+  /* ---------- 我的纪录 ---------- */
+  let bestTab = 'record';
+
+  function openBest() {
+    showDialog('我的战绩', (body) => {
+      const tabs = document.createElement('div');
+      tabs.className = 'sk-tabs';
+      const mkTab = (key, label) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'sk-tab' + (bestTab === key ? ' on' : '');
+        b.textContent = label;
+        b.addEventListener('click', () => { bestTab = key; closeDialog(); openBest(); });
+        return b;
+      };
+      tabs.append(mkTab('record', '最快纪录'), mkTab('fav', '收藏棋谱'));
+      body.appendChild(tabs);
+      if (bestTab === 'fav') renderFavorites(body);
+      else renderRecords(body);
+    });
+  }
+
+  function renderRecords(body) {
+    const best = store.get(KEYS.best, {});
+    const cloudCells = {};
+    const head = document.createElement('div');
+    head.className = 'sk-best-row';
+    const h0 = document.createElement('span');
+    h0.className = 'k';
+    h0.textContent = '等级';
+    const h1 = document.createElement('b');
+    h1.textContent = '本机';
+    const h2 = document.createElement('span');
+    h2.className = 'c';
+    h2.textContent = '云端';
+    head.append(h0, h1, h2);
+    body.appendChild(head);
+    for (const k of Object.keys(DIFFS)) {
+      const row = document.createElement('div');
+      row.className = 'sk-best-row';
+      const kEl = document.createElement('span');
+      kEl.className = 'k';
+      kEl.textContent = DIFFS[k].label;
+      const tEl = document.createElement('b');
+      tEl.textContent = best[k] ? fmt(best[k].t) : '—';
+      const cEl = document.createElement('span');
+      cEl.className = 'c';
+      cEl.textContent = '…';
+      cloudCells[k] = cEl;
+      row.append(kEl, tEl, cEl);
+      body.appendChild(row);
+    }
+    if (cloudSb && cloudUser) {
+      cloudSb.from('sudoku_records')
+        .select('difficulty,seconds')
+        .eq('user_id', cloudUser.id)
+        .then(({ data, error }) => {
+          if (error) throw error;
+          const top = {};
+          for (const r of data || [])
+            if (!(r.difficulty in top) || r.seconds < top[r.difficulty]) top[r.difficulty] = r.seconds;
+          for (const k of Object.keys(DIFFS)) cloudCells[k].textContent = k in top ? fmt(top[k]) : '—';
+        })
+        .catch(() => { for (const k of Object.keys(DIFFS)) cloudCells[k].textContent = '—'; });
+    } else {
+      for (const k of Object.keys(DIFFS)) cloudCells[k].textContent = '—';
+    }
+    const note = document.createElement('p');
+    note.className = 'muted';
+    note.style.marginTop = '10px';
+    note.textContent = '本机纪录存在这台设备；登录后云端全设备同步并参与英雄榜（每人只计最快）。';
+    body.appendChild(note);
+  }
+
+  async function renderFavorites(body) {
+    if (!cloudUser || !cloudSb) {
+      const p = document.createElement('p');
+      p.className = 'muted';
+      p.textContent = '收藏需要登录账号——收藏的棋谱会存到你的名下，换设备也在。';
+      body.appendChild(p);
+      const foot = document.createElement('div');
+      foot.className = 'sk-actions';
+      const go = document.createElement('button');
+      go.className = 'sk-abtn primary';
+      go.type = 'button';
+      go.textContent = '登录';
+      go.addEventListener('click', () => { closeDialog(); openLogin(); });
+      foot.appendChild(go);
+      body.appendChild(foot);
+      return;
+    }
+    const holder = document.createElement('div');
+    holder.textContent = '读取中…';
+    holder.className = 'muted';
+    body.appendChild(holder);
+    try {
+      const { data, error } = await cloudSb.from('sudoku_favorites')
+        .select('id,difficulty,givens,solution,seconds,mistakes,hints_used,created_at')
+        .eq('user_id', cloudUser.id)
+        .order('created_at', { ascending: false })
+        .limit(50);
+      if (error) throw error;
+      holder.textContent = '';
+      if (!data || !data.length) {
+        holder.textContent = '还没有收藏。下一局下完，在结算框里点「收藏这局」就会出现在这里。';
+        return;
+      }
+      for (const r of data) {
+        const item = document.createElement('div');
+        item.className = 'sk-fav';
+        item.appendChild(miniBoard(r.givens, r.solution));
+        const meta = document.createElement('div');
+        meta.className = 'sk-fav-meta';
+        const t = document.createElement('b');
+        t.textContent = `${DIFFS[r.difficulty]?.label || r.difficulty} · ${fmt(r.seconds)}`;
+        const s = document.createElement('span');
+        const d = new Date(r.created_at);
+        const pad = (n) => String(n).padStart(2, '0');
+        s.textContent = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+          + ` · 剩余 ${3 - r.mistakes} 命 · 提示 ${r.hints_used} 次`;
+        meta.append(t, s);
+        item.appendChild(meta);
+        const del = document.createElement('button');
+        del.type = 'button';
+        del.className = 'sk-fav-del';
+        del.textContent = '删除';
+        del.addEventListener('click', async () => {
+          del.disabled = true;
+          const { error: e2 } = await cloudSb.from('sudoku_favorites').delete().eq('id', r.id);
+          if (e2) { del.disabled = false; return; }
+          item.remove();
+          if (!holder.querySelector('.sk-fav')) holder.textContent = '还没有收藏。';
+        });
+        item.appendChild(del);
+        holder.appendChild(item);
+      }
+    } catch (e) {
+      console.warn('[数独] 收藏读取失败：', e?.message || e);
+      holder.textContent = '收藏暂时读不到，稍后再试。';
+    }
+  }
+
+  bestBtn.addEventListener('click', openBest);
+
+  /* ---------- 暂停 / 继续的按钮 ---------- */
+  pauseBtn.addEventListener('click', pauseGame);
+  resumeBtn.addEventListener('click', resumeGame);
+
+  /* 打开页面时如果查到暂停存档，问一句要不要接着下。
+     先查云端（可跨设备），没有再退回本机副本。 */
+  async function offerResume() {
+    if (paused || over) return;
+    const cloud = await pullSave();
+    const saved = cloud || store.get(KEYS.save, null);
+    if (!saved) return;
+    showDialog('发现没下完的一局', (body) => {
+      const p = document.createElement('p');
+      p.textContent = `${DIFFS[saved.difficulty]?.label || saved.difficulty} · 已用 ${fmt(saved.seconds || 0)} · 剩余 ${3 - (saved.mistakes || 0)} 命`;
+      body.appendChild(p);
+      const from = document.createElement('p');
+      from.className = 'muted';
+      from.textContent = cloud ? '这份进度存在你的账号下。' : '这份进度存在这台设备上。';
+      body.appendChild(from);
+      const foot = document.createElement('div');
+      foot.className = 'sk-actions';
+      const no = document.createElement('button');
+      no.className = 'sk-abtn';
+      no.type = 'button';
+      no.textContent = '不下了';
+      no.addEventListener('click', async () => {
+        closeDialog();
+        store.set(KEYS.save, null);
+        if (cloud && cloudSb && cloudUser) {
+          cloudSb.from('sudoku_saves').delete().eq('user_id', cloudUser.id).catch(() => {});
+        }
+      });
+      const yes = document.createElement('button');
+      yes.className = 'sk-abtn primary';
+      yes.type = 'button';
+      yes.textContent = '接着下';
+      yes.addEventListener('click', () => {
+        closeDialog();
+        applySave(saved);
+        if (started && !over) startTimer();
+      });
+      foot.append(no, yes);
       body.appendChild(foot);
     });
   }
-  bestBtn.addEventListener('click', openBest);
 
   /* ---------- 右侧英雄榜 ---------- */
   function renderLbNote(msg, emptyText) {
@@ -859,6 +1284,7 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
   updateLives();
   updateHintBtn();
   fitSudoku();
-  newGame(diffKey);
-  initCloud();
+  newGame(diffKey, { keepSave: true });
+  // 先出题保证首屏有棋盘；查存档是异步的，查到再问要不要接着下
+  initCloud().then(() => { setTimeout(offerResume, 400); });
 })();
