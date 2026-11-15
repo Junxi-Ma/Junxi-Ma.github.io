@@ -124,6 +124,7 @@ export default defineConfig({
 			// when the Tailwind class `transition-all` is used
 			containers: [
 				"#banner-overlay-container",
+				"#category-bar-wrapper",
 				"#banner-dim-container",
 				"#swup-container",
 				"#left-sidebar-dynamic",

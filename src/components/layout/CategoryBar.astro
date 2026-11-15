@@ -495,10 +495,14 @@ function initialActive(categoryName: string): {
   if (!window.__categoryBarInit) {
     window.__categoryBarInit = true;
     document.addEventListener("astro:page-load", () => {
-      updateCategoryBar();
+      // 分类条容器在 swup containers 里：换页后是新 DOM，交互绑定要重跑
+      initCategoryBarInteractions();
       initScrollFeatures();
+      updateCategoryBar();
     });
     document.addEventListener("swup:contentReplaced", () => {
+      initCategoryBarInteractions();
+      initScrollFeatures();
       updateCategoryBar();
       // 某些 swup 生命周期下 URL/DOM 状态同步稍晚，下一帧再校正一次避免状态残留
       requestAnimationFrame(() => {
