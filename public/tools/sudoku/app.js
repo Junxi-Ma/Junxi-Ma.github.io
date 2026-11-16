@@ -448,8 +448,10 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     started = false;
     paused = false;
     if (pauseEl) pauseEl.hidden = true;
-    // 开新局就把上一局的暂停存档作废；启动时的第一局除外，那时还要拿它来问要不要续
-    if (!opts.keepSave) clearSave();
+    // 切难度不再丢暂停存档：暂停过的那局留在那儿，下次打开还能接着做。
+    // 只有这一局真正分出结果（完成 / 三振）时才清掉属于它的存档。
+    sid = newSid();
+    savedSid = null;
     mistakes = 0;
     hints = 3;
     history = [];
@@ -714,6 +716,12 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
      ============================================================ */
   let paused = false;
 
+  /* 每一局一个 sid：存档带上它，才能分清「这份存档是不是当前这局的」。
+     切难度时旧局要留住，不能因为开了新局就把别人的存档清掉。 */
+  const newSid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  let sid = newSid();     // 当前这一局
+  let savedSid = null;    // 暂停时写进存档的那一局
+
   function makeSave() {
     const g = [], s = [], b = [], n = [];
     for (let i = 0; i < 81; i++) {
@@ -723,6 +731,7 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
       n.push(notes[i].toString(16).padStart(3, '0'));
     }
     return {
+      sid,
       difficulty: diffKey,
       givens: g.join(''),
       solution: s.join(''),
@@ -762,6 +771,9 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     for (const b of document.querySelectorAll('.sk-diffbtn')) b.classList.toggle('on', b.dataset.diff === diffKey);
     store.set(KEYS.diff, diffKey);
     if (pauseEl) pauseEl.hidden = true;
+    sid = sv.sid || newSid();
+    savedSid = sid;                    // 恢复的就是本局的存档，做完时能清掉
+    store.set(KEYS.save, makeSave());  // 云端那份没 sid，就地补上
     fitSudoku();
   }
 
@@ -769,10 +781,12 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     if (pauseHintEl) pauseHintEl.textContent = text || '';
   }
 
-  /* 这局已经分出结果（完成或三振），暂停存档作废 */
+  /* 这一局分出结果（完成或三振）时，把它的暂停存档作废。
+     存档可能属于别的局（切难度后旧局留着），所以先认 sid，不是本局的不动。 */
   function clearSave() {
-    store.set(KEYS.save, null);
-    if (cloudSb && cloudUser) {
+    const cur = store.get(KEYS.save, null);
+    if (!cur || !cur.sid || cur.sid === sid) store.set(KEYS.save, null);
+    if (cloudSb && cloudUser && savedSid && savedSid === sid) {
       // PostgrestBuilder 只有 then，没有 catch：挂 .catch() 会抛 TypeError，
       // 而 clearSave() 在 newGame / checkWin / lose 里都是同步调用的，
       // 一抛就会把换难度、结算这些流程整个打断。
@@ -787,9 +801,11 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     if (!cloudSb) return { ok: false, reason: 'offline' };
     if (!cloudUser) return { ok: false, reason: 'anon' };
     try {
+      const sv = makeSave();
+      delete sv.sid;   // 表里没这一列，带上会被 PostgREST 拒绝
       const { error } = await cloudSb.from('sudoku_saves').upsert({
         user_id: cloudUser.id,
-        ...makeSave(),
+        ...sv,
         updated_at: new Date().toISOString(),
       }, { onConflict: 'user_id' });
       if (error) throw error;
@@ -827,6 +843,7 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     }
     // 先落一份在本机，云端失败也不至于丢
     store.set(KEYS.save, makeSave());
+    savedSid = sid;
     if (pauseNoteEl) pauseNoteEl.textContent = '计时已停，进度已存在这台设备。';
     pauseHint('正在同步到云端…');
     pushSave().then((r) => {
