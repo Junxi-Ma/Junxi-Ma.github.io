@@ -11,20 +11,23 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
   'use strict';
 
   /* 版本标记：排查时一眼确认浏览器跑的是哪一版脚本 */
-  const BUILD = 'v6 · 2026-11-16';
+  const BUILD = 'v7 · 2026-11-16';
   console.info('[数独] build', BUILD);
 
-  /* 未捕获错误在页面顶部亮一条红条：QR「点了没反应」时至少能看到原因 */
+  /* 未捕获错误在页面顶部亮一条红条：排查「点了没反应」时至少能看到原因。
+     资源加载失败（图片/字体）冒泡上来的 error 事件忽略，只报真正的脚本错误。 */
   window.addEventListener('error', (ev) => {
     try {
+      if (ev.target && ev.target !== window && ev.target.nodeType === 1) return;
       if (document.getElementById('sk-errbar')) return;
+      const where = ev.filename ? ' @ ' + ev.filename.split('/').pop() + ':' + (ev.lineno || 0) : '';
       const bar = document.createElement('div');
       bar.id = 'sk-errbar';
       bar.style.cssText = 'position:fixed;left:0;right:0;top:0;z-index:9999;padding:10px 14px;'
         + 'font:13px/1.6 system-ui,-apple-system,"Microsoft YaHei",sans-serif;'
         + 'background:#b3261e;color:#fff;box-shadow:0 2px 10px rgba(0,0,0,.3)';
       bar.textContent = '数独脚本出错（' + BUILD + '）：' + (ev.message || ev.error || '未知错误')
-        + ' —— 按 F12 看控制台，把这段发我';
+        + where + ' —— 按 F12 看控制台，把这段发我';
       document.body.appendChild(bar);
     } catch { /* 提示本身失败就算了 */ }
   });
