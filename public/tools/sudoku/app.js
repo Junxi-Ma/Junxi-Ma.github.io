@@ -831,7 +831,7 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
         pauseHint(`已同步到云端 · ${fmt(time)} · ${DIFFS[diffKey].label}`);
         if (pauseNoteEl) pauseNoteEl.textContent = '换设备登录同一账号即可继续。';
       } else if (r.reason === 'anon') {
-        pauseHint('未登录：进度只在这台设备上，登录后可以跨设备续下。');
+        pauseHint('未登录：进度只在这台设备上，登录后可以跨设备继续。');
         addLoginShortcut();
       } else if (r.reason === 'offline') {
         pauseHint('云端暂不可用：进度只在这台设备上。');
