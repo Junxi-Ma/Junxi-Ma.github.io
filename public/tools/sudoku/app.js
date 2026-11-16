@@ -770,7 +770,13 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
   function clearSave() {
     store.set(KEYS.save, null);
     if (cloudSb && cloudUser) {
-      cloudSb.from('sudoku_saves').delete().eq('user_id', cloudUser.id).catch(() => {});
+      // PostgrestBuilder 只有 then，没有 catch：挂 .catch() 会抛 TypeError，
+      // 而 clearSave() 在 newGame / checkWin / lose 里都是同步调用的，
+      // 一抛就会把换难度、结算这些流程整个打断。
+      try {
+        cloudSb.from('sudoku_saves').delete().eq('user_id', cloudUser.id)
+          .then(() => {}, () => {});
+      } catch { /* 云端删不掉不影响本地已清 */ }
     }
   }
 
@@ -823,7 +829,7 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     pushSave().then((r) => {
       if (r.ok) {
         pauseHint(`已同步到云端 · ${fmt(time)} · ${DIFFS[diffKey].label}`);
-        if (pauseNoteEl) pauseNoteEl.textContent = '换设备登录同一账号即可接着下。';
+        if (pauseNoteEl) pauseNoteEl.textContent = '换设备登录同一账号即可继续。';
       } else if (r.reason === 'anon') {
         pauseHint('未登录：进度只在这台设备上，登录后可以跨设备续下。');
         addLoginShortcut();
@@ -859,7 +865,7 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     showDialog('登录', (body) => {
       const tip = document.createElement('p');
       tip.className = 'muted';
-      tip.textContent = '登录后，暂停的进度会存到你的账号下，换设备也能接着下。';
+      tip.textContent = '登录后，暂停的进度会存到你的账号下，换设备也能继续。';
       body.appendChild(tip);
       const mk = (labelText, type, id) => {
         const field = document.createElement('div');
@@ -904,7 +910,7 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
           pauseHint('');
           pushSave().then((r) => {
             if (r.ok) {
-              if (pauseNoteEl) pauseNoteEl.textContent = '换设备登录同一账号即可接着下。';
+              if (pauseNoteEl) pauseNoteEl.textContent = '换设备登录同一账号即可继续。';
               pauseHint(`已同步到云端 · ${fmt(time)} · ${DIFFS[diffKey].label}`);
             } else {
               pauseHint('登录成功，但存档没传上去，稍后再暂停一次试试。');
@@ -1065,7 +1071,7 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
       if (error) throw error;
       holder.textContent = '';
       if (!data || !data.length) {
-        holder.textContent = '还没有收藏。下一局下完，在结算框里点「收藏这局」就会出现在这里。';
+        holder.textContent = '还没有收藏。做完一局后，在结算框里点「收藏这局」就会出现在这里。';
         return;
       }
       for (const r of data) {
@@ -1109,14 +1115,14 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
   pauseBtn?.addEventListener('click', pauseGame);
   resumeBtn?.addEventListener('click', resumeGame);
 
-  /* 打开页面时如果查到暂停存档，问一句要不要接着下。
+  /* 打开页面时如果查到暂停存档，问一句要不要接着做。
      先查云端（可跨设备），没有再退回本机副本。 */
   async function offerResume() {
     if (paused || over) return;
     const cloud = await pullSave();
     const saved = cloud || store.get(KEYS.save, null);
     if (!saved) return;
-    showDialog('发现没下完的一局', (body) => {
+    showDialog('有一局没做完', (body) => {
       const p = document.createElement('p');
       p.textContent = `${DIFFS[saved.difficulty]?.label || saved.difficulty} · 已用 ${fmt(saved.seconds || 0)} · 剩余 ${3 - (saved.mistakes || 0)} 命`;
       body.appendChild(p);
@@ -1129,18 +1135,25 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
       const no = document.createElement('button');
       no.className = 'sk-abtn';
       no.type = 'button';
-      no.textContent = '不下了';
+      no.textContent = '不做了';
       no.addEventListener('click', async () => {
-        closeDialog();
         store.set(KEYS.save, null);
-        if (cloud && cloudSb && cloudUser) {
-          cloudSb.from('sudoku_saves').delete().eq('user_id', cloudUser.id).catch(() => {});
+        closeDialog();
+        if (cloudSb && cloudUser) {
+          // 只要登录着就清一次云端：云端读取失败时 cloud 为 null，
+          // 但库里可能仍留着旧存档，不清掉下次还会被问一遍。
+          // 等删完再算放下，否则立刻刷新会读到旧存档。
+          try {
+            await cloudSb.from('sudoku_saves').delete().eq('user_id', cloudUser.id);
+          } catch (e) {
+            console.warn('[数独] 云端存档删除失败：', e?.message || e);
+          }
         }
       });
       const yes = document.createElement('button');
       yes.className = 'sk-abtn primary';
       yes.type = 'button';
-      yes.textContent = '接着下';
+      yes.textContent = '接着做';
       yes.addEventListener('click', () => {
         closeDialog();
         applySave(saved);
@@ -1312,6 +1325,6 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
   updateHintBtn();
   fitSudoku();
   newGame(diffKey, { keepSave: true });
-  // 先出题保证首屏有棋盘；查存档是异步的，查到再问要不要接着下
+  // 先出题保证首屏有棋盘；查存档是异步的，查到再问要不要接着做
   initCloud().then(() => { setTimeout(offerResume, 400); });
 })();
