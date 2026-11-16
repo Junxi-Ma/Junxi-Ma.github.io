@@ -11,7 +11,7 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
   'use strict';
 
   /* 版本标记：排查时一眼确认浏览器跑的是哪一版脚本 */
-  const BUILD = 'v7 · 2026-11-16';
+  const BUILD = 'v8 · 2026-11-16';
   console.info('[数独] build', BUILD);
 
   /* 未捕获错误在页面顶部亮一条红条：排查「点了没反应」时至少能看到原因。
@@ -692,8 +692,11 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
         if (isNewBest) {
           const name = cloudUser ? cloudUser.name : (nameInput.value.trim() || '匿名');
           if (nameInput) store.set(KEYS.name, name);
-          best[diffKey] = { t: time, n: name, d: new Date().toISOString().slice(0, 10) };
-          store.set(KEYS.best, best);
+          // 本机纪录得在这里自己读：maybeRecord() 里的 best 是那个函数的局部变量，
+          // showDoneDialog 拿不到，直接引用会抛 ReferenceError: best is not defined
+          const bestMap = store.get(KEYS.best, {});
+          bestMap[diffKey] = { t: time, n: name, d: new Date().toISOString().slice(0, 10) };
+          store.set(KEYS.best, bestMap);
           submitRecord(time, mistakes, 3 - hints);
         }
         closeDialog();
