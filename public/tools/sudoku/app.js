@@ -1,17 +1,19 @@
 /* ============================================================
-   纸感数独 — 现代风格
-   · 生成：先随机铺满一张终盘，再逐格挖空并保持唯一解（MRV 回归计数）
+   纸感数独 — 现代风格（普通 / 杀手 两种玩法共用这一份棋盘）
+   · 普通：随机终盘逐格挖空，每次只保留能由确定性逻辑推完的盘面
+   · 杀手：题库离线生成（scripts/gen-killer-puzzles.mjs），笼内不重复 + 和为笼标
    · 交互：点选作答、铅笔笔记、提示×3、撤销、三次失误上限
    · 云端（Supabase）：完成即自动署名上云；英雄榜每人只计最快
    · 云端不可用时静默回退纯本地
    ============================================================ */
 import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
+import { isNoGuess } from './sudoku-logic.mjs?v=1';
 
 (() => {
   'use strict';
 
   /* 版本标记：排查时一眼确认浏览器跑的是哪一版脚本 */
-  const BUILD = 'v8 · 2026-11-16';
+  const BUILD = 'v11 · 2026-11-20';
   console.info('[数独] build', BUILD);
 
   /* 未捕获错误在页面顶部亮一条红条：排查「点了没反应」时至少能看到原因。
@@ -34,6 +36,19 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
 
   const $ = (s, el = document) => el.querySelector(s);
 
+  /* ---------- 玩法 ----------
+     同一份 index.html / app.js，用 ?mode=killer 切玩法：
+       classic = 普通数独
+       killer  = 杀手数独（同一行/列/宫内不重复；同一虚线笼内数字不重复，且和等于笼标）
+     本地键带前缀、云端表各用一套：两边的纪录、存档、收藏天然分开，互不覆盖。
+     独立表还有个用处 —— 还在用旧版缓存页面的浏览器删存档时只认 classic 那张表，
+     不会顺手把杀手这边的进度删掉。 */
+  const IS_KILLER = new URLSearchParams(location.search).get('mode') === 'killer';
+  const NS = IS_KILLER ? 'kk' : 'sk';
+  const TB = IS_KILLER
+    ? { records: 'killer_records', saves: 'killer_saves', favorites: 'killer_favorites' }
+    : { records: 'sudoku_records', saves: 'sudoku_saves', favorites: 'sudoku_favorites' };
+
   /* ---------- 常量与本地存储 ---------- */
   const DIFFS = {
     easy: { clues: 40, label: '入门' },
@@ -42,10 +57,10 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     expert: { clues: 25, label: '专家' },
   };
   const KEYS = {
-    best: 'sk-best-v1',     // { easy:{t,n,d}, ... }
-    diff: 'sk-diff-v1',
-    name: 'sk-name-v1',
-    save: 'sk-save-v1',     // 暂停存档（本机副本，跨设备靠云端）
+    best: `${NS}-best-v1`,  // { easy:{t,n,d}, ... }
+    diff: `${NS}-diff-v1`,
+    name: 'sk-name-v1',     // 署名两种玩法共用一份
+    save: `${NS}-save-v1`,  // 暂停存档（本机副本，跨设备靠云端）
   };
   const store = {
     get(k, d) {
@@ -55,7 +70,7 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
       } catch { return d; }
     },
     set(k, v) {
-      try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* 静默 */ }
+      try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch { return false; }
     },
   };
   const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
@@ -103,48 +118,6 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
   const bitOf = (d) => 1 << d;
   const digitOf = (bit) => 31 - Math.clz32(bit);
 
-  /* 数解（MRV 回溯），最多数到 limit 个即停；sol 返回找到的第一个解 */
-  function countSolutions(bd, limit) {
-    const rowM = new Int32Array(9), colM = new Int32Array(9), boxM = new Int32Array(9);
-    for (let i = 0; i < 81; i++)
-      if (bd[i]) {
-        const b = bitOf(bd[i]);
-        rowM[ROW[i]] |= b; colM[COL[i]] |= b; boxM[BOX[i]] |= b;
-      }
-    let count = 0;
-    const sol = new Int8Array(81);
-    (function dfs() {
-      if (count >= limit) return;
-      let best = -1, bestMask = 0, bestN = 10;
-      for (let i = 0; i < 81; i++) {
-        if (bd[i]) continue;
-        const used = rowM[ROW[i]] | colM[COL[i]] | boxM[BOX[i]];
-        let mask = 0, n = 0;
-        for (let d = 1; d <= 9; d++) if (!(used & bitOf(d))) { mask |= bitOf(d); n++; }
-        if (n === 0) return; // 死局
-        if (n < bestN) { bestN = n; best = i; bestMask = mask; if (n === 1) break; }
-      }
-      if (best === -1) { // 填满
-        count++;
-        if (count === 1) sol.set(bd);
-        return;
-      }
-      const r = ROW[best], c = COL[best], bx = BOX[best];
-      let mask = bestMask;
-      while (mask) {
-        const bit = mask & -mask;
-        mask ^= bit;
-        bd[best] = digitOf(bit);
-        rowM[r] |= bit; colM[c] |= bit; boxM[bx] |= bit;
-        dfs();
-        bd[best] = 0;
-        rowM[r] ^= bit; colM[c] ^= bit; boxM[bx] ^= bit;
-        if (count >= limit) return;
-      }
-    })();
-    return { count, sol };
-  }
-
   /* 随机铺满一张终盘 */
   function generateFull() {
     const bd = new Int8Array(81);
@@ -180,7 +153,7 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     return bd;
   }
 
-  /* 挖空出唯一解谜题：目标 clues 个提示，2.5s 预算兜底 */
+  /* 挖空出无需猜测的谜题：每次试挖都必须能用确定性逻辑推完；目标只是上限。 */
   function makePuzzle(clues) {
     const solution = generateFull();
     const puzzle = Int8Array.from(solution);
@@ -189,30 +162,35 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
       const j = (Math.random() * (i + 1)) | 0;
       [order[i], order[j]] = [order[j], order[i]];
     }
-    const deadline = performance.now() + 2500;
     let removed = 0;
     const target = 81 - clues;
     for (const i of order) {
-      if (removed >= target || performance.now() > deadline) break;
+      if (removed >= target) break;
       const backup = puzzle[i];
       puzzle[i] = 0;
-      if (countSolutions(puzzle, 2).count === 1) removed++;
+      if (isNoGuess(puzzle)) removed++;
       else puzzle[i] = backup;
     }
     return { solution, puzzle, clues: 81 - removed };
   }
 
   /* ---------- 游戏状态 ---------- */
-  let diffKey = ['easy', 'medium', 'hard', 'expert'].includes(store.get(KEYS.diff, 'easy')) ? store.get(KEYS.diff, 'easy') : 'easy';
+  const storedDiff = store.get(KEYS.diff, 'easy');
+  let diffKey = Object.hasOwn(DIFFS, storedDiff) ? storedDiff : 'easy';
   let solution = new Int8Array(81);
-  let given = new Uint8Array(81);  // 1 = 提示格
+  let given = new Uint8Array(81);  // 1 = 提示格（杀手玩法里就是单格笼）
   let val = new Int8Array(81);     // 当前盘面（0 空）
   let notes = new Int16Array(81);  // 笔记位掩码
+  /* 杀手玩法专有：笼子清单（{sum, cells}）、每格所属笼号、当前题目 id */
+  let cages = [];
+  let cageOf = null;
+  let puzzleId = null;
   let sel = -1;
   let noteMode = false;
   let mistakes = 0, hints = 3;
   let history = [];
-  let started = false, over = false, time = 0, timerId = null;
+  let started = false, over = false, ready = false, time = 0, timerId = null;
+  let generation = 0;
 
   /* ---------- 云端（Supabase）状态 ---------- */
   let cloudSb = null;
@@ -248,6 +226,62 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
       cells[i] = d;
     }
     gridEl.replaceChildren(frag);
+    paintCages();
+  }
+
+  /* ---------- 杀手笼线 ----------
+     每个笼自己画边界：只在「邻格不属于本笼」的那条边落笔，
+     盘面最外圈交给棋盘本身的粗边框，不重复画。
+     用一层 viewBox 0 0 90 90 的 SVG，棋盘怎么缩放线都跟着走。 */
+  function paintCages() {
+    gridEl.querySelectorAll('.sk-cageline, .sk-cage-sum').forEach((e) => e.remove());
+    if (!IS_KILLER || !cages.length) return;
+    const NSVG = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(NSVG, 'svg');
+    svg.setAttribute('class', 'sk-cageline');
+    svg.setAttribute('viewBox', '0 0 90 90');
+    svg.setAttribute('preserveAspectRatio', 'none');
+    svg.setAttribute('aria-hidden', 'true');
+    let d = '';
+    cages.forEach((cg, ci) => {
+      for (const i of cg.cells) {
+        const r = (i / 9) | 0, c = i % 9;
+        const x = c * 10, y = r * 10;
+        const edges = [
+          [r > 0 ? i - 9 : -1, x, y, x + 10, y],            // 上
+          [r < 8 ? i + 9 : -1, x, y + 10, x + 10, y + 10],  // 下
+          [c > 0 ? i - 1 : -1, x, y, x, y + 10],            // 左
+          [c < 8 ? i + 1 : -1, x + 10, y, x + 10, y + 10],  // 右
+        ];
+        for (const [n, x1, y1, x2, y2] of edges) {
+          if (n < 0) continue;               // 外圈有粗边框，不画
+          if (cageOf && cageOf[n] === ci) continue;
+          d += `M${x1} ${y1}L${x2} ${y2}`;
+        }
+      }
+    });
+    const p = document.createElementNS(NSVG, 'path');
+    p.setAttribute('d', d);
+    svg.appendChild(p);
+    gridEl.appendChild(svg);
+
+    /* 和值写在笼里最靠上（同高取最左）那格的左上角；单格笼本身就是明数，不再标 */
+    for (const cg of cages) {
+      if (cg.cells.length === 1) continue;
+      const head = Math.min(...cg.cells);
+      if (!cells[head]) continue;
+      const sum = document.createElement('span');
+      sum.className = 'sk-cage-sum';
+      sum.textContent = String(cg.sum);
+      cells[head].appendChild(sum);
+    }
+  }
+
+  /* 从笼子清单推出 cageOf，建盘 / 恢复存档都要走一遍 */
+  function indexCages() {
+    cageOf = IS_KILLER ? new Int16Array(81).fill(-1) : null;
+    if (!cageOf) return;
+    cages.forEach((cg, ci) => { for (const i of cg.cells) cageOf[i] = ci; });
   }
 
   function paint(i) {
@@ -271,7 +305,7 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     for (let i = 0; i < 81; i++) {
       const el = cells[i];
       el.classList.toggle('sel', i === sel);
-      const peer = sel >= 0 && i !== sel && (ROW[i] === sr || COL[i] === sc || BOX[i] === sb);
+      const peer = sel >= 0 && i !== sel && (ROW[i] === sr || COL[i] === sc || BOX[i] === sb || (cageOf && cageOf[i] === cageOf[sel]));
       el.classList.toggle('peer', peer);
       el.classList.toggle('same', d > 0 && i !== sel && val[i] === d);
     }
@@ -306,9 +340,9 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     return m + ':' + s;
   }
   function startTimer() {
-    if (timerId) return;
+    if (timerId || !ready || paused || over) return;
     timerId = setInterval(() => {
-      time++;
+      time = Math.min(time + 1, 35999);
       timerEl.textContent = fmt(time);
     }, 1000);
   }
@@ -323,7 +357,7 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     if (history.length > 400) history.shift();
   }
   function undo() {
-    if (over || !history.length) return;
+    if (!ready || paused || over || !history.length) return;
     const h = history.pop();
     val = h.val; notes = h.notes; mistakes = h.mistakes; hints = h.hints;
     updateLives(); updateHintBtn(); repaintAll();
@@ -334,15 +368,17 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
   }
 
   function placeDigit(d) {
-    if (over || sel < 0 || given[sel]) return;
+    if (!ready || paused || over || sel < 0 || given[sel]) return;
     if (val[sel] === d && notes[sel] === 0) return;
     begin();
     pushHistory();
     val[sel] = d;
     notes[sel] = 0;
     if (d === solution[sel]) {
-      // 正确：清理同 unit 的笔记
-      for (const p of [...ROWP[sel], ...COLP[sel], ...BOXP[sel]])
+      // 正确：清理同 unit 的笔记（杀手玩法再加同笼）
+      const peers = [...ROWP[sel], ...COLP[sel], ...BOXP[sel]];
+      if (cageOf) for (let p = 0; p < 81; p++) if (p !== sel && cageOf[p] === cageOf[sel]) peers.push(p);
+      for (const p of peers)
         if (val[p] === 0 && (notes[p] & bitOf(d))) { notes[p] &= ~bitOf(d); paint(p); }
     } else {
       mistakes++;
@@ -356,7 +392,7 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
   }
 
   function eraseCell() {
-    if (over || sel < 0 || given[sel]) return;
+    if (!ready || paused || over || sel < 0 || given[sel]) return;
     if (val[sel] === 0 && notes[sel] === 0) return;
     begin();
     pushHistory();
@@ -368,7 +404,7 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
   }
 
   function toggleNote(d) {
-    if (over || sel < 0 || given[sel] || val[sel] > 0) return;
+    if (!ready || paused || over || sel < 0 || given[sel] || val[sel] > 0) return;
     begin();
     pushHistory();
     notes[sel] ^= bitOf(d);
@@ -376,7 +412,7 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
   }
 
   function hint() {
-    if (over || hints <= 0) return;
+    if (!ready || paused || over || hints <= 0) return;
     let target = sel;
     if (target < 0 || given[target] || val[target] === solution[target]) {
       const empties = [];
@@ -440,8 +476,39 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     hintBtn.disabled = hints <= 0;
   }
 
+  /* ---------- 杀手题库 ----------
+     题库是离线脚本按唯一解筛过的静态 JSON（四档各 20 题），前端只负责挑一题。 */
+  let killerBank = null;
+  let lastPuzzleId = '';
+  let bankPromise = null;
+  function loadKillerBank() {
+    if (killerBank) return Promise.resolve(killerBank);
+    if (!bankPromise) bankPromise = fetch(new URL('./killer-puzzles.json?v=1', import.meta.url))
+      .then((r) => { if (!r.ok) throw new Error('题库 HTTP ' + r.status); return r.json(); })
+      .then((j) => {
+        if (!j || !j.puzzles || Object.keys(DIFFS).some((k) => !Array.isArray(j.puzzles[k]) || !j.puzzles[k].length))
+          throw new Error('题库格式不对');
+        killerBank = j.puzzles;
+        return killerBank;
+      }).catch((err) => { bankPromise = null; throw err; });
+    return bankPromise;
+  }
+  function pickKillerPuzzle(key) {
+    const pool = killerBank && killerBank[key];
+    if (!pool || !pool.length) return null;
+    for (let t = 0; t < 6; t++) {
+      const p = pool[(Math.random() * pool.length) | 0];
+      if (p.id !== lastPuzzleId) { lastPuzzleId = p.id; return p; }
+    }
+    return pool[(Math.random() * pool.length) | 0];
+  }
+
   /* ---------- 新局 ---------- */
-  function newGame(key, opts = {}) {
+  function newGame(key) {
+    if (!Object.hasOwn(DIFFS, key)) return;
+    const request = ++generation;
+    ready = false;
+    started = false;
     diffKey = key;
     store.set(KEYS.diff, key);
     over = false;
@@ -451,7 +518,6 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     // 切难度不再丢暂停存档：暂停过的那局留在那儿，下次打开还能接着做。
     // 只有这一局真正分出结果（完成 / 三振）时才清掉属于它的存档。
     sid = newSid();
-    savedSid = null;
     mistakes = 0;
     hints = 3;
     history = [];
@@ -464,17 +530,49 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     updateHintBtn();
     diffLabel.textContent = '出题中…';
     // 让「出题中」先画出来再阻塞生成
-    setTimeout(() => {
-      const { solution: sol, puzzle } = makePuzzle(DIFFS[key].clues);
-      solution = sol;
-      given = new Uint8Array(81);
-      val = new Int8Array(81);
-      notes = new Int16Array(81);
-      for (let i = 0; i < 81; i++) if (puzzle[i]) { given[i] = 1; val[i] = puzzle[i]; }
+    setTimeout(async () => {
+      try {
+        if (IS_KILLER) await loadKillerBank();
+        if (request !== generation) return;
+        if (IS_KILLER) {
+        const p = pickKillerPuzzle(key);
+        if (!p) throw new Error('题库缺少当前难度');
+        solution = Int8Array.from(p.s, (ch) => +ch);
+        cages = p.c.map(([sum, cs]) => ({ sum, cells: cs }));
+        puzzleId = p.id;
+        given = new Uint8Array(81);
+        val = new Int8Array(81);
+        notes = new Int16Array(81);
+        for (const cg of cages) {
+          if (cg.cells.length === 1) { given[cg.cells[0]] = 1; val[cg.cells[0]] = cg.sum; }
+        }
+        for (const i of p.g ?? []) {
+          if (!Number.isInteger(i) || i < 0 || i >= 81 || given[i]) throw new Error('附加明数格格式错误');
+          given[i] = 1;
+          val[i] = solution[i];
+        }
+        indexCages();
+      } else {
+        const { solution: sol, puzzle } = makePuzzle(DIFFS[key].clues);
+        solution = sol;
+        cages = [];
+        cageOf = null;
+        puzzleId = null;
+        given = new Uint8Array(81);
+        val = new Int8Array(81);
+        notes = new Int16Array(81);
+        for (let i = 0; i < 81; i++) if (puzzle[i]) { given[i] = 1; val[i] = puzzle[i]; }
+      }
       buildBoard();
       repaintAll();
       diffLabel.textContent = DIFFS[key].label;
+      ready = true;
       fitSudoku();
+      } catch (err) {
+        if (request !== generation) return;
+        diffLabel.textContent = '出题失败，请重试';
+        console.error('[数独] 出题失败：', err);
+      }
     }, 30);
   }
 
@@ -517,11 +615,11 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
   /* ---------- 交互 ---------- */
   gridEl?.addEventListener('click', (e) => {
     const cell = e.target.closest('.sk-cell');
-    if (cell) select(+cell.dataset.i);
+    if (cell && ready && !paused) select(+cell.dataset.i);
   });
 
   document.addEventListener('keydown', (e) => {
-    if (e.target.tagName === 'INPUT') return;
+    if (e.target instanceof Element && e.target.closest('input, textarea, [contenteditable]')) return;
     if (e.key === 'Escape') {
       if (!modal.hidden) { closeDialog(); return; }
       if (document.body.classList.contains('sk-fs-fake')) {
@@ -530,7 +628,7 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
       }
       return;
     }
-    if (!modal.hidden) return;
+    if (!modal.hidden || !ready || paused) return;
     if (e.key >= '1' && e.key <= '9') {
       const d = +e.key;
       noteMode ? toggleNote(d) : placeDigit(d);
@@ -602,7 +700,7 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     if (!cloudSb) return;
     const name = cloudUser ? cloudUser.name : (store.get(KEYS.name, '') || '匿名');
     try {
-      const { error } = await cloudSb.from('sudoku_records').insert({
+      const { error } = await cloudSb.from(TB.records).insert({
         user_id: cloudUser ? cloudUser.id : null,
         name,
         difficulty: diffKey,
@@ -724,6 +822,9 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
   const newSid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
   let sid = newSid();     // 当前这一局
   let savedSid = null;    // 暂停时写进存档的那一局
+  let cloudSaveRef = null;
+  let saveQueue = Promise.resolve();
+  let pendingSavePromise = Promise.resolve({ ok: true });
 
   function makeSave() {
     const g = [], s = [], b = [], n = [];
@@ -733,7 +834,7 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
       b.push(val[i]);
       n.push(notes[i].toString(16).padStart(3, '0'));
     }
-    return {
+    const sv = {
       sid,
       difficulty: diffKey,
       givens: g.join(''),
@@ -743,12 +844,27 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
       seconds: time,
       mistakes,
       hints_left: hints,
+      updated_at: new Date().toISOString(),
     };
+    /* 杀手存档把笼子一起带上：以后题库换了，这一局的盘面也还能原样恢复 */
+    if (IS_KILLER) {
+      sv.puzzle_id = puzzleId;
+      sv.cages = cages.map((cg) => [cg.sum, cg.cells]);
+    }
+    return sv;
   }
 
-  function applySave(sv) {
-    diffKey = DIFFS[sv.difficulty] ? sv.difficulty : 'easy';
-    solution = Int8Array.from(sv.solution, (c) => +c);
+  function applySave(sv, remoteRef = null) {
+    if (!validSave(sv)) throw new Error('暂停存档格式错误');
+    generation++;
+    diffKey = sv.difficulty;
+    solution = Int8Array.from(sv.solution, Number);
+    /* 杀手存档自带笼子定义，恢复不依赖可能变化的题库 */
+    if (IS_KILLER) {
+      cages = sv.cages.map(([sum, cells]) => ({ sum, cells }));
+      puzzleId = sv.puzzle_id;
+      indexCages();
+    }
     given = new Uint8Array(81);
     val = new Int8Array(81);
     notes = new Int16Array(81);
@@ -762,7 +878,9 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     time = clamp(sv.seconds | 0, 0, 35999);
     history = [];
     over = false;
-    started = time > 0;
+    ready = true;
+    paused = false;
+    started = true;
     sel = -1;
     stopTimer();
     buildBoard();
@@ -774,9 +892,10 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     for (const b of document.querySelectorAll('.sk-diffbtn')) b.classList.toggle('on', b.dataset.diff === diffKey);
     store.set(KEYS.diff, diffKey);
     if (pauseEl) pauseEl.hidden = true;
-    sid = sv.sid || newSid();
-    savedSid = sid;                    // 恢复的就是本局的存档，做完时能清掉
-    store.set(KEYS.save, makeSave());  // 云端那份没 sid，就地补上
+    sid = sv.sid || remoteRef?.sid || newSid();
+    savedSid = sid;
+    cloudSaveRef = remoteRef ? { ...remoteRef, sid } : null;
+    store.set(KEYS.save, { ...sv, sid, updated_at: sv.updated_at || new Date().toISOString() });
     fitSudoku();
   }
 
@@ -784,84 +903,154 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     if (pauseHintEl) pauseHintEl.textContent = text || '';
   }
 
-  /* 这一局分出结果（完成或三振）时，把它的暂停存档作废。
-     存档可能属于别的局（切难度后旧局留着），所以先认 sid，不是本局的不动。 */
-  function clearSave() {
-    const cur = store.get(KEYS.save, null);
-    if (!cur || !cur.sid || cur.sid === sid) store.set(KEYS.save, null);
-    if (cloudSb && cloudUser && savedSid && savedSid === sid) {
-      // PostgrestBuilder 只有 then，没有 catch：挂 .catch() 会抛 TypeError，
-      // 而 clearSave() 在 newGame / checkWin / lose 里都是同步调用的，
-      // 一抛就会把换难度、结算这些流程整个打断。
-      try {
-        cloudSb.from('sudoku_saves').delete().eq('user_id', cloudUser.id)
-          .then(() => {}, () => {});
-      } catch { /* 云端删不掉不影响本地已清 */ }
+  function validSave(sv) {
+    if (!sv || !Object.hasOwn(DIFFS, sv.difficulty) || !/^[1-9]{81}$/.test(sv.solution)
+      || !/^[0-9]{81}$/.test(sv.givens) || !/^[0-9]{81}$/.test(sv.board)
+      || !/^[0-9a-f]{243}$/.test(sv.notes)) return false;
+    for (let i = 0; i < 81; i++) {
+      if (sv.givens[i] !== '0' && (sv.givens[i] !== sv.solution[i] || sv.givens[i] !== sv.board[i])) return false;
     }
+    if (!IS_KILLER) return true;
+    if (typeof sv.sid !== 'string' || !sv.sid.trim() || typeof sv.puzzle_id !== 'string'
+      || !sv.puzzle_id.trim() || !Array.isArray(sv.cages) || !sv.cages.length) return false;
+    const covered = new Uint8Array(81);
+    for (const cage of sv.cages) {
+      if (!Array.isArray(cage) || cage.length !== 2 || !Number.isInteger(cage[0])
+        || !Array.isArray(cage[1]) || !cage[1].length || cage[1].length > 9) return false;
+      const [sum, cells] = cage, digits = new Set();
+      for (const i of cells) {
+        if (!Number.isInteger(i) || i < 0 || i >= 81 || covered[i]) return false;
+        covered[i] = 1;
+        digits.add(+sv.solution[i]);
+      }
+      if (digits.size !== cells.length || [...digits].reduce((a, b) => a + b, 0) !== sum) return false;
+    }
+    return covered.every(Boolean);
   }
 
-  async function pushSave() {
-    if (!cloudSb) return { ok: false, reason: 'offline' };
-    if (!cloudUser) return { ok: false, reason: 'anon' };
-    try {
-      const sv = makeSave();
-      delete sv.sid;   // 表里没这一列，带上会被 PostgREST 拒绝
-      const { error } = await cloudSb.from('sudoku_saves').upsert({
-        user_id: cloudUser.id,
-        ...sv,
-        updated_at: new Date().toISOString(),
-      }, { onConflict: 'user_id' });
-      if (error) throw error;
-      return { ok: true };
-    } catch (e) {
-      console.warn('[数独] 存档上传失败：', e?.message || e);
-      return { ok: false, reason: 'error' };
+  function sameSave(a, b) {
+    return !!a && !!b && a.difficulty === b.difficulty && a.solution === b.solution
+      && a.givens === b.givens && a.board === b.board && a.notes === b.notes
+      && a.seconds === b.seconds && a.mistakes === b.mistakes && a.hints_left === b.hints_left;
+  }
+
+  function queueSave(task) {
+    const result = saveQueue.then(task);
+    saveQueue = result.catch(() => {});
+    return result;
+  }
+
+  async function deleteCloudSave(ref) {
+    if (!cloudSb || !ref?.userId || cloudUser?.id !== ref.userId) return;
+    let query = cloudSb.from(TB.saves).delete().eq('user_id', ref.userId);
+    if (IS_KILLER) {
+      if (!ref.sid) return;
+      query = query.eq('sid', ref.sid);
     }
+    if (ref.updatedAt) query = query.eq('updated_at', ref.updatedAt);
+    const { error } = await query;
+    if (error) throw error;
+  }
+
+  function removeLocalSave(snapshot) {
+    const current = store.get(KEYS.save, null);
+    if (current?.sid === snapshot.sid && current.updated_at === snapshot.updated_at) store.set(KEYS.save, null);
+  }
+
+  /* 本局结束时只删同 sid 的存档；并排队到未完成的上传之后，避免刚删完又被旧上传写回来。 */
+  function clearSave() {
+    const finishedSid = sid;
+    const current = store.get(KEYS.save, null);
+    const ownsLocal = current?.sid === finishedSid;
+    if (ownsLocal) removeLocalSave(current);
+    if (savedSid !== finishedSid) return;
+    savedSid = null;
+    const ref = cloudSaveRef;
+    if (!ref || ref.sid !== finishedSid) return;
+    cloudSaveRef = null;
+    queueSave(async () => {
+      if (IS_KILLER) return deleteCloudSave(ref);
+      /* 经典表没有 sid：比较完整存档，再用 updated_at 做条件删除。 */
+      if (!ownsLocal || !cloudSb || cloudUser?.id !== ref.userId) return;
+      const remote = await pullSave();
+      if (!remote || !sameSave(remote, current)) return;
+      let query = cloudSb.from(TB.saves).delete().eq('user_id', ref.userId);
+      if (remote.updated_at) query = query.eq('updated_at', remote.updated_at);
+      const { error } = await query;
+      if (error) throw error;
+    }).catch((err) => {
+      console.warn('[数独] 存档删除失败：', err?.message || err);
+      pauseHint('本局云端存档未能清理；下次打开时可以选择「不做了」。');
+    });
+  }
+
+  async function pushSave(snapshot = makeSave()) {
+    if (!cloudSb) return { ok: false, reason: 'offline' };
+    const userId = cloudUser?.id;
+    if (!userId) return { ok: false, reason: 'anon' };
+    const row = { ...snapshot, user_id: userId };
+    if (!IS_KILLER) delete row.sid; // 经典表无 sid；杀手表必须保留，供按局 CAS 删除。
+    return queueSave(async () => {
+      if (cloudUser?.id !== userId) return { ok: false, reason: 'anon' };
+      try {
+        const { error } = await cloudSb.from(TB.saves).upsert(row, { onConflict: 'user_id' });
+        if (error) throw error;
+        cloudSaveRef = { userId, sid: snapshot.sid, updatedAt: row.updated_at };
+        return { ok: true };
+      } catch (err) {
+        console.warn('[数独] 存档上传失败：', err?.message || err);
+        return { ok: false, reason: 'error' };
+      }
+    });
   }
 
   async function pullSave() {
     if (!cloudSb || !cloudUser) return null;
     try {
-      const { data, error } = await cloudSb.from('sudoku_saves')
-        .select('*')
-        .eq('user_id', cloudUser.id)
-        .maybeSingle();
+      const { data, error } = await cloudSb.from(TB.saves).select('*').eq('user_id', cloudUser.id).maybeSingle();
       if (error) throw error;
       return data || null;
-    } catch (e) {
-      console.warn('[数独] 存档读取失败：', e?.message || e);
+    } catch (err) {
+      console.warn('[数独] 存档读取失败：', err?.message || err);
+      pauseHint('暂时读取不到云端暂停存档。');
       return null;
     }
   }
 
   function pauseGame() {
-    if (over || paused) return;
+    if (!ready || over) return null;
+    if (paused) return pendingSavePromise;
+    const old = store.get(KEYS.save, null);
+    const remoteConflict = cloudSaveRef && cloudSaveRef.userId === cloudUser?.id && cloudSaveRef.sid !== sid;
+    if ((validSave(old) && old.sid !== sid || remoteConflict)
+      && !window.confirm('当前玩法已有另一局暂停进度。暂停这局会替换它，是否继续？')) return null;
+    const snapshot = makeSave();
+    if (!store.set(KEYS.save, snapshot)) {
+      pauseHint('无法保存到本机，因此没有暂停。');
+      return null;
+    }
     paused = true;
+    savedSid = sid;
     stopTimer();
     select(-1);
     if (pauseEl) pauseEl.hidden = false;
-    // 纸张可能有一半在视口外，先把整张滚到中间，免得看不到「继续」
-    if (!fsActive()) {
-      try { sheetEl.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch { /* 老浏览器忽略平滑 */ }
-    }
-    // 先落一份在本机，云端失败也不至于丢
-    store.set(KEYS.save, makeSave());
-    savedSid = sid;
+    if (!fsActive()) sheetEl.scrollIntoView({ block: 'center', behavior: 'smooth' });
     if (pauseNoteEl) pauseNoteEl.textContent = '计时已停，进度已存在这台设备。';
     pauseHint('正在同步到云端…');
-    pushSave().then((r) => {
+    pendingSavePromise = pushSave(snapshot).then((r) => {
+      if (sid !== snapshot.sid || !paused) return r;
       if (r.ok) {
         pauseHint(`已同步到云端 · ${fmt(time)} · ${DIFFS[diffKey].label}`);
         if (pauseNoteEl) pauseNoteEl.textContent = '换设备登录同一账号即可继续。';
       } else if (r.reason === 'anon') {
         pauseHint('未登录：进度只在这台设备上，登录后可以跨设备继续。');
         addLoginShortcut();
-      } else if (r.reason === 'offline') {
-        pauseHint('云端暂不可用：进度只在这台设备上。');
       } else {
-        pauseHint('上传失败：进度已存在这台设备，稍后可以再暂停一次重试。');
+        pauseHint('未同步到云端：进度仍保存在这台设备上。');
       }
+      return r;
     });
+    return pendingSavePromise;
   }
 
   function resumeGame() {
@@ -927,11 +1116,22 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
         go.disabled = true;
         err.textContent = '登录中…';
         try {
-          const { error } = await cloudSb.auth.signInWithPassword({ email: e, password: p });
+          const { data, error } = await cloudSb.auth.signInWithPassword({ email: e, password: p });
           if (error) throw error;
+          setCloudUser(data.user);
+          const snapshot = store.get(KEYS.save, null);
+          if (!paused || snapshot?.sid !== sid) { closeDialog(); return; }
+          const remote = await pullSave();
+          if (!paused || snapshot.sid !== sid) return;
+          const conflict = validSave(remote) && (IS_KILLER ? remote.sid !== snapshot.sid : !sameSave(remote, snapshot));
+          if (conflict && !window.confirm('账号已有另一局暂停进度。登录同步会替换它，是否继续？')) {
+            closeDialog();
+            pauseHint('登录成功；本机进度保留，云端那局没有替换。');
+            return;
+          }
           closeDialog();
           pauseHint('');
-          pushSave().then((r) => {
+          pushSave(snapshot).then((r) => {
             if (r.ok) {
               if (pauseNoteEl) pauseNoteEl.textContent = '换设备登录同一账号即可继续。';
               pauseHint(`已同步到云端 · ${fmt(time)} · ${DIFFS[diffKey].label}`);
@@ -958,7 +1158,7 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     if (!cloudUser || !cloudSb) { openLogin(); return; }
     try {
       const sv = makeSave();
-      const { error } = await cloudSb.from('sudoku_favorites').insert({
+      const row = {
         user_id: cloudUser.id,
         difficulty: sv.difficulty,
         givens: sv.givens,
@@ -966,7 +1166,12 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
         seconds: time,
         mistakes,
         hints_used: 3 - hints,
-      });
+      };
+      if (IS_KILLER) {
+        row.puzzle_id = puzzleId;
+        row.cages = cages.map((cg) => [cg.sum, cg.cells]);
+      }
+      const { error } = await cloudSb.from(TB.favorites).insert(row);
       if (error) throw error;
       return true;
     } catch (e) {
@@ -1043,7 +1248,7 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
       body.appendChild(row);
     }
     if (cloudSb && cloudUser) {
-      cloudSb.from('sudoku_records')
+      cloudSb.from(TB.records)
         .select('difficulty,seconds')
         .eq('user_id', cloudUser.id)
         .then(({ data, error }) => {
@@ -1086,7 +1291,7 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     holder.className = 'muted';
     body.appendChild(holder);
     try {
-      const { data, error } = await cloudSb.from('sudoku_favorites')
+      const { data, error } = await cloudSb.from(TB.favorites)
         .select('id,difficulty,givens,solution,seconds,mistakes,hints_used,created_at')
         .eq('user_id', cloudUser.id)
         .order('created_at', { ascending: false })
@@ -1118,7 +1323,7 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
         del.textContent = '删除';
         del.addEventListener('click', async () => {
           del.disabled = true;
-          const { error: e2 } = await cloudSb.from('sudoku_favorites').delete().eq('id', r.id);
+          const { error: e2 } = await cloudSb.from(TB.favorites).delete().eq('id', r.id);
           if (e2) { del.disabled = false; return; }
           item.remove();
           if (!holder.querySelector('.sk-fav')) holder.textContent = '还没有收藏。';
@@ -1141,9 +1346,17 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
   /* 打开页面时如果查到暂停存档，问一句要不要接着做。
      先查云端（可跨设备），没有再退回本机副本。 */
   async function offerResume() {
-    if (paused || over) return;
-    const cloud = await pullSave();
-    const saved = cloud || store.get(KEYS.save, null);
+    const request = generation;
+    const remote = await pullSave();
+    const local = store.get(KEYS.save, null);
+    const cloud = validSave(remote) ? remote : null;
+    if (generation !== request || !ready || started || paused || over || !modal.hidden) return;
+    const localValid = validSave(local);
+    if (cloud) cloudSaveRef = { userId: cloudUser?.id, sid: cloud.sid || null, updatedAt: cloud.updated_at };
+    const same = localValid && cloud && (IS_KILLER ? local.sid === cloud.sid : sameSave(local, cloud));
+    const useLocal = localValid && (!cloud || same || Date.parse(local.updated_at || 0) > Date.parse(cloud.updated_at || 0));
+    const saved = useLocal ? local : cloud;
+    const matchingCloud = cloud && (saved === cloud || same) ? cloud : null;
     if (!saved) return;
     showDialog('有一局没做完', (body) => {
       const p = document.createElement('p');
@@ -1151,39 +1364,37 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
       body.appendChild(p);
       const from = document.createElement('p');
       from.className = 'muted';
-      from.textContent = cloud ? '这份进度存在你的账号下。' : '这份进度存在这台设备上。';
+      from.textContent = matchingCloud ? '这份进度存在你的账号下。' : '这份进度存在这台设备上。';
       body.appendChild(from);
-      const foot = document.createElement('div');
-      foot.className = 'sk-actions';
-      const no = document.createElement('button');
-      no.className = 'sk-abtn';
-      no.type = 'button';
-      no.textContent = '不做了';
+      const foot = document.createElement('div'); foot.className = 'sk-actions';
+      const no = document.createElement('button'); no.className = 'sk-abtn'; no.type = 'button'; no.textContent = '不做了';
+      const yes = document.createElement('button'); yes.className = 'sk-abtn primary'; yes.type = 'button'; yes.textContent = '接着做';
       no.addEventListener('click', async () => {
-        store.set(KEYS.save, null);
-        closeDialog();
-        if (cloudSb && cloudUser) {
-          // 只要登录着就清一次云端：云端读取失败时 cloud 为 null，
-          // 但库里可能仍留着旧存档，不清掉下次还会被问一遍。
-          // 等删完再算放下，否则立刻刷新会读到旧存档。
-          try {
-            await cloudSb.from('sudoku_saves').delete().eq('user_id', cloudUser.id);
-          } catch (e) {
-            console.warn('[数独] 云端存档删除失败：', e?.message || e);
-          }
+        no.disabled = yes.disabled = true;
+        try {
+          if (matchingCloud) await queueSave(() => deleteCloudSave({ userId: cloudUser?.id, sid: matchingCloud.sid || saved.sid, updatedAt: matchingCloud.updated_at }));
+          if (localValid && (saved === local || (IS_KILLER ? local.sid === saved.sid : sameSave(local, saved)))) removeLocalSave(local);
+          if (matchingCloud) cloudSaveRef = null;
+          savedSid = null;
+          closeDialog();
+        } catch (err) {
+          console.warn('[数独] 云端存档删除失败：', err?.message || err);
+          from.textContent = '云端进度没有删除，请重试。';
+          no.disabled = yes.disabled = false;
         }
       });
-      const yes = document.createElement('button');
-      yes.className = 'sk-abtn primary';
-      yes.type = 'button';
-      yes.textContent = '接着做';
       yes.addEventListener('click', () => {
         closeDialog();
-        applySave(saved);
-        if (started && !over) startTimer();
+        const resumeId = saved.sid || newSid();
+        const remoteRef = cloud ? {
+          userId: cloudUser?.id,
+          sid: matchingCloud ? resumeId : (IS_KILLER ? cloud.sid : null),
+          updatedAt: cloud.updated_at,
+        } : null;
+        applySave({ ...saved, sid: resumeId }, remoteRef);
+        startTimer();
       });
-      foot.append(no, yes);
-      body.appendChild(foot);
+      foot.append(no, yes); body.appendChild(foot);
     });
   }
 
@@ -1198,16 +1409,19 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
     lbListEl.replaceChildren(li);
   }
 
+  let leaderboardRequest = 0;
   async function loadLeaderboard() {
     if (!cloudSb || !lbListEl) return;
-    lbNoteEl.textContent = '读取中…';
+    const request = ++leaderboardRequest;
+    renderLbNote('读取中…');
     try {
-      const { data, error } = await cloudSb.from('sudoku_records')
+      const { data, error } = await cloudSb.from(TB.records)
         .select('name,seconds,user_id')
         .eq('difficulty', lbDiff)
         .order('seconds', { ascending: true })
         .order('created_at', { ascending: true })
         .limit(200);
+      if (request !== leaderboardRequest) return;
       if (error) throw error;
       lbNoteEl.textContent = '全站共享 · 每人最快';
       const seen = new Set();
@@ -1237,6 +1451,7 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
       });
       lbListEl.replaceChildren(...rows);
     } catch (e) {
+      if (request !== leaderboardRequest) return;
       console.warn('[数独] 排行榜读取失败：', e?.message || e);
       renderLbNote('云端暂不可用', '榜单暂时读不到');
     }
@@ -1340,14 +1555,85 @@ import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
   }
   window.addEventListener('resize', fitSudoku);
 
+  /* 切换前让玩家选择：暂停保留当前局，或明确放弃；不再偷偷覆盖旧存档。 */
+  for (const a of document.querySelectorAll('.sk-mode')) {
+    a.addEventListener('click', (event) => {
+      const mode = IS_KILLER ? 'killer' : 'classic';
+      if (a.dataset.mode === mode) { event.preventDefault(); return; }
+      if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+      if (paused) {
+        event.preventDefault();
+        pendingSavePromise.then(() => { location.href = a.href; });
+        return;
+      }
+      if (!ready || !started || over) return;
+      event.preventDefault();
+      showDialog('切换玩法', (body) => {
+        const p = document.createElement('p');
+        p.textContent = '当前这局还没结束。可以暂停后切换并保留进度，也可以直接放弃这局。';
+        body.appendChild(p);
+        const actions = document.createElement('div'); actions.className = 'sk-actions';
+        const add = (label, primary, handler) => {
+          const btn = document.createElement('button'); btn.type = 'button';
+          btn.className = 'sk-abtn' + (primary ? ' primary' : ''); btn.textContent = label;
+          btn.addEventListener('click', handler); actions.appendChild(btn);
+        };
+        add('取消', false, closeDialog);
+        add('放弃并切换', false, () => { location.href = a.href; });
+        add('暂停并切换', true, async () => {
+          const buttons = [...actions.querySelectorAll('button')]; buttons.forEach((b) => { b.disabled = true; });
+          closeDialog();
+          const result = pauseGame();
+          if (!result) return;
+          await result;
+          location.href = a.href;
+        });
+        body.appendChild(actions);
+      });
+    });
+  }
+
   /* ---------- 启动 ---------- */
+  /* 杀手玩法把页面上的名字和说明换掉，配色和布局跟普通玩法完全一致 */
+  if (IS_KILLER) {
+    document.title = '纸感杀手数独 — Michael';
+    const h1 = $('.tool__head h1');
+    if (h1) h1.textContent = '纸感杀手数独';
+    const lead = $('.tool__head p:last-of-type');
+    if (lead) {
+      lead.textContent = '在普通数独上多一层笼子：每个虚线笼内的数字不能重复，且和等于笼子左上角的数字。'
+        + '题库已通过确定性逻辑推导验证，无需猜测；提示、撤销、三次失误、暂停、收藏与英雄榜都和普通数独一致；'
+        + '两种玩法的成绩、存档、收藏各自独立，互不覆盖。';
+    }
+    const lbTitle = $('.sk-lb h2');
+    if (lbTitle) lbTitle.textContent = '杀手英雄榜';
+    const tip = $('.sk-tip');
+    if (tip) {
+      tip.textContent = '题库题目可由确定性逻辑推完，无需猜测。点格选中 → 数字键或下方键作答；左上角小数字是笼内之和，同笼不能重复；'
+        + '✏ 笔记模式写候选数，方向键移动，N 切笔记，⌫ 擦除';
+    }
+  }
+  for (const a of document.querySelectorAll('.sk-mode')) {
+    const on = a.dataset.mode === (IS_KILLER ? 'killer' : 'classic');
+    a.classList.toggle('on', on);
+    a.setAttribute('aria-selected', String(on));
+    if (on) a.setAttribute('aria-current', 'page');
+    else a.removeAttribute('aria-current');
+  }
+
   buildNums();
   buildBoard();
   repaintAll();
   updateLives();
   updateHintBtn();
   fitSudoku();
-  newGame(diffKey, { keepSave: true });
-  // 先出题保证首屏有棋盘；查存档是异步的，查到再问要不要接着做
-  initCloud().then(() => { setTimeout(offerResume, 400); });
+  newGame(diffKey);
+  initCloud().then(() => {
+    let attempts = 0;
+    const waitUntilReady = () => {
+      if (ready) { offerResume(); return; }
+      if (++attempts < 120) setTimeout(waitUntilReady, 100);
+    };
+    waitUntilReady();
+  });
 })();

@@ -74,6 +74,7 @@ body.sk-page [hidden] { display: none !important; }
 
 /* ---------- 棋盘 ---------- */
 .sk-grid {
+  position: relative;
   display: grid;
   grid-template-columns: repeat(9, 1fr);
   grid-template-rows: repeat(9, 1fr);
@@ -146,6 +147,37 @@ body.sk-page [hidden] { display: none !important; }
   .sk-cell.sel:not(.given):hover { background: #ffedb0; }
 }
 
+/* ---------- 杀手笼线 ----------
+   一层 viewBox 0 0 90 90 的 SVG 盖在棋盘上，只有虚线；点击穿透，不影响选格。
+   non-scaling-stroke 让棋盘缩放时线宽和虚线间隔都保持原样。 */
+.sk-cageline {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2;
+}
+.sk-cageline path {
+  fill: none;
+  stroke: #8a7a5c;
+  stroke-width: 1.3;
+  stroke-dasharray: 5 4;
+  vector-effect: non-scaling-stroke;
+  opacity: 0.75;
+}
+.sk-cage-sum {
+  position: absolute;
+  top: 4%;
+  left: 8%;
+  font: 700 0.3em/1 "Microsoft YaHei", sans-serif;
+  font-variant-numeric: tabular-nums;
+  color: #7a6b4e;
+  pointer-events: none;
+}
+/* 有和值的格子，笔记区往下让一让，免得两串小数字压在一起 */
+.sk-cell:has(.sk-cage-sum) .sk-n { inset: 22% 8% 4%; }
+
 /* ---------- 数字键与工具行 ---------- */
 .sk-pad {
   margin-top: 12px;
@@ -209,6 +241,29 @@ body.sk-page [hidden] { display: none !important; }
   border-color: #4c4436;
   color: #fdfaf2;
 }
+
+/* ---------- 玩法切换（普通 / 杀手） ---------- */
+.sk-modes {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-1);
+}
+.sk-mode {
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-2);
+  font: 600 13px/1 "Microsoft YaHei", sans-serif;
+  padding: 8px 20px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background var(--dur-fast) ease, color var(--dur-fast) ease;
+}
+.sk-mode:hover { color: var(--text-1); }
+.sk-mode.on { background: var(--text-1); color: var(--bg); }
 
 /* ---------- 难度选择 ---------- */
 .sk-diffs {
