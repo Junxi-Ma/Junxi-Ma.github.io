@@ -192,10 +192,17 @@ function sumSupports(cells, sum, [ab, ac, bc], masks) {
   return support[0] ? support : null;
 }
 
+/** Solve a classic 81-cell numeric board (0 = empty) by deduction only. Does not mutate it. */
+export function solveLogically(board) {
+  const masks = candidates(board);
+  if (!masks || !propagate(masks)) return { status: 'invalid' };
+  const values = Uint8Array.from(masks, (m) => singleton(m) ? digit(m) : 0);
+  return { status: values.includes(0) ? 'stalled' : 'solved', values, masks };
+}
+
 /** Check a classic 81-cell numeric board (0 = empty). Does not mutate it. */
 export function isNoGuess(board) {
-  const masks = candidates(board);
-  return !!masks && propagate(masks) && masks.every(singleton);
+  return solveLogically(board).status === 'solved';
 }
 
 /** Solve by deduction only. Cages are [sum, cells]; board has optional givens. */
@@ -222,4 +229,43 @@ export function solveKillerLogically(cages, board = new Uint8Array(81)) {
   if (cageOf.includes(-1) || !propagate(masks, groups, cageOf, rule45(groups, cageOf))) return { status: 'invalid' };
   const values = Uint8Array.from(masks, (m) => singleton(m) ? digit(m) : 0);
   return { status: values.includes(0) ? 'stalled' : 'solved', values, masks };
+}
+
+const ROW_OF = CELLS.map((i) => Math.floor(i / 9));
+const COL_OF = CELLS.map((i) => i % 9);
+const BOX_OF = CELLS.map((i) => 3 * Math.floor(i / 27) + Math.floor(i % 9 / 3));
+
+/** Fill a random complete grid, most-constrained cell first. */
+export function randomFullGrid(rnd = Math.random) {
+  const board = new Uint8Array(81);
+  const rowM = new Uint16Array(9), colM = new Uint16Array(9), boxM = new Uint16Array(9);
+  const dfs = () => {
+    let best = -1, bestMask = 0, bestN = 10;
+    for (const i of CELLS) {
+      if (board[i]) continue;
+      const used = rowM[ROW_OF[i]] | colM[COL_OF[i]] | boxM[BOX_OF[i]];
+      let mask = 0, n = 0;
+      for (let d = 1; d <= 9; d++) if (!(used & (1 << d))) { mask |= 1 << d; n++; }
+      if (!n) return false;
+      if (n < bestN) { bestN = n; best = i; bestMask = mask; if (n === 1) break; }
+    }
+    if (best < 0) return true;
+    const r = ROW_OF[best], c = COL_OF[best], b = BOX_OF[best];
+    const options = [];
+    for (let m = bestMask; m; m &= m - 1) options.push(m & -m);
+    for (let i = options.length - 1; i > 0; i--) {
+      const j = (rnd() * (i + 1)) | 0;
+      [options[i], options[j]] = [options[j], options[i]];
+    }
+    for (const bit of options) {
+      board[best] = digit(bit);
+      rowM[r] |= bit; colM[c] |= bit; boxM[b] |= bit;
+      if (dfs()) return true;
+      board[best] = 0;
+      rowM[r] ^= bit; colM[c] ^= bit; boxM[b] ^= bit;
+    }
+    return false;
+  };
+  dfs();
+  return board;
 }

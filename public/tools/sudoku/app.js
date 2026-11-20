@@ -1,13 +1,13 @@
 /* ============================================================
    纸感数独 — 现代风格（普通 / 杀手 两种玩法共用这一份棋盘）
    · 普通：随机终盘逐格挖空，每次只保留能由确定性逻辑推完的盘面
-   · 杀手：题库离线生成（scripts/gen-killer-puzzles.mjs），笼内不重复 + 和为笼标
+   · 杀手：现场随机出题（killer-gen.mjs），推不动才退回离线题库；笼内不重复 + 和为笼标
    · 交互：点选作答、铅笔笔记、提示×3、撤销、三次失误上限
    · 云端（Supabase）：完成即自动署名上云；英雄榜每人只计最快
    · 云端不可用时静默回退纯本地
    ============================================================ */
 import { getSupabase, isConfigured } from '../../assets/js/supabase.js';
-import { isNoGuess } from './sudoku-logic.mjs?v=1';
+import { isNoGuess, randomFullGrid } from './sudoku-logic.mjs?v=3';
 
 (() => {
   'use strict';
@@ -116,46 +116,10 @@ import { isNoGuess } from './sudoku-logic.mjs?v=1';
     }
   }
   const bitOf = (d) => 1 << d;
-  const digitOf = (bit) => 31 - Math.clz32(bit);
-
-  /* 随机铺满一张终盘 */
-  function generateFull() {
-    const bd = new Int8Array(81);
-    const rowM = new Int32Array(9), colM = new Int32Array(9), boxM = new Int32Array(9);
-    function dfs() {
-      let best = -1, bestMask = 0, bestN = 10;
-      for (let i = 0; i < 81; i++) {
-        if (bd[i]) continue;
-        const used = rowM[ROW[i]] | colM[COL[i]] | boxM[BOX[i]];
-        let mask = 0, n = 0;
-        for (let d = 1; d <= 9; d++) if (!(used & bitOf(d))) { mask |= bitOf(d); n++; }
-        if (n === 0) return false;
-        if (n < bestN) { bestN = n; best = i; bestMask = mask; if (n === 1) break; }
-      }
-      if (best === -1) return true;
-      const r = ROW[best], c = COL[best], bx = BOX[best];
-      const cands = [];
-      for (let m = bestMask; m; m ^= m & -m) cands.push(m & -m);
-      for (let i = cands.length - 1; i > 0; i--) {
-        const j = (Math.random() * (i + 1)) | 0;
-        [cands[i], cands[j]] = [cands[j], cands[i]];
-      }
-      for (const bit of cands) {
-        bd[best] = digitOf(bit);
-        rowM[r] |= bit; colM[c] |= bit; boxM[bx] |= bit;
-        if (dfs()) return true;
-        bd[best] = 0;
-        rowM[r] ^= bit; colM[c] ^= bit; boxM[bx] ^= bit;
-      }
-      return false;
-    }
-    dfs();
-    return bd;
-  }
 
   /* 挖空出无需猜测的谜题：每次试挖都必须能用确定性逻辑推完；目标只是上限。 */
   function makePuzzle(clues) {
-    const solution = generateFull();
+    const solution = randomFullGrid();
     const puzzle = Int8Array.from(solution);
     const order = [...Array(81).keys()];
     for (let i = order.length - 1; i > 0; i--) {
@@ -484,14 +448,17 @@ import { isNoGuess } from './sudoku-logic.mjs?v=1';
     hintBtn.disabled = hints <= 0;
   }
 
-  /* ---------- 杀手题库 ----------
-     题库是离线脚本按唯一解筛过的静态 JSON（四档各 20 题），前端只负责挑一题。 */
+  /* ---------- 杀手出题 ----------
+     优先现场生成：随机终盘上长随机笼子，用共享推导器验到「不猜就能推完」才收。
+     推导只剔除任何解都用不上的值，所以推完即唯一 —— 可解与唯一性是同一条判据。
+     生成失败或题库取不到时退回静态题库（scripts/gen-killer-puzzles.mjs 产物，同一套标准验过）。 */
   let killerBank = null;
+  let killerGen = null;
   let lastPuzzleId = '';
   let bankPromise = null;
   function loadKillerBank() {
     if (killerBank) return Promise.resolve(killerBank);
-    if (!bankPromise) bankPromise = fetch(new URL('./killer-puzzles.json?v=1', import.meta.url))
+    if (!bankPromise) bankPromise = fetch(new URL('./killer-puzzles.json?v=3', import.meta.url))
       .then((r) => { if (!r.ok) throw new Error('题库 HTTP ' + r.status); return r.json(); })
       .then((j) => {
         if (!j || !j.puzzles || Object.keys(DIFFS).some((k) => !Array.isArray(j.puzzles[k]) || !j.puzzles[k].length))
@@ -509,6 +476,17 @@ import { isNoGuess } from './sudoku-logic.mjs?v=1';
       if (p.id !== lastPuzzleId) { lastPuzzleId = p.id; return p; }
     }
     return pool[(Math.random() * pool.length) | 0];
+  }
+  async function makeKillerPuzzle(key) {
+    try {
+      killerGen ??= await import('./killer-gen.mjs?v=2');
+      const p = killerGen.generateKiller(key);
+      if (p) return { ...p, id: 'g' + Math.random().toString(36).slice(2, 10) };
+    } catch (err) {
+      console.warn('[数独] 现场出题不可用，改用题库：', err?.message || err);
+    }
+    await loadKillerBank();
+    return pickKillerPuzzle(key);
   }
 
   /* ---------- 新局 ---------- */
@@ -540,11 +518,10 @@ import { isNoGuess } from './sudoku-logic.mjs?v=1';
     // 让「出题中」先画出来再阻塞生成
     setTimeout(async () => {
       try {
-        if (IS_KILLER) await loadKillerBank();
+        const p = IS_KILLER ? await makeKillerPuzzle(key) : null;
         if (request !== generation) return;
         if (IS_KILLER) {
-        const p = pickKillerPuzzle(key);
-        if (!p) throw new Error('题库缺少当前难度');
+        if (!p) throw new Error('出题失败');
         solution = Int8Array.from(p.s, (ch) => +ch);
         cages = p.c.map(([sum, cs]) => ({ sum, cells: cs }));
         puzzleId = p.id;
@@ -553,11 +530,6 @@ import { isNoGuess } from './sudoku-logic.mjs?v=1';
         notes = new Int16Array(81);
         for (const cg of cages) {
           if (cg.cells.length === 1) { given[cg.cells[0]] = 1; val[cg.cells[0]] = cg.sum; }
-        }
-        for (const i of p.g ?? []) {
-          if (!Number.isInteger(i) || i < 0 || i >= 81 || given[i]) throw new Error('附加明数格格式错误');
-          given[i] = 1;
-          val[i] = solution[i];
         }
         indexCages();
       } else {
@@ -1644,14 +1616,14 @@ import { isNoGuess } from './sudoku-logic.mjs?v=1';
     const lead = $('.tool__head p:last-of-type');
     if (lead) {
       lead.textContent = '在普通数独上多一层笼子：每个虚线笼内的数字不能重复，且和等于笼子左上角的数字。'
-        + '题库已通过确定性逻辑推导验证，无需猜测；提示、撤销、三次失误、暂停、收藏与英雄榜都和普通数独一致；'
-        + '两种玩法的成绩、存档、收藏各自独立，互不覆盖。';
+        + '每局都是现场随机生成的题，验到「不靠猜测就能推完」才发给你，所以一定唯一解；偶发生成失败会退回离线题库，标准一致；'
+        + '提示、撤销、三次失误、暂停、收藏与英雄榜都和普通数独一致；两种玩法的成绩、存档、收藏各自独立，互不覆盖。';
     }
     const lbTitle = $('.sk-lb h2');
     if (lbTitle) lbTitle.textContent = '杀手英雄榜';
     const tip = $('.sk-tip');
     if (tip) {
-      tip.textContent = '题库题目可由确定性逻辑推完，无需猜测。点格选中 → 数字键或下方键作答；左上角小数字是笼内之和，同笼不能重复；'
+      tip.textContent = '题目都由确定性逻辑推完，无需猜测。点格选中 → 数字键或下方键作答；左上角小数字是笼内之和，同笼不能重复；'
         + '✏ 笔记模式写候选数，方向键移动，N 切笔记，⌫ 擦除';
     }
   }
