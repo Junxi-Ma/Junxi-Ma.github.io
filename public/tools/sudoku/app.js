@@ -13,7 +13,7 @@ import { isNoGuess } from './sudoku-logic.mjs?v=1';
   'use strict';
 
   /* 版本标记：排查时一眼确认浏览器跑的是哪一版脚本 */
-  const BUILD = 'v11 · 2026-11-20';
+  const BUILD = 'v20 · 2026-11-20';
   console.info('[数独] build', BUILD);
 
   /* 未捕获错误在页面顶部亮一条红条：排查「点了没反应」时至少能看到原因。
@@ -229,10 +229,14 @@ import { isNoGuess } from './sudoku-logic.mjs?v=1';
     paintCages();
   }
 
-  /* ---------- 杀手笼线 ----------
-     每个笼自己画边界：只在「邻格不属于本笼」的那条边落笔，
-     盘面最外圈交给棋盘本身的粗边框，不重复画。
-     用一层 viewBox 0 0 90 90 的 SVG，棋盘怎么缩放线都跟着走。 */
+  /* ---------- 杀手笼 ----------
+     每个笼一条虚线轮廓，四边各往笼内缩 2.5px（90 单位制里 0.45）。
+     端点比边长各多伸出一个 PAD，让拐角闭合、跨格的边连成一条直线；
+     相邻两笼各自向内缩，交界处就是两条平行虚线夹一道纸色缝——
+     和主流在线数独同一个画法。
+     不铺底色：色块压数字，而且和值集中在十几二十几，颜色几乎分不开。 */
+  const CAGE_PAD = 0.45;
+
   function paintCages() {
     gridEl.querySelectorAll('.sk-cageline, .sk-cage-sum').forEach((e) => e.remove());
     if (!IS_KILLER || !cages.length) return;
@@ -242,27 +246,29 @@ import { isNoGuess } from './sudoku-logic.mjs?v=1';
     svg.setAttribute('viewBox', '0 0 90 90');
     svg.setAttribute('preserveAspectRatio', 'none');
     svg.setAttribute('aria-hidden', 'true');
-    let d = '';
     cages.forEach((cg, ci) => {
+      let d = '';
       for (const i of cg.cells) {
         const r = (i / 9) | 0, c = i % 9;
-        const x = c * 10, y = r * 10;
-        const edges = [
-          [r > 0 ? i - 9 : -1, x, y, x + 10, y],            // 上
-          [r < 8 ? i + 9 : -1, x, y + 10, x + 10, y + 10],  // 下
-          [c > 0 ? i - 1 : -1, x, y, x, y + 10],            // 左
-          [c < 8 ? i + 1 : -1, x + 10, y, x + 10, y + 10],  // 右
-        ];
-        for (const [n, x1, y1, x2, y2] of edges) {
-          if (n < 0) continue;               // 外圈有粗边框，不画
-          if (cageOf && cageOf[n] === ci) continue;
-          d += `M${x1} ${y1}L${x2} ${y2}`;
-        }
+        const x = c * 10, y = r * 10, p = CAGE_PAD;
+        const up = r === 0 || cageOf[i - 9] !== ci;
+        const down = r === 8 || cageOf[i + 9] !== ci;
+        const left = c === 0 || cageOf[i - 1] !== ci;
+        const right = c === 8 || cageOf[i + 1] !== ci;
+        /* 端点只在「这一侧也有边界」时缩 p：凸角处两条边正好交于 (x+p, y+p)；
+           同笼相邻格那边不缩，跨格的线段自然连成一条直线。 */
+        const x1 = x + (left ? p : 0), x2 = x + 10 - (right ? p : 0);
+        const y1 = y + (up ? p : 0), y2 = y + 10 - (down ? p : 0);
+        if (up) d += `M${x1} ${y + p}L${x2} ${y + p}`;
+        if (down) d += `M${x1} ${y + 10 - p}L${x2} ${y + 10 - p}`;
+        if (left) d += `M${x + p} ${y1}L${x + p} ${y2}`;
+        if (right) d += `M${x + 10 - p} ${y1}L${x + 10 - p} ${y2}`;
       }
+      if (!d) return;
+      const path = document.createElementNS(NSVG, 'path');
+      path.setAttribute('d', d);
+      svg.appendChild(path);
     });
-    const p = document.createElementNS(NSVG, 'path');
-    p.setAttribute('d', d);
-    svg.appendChild(p);
     gridEl.appendChild(svg);
 
     /* 和值写在笼里最靠上（同高取最左）那格的左上角；单格笼本身就是明数，不再标 */
@@ -302,11 +308,13 @@ import { isNoGuess } from './sudoku-logic.mjs?v=1';
   function paintHighlights() {
     const d = sel >= 0 ? val[sel] : 0;
     const sr = sel >= 0 ? ROW[sel] : -1, sc = sel >= 0 ? COL[sel] : -1, sb = sel >= 0 ? BOX[sel] : -1;
+    const selCage = sel >= 0 && cageOf ? cageOf[sel] : -1;
     for (let i = 0; i < 81; i++) {
       const el = cells[i];
       el.classList.toggle('sel', i === sel);
       const peer = sel >= 0 && i !== sel && (ROW[i] === sr || COL[i] === sc || BOX[i] === sb || (cageOf && cageOf[i] === cageOf[sel]));
       el.classList.toggle('peer', peer);
+      el.classList.toggle('in-cage', selCage >= 0 && i !== sel && cageOf[i] === selCage);
       el.classList.toggle('same', d > 0 && i !== sel && val[i] === d);
     }
   }
