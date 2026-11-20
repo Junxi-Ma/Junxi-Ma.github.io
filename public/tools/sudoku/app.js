@@ -13,7 +13,7 @@ import { isNoGuess } from './sudoku-logic.mjs?v=1';
   'use strict';
 
   /* 版本标记：排查时一眼确认浏览器跑的是哪一版脚本 */
-  const BUILD = 'v20 · 2026-11-20';
+  const BUILD = 'v22 · 2026-11-20';
   console.info('[数独] build', BUILD);
 
   /* 未捕获错误在页面顶部亮一条红条：排查「点了没反应」时至少能看到原因。
@@ -604,20 +604,54 @@ import { isNoGuess } from './sudoku-logic.mjs?v=1';
     }
   }
 
+  /* 本局有没有值得确认的进度：动过手、走过表、暂停过，或者已经填了字 / 记了笔记 */
+  function hasProgress() {
+    if (over) return false;
+    if (started || paused || time > 0) return true;
+    for (let i = 0; i < 81; i++) if (!given[i] && (val[i] || notes[i])) return true;
+    return false;
+  }
+
   /* ---------- 难度切换 ----------
+     双击、误点都会重置整局，所以和「切换玩法」一样先确认；
+     点当前这档等于「重开一道新题」，有进度时同样要确认。
      事件委托绑在 document 上，位置提到其它绑定之前：
      这样即便页面上某个元素缺失、或后面的初始化在某处抛错，
      难度按钮也照常能切；newGame 真出错时给出可见反馈，而不是「点了没反应」。 */
   document.addEventListener('click', (e) => {
     const btn = e.target instanceof Element ? e.target.closest('.sk-diffbtn') : null;
     if (!btn || btn.disabled) return;
-    for (const t of document.querySelectorAll('.sk-diffbtn')) t.classList.toggle('on', t === btn);
-    try {
-      newGame(btn.dataset.diff);
-    } catch (err) {
-      console.error('[数独] 切换难度失败：', err);
-      if (diffLabel) diffLabel.textContent = '出题失败，请刷新页面';
-    }
+    const next = btn.dataset.diff;
+    if (!Object.hasOwn(DIFFS, next)) return;
+
+    const go = () => {
+      for (const t of document.querySelectorAll('.sk-diffbtn')) t.classList.toggle('on', t === btn);
+      try {
+        newGame(next);
+      } catch (err) {
+        console.error('[数独] 切换难度失败：', err);
+        if (diffLabel) diffLabel.textContent = '出题失败，请刷新页面';
+      }
+    };
+
+    if (!hasProgress()) { go(); return; }
+    const sameTier = next === diffKey;
+    showDialog(sameTier ? '重开本局' : '换难度', (body) => {
+      const p = document.createElement('p');
+      p.textContent = sameTier
+        ? `这局已经做了 ${fmt(time)}，重开会换一道新题，当前进度不会留下。`
+        : `这局已经做了 ${fmt(time)}，换成「${DIFFS[next].label}」会重新出题，当前进度不会留下。`;
+      body.appendChild(p);
+      const actions = document.createElement('div'); actions.className = 'sk-actions';
+      const add = (label, primary, handler) => {
+        const b = document.createElement('button'); b.type = 'button';
+        b.className = 'sk-abtn' + (primary ? ' primary' : ''); b.textContent = label;
+        b.addEventListener('click', handler); actions.appendChild(b);
+      };
+      add('取消', false, closeDialog);
+      add(sameTier ? '重开' : '放弃并换难度', true, () => { closeDialog(); go(); });
+      body.appendChild(actions);
+    });
   });
 
   /* ---------- 交互 ---------- */
